@@ -5,25 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0A84FF" />
   <title>Muscu PWA</title>
-  <link rel="manifest" href="manifest.webmanifest?v=4">
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="manifest" href="manifest.webmanifest?v=6">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body class="theme-light">
 
-  <!-- En-tête de navigation -->
+  <!-- En-tête -->
   <header id="appHeader" class="app-header">
     <button id="btnBack" class="nav-back" aria-label="Retour" hidden>←</button>
     <h1 id="title" class="title">Séances</h1>
     <button id="btnOk" class="nav-ok" hidden>OK</button>
   </header>
 
-  <!-- Sous-onglets (sections avec sous-sections) -->
   <nav id="subTabs" class="subtabs" hidden></nav>
 
-  <!-- Contenu (vues) -->
   <main id="app" class="app">
-    <!-- 3.4 Séances (écran par défaut) -->
+    <!-- 3.4 Séances -->
     <section class="view" id="v-sessions" data-route="sessions">
       <div class="toolbar">
         <div class="today" id="todayLabel"></div>
@@ -31,7 +28,7 @@
       </div>
       <div id="calendar" class="calendar"></div>
       <div id="sessionExercises" class="card-list"></div>
-      <div class="card-list">
+      <div class="card-list" id="sessionActions">
         <button class="btn primary" id="btnAddPlanned" disabled>Ajouter &lt;routine&gt;</button>
         <label class="select-row">
           <select id="pickRoutine"></select>
@@ -42,7 +39,7 @@
       <div class="spacer64"></div>
     </section>
 
-    <!-- 3.1.1 Bibliothèque d’exercices -->
+    <!-- 3.1.1 Exercices -->
     <section class="view enter-from-right" id="v-exercises" data-route="exercises" hidden>
       <div class="search">
         <input id="searchExo" class="input" type="search" placeholder="Rechercher…" />
@@ -58,7 +55,7 @@
       <div class="spacer64"></div>
     </section>
 
-    <!-- 3.1.2 Ajouter/Modifier un exercice -->
+    <!-- 3.1.2 Form Exercice -->
     <section class="view enter-from-right" id="v-exercise-form" data-route="exercise-form" hidden>
       <div class="card danger soft" id="exerciseDeleteRow" hidden>
         <button class="btn danger outline" id="btnDelExercise">🗑️ Supprimer</button>
@@ -105,7 +102,7 @@
       <div class="spacer64"></div>
     </section>
 
-    <!-- 3.2.2 Contenu routine -->
+    <!-- 3.2.2 Form Routine -->
     <section class="view enter-from-right" id="v-routine-form" data-route="routine-form" hidden>
       <div class="card danger soft" id="routineDeleteRow" hidden>
         <button class="btn danger outline" id="btnDelRoutine">🗑️ Supprimer</button>
@@ -140,29 +137,52 @@
       <ul id="exercisePickList" class="list"></ul>
     </section>
 
-    <!-- 3.3 Plan (stub) -->
+    <!-- 3.3 Plan (28 jours) -->
     <section class="view enter-from-right" id="v-plan" data-route="plan" hidden>
+      <div class="card-list">
+        <button id="btnSetPlanStart" class="btn">Définir date de départ du plan</button>
+      </div>
       <ul id="planList" class="list"></ul>
       <div class="spacer64"></div>
     </section>
 
-    <!-- 3.5 Objectifs (stub) -->
+    <!-- 3.4.2 Modifier l’exécution -->
+    <section class="view enter-from-right" id="v-exec" data-route="exec" hidden>
+      <div class="exec-grid">
+        <div class="exec-col">
+          <div class="exec-title" id="execDateA"></div>
+          <div class="exec-head">Reps | Poids | RPE | Repos</div>
+          <ul id="execToday" class="exec-list"></ul>
+          <button class="btn danger" id="btnDelLastSet">Supprimer la dernière série</button>
+        </div>
+        <div class="exec-col">
+          <div class="exec-title" id="execDateB"></div>
+          <div class="exec-head">Reps | Poids | RPE | Repos</div>
+          <ul id="execPrev" class="exec-list readonly"></ul>
+        </div>
+      </div>
+      <div class="exec-bottom">
+        <div class="exec-meta">
+          <div id="execGoal"></div>
+          <div id="execRecord"></div>
+        </div>
+        <div class="timer">
+          <button id="tMinus">-10s</button>
+          <span id="tDisplay">00:00</span>
+          <button id="tPlus">+10s</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3.5 Objectifs (placeholder minimal) -->
     <section class="view enter-from-right" id="v-goals" data-route="goals" hidden>
-      <div class="search"><input class="input" placeholder="Rechercher…"></div>
       <div class="card-list"><button class="btn">+ Ajouter objectif</button></div>
       <ul id="goalList" class="list"></ul>
       <div class="spacer64"></div>
     </section>
 
-    <!-- 3.6/3.7 Stats (stubs) -->
+    <!-- 3.6/3.7 Stats (placeholder) -->
     <section class="view enter-from-right" id="v-stats-general" data-route="stats-general" hidden>
-      <div class="tabs small">
-        <button class="chip active">Semaine</button>
-        <button class="chip">Mois</button>
-        <button class="chip">3 mois</button>
-        <button class="chip">6 mois</button>
-        <button class="chip">12 mois</button>
-      </div>
       <div class="kpis">
         <div class="kpi"><b id="kpiSessions">0</b><span>Séances</span></div>
         <div class="kpi"><b id="kpiSets">0</b><span>Séries</span></div>
@@ -170,7 +190,6 @@
       </div>
       <div class="spacer64"></div>
     </section>
-
     <section class="view enter-from-right" id="v-stats-progress" data-route="stats-progress" hidden>
       <div class="search"><input class="input" placeholder="Rechercher un exercice…"></div>
       <div class="spacer64"></div>
@@ -185,7 +204,6 @@
     <button data-tab="settings" class="tab" aria-label="Réglages">⚙️</button>
   </footer>
 
-  <!-- IMPORTANT : un seul script en module -->
-  <script type="module" src="app.js?v=4"></script>
+  <script type="module" src="app.js?v=6"></script>
 </body>
 </html>
