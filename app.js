@@ -1,12 +1,15 @@
 import { db, ensureSeed } from './db.js';
 
-/* ---- util ---- */
+/* ===== utils ===== */
 const qs = s => document.querySelector(s);
 const qsa = s => [...document.querySelectorAll(s)];
 const last = a => a[a.length-1];
+const pad = n => String(n).padStart(2,'0');
 const fmtDate = d => d.toISOString().slice(0,10);
+const parseISO = s => { const [y,m,d]=s.split('-').map(Number); const dt = new Date(y,m-1,d); dt.setHours(0,0,0,0); return dt; };
+const addDays = (d,n)=>{ const x=new Date(d); x.setDate(x.getDate()+n); return x; };
 
-/* ---- navigation ---- */
+/* ===== nav/header ===== */
 let navStack = [];
 let currentRoute = 'sessions';
 let currentRoutineId = null;
@@ -63,7 +66,7 @@ function back(){
   renderSubtabs();
 }
 
-/* ---- sous-onglets haut ---- */
+/* ===== sub tabs (bibliothèques / stats) ===== */
 function renderSubtabs(){
   const st = qs('#subTabs'); st.innerHTML=''; st.hidden = true;
   const libs = ['routines','plan','exercises'];
@@ -90,7 +93,7 @@ function renderSubtabs(){
   }
 }
 
-/* ---- onglets bas ---- */
+/* ===== bottom tabs ===== */
 qsa('.tab').forEach(t=>{
   t.addEventListener('click', ()=>{
     qsa('.tab').forEach(x=>x.classList.remove('active'));
@@ -103,7 +106,7 @@ qsa('.tab').forEach(t=>{
   });
 });
 
-/* ---- drag & drop (︙) ---- */
+/* ===== drag & drop (︙) ===== */
 function enableReorder(listEl, onReorder){
   let dragEl=null, ph=null, pressTimer=null, startIndex=-1;
 
@@ -133,7 +136,7 @@ function enableReorder(listEl, onReorder){
     listEl.insertBefore(dragEl, ph);
     const newIndex = [...listEl.children].indexOf(dragEl);
     ph.remove(); ph=null; document.body.style.touchAction='';
-    const ids = [...listEl.querySelectorAll('.item')].map(el=>Number(el.dataset.id));
+    const ids = [...listEl.querySelectorAll('.item')].map(el=>Number(el.dataset.id||el.dataset.idx));
     onReorder?.(ids, startIndex, newIndex);
     dragEl=null;
   }
@@ -151,7 +154,7 @@ function enableReorder(listEl, onReorder){
   window.addEventListener('pointerup', ()=>{ clearTimeout(pressTimer); pressTimer=null; endDrag(); });
 }
 
-/* ---- Exercices (3.1) ---- */
+/* ===== Exercices (3.1) ===== */
 async function openExercises(){
   header.set({back:false,title:'Exercices',ok:false});
   showView('v-exercises',{push:false});
@@ -224,7 +227,7 @@ async function openExerciseForm(id){
   showView('v-exercise-form');
 }
 
-/* ---- Routines (3.2) ---- */
+/* ===== Routines (3.2) ===== */
 async function openRoutines(){
   header.set({back:false,title:'Routines',ok:false});
   showView('v-routines',{push:false});
@@ -252,7 +255,7 @@ async function renderRoutineList(){
       li.onclick = ()=> openRoutineForm(r.id);
       list.appendChild(li);
     });
-  enableReorder(list, async (_ids)=>{/* si tu veux persister l’ordre global, ajoute un champ order sur les routines */});
+  enableReorder(list, async (_ids)=>{ /* si besoin : ordre global */ });
 }
 qs('#btnNewRoutine').onclick = ()=> openRoutineForm(null);
 qs('#searchRoutine').oninput = renderRoutineList;
@@ -267,7 +270,9 @@ async function openRoutineForm(id){
   header.onOk(async ()=>{
     const f = new FormData(qs('#routineForm'));
     const name=f.get('name')?.trim(); if(!name) return alert('Nom requis');
-    const obj = { id:id||undefined, name, type:f.get('type'), desc:f.get('desc')||'', items: state.movementItems||[] };
+    // recalcul groupes
+    const groups = [...new Set((state.movementItems||[]).map(m=>m.group3).filter(Boolean))].join(', ');
+    const obj = { id:id||undefined, name, type:f.get('type'), desc:f.get('desc')||'', items: state.movementItems||[], groups };
     await db.put('routines', obj);
     back(); openRoutines();
   });
@@ -293,7 +298,7 @@ function renderMovementList(){
     const reps = (m.sets||[]).map(s=>s.repsDefault??0);
     const min = reps.length?Math.min(...reps):0;
     const max = reps.length?Math.max(...reps):0;
-    const li=document.createElement('li'); li.className='item'; li.dataset.id=idx;
+    const li=document.createElement('li'); li.className='item'; li.dataset.idx=idx;
     li.innerHTML = `
       <button class="grab" aria-label="Réordonner">︙</button>
       <div class="grow">
@@ -315,7 +320,7 @@ async function openAddMovements(){
   header.onOk(()=>{
     const checked = qsa('#exercisePickList input[type=checkbox]:checked').map(x=>Number(x.value));
     addMovementsToRoutine(checked);
-    back(); // retour routine
+    back();
   });
   await renderExercisePickList();
   showView('v-add-movements');
@@ -353,7 +358,7 @@ async function addMovementsToRoutine(exIds){
   for(const id of exIds){
     const e = await db.get('exercises', id);
     if(!e) continue;
-    if(arr.some(x=>x.exId===id)) continue; // pas de doublon
+    if(arr.some(x=>x.exId===id)) continue;
     arr.push({ exId:id, name:e.name, group3:e.group3, sets:[{repsDefault:10, restDefault:60},{repsDefault:10, restDefault:60}] });
   }
   state.movementItems = arr;
@@ -365,10 +370,16 @@ function editMovement(index){
   if(add){ m.sets = (m.sets||[]).concat({repsDefault:10, restDefault:60}); renderMovementList(); }
 }
 
-/* ---- Plan (3.3) : 28 jours, stub simple ---- */
+/* ===== Plan (3.3) ===== */
 async function openPlan(){
   header.set({back:false,title:'Plan',ok:false});
   showView('v-plan',{push:false});
+  qs('#btnSetPlanStart').onclick = async ()=>{
+    const d = prompt('Date de départ du plan (YYYY-MM-DD) :', (await db.get('settings','planStart'))?.value);
+    if(!d) return;
+    await db.put('settings',{key:'planStart', value:d});
+    openPlan();
+  };
   const ul = qs('#planList'); ul.innerHTML='';
   for(let day=1; day<=28; day++){
     const item = await db.get('plan', day);
@@ -382,7 +393,7 @@ async function openPlan(){
     `;
     li.onclick = async ()=>{
       const routines = await db.getAll('routines');
-      const pick = prompt('Nom de routine (exact) :\n'+routines.map(r=>r.name).join('\n'));
+      const pick = prompt('Nom de routine (exact) :\n'+(routines.length? routines.map(r=>r.name).join('\n') : 'Aucune routine'));
       if(!pick) return;
       const r = routines.find(x=>x.name===pick);
       if(!r){ alert('Routine inconnue'); return; }
@@ -393,65 +404,259 @@ async function openPlan(){
   }
 }
 
-/* ---- Séances (3.4) simplifiées ---- */
-async function renderSessions(){
-  const today = new Date();
-  qs('#todayLabel').textContent = new Intl.DateTimeFormat('fr-FR',{weekday:'long', day:'numeric', month:'short'}).format(today);
-  renderCalendar(today);
-  qs('#sessionExercises').innerHTML = `
-    <div class="item">
-      <div class="grow"><div class="name">Développé couché</div><div class="detail">8×80 — RPE 8</div></div>
-      <button class="edit">✏️</button>
-    </div>
-  `;
+/* ===== Séances (3.4) ===== */
+let selectedDate = new Date(); selectedDate.setHours(0,0,0,0);
+
+function planRoutineForDate(dt, planStart, planMap){
+  if(!planStart || planMap.length===0) return null;
+  const days = Math.floor((dt - planStart)/(1000*3600*24));
+  const idx = ((days % 28)+28)%28; // 0..27
+  const dayNum = idx+1;
+  return planMap.find(p=>p.day===dayNum) || null;
 }
-function renderCalendar(day){
+async function renderSessions(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  qs('#todayLabel').textContent = new Intl.DateTimeFormat('fr-FR',{weekday:'long', day:'numeric', month:'short'}).format(selectedDate);
+
+  // calendrier 3 semaines
   const cal = qs('#calendar'); cal.innerHTML='';
-  const start = new Date(day); start.setDate(day.getDate()-3);
-  for(let i=0;i<7;i++){
-    const d = new Date(start); d.setDate(start.getDate()+i);
+  const start = addDays(selectedDate, -7); // 21 jours
+  const workouts = await db.getAll('workouts');
+  const planStartStr = (await db.get('settings','planStart'))?.value;
+  const planStart = planStartStr ? parseISO(planStartStr) : today;
+  const planMap = await db.getAll('plan');
+
+  for(let i=0;i<21;i++){
+    const d = addDays(start, i);
     const div = document.createElement('div'); div.className='day';
-    if(fmtDate(d)===fmtDate(new Date())) div.classList.add('today','selected');
+    if(fmtDate(d)===fmtDate(today)) div.classList.add('today');
+    if(fmtDate(d)===fmtDate(selectedDate)) div.classList.add('selected');
+    // entraînement créé ?
+    const hasW = workouts.some(w=>w.date===fmtDate(d));
+    if(hasW) div.classList.add('has');
+    // plan futur ?
+    const p = planRoutineForDate(d, planStart, planMap);
+    if(!hasW && p) div.classList.add('has');
     div.textContent = d.getDate();
+    div.onclick = ()=>{ selectedDate=d; renderSessions(); };
     cal.appendChild(div);
   }
+
+  // afficher exercices de la séance de la date
+  const w = await db.get('workouts', fmtDate(selectedDate));
+  renderSessionExercises(w);
+
+  // “Ajouter <routine>” si plan + séance vide
+  const planned = planRoutineForDate(selectedDate, planStart, planMap);
+  const btnPlan = qs('#btnAddPlanned');
+  if(planned && !w){
+    btnPlan.disabled = false;
+    btnPlan.textContent = `Ajouter ${planned.name}`;
+    btnPlan.onclick = async ()=>{
+      const routine = await db.get('routines', planned.routineId);
+      if(!routine){ alert('Routine introuvable'); return; }
+      const exos = (routine.items||[]).map(m=>({
+        exId: m.exId, name:m.name,
+        sets: (m.sets||[]).map(s=>({ plannedReps:s.repsDefault??0, plannedRest:s.restDefault??60, reps:null, weight:null, rpe:null, rest:s.restDefault??60 }))
+      }));
+      await db.put('workouts',{date:fmtDate(selectedDate), exercises:exos});
+      renderSessions();
+    };
+  } else {
+    btnPlan.disabled = true;
+    btnPlan.textContent = 'Ajouter <routine>';
+    btnPlan.onclick = null;
+  }
+
+  // “Ajouter une routine” sélecteur
+  const pick = qs('#pickRoutine'); pick.innerHTML='';
+  const listR = await db.getAll('routines');
+  pick.appendChild(new Option('— Choisir une routine —',''));
+  listR.forEach(r=> pick.appendChild(new Option(r.name, r.id)));
+  pick.onchange = async ()=>{
+    const id = Number(pick.value); if(!id) return;
+    const routine = await db.get('routines', id);
+    let cur = await db.get('workouts', fmtDate(selectedDate));
+    if(!cur) cur = {date:fmtDate(selectedDate), exercises:[]};
+    const exos = (routine.items||[]).map(m=>({
+      exId: m.exId, name:m.name,
+      sets: (m.sets||[]).map(s=>({ plannedReps:s.repsDefault??0, plannedRest:s.restDefault??60, reps:null, weight:null, rpe:null, rest:s.restDefault??60 }))
+    }));
+    cur.exercises = cur.exercises.concat(exos);
+    await db.put('workouts', cur);
+    pick.value='';
+    renderSessions();
+  };
+
+  // “Ajouter exercice/s” depuis bibliothèque
+  qs('#btnAddFromLibrary').onclick = async ()=>{
+    // réutilise l’écran d’ajout de mouvements pour cocher des exos
+    header.set({back:true,title:'Ajouter exercice/s',ok:true});
+    header.onBack(()=> back());
+    header.onOk(async ()=>{
+      const checked = qsa('#exercisePickList input[type=checkbox]:checked').map(x=>Number(x.value));
+      if(checked.length===0){ back(); return; }
+      let cur = await db.get('workouts', fmtDate(selectedDate));
+      if(!cur) cur = {date:fmtDate(selectedDate), exercises:[]};
+      for(const id of checked){
+        const e = await db.get('exercises', id);
+        cur.exercises.push({ exId:id, name:e.name, sets:[] }); // séries vides
+      }
+      await db.put('workouts', cur);
+      back(); renderSessions();
+    });
+    await renderExercisePickList();
+    showView('v-add-movements');
+  };
+}
+function renderSessionExercises(workout){
+  const box = qs('#sessionExercises'); box.innerHTML='';
+  if(!workout){ return; }
+  workout.exercises.forEach((ex, idx)=>{
+    // petite synthèse des séries (cases)
+    const chips = (ex.sets||[]).map(s=>{
+      const r = (s.reps!=null ? s.reps : (s.plannedReps ?? '—'));
+      const w = (s.weight!=null ? s.weight : '—');
+      const rp = (s.rpe!=null ? s.rpe : '•');
+      return `<span class="chipset">${r}×${w} <sup>${rp}</sup></span>`;
+    }).join(' ');
+    const item = document.createElement('div'); item.className='item';
+    item.innerHTML = `
+      <div class="grow">
+        <div class="name">${ex.name}</div>
+        <div class="detail">${chips || 'Aucune série'}</div>
+      </div>
+      <button class="edit">✏️</button>
+    `;
+    item.onclick = ()=> openExecScreen(fmtDate(selectedDate), idx);
+    box.appendChild(item);
+  });
 }
 
-/* ---- Stats/Objectifs/Settings ---- */
+/* ===== Exec 3.4.2 ===== */
+let execTimer = {remain:0, tick:null};
+async function openExecScreen(dateStr, exIndex){
+  const w = await db.get('workouts', dateStr);
+  if(!w) return;
+  const ex = w.exercises[exIndex];
+  header.set({back:true,title:ex.name,ok:false});
+  header.onBack(async ()=>{ back(); renderSessions(); });
+
+  // Colonne gauche = aujourd'hui (édition)
+  qs('#execDateA').textContent = new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',year:'2-digit'}).format(parseISO(dateStr));
+  const ulA = qs('#execToday'); ulA.innerHTML='';
+  const sets = ex.sets||[];
+  if(sets.length===0){
+    // une ligne vide si rien n'est prévu
+    sets.push({plannedReps:null, plannedRest:60, reps:null, weight:null, rpe:null, rest:60});
+  }
+  sets.forEach((s,i)=>{
+    const li = document.createElement('li'); li.className='exec-row';
+    li.innerHTML = `
+      <input type="number" inputmode="numeric" placeholder="${s.plannedReps ?? ''}" value="${s.reps ?? ''}">
+      <input type="number" inputmode="numeric" placeholder="kg" value="${s.weight ?? ''}">
+      <input type="number" inputmode="numeric" placeholder="RPE" value="${s.rpe ?? ''}">
+      <input type="number" inputmode="numeric" placeholder="${s.plannedRest ?? 60}" value="${s.rest ?? s.plannedRest ?? 60}">
+    `;
+    const [repsEl, wEl, rpeEl, restEl] = [...li.querySelectorAll('input')];
+    repsEl.onchange = async ()=>{ s.reps = repsEl.value? Number(repsEl.value):null; await db.put('workouts', w); };
+    wEl.onchange    = async ()=>{ s.weight = wEl.value? Number(wEl.value):null; await db.put('workouts', w); };
+    rpeEl.onchange  = async ()=>{ s.rpe = rpeEl.value? Number(rpeEl.value):null; await db.put('workouts', w); };
+    restEl.onchange = async ()=>{ s.rest = restEl.value? Number(restEl.value):null; await db.put('workouts', w); };
+    // appui "Enter" dans le champ rest => enregistre + lance minuteur + ajoute série suivante
+    restEl.addEventListener('keydown', async ev=>{
+      if(ev.key==='Enter'){
+        ev.preventDefault();
+        s.rest = restEl.value? Number(restEl.value): (s.plannedRest ?? 60);
+        await db.put('workouts', w);
+        startTimer(s.rest || 60);
+        // ajoute une ligne suivante vide automatiquement
+        if(i===sets.length-1){
+          sets.push({plannedReps:s.plannedReps ?? null, plannedRest:s.plannedRest ?? s.rest ?? 60, reps:null, weight:null, rpe:null, rest:s.rest ?? 60});
+          await db.put('workouts', w);
+          openExecScreen(dateStr, exIndex); // refresh
+        }
+      }
+    });
+    ulA.appendChild(li);
+  });
+
+  qs('#btnDelLastSet').onclick = async ()=>{
+    if(ex.sets && ex.sets.length>0){
+      ex.sets.pop();
+      await db.put('workouts', w);
+      openExecScreen(dateStr, exIndex);
+    }
+  };
+
+  // Colonne droite = précédente (lecture seule)
+  const allW = await db.getAll('workouts');
+  const prev = allW
+    .filter(x=>x.date < dateStr)
+    .sort((a,b)=>a.date.localeCompare(b.date))
+    .reverse()
+    .find(x=> (x.exercises||[]).some(e=>e.exId===ex.exId));
+  const ulB = qs('#execPrev'); ulB.innerHTML='';
+  if(prev){
+    qs('#execDateB').textContent = new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',year:'2-digit'}).format(parseISO(prev.date));
+    const exPrev = prev.exercises.find(e=>e.exId===ex.exId);
+    (exPrev.sets||[]).forEach(s=>{
+      const li = document.createElement('li'); li.className='exec-row';
+      li.innerHTML = `
+        <input value="${s.reps ?? ''}"><input value="${s.weight ?? ''}"><input value="${s.rpe ?? ''}"><input value="${s.rest ?? ''}">
+      `;
+      ulB.appendChild(li);
+    });
+  } else {
+    qs('#execDateB').textContent = '—';
+  }
+
+  // bandeau : objectif/record (placeholders)
+  qs('#execGoal').textContent = 'Objectif : —';
+  qs('#execRecord').textContent = 'Record : —';
+
+  // timer
+  qs('#tMinus').onclick = ()=> startTimer(Math.max(0, execTimer.remain-10));
+  qs('#tPlus').onclick = ()=> startTimer(execTimer.remain+10);
+
+  showView('v-exec');
+}
+function startTimer(seconds){
+  execTimer.remain = seconds|0;
+  updateTimerLabel();
+  if(execTimer.tick) clearInterval(execTimer.tick);
+  execTimer.tick = setInterval(()=>{
+    execTimer.remain--;
+    updateTimerLabel();
+    if(execTimer.remain<=0){
+      clearInterval(execTimer.tick); execTimer.tick=null;
+      if('vibrate' in navigator) navigator.vibrate?.(200);
+    }
+  },1000);
+}
+function updateTimerLabel(){
+  qs('#tDisplay').textContent = `${pad(Math.floor(execTimer.remain/60))}:${pad(execTimer.remain%60)}`;
+}
+
+/* ===== Stats/Objectifs/Settings (light) ===== */
 function openGoals(){ header.set({back:false,title:'Objectifs',ok:false}); showView('v-goals',{push:false}); }
 function openStatsGeneral(){ header.set({back:false,title:'Général',ok:false}); showView('v-stats-general',{push:false}); }
 function openStatsProgress(){ header.set({back:false,title:'Progrès',ok:false}); showView('v-stats-progress',{push:false}); }
 function openSettings(){
   header.set({back:false,title:'Réglages',ok:false});
-  showView('v-settings',{push:false});
-  applySettingsUI();
+  alert('Réglages: thème & préférences à brancher (stockées dans IndexedDB).'); // placeholder visuel
 }
 
-/* ---- Réglages ---- */
-async function applySettingsUI(){
-  const fs = (await db.get('settings','fontSize'))?.value || 'normal';
-  const dt = (await db.get('settings','defaultTimer'))?.value ?? 60;
-  const st = (await db.get('settings','weightStep'))?.value ?? 1;
-  const md = (await db.get('settings','seriesDefaultMode'))?.value || 'template';
-  const th = (await db.get('settings','theme'))?.value || 'light';
-  const fsel = document.createElement('div'); // placeholder needed? (UI déjà dans index)
-
-  // appliquer
-  document.body.classList.toggle('theme-dark', th==='dark');
-  document.body.style.setProperty('--font', fs==='small'?'15px':fs==='large'?'18px':'16px');
-}
-
-/* ---- démarrage ---- */
+/* ===== démarrage ===== */
 (async function start(){
   await ensureSeed();
   header.set({back:false,title:'Séances',ok:false});
   showView('v-sessions',{push:false});
   renderSessions();
 
-  // service worker avec version pour casser le cache
   if('serviceWorker' in navigator){
-    try {
-      await navigator.serviceWorker.register('./sw.js?v=4');
-    } catch(e) { /* silencieux */ }
+    try { await navigator.serviceWorker.register('./sw.js?v=6'); } catch(e){}
   }
+
+  // actions de la barre d’onglets secondaires au besoin
 })();
