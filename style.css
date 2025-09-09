@@ -86,3 +86,6 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-appl
 #tDisplay{min-width:72px;display:inline-block;text-align:center}
 
 .spacer64{height:64px}
+
+/* Masque tout élément avec l’attribut [hidden] */
+[hidden]{ display:none !important; }
