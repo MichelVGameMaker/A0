@@ -1,6 +1,5 @@
-// IndexedDB minimal pour exercices / routines / séances / réglages / plan
 const DB_NAME = 'muscu-db';
-const DB_VER  = 1;
+const DB_VER  = 2;
 
 function openDB(){
   return new Promise((res, rej)=>{
@@ -15,33 +14,33 @@ function openDB(){
         db.createObjectStore('routines',{keyPath:'id',autoIncrement:true}); // {id,name,type,desc,items[]}
       }
       if(!db.objectStoreNames.contains('workouts')){
-        db.createObjectStore('workouts',{keyPath:'date'}); // "YYYY-MM-DD"
+        db.createObjectStore('workouts',{keyPath:'date'}); // {date, exercises:[{exId,name,sets:[{plannedReps,plannedRest,reps,weight,rpe,rest}]}]}
       }
       if(!db.objectStoreNames.contains('settings')){
         db.createObjectStore('settings',{keyPath:'key'});
       }
       if(!db.objectStoreNames.contains('plan')){
-        db.createObjectStore('plan',{keyPath:'day'}); // 1..28
+        db.createObjectStore('plan',{keyPath:'day'}); // 1..28 -> {day, routineId, name, groups}
+      }
+      if(!db.objectStoreNames.contains('goals')){
+        db.createObjectStore('goals',{keyPath:'id',autoIncrement:true}); // minimal
       }
     };
     req.onsuccess = ()=>res(req.result);
     req.onerror = ()=>rej(req.error);
   });
 }
-
 async function store(name, mode='readonly'){
   const db = await openDB();
   return db.transaction(name, mode).objectStore(name);
 }
-
 export const db = {
-  async getAll(name){ const s=await store(name); return new Promise(r=>{ const q=s.getAll(); q.onsuccess=()=>r(q.result); });},
-  async get(name, key){ const s=await store(name); return new Promise(r=>{ const q=s.get(key); q.onsuccess=()=>r(q.result); });},
-  async put(name, val){ const s=await store(name,'readwrite'); return new Promise(r=>{ const q=s.put(val); q.onsuccess=()=>r(q.result); });},
-  async delete(name, key){ const s=await store(name,'readwrite'); return new Promise(r=>{ const q=s.delete(key); q.onsuccess=()=>r(); });}
+  async getAll(name){ const s=await store(name); return new Promise((r,e)=>{ const q=s.getAll(); q.onsuccess=()=>r(q.result); q.onerror=()=>e(q.error); });},
+  async get(name, key){ const s=await store(name); return new Promise((r,e)=>{ const q=s.get(key); q.onsuccess=()=>r(q.result); q.onerror=()=>e(q.error); });},
+  async put(name, val){ const s=await store(name,'readwrite'); return new Promise((r,e)=>{ const q=s.put(val); q.onsuccess=()=>r(q.result); q.onerror=()=>e(q.error); });},
+  async delete(name, key){ const s=await store(name,'readwrite'); return new Promise((r,e)=>{ const q=s.delete(key); q.onsuccess=()=>r(); q.onerror=()=>e(q.error); });}
 };
 
-// Seed de départ
 export async function ensureSeed(){
   const exos = await db.getAll('exercises');
   if(exos.length===0){
@@ -56,5 +55,8 @@ export async function ensureSeed(){
     await db.put('settings',{key:'weightStep', value:1});
     await db.put('settings',{key:'seriesDefaultMode', value:'template'});
     await db.put('settings',{key:'theme', value:'light'});
+    // date départ plan = aujourd'hui
+    const today = new Date(); today.setHours(0,0,0,0);
+    await db.put('settings',{key:'planStart', value: today.toISOString().slice(0,10)});
   }
 }
