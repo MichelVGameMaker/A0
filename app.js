@@ -25,25 +25,47 @@ const header = {
   onOk(cb){ qs('#btnOk').onclick = cb; }
 };
 
+function hideAllViews(){
+  document.querySelectorAll('.view').forEach(v=>{
+    v.hidden = true;
+    v.classList.remove('enter-from-right','enter-from-left','leave-to-left','leave-to-right');
+    v.style.transform = ''; // reset
+  });
+}
+
 function showView(id, {push=true}={}){
-  const next = qs('#'+id);
-  const cur  = last(navStack);
+  const next = document.getElementById(id);
+  const cur  = navStack.length ? navStack[navStack.length-1] : null;
+
+  // Toujours cacher toutes les vues (évite l'empilement)
+  hideAllViews();
   next.hidden = false;
-  if(push){
+
+  // Animation uniquement si push=true et qu’il y a une vue courante
+  if(push && cur && cur!==next){
+    // On ré-affiche la vue courante pour l’animer vers la gauche
+    cur.hidden = false;
+
+    // Prépare les classes
     next.classList.add('enter-from-right');
     requestAnimationFrame(()=>{
-      if(cur) cur.classList.add('leave-to-left');
+      cur.classList.add('leave-to-left');
       next.classList.remove('enter-from-right');
     });
+
+    // Fin d’animation : on masque l’ancienne vue
     next.addEventListener('transitionend', function onEnd(){
       next.removeEventListener('transitionend', onEnd);
-      if(cur){ cur.hidden = true; cur.classList.remove('leave-to-left'); }
+      cur.hidden = true;
+      cur.classList.remove('leave-to-left');
     });
+
     navStack.push(next);
-  }else{
-    if(cur) cur.hidden = true;
+  } else {
+    // Pas d’animation : on remplace la pile par la vue cible
     navStack = [next];
   }
+
   currentRoute = next.dataset.route;
   renderSubtabs();
 }
