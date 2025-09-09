@@ -1,6 +1,6 @@
-const CACHE = 'muscu-app-v6';
+const CACHE = 'muscu-app-v2';
 const CORE = [
-  './','./index.html','./styles.css?v=6','./app.js?v=6','./db.js','./manifest.webmanifest?v=6'
+  './','./index.html?v=2','./styles.css?v=2','./app.js?v=2','./db.js','./manifest.webmanifest?v=2'
 ];
 
 self.addEventListener('install', e=>{
