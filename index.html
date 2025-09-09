@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0A84FF" />
+  <title>Muscu PWA</title>
+  <link rel="manifest" href="manifest.webmanifest?v=4">
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css?v=4">
+</head>
+<body class="theme-light">
+
+  <!-- En-tête de navigation -->
+  <header id="appHeader" class="app-header">
+    <button id="btnBack" class="nav-back" aria-label="Retour" hidden>←</button>
+    <h1 id="title" class="title">Séances</h1>
+    <button id="btnOk" class="nav-ok" hidden>OK</button>
+  </header>
+
+  <!-- Sous-onglets (sections avec sous-sections) -->
+  <nav id="subTabs" class="subtabs" hidden></nav>
+
+  <!-- Contenu (vues) -->
+  <main id="app" class="app">
+    <!-- 3.4 Séances (écran par défaut) -->
+    <section class="view" id="v-sessions" data-route="sessions">
+      <div class="toolbar">
+        <div class="today" id="todayLabel"></div>
+        <button id="btnQuickNav" class="btn ghost">Navigation rapide</button>
+      </div>
+      <div id="calendar" class="calendar"></div>
+      <div id="sessionExercises" class="card-list"></div>
+      <div class="card-list">
+        <button class="btn primary" id="btnAddPlanned" disabled>Ajouter &lt;routine&gt;</button>
+        <label class="select-row">
+          <select id="pickRoutine"></select>
+          <span class="btn-label">Ajouter une routine</span>
+        </label>
+        <button class="btn" id="btnAddFromLibrary">Ajouter exercice/s</button>
+      </div>
+      <div class="spacer64"></div>
+    </section>
+
+    <!-- 3.1.1 Bibliothèque d’exercices -->
+    <section class="view enter-from-right" id="v-exercises" data-route="exercises" hidden>
+      <div class="search">
+        <input id="searchExo" class="input" type="search" placeholder="Rechercher…" />
+        <div class="filters">
+          <select id="fGrp" class="input"><option value="">Groupe musculaire</option></select>
+          <select id="fMat" class="input"><option value="">Matériel</option></select>
+        </div>
+      </div>
+      <div class="card-list">
+        <button class="btn primary" id="btnNewExercise">+ Ajouter un exercice</button>
+      </div>
+      <ul id="exerciseList" class="list"></ul>
+      <div class="spacer64"></div>
+    </section>
+
+    <!-- 3.1.2 Ajouter/Modifier un exercice -->
+    <section class="view enter-from-right" id="v-exercise-form" data-route="exercise-form" hidden>
+      <div class="card danger soft" id="exerciseDeleteRow" hidden>
+        <button class="btn danger outline" id="btnDelExercise">🗑️ Supprimer</button>
+      </div>
+      <form id="exerciseForm" class="form">
+        <label>Nom<input name="name" class="input" placeholder="Nom…"></label>
+        <label>Groupe musculaire
+          <select name="group3" class="input">
+            <option value="">Choisir…</option>
+            <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
+            <option>Biceps</option><option>Triceps</option>
+            <option>Quadriceps</option><option>Ischio</option><option>Mollets</option>
+            <option>Abdos</option><option>Cardio</option>
+          </select>
+        </label>
+        <label>Matériel
+          <select name="equipment" class="input">
+            <option value="">Choisir…</option>
+            <option>Machine</option><option>Poids</option><option>Poids de corps</option>
+            <option>Élastique</option><option>Barre</option><option>Autre</option>
+          </select>
+        </label>
+        <label>Description<textarea name="desc" class="input" rows="4" placeholder="Description…"></textarea></label>
+      </form>
+    </section>
+
+    <!-- 3.2.1 Routines -->
+    <section class="view enter-from-right" id="v-routines" data-route="routines" hidden>
+      <div class="search">
+        <input id="searchRoutine" class="input" type="search" placeholder="Rechercher…" />
+        <div class="filters">
+          <select id="fType" class="input">
+            <option value="">Type</option>
+            <option>Général</option><option>HIT</option><option>HIIT</option>
+            <option>Volume</option><option>Hypertrophie</option>
+            <option>Force pure</option><option>Conditionnement</option><option>Circuit</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-list">
+        <button class="btn primary" id="btnNewRoutine">+ Ajouter une routine</button>
+      </div>
+      <ul id="routineList" class="list reorderable"></ul>
+      <div class="spacer64"></div>
+    </section>
+
+    <!-- 3.2.2 Contenu routine -->
+    <section class="view enter-from-right" id="v-routine-form" data-route="routine-form" hidden>
+      <div class="card danger soft" id="routineDeleteRow" hidden>
+        <button class="btn danger outline" id="btnDelRoutine">🗑️ Supprimer</button>
+      </div>
+      <form id="routineForm" class="form">
+        <label>Nom<input name="name" class="input" placeholder="Nom…"></label>
+        <label>Type
+          <select name="type" class="input">
+            <option>Général</option><option>HIT</option><option>HIIT</option>
+            <option>Volume</option><option>Hypertrophie</option>
+            <option>Force pure</option><option>Conditionnement</option><option>Circuit</option>
+          </select>
+        </label>
+        <label>Description<textarea name="desc" class="input" rows="3" placeholder="Description…"></textarea></label>
+      </form>
+      <div class="card-list">
+        <button class="btn" id="btnAddMovements">+ Ajouter exercice/s</button>
+      </div>
+      <ul id="movementList" class="list reorderable"></ul>
+      <div class="spacer64"></div>
+    </section>
+
+    <!-- 3.2.4 Ajout de mouvements -->
+    <section class="view enter-from-right" id="v-add-movements" data-route="add-movements" hidden>
+      <div class="search">
+        <input id="searchExoForRoutine" class="input" type="search" placeholder="Rechercher…" />
+        <div class="filters">
+          <select id="fGrp2" class="input"><option value="">Groupe musculaire</option></select>
+          <select id="fMat2" class="input"><option value="">Matériel</option></select>
+        </div>
+      </div>
+      <ul id="exercisePickList" class="list"></ul>
+    </section>
+
+    <!-- 3.3 Plan (stub) -->
+    <section class="view enter-from-right" id="v-plan" data-route="plan" hidden>
+      <ul id="planList" class="list"></ul>
+      <div class="spacer64"></div>
+    </section>
+
+    <!-- 3.5 Objectifs (stub) -->
+    <section class="view enter-from-right" id="v-goals" data-route="goals" hidden>
+      <div class="search"><input class="input" placeholder="Rechercher…"></div>
+      <div class="card-list"><button class="btn">+ Ajouter objectif</button></div>
+      <ul id="goalList" class="list"></ul>
+      <div class="spacer64"></div>
+    </section>
+
+    <!-- 3.6/3.7 Stats (stubs) -->
+    <section class="view enter-from-right" id="v-stats-general" data-route="stats-general" hidden>
+      <div class="tabs small">
+        <button class="chip active">Semaine</button>
+        <button class="chip">Mois</button>
+        <button class="chip">3 mois</button>
+        <button class="chip">6 mois</button>
+        <button class="chip">12 mois</button>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><b id="kpiSessions">0</b><span>Séances</span></div>
+        <div class="kpi"><b id="kpiSets">0</b><span>Séries</span></div>
+        <div class="kpi"><b id="kpiVolume">0</b><span>Volume</span></div>
+      </div>
+      <div class="spacer64"></div>
+    </section>
+
+    <section class="view enter-from-right" id="v-stats-progress" data-route="stats-progress" hidden>
+      <div class="search"><input class="input" placeholder="Rechercher un exercice…"></div>
+      <div class="spacer64"></div>
+    </section>
+  </main>
+
+  <!-- Barre d’onglets -->
+  <footer class="tabbar">
+    <button data-tab="sessions" class="tab active" aria-label="Séances">🏋️‍♂️</button>
+    <button data-tab="libraries" class="tab" aria-label="Bibliothèques">📚</button>
+    <button data-tab="stats" class="tab" aria-label="Statistiques">📈</button>
+    <button data-tab="settings" class="tab" aria-label="Réglages">⚙️</button>
+  </footer>
+
+  <!-- IMPORTANT : un seul script en module -->
+  <script type="module" src="app.js?v=4"></script>
+</body>
+</html>
