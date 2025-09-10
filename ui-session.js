@@ -56,9 +56,11 @@
 
       const grid = document.createElement('div'); grid.className='set-grid';
       for (const s of ex.sets) {
-        const cell = document.createElement('div'); cell.className='set-cell';
+        const cell = document.createElement('div'); 
+        cell.className='set-cell';
         const reps = s.reps ?? 0, w = s.weight ?? 0, rpe = s.rpe ? `<sup>${s.rpe}</sup>`:'';
-        cell.innerHTML = `<span class="details">${reps}×${w} ${rpe}</span>`;
+        cell.innerHTML = `<span class="details">${reps}×${w} kg ${rpe}</span>`;
+
         grid.appendChild(cell);
       }
       card.appendChild(grid);
