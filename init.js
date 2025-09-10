@@ -14,8 +14,12 @@
   A.el.dlgCalendar     = document.getElementById('dlgCalendar');
   A.el.bigCalendar     = document.getElementById('bigCalendar');
 
-  // Mois affiché par la modale = mois de la date active
+  // État initial : sélection = aujourd’hui (emphase par défaut)
+  A.activeDate    = A.today();
+  A.currentAnchor = new Date(A.activeDate);
   A.calendarMonth = new Date(A.activeDate.getFullYear(), A.activeDate.getMonth(), 1);
+
+  // Boutons de navigation
   document.getElementById('calPrev').addEventListener('click', async ()=>{
     A.calendarMonth = new Date(A.calendarMonth.getFullYear(), A.calendarMonth.getMonth()-1, 1);
     await A.openCalendar(); // re-render
@@ -28,9 +32,7 @@
   document.getElementById('btnQuickNav').addEventListener('click', ()=>A.openCalendar());
   document.getElementById('dlgClose').addEventListener('click', ()=>A.el.dlgCalendar.close());
 
-  // État initial : sélection = aujourd’hui (emphase par défaut)
-  A.activeDate    = A.today();
-  A.currentAnchor = A.today();
+
 
   // DB + seed
   await db.init();
