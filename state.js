@@ -16,4 +16,5 @@ window.App = {
   activeDate: null,     // sélection courante (Date)
   currentAnchor: null,  // ancre semaine (Date)
   plannedRoutineName: null // nom de la routine prévue du jour (plan actif)
+  calendarMonth: null, // Date au 1er du mois affiché dans la modale
 };
