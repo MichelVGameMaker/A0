@@ -29,7 +29,7 @@
 
       btn.addEventListener('click', async () => {
         A.activeDate = d;
-        await A.refreshPlannedRoutineName();
+        await A.populateRoutineSelect();
         await A.renderWeek();
         await A.renderSession();
       });
