@@ -78,11 +78,14 @@ body {
   color: #333;
   border-color: #dddddd;
 }
+.week-strip .day.planned.has-session,
 .week-strip .day.has-session {
   background: #000;
   color: #fff;
   border-color: #000;
 }
+.week-strip .has-session.selected, 
+.week-strip .day.planned.selected,
 .week-strip .day.selected {
   background: var(--emphasis);
   color: #fff;
@@ -224,11 +227,14 @@ body {
   color: #333;
   border-color: #dddddd;
 }
+.day-cell.planned.has-session,
 .day-cell.has-session {
   background: #000;
   color: #fff;
   border-color: #000;
 }
+.day-cell.has-session.selected,
+.day-cell.planned.selected,
 .day-cell.selected {
   background: var(--emphasis);
   color: #fff;
