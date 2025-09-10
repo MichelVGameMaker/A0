@@ -73,20 +73,20 @@ body {
 
 /* États — ordre visuel de priorité :
    .selected (emphase) > .has-session (noir) > .planned (gris) */
-.week-strip .day.selected {
-  background: var(--emphasis);
-  color: #fff;
-  border-color: var(--emphasis);
+.week-strip .day.planned {
+  background: #dddddd;
+  color: #333;
+  border-color: #dddddd;
 }
 .week-strip .day.has-session {
   background: #000;
   color: #fff;
   border-color: #000;
 }
-.week-strip .day.planned {
-  background: #dddddd;
-  color: #333;
-  border-color: #dddddd;
+.week-strip .day.selected {
+  background: var(--emphasis);
+  color: #fff;
+  border-color: var(--emphasis);
 }
 
 /* ===========================
@@ -219,20 +219,20 @@ body {
 .day-cell:active { transform: scale(0.98); }
 
 /* États pour la grille mensuelle — mêmes règles que la semaine */
-.day-cell.selected {
-  background: var(--emphasis);
-  color: #fff;
-  border-color: var(--emphasis);
+.day-cell.planned {
+  background: #dddddd;
+  color: #333;
+  border-color: #dddddd;
 }
 .day-cell.has-session {
   background: #000;
   color: #fff;
   border-color: #000;
 }
-.day-cell.planned {
-  background: #dddddd;
-  color: #333;
-  border-color: #dddddd;
+.day-cell.selected {
+  background: var(--emphasis);
+  color: #fff;
+  border-color: var(--emphasis);
 }
 
 /* ===========================
