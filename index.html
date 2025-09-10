@@ -16,112 +16,66 @@
 </head>
 <body>
 
-  <!-- En-tête (spécifique à l'écran Séances) -->
-  <header class="header-session safe-top">
+  <!-- ========== 3.4. Séance  ========== -->
+  <section id="screenSessions" class="screen">
     
-    <div class="header-left">
-      <span id="todayLabel">—</span>
-    </div>
-
-    <div class="header-right">
-      <button id="btnQuickNav" class="btn ghost" title="Calendrier">📅</button>
-    </div>
-
-  </header>
-
-  <main class="content">
-
-    <!-- ========== 3.4. Séance  ========== -->
-    <!-- Calendrier 1 semaine défilable -->
-    <section class="week-strip" id="weekStrip" aria-label="Calendrier 1 semaine"></section>
-
-    <!-- Liste des exercices de la séance -->
-    <section id="sessionList" class="session-list" aria-label="Séance du jour"></section>
-
-    <!-- Boutons d'ajout (2 lignes) -->
-    <section class="add-actions" id="addActions">
-      <!-- Ligne 1 : Sélecteur Ajouter <routine> (pré-sélection = routine prévue du jour) -->
-      <div class="row">
-        <label for="selectRoutine" class="sr-only">Ajouter une routine</label>
-        <select id="selectRoutine" class="input flex-1">
-          <option value="">Ajouter une routine…</option>
-        </select>
-        <button id="btnAddRoutine" class="btn">Ajouter</button>
+    <!-- En-tête (spécifique à l'écran Séances) -->
+    <header class="header-session safe-top">
+      
+      <div class="header-left">
+        <span id="todayLabel">—</span>
       </div>
-
-      <!-- Ligne 2 : Ajouter exercices (ouvre la bibliothèque) -->
-      <button id="btnAddExercises" class="btn">Ajouter exercice/s</button>
-    </section>
-
-    <!-- ========== 3.1.1 Bibliothèque d’exercices (liste) ========== -->
-    <section id="screenExercises" class="screen" hidden>
-      <!-- En-tête -->
-      <header class="subheader">
-        <button class="btn ghost" id="exBackList" disabled>←</button>
-        <div class="title">Exercices</div>
-        <button class="btn ghost" id="exOkList" disabled>OK</button>
-      </header>
-    
-      <!-- Recherche + filtres -->
-      <div class="filters">
-        <input id="exSearch" class="input full" placeholder="Rechercher par nom…" />
+  
+      <div class="header-right">
+        <button id="btnQuickNav" class="btn ghost" title="Calendrier">📅</button>
+      </div>
+  
+    </header>
+  
+    <!-- Corps de l'écran Séances) -->
+    <main class="content">
+  
+      <!-- Calendrier 1 semaine défilable -->
+      <section class="week-strip" id="weekStrip" aria-label="Calendrier 1 semaine"></section>
+  
+      <!-- Liste des exercices de la séance -->
+      <section id="sessionList" class="session-list" aria-label="Séance du jour"></section>
+  
+      <!-- Boutons d'ajout (2 lignes) -->
+      <section class="add-actions" id="addActions">
+        <!-- Ligne 1 : Sélecteur Ajouter <routine> (pré-sélection = routine prévue du jour) -->
         <div class="row">
-          <select id="exFilterGroup" class="input flex-1">
-            <option value="">Groupe musculaire</option>
-            <option value="Pectoraux">Pectoraux</option>
-            <option value="Dos">Dos</option>
-            <option value="Épaules">Épaules</option>
-            <option value="Biceps">Biceps</option>
-            <option value="Triceps">Triceps</option>
-            <option value="Quadriceps">Quadriceps</option>
-            <option value="Ischio">Ischio</option>
-            <option value="Mollets">Mollets</option>
-            <option value="Abdos">Abdos</option>
-            <option value="Cardio">Cardio</option>
+          <label for="selectRoutine" class="sr-only">Ajouter une routine</label>
+          <select id="selectRoutine" class="input flex-1">
+            <option value="">Ajouter une routine…</option>
           </select>
-          <select id="exFilterEquip" class="input flex-1">
-            <option value="">Matériel</option>
-            <option value="Machine">Machine</option>
-            <option value="Poids">Poids</option>
-            <option value="Poids de corps">Poids de corps</option>
-            <option value="Élastique">Élastique</option>
-            <option value="Barre">Barre</option>
-            <option value="Autre">Autre</option>
-          </select>
+          <button id="btnAddRoutine" class="btn">Ajouter</button>
         </div>
-      </div>
+  
+        <!-- Ligne 2 : Ajouter exercices (ouvre la bibliothèque) -->
+        <button id="btnAddExercises" class="btn">Ajouter exercice/s</button>
+      </section>
+    </main>
     
-      <!-- Bouton Ajouter -->
-      <div class="add-actions">
-        <button id="btnExAdd" class="btn primary full">+ Ajouter un exercice</button>
-      </div>
+  </section>
+  <!-- ==================== -->
+  
+  <!-- ========== 3.1.1 Bibliothèque d’exercices (liste) ========== -->
+  <section id="screenExercises" class="screen" hidden>
     
-      <!-- Liste -->
-      <section id="exList" class="list cards" aria-label="Bibliothèque d’exercices"></section>
-    </section>
-    
-    <!-- ========== 3.1.2 Ajouter / Modifier un exercice ========== -->
-    <section id="screenExerciseEdit" class="screen" hidden>
-      <!-- En-tête -->
-      <header class="subheader">
-        <button class="btn ghost" id="exEditBack">←</button>
-        <div class="title" id="exEditTitle">Ajouter</div>
-        <button class="btn" id="exEditOk">OK</button>
-      </header>
-    
-      <!-- Zone suppression -->
-      <div class="add-actions">
-        <button id="exEditDelete" class="btn" style="border-color:#c00;color:#c00">🗑️ Supprimer</button>
-      </div>
-    
-      <!-- Formulaire -->
-      <div class="form">
-        <label class="lbl">Nom</label>
-        <input id="exName" class="input full" placeholder="Nom de l’exercice" />
-    
-        <label class="lbl">Groupe musculaire fin</label>
-        <select id="exGroup3" class="input full">
-          <option value="">Choisir…</option>
+    <!-- En-tête -->
+    <header class="subheader">
+      <button class="btn ghost" id="exBackList" disabled>←</button>
+      <div class="title">Exercices</div>
+      <button class="btn ghost" id="exOkList" disabled>OK</button>
+    </header>
+  
+    <!-- Recherche + filtres -->
+    <div class="filters">
+      <input id="exSearch" class="input full" placeholder="Rechercher par nom…" />
+      <div class="row">
+        <select id="exFilterGroup" class="input flex-1">
+          <option value="">Groupe musculaire</option>
           <option value="Pectoraux">Pectoraux</option>
           <option value="Dos">Dos</option>
           <option value="Épaules">Épaules</option>
@@ -133,10 +87,8 @@
           <option value="Abdos">Abdos</option>
           <option value="Cardio">Cardio</option>
         </select>
-    
-        <label class="lbl">Matériel</label>
-        <select id="exEquip" class="input full">
-          <option value="">Choisir…</option>
+        <select id="exFilterEquip" class="input flex-1">
+          <option value="">Matériel</option>
           <option value="Machine">Machine</option>
           <option value="Poids">Poids</option>
           <option value="Poids de corps">Poids de corps</option>
@@ -144,11 +96,72 @@
           <option value="Barre">Barre</option>
           <option value="Autre">Autre</option>
         </select>
-    
-        <label class="lbl">Description</label>
-        <textarea id="exDesc" class="input full" rows="4" placeholder="Facultatif"></textarea>
       </div>
-    </section>
+    </div>
+  
+    <!-- Bouton Ajouter -->
+    <div class="add-actions">
+      <button id="btnExAdd" class="btn primary full">+ Ajouter un exercice</button>
+    </div>
+  
+    <!-- Liste -->
+    <section id="exList" class="list cards" aria-label="Bibliothèque d’exercices"></section>
+      
+  </section>
+  <!-- ==================== -->
+    
+  <!-- ========== 3.1.2 Ajouter / Modifier un exercice ========== -->
+  <section id="screenExerciseEdit" class="screen" hidden>
+    
+    <!-- En-tête -->
+    <header class="subheader">
+      <button class="btn ghost" id="exEditBack">←</button>
+      <div class="title" id="exEditTitle">Ajouter</div>
+      <button class="btn" id="exEditOk">OK</button>
+    </header>
+  
+    <!-- Zone suppression -->
+    <div class="add-actions">
+      <button id="exEditDelete" class="btn" style="border-color:#c00;color:#c00">🗑️ Supprimer</button>
+    </div>
+  
+    <!-- Formulaire -->
+    <div class="form">
+      <label class="lbl">Nom</label>
+      <input id="exName" class="input full" placeholder="Nom de l’exercice" />
+  
+      <label class="lbl">Groupe musculaire fin</label>
+      <select id="exGroup3" class="input full">
+        <option value="">Choisir…</option>
+        <option value="Pectoraux">Pectoraux</option>
+        <option value="Dos">Dos</option>
+        <option value="Épaules">Épaules</option>
+        <option value="Biceps">Biceps</option>
+        <option value="Triceps">Triceps</option>
+        <option value="Quadriceps">Quadriceps</option>
+        <option value="Ischio">Ischio</option>
+        <option value="Mollets">Mollets</option>
+        <option value="Abdos">Abdos</option>
+        <option value="Cardio">Cardio</option>
+      </select>
+  
+      <label class="lbl">Matériel</label>
+      <select id="exEquip" class="input full">
+        <option value="">Choisir…</option>
+        <option value="Machine">Machine</option>
+        <option value="Poids">Poids</option>
+        <option value="Poids de corps">Poids de corps</option>
+        <option value="Élastique">Élastique</option>
+        <option value="Barre">Barre</option>
+        <option value="Autre">Autre</option>
+      </select>
+  
+      <label class="lbl">Description</label>
+      <textarea id="exDesc" class="input full" rows="4" placeholder="Facultatif"></textarea>
+    </div>
+    
+  </section>
+  <!-- ==================== -->
 
    
   </main>
@@ -161,11 +174,8 @@
     <button id="tabSettings" class="tab" title="Réglages" aria-label="Réglages">⚙️</button>
   </nav>
 
-
-
-
   
-  <!-- Modale calendrier (Navigation rapide) -->
+  <!-- ==========  Modale calendrier (Navigation rapide) ========== -->
   <dialog id="dlgCalendar" class="modal">
   <div class="modal-header">
     <button id="calPrev" class="btn ghost" aria-label="Mois précédent">◀︎</button>
@@ -177,7 +187,9 @@
   </div>
   <div id="bigCalendar" class="big-calendar"></div>
 </dialog>
-
+  <!-- ==================== -->
+  
+  <!-- ==================== -->
   <!-- JS (ordre important) -->
   <script src="db.js"></script>
   <script src="state.js"></script>
@@ -194,5 +206,7 @@
       });
     }
   </script>
+  <!-- ==================== -->
+  
 </body>
 </html>
