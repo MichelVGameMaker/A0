@@ -60,12 +60,16 @@
 
   <!-- Modale calendrier (Navigation rapide) -->
   <dialog id="dlgCalendar" class="modal">
-    <div class="modal-header">
-      <strong>Calendrier</strong>
+  <div class="modal-header">
+    <button id="calPrev" class="btn ghost" aria-label="Mois précédent">◀︎</button>
+    <strong id="calTitle">Calendrier</strong>
+    <div style="display:flex; gap:8px;">
+      <button id="calNext" class="btn ghost" aria-label="Mois suivant">▶︎</button>
       <button id="dlgClose" class="btn ghost">Fermer</button>
     </div>
-    <div id="bigCalendar" class="big-calendar"></div>
-  </dialog>
+  </div>
+  <div id="bigCalendar" class="big-calendar"></div>
+</dialog>
 
   <!-- JS (ordre important) -->
   <script src="db.js"></script>
