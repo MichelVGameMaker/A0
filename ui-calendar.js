@@ -63,7 +63,7 @@
       cell.addEventListener("click", async () => {
         A.activeDate = dt;
         A.currentAnchor = dt; // recale la barre semaine sur la date choisie
-        await A.refreshPlannedRoutineName();
+        await A.populateRoutineSelect();
         await A.renderWeek();
         await A.renderSession();
         dlg.close();
