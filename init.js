@@ -2,40 +2,24 @@
 (async function(){
   const A = window.App;
 
-  // routing basique des onglets
-  function showOnly(id){
-    // Séances
-    const screenSessionsParts = ['weekStrip','sessionList','addActions'];
-    const sessionsVisible = (id==='sessions');
-    for (const pid of screenSessionsParts) {
-      const el = document.getElementById(pid);
-      if (el) el.parentElement.hidden = !sessionsVisible && pid==='weekStrip' ? true : false;
-    }
-    // Pour simplicité : on masque/affiche par sections dédiées
-    document.getElementById('screenExercises').hidden     = (id!=='exercises');
-    document.getElementById('screenExerciseEdit').hidden  = true; // fermé par défaut
+  // ---------- Helpers navigation écrans & onglets ----------
+  function showOnly(which){
+    const sSessions = document.getElementById('screenSessions');
+    const sExercises = document.getElementById('screenExercises');
+    const sEdit = document.getElementById('screenExerciseEdit');
+
+    if (sSessions)  sSessions.hidden  = (which !== 'sessions');
+    if (sExercises) sExercises.hidden = (which !== 'exercises');
+    if (sEdit)      sEdit.hidden      = (which !== 'edit'); // on n'ouvre l'éditeur que via openExerciseEdit
   }
-  
-  // brancher les onglets
-  document.getElementById('tabLibraries').addEventListener('click', async ()=>{
-    // activer l’onglet visuellement
+
+  function setActiveTab(id){
     document.querySelectorAll('.tabbar .tab').forEach(b=>b.classList.remove('active'));
-    document.getElementById('tabLibraries').classList.add('active');
-  
-    showOnly('exercises');
-    await App.openExercises();
-  });
-  
-  document.getElementById('tabSessions').addEventListener('click', async ()=>{
-    document.querySelectorAll('.tabbar .tab').forEach(b=>b.classList.remove('active'));
-    document.getElementById('tabSessions').classList.add('active');
-  
-    showOnly('sessions');
-    await App.renderWeek();
-    await App.renderSession();
-  });
-  
-  // DOM refs
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+  }
+
+  // ---------- DOM refs ----------
   A.el.todayLabel      = document.getElementById('todayLabel');
   A.el.weekStrip       = document.getElementById('weekStrip');
   A.el.sessionList     = document.getElementById('sessionList');
@@ -45,12 +29,12 @@
   A.el.dlgCalendar     = document.getElementById('dlgCalendar');
   A.el.bigCalendar     = document.getElementById('bigCalendar');
 
-  // État initial
-  A.activeDate    = A.today();                 // sélection = aujourd’hui
-  A.currentAnchor = new Date(A.activeDate);    // ancre semaine
+  // ---------- État initial ----------
+  A.activeDate    = A.today();                               // sélection = aujourd’hui
+  A.currentAnchor = new Date(A.activeDate);                  // ancre semaine
   A.calendarMonth = new Date(A.activeDate.getFullYear(), A.activeDate.getMonth(), 1);
 
-  // Boutons calendrier
+  // ---------- Boutons calendrier ----------
   const btnQuick = document.getElementById('btnQuickNav');
   if (btnQuick) btnQuick.addEventListener('click', ()=>A.openCalendar());
 
@@ -69,16 +53,35 @@
     await A.openCalendar();
   });
 
-  // Init DB + seed
+  // ---------- Init DB + seed ----------
   await db.init();
   await ensureSeed();
 
-  // Premier rendu
-  await A.populateRoutineSelect();  // <- remplit le sélecteur selon la date
+  // ---------- Premier rendu (écran Séances par défaut) ----------
+  setActiveTab('tabSessions');
+  showOnly('sessions');
+  await A.populateRoutineSelect();
   await A.renderWeek();
   await A.renderSession();
 
-  // Actions (2 lignes)
+  // ---------- Onglets ----------
+  const tabLibraries = document.getElementById('tabLibraries');
+  if (tabLibraries) tabLibraries.addEventListener('click', async ()=>{
+    setActiveTab('tabLibraries');
+    showOnly('exercises');
+    await App.openExercises();     // défini dans ui-exercises.js
+  });
+
+  const tabSessions = document.getElementById('tabSessions');
+  if (tabSessions) tabSessions.addEventListener('click', async ()=>{
+    setActiveTab('tabSessions');
+    showOnly('sessions');
+    await App.populateRoutineSelect();
+    await App.renderWeek();
+    await App.renderSession();
+  });
+
+  // ---------- Actions (2 lignes d’ajout) ----------
   A.el.btnAddRoutine?.addEventListener('click', async ()=>{
     const id = A.el.selectRoutine?.value;
     if (id) await A.addRoutineToSession(id);
@@ -103,7 +106,7 @@
     }
   });
 
-  // Seed minimal
+  // ---------- Seed minimal ----------
   async function ensureSeed(){
     const exCount = await db.count('exercises');
     const roCount = await db.count('routines');
