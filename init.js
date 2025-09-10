@@ -2,6 +2,39 @@
 (async function(){
   const A = window.App;
 
+  // routing basique des onglets
+  function showOnly(id){
+    // Séances
+    const screenSessionsParts = ['weekStrip','sessionList','addActions'];
+    const sessionsVisible = (id==='sessions');
+    for (const pid of screenSessionsParts) {
+      const el = document.getElementById(pid);
+      if (el) el.parentElement.hidden = !sessionsVisible && pid==='weekStrip' ? true : false;
+    }
+    // Pour simplicité : on masque/affiche par sections dédiées
+    document.getElementById('screenExercises').hidden     = (id!=='exercises');
+    document.getElementById('screenExerciseEdit').hidden  = true; // fermé par défaut
+  }
+  
+  // brancher les onglets
+  document.getElementById('tabLibraries').addEventListener('click', async ()=>{
+    // activer l’onglet visuellement
+    document.querySelectorAll('.tabbar .tab').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tabLibraries').classList.add('active');
+  
+    showOnly('exercises');
+    await App.openExercises();
+  });
+  
+  document.getElementById('tabSessions').addEventListener('click', async ()=>{
+    document.querySelectorAll('.tabbar .tab').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tabSessions').classList.add('active');
+  
+    showOnly('sessions');
+    await App.renderWeek();
+    await App.renderSession();
+  });
+  
   // DOM refs
   A.el.todayLabel      = document.getElementById('todayLabel');
   A.el.weekStrip       = document.getElementById('weekStrip');
