@@ -9,12 +9,12 @@ window.App = {
   today()  { return new Date(new Date().toDateString()); }, // strip heure
   addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; },
 
-  // DOM refs remplis dans init.js
+  // DOM refs (remplis dans init.js)
   el: {},
 
   // État runtime
-  activeDate: null,     // sélection courante (Date)
-  currentAnchor: null,  // ancre semaine (Date)
-  plannedRoutineName: null, // nom de la routine prévue du jour (plan actif)
-  calendarMonth: null, // Date au 1er du mois affiché dans la modale
+  activeDate: null,        // sélection courante (Date)
+  currentAnchor: null,     // ancre semaine (Date)
+  plannedRoutineName: null, // nom de la routine prévue du jour
+  calendarMonth: null      // date du 1er mois affiché dans la modale
 };
