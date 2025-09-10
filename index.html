@@ -30,15 +30,16 @@
   </header>
 
   <main class="content">
+    
     <!-- Calendrier 1 semaine défilable -->
     <section class="week-strip" id="weekStrip" aria-label="Calendrier 1 semaine"></section>
 
     <!-- Liste des exercices de la séance -->
     <section id="sessionList" class="session-list" aria-label="Séance du jour"></section>
 
-    <!-- Boutons d'ajout -->
+    <!-- Boutons d'ajout (2 lignes) -->
     <section class="add-actions" id="addActions">
-      <button id="btnAddPlanned" class="btn primary full">Ajouter &lt;routine&gt;</button>
+      <!-- Ligne 1 : Sélecteur Ajouter <routine> (pré-sélection = routine prévue du jour) -->
       <div class="row">
         <label for="selectRoutine" class="sr-only">Ajouter une routine</label>
         <select id="selectRoutine" class="input flex-1">
@@ -46,8 +47,11 @@
         </select>
         <button id="btnAddRoutine" class="btn">Ajouter</button>
       </div>
+
+      <!-- Ligne 2 : Ajouter exercices (ouvre la bibliothèque) -->
       <button id="btnAddExercises" class="btn">Ajouter exercice/s</button>
     </section>
+  
   </main>
 
   <!-- Barre d’onglets fixe (icônes) -->
