@@ -1,46 +1,57 @@
-// ui-session.js — liste de la séance du jour + ajouts
+// ui-session.js — liste de la séance du jour + ajouts (2 lignes)
 
-(async function(){
+(function(){
   const A = window.App;
 
-  A.refreshPlannedRoutineName = async function(){
+  // Donne l'id de la routine prévue pour une date (via plan actif), sinon null
+  A.getPlannedRoutineId = async function(date){
     const plan = await db.getActivePlan();
-    A.plannedRoutineName = null;
-    if (plan) {
-      const wd = (A.activeDate.getDay() + 6) % 7 + 1; // 1..7
-      const rid = plan.days[String(wd)];
-      if (rid) {
-        const r = await db.get('routines', rid);
-        A.plannedRoutineName = r?.name || null;
-      }
-    }
-    const btn = A.el.btnAddPlanned;
-    if (A.plannedRoutineName) { btn.textContent = `Ajouter ${A.plannedRoutineName}`; btn.disabled = false; }
-    else { btn.textContent = 'Ajouter <routine>'; btn.disabled = true; }
+    if (!plan) return null;
+    const wd = (date.getDay() + 6) % 7 + 1; // 1..7 (lun..dim)
+    return plan.days?.[String(wd)] || null;
   };
 
-  A.populateRoutineSelect = async function(){
+  // Remplit le sélecteur avec la routine prévue en premier (pré-sélectionnée), puis les autres
+  A.populateRoutineSelect = async function populateRoutineSelect(){
     const sel = A.el.selectRoutine;
     const all = await db.getAll('routines');
+    const plannedId = await A.getPlannedRoutineId(A.activeDate);
+
+    // Réinitialise
     sel.innerHTML = `<option value="">Ajouter une routine…</option>`;
-    for (const r of all) {
-      const o = document.createElement('option'); o.value = r.id; o.textContent = r.name; sel.appendChild(o);
+
+    // Construit la liste : [planned en 1er si existe] + autres (sans doublon)
+    const ordered = [];
+    if (plannedId) {
+      const p = all.find(r => r.id === plannedId);
+      if (p) ordered.push(p);
     }
+    for (const r of all) {
+      if (!ordered.some(o => o.id === r.id)) ordered.push(r);
+    }
+
+    // Injecte options
+    for (const r of ordered) {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.name;
+      sel.appendChild(opt);
+    }
+
+    // Sélection par défaut = routine prévue du jour si existe, sinon placeholder
+    sel.value = plannedId || '';
   };
 
-  A.renderSession = async function(){
+  // Rendu de la séance du jour
+  A.renderSession = async function renderSession(){
     A.el.todayLabel.textContent = A.fmtUI(A.activeDate);
 
     const key = A.ymd(A.activeDate);
     const session = await db.getSession(key);
-    const hasEx = session?.exercises?.length > 0;
-
-    // Règle: "Ajouter <routine>" disparaît dès qu'il y a des exos
-    A.el.btnAddPlanned.style.display = (A.plannedRoutineName && !hasEx) ? 'block' : 'none';
-
     const list = A.el.sessionList;
     list.innerHTML = '';
-    if (!hasEx) {
+
+    if (!(session?.exercises?.length)) {
       list.innerHTML = `<div class="empty">Aucun exercice pour cette date.</div>`;
       return;
     }
@@ -56,11 +67,11 @@
 
       const grid = document.createElement('div'); grid.className='set-grid';
       for (const s of ex.sets) {
-        const cell = document.createElement('div'); 
-        cell.className='set-cell';
-        const reps = s.reps ?? 0, w = s.weight ?? 0, rpe = s.rpe ? `<sup>${s.rpe}</sup>`:'';
-        cell.innerHTML = `<span class="details">${reps}×${w} kg ${rpe}</span>`;
-
+        const cell = document.createElement('div'); cell.className='set-cell';
+        const reps = s.reps ?? 0;
+        const w    = s.weight ?? 0;
+        const rpeSmall = s.rpe ? `<sup>${s.rpe}</sup>` : '';
+        cell.innerHTML = `<span class="details">${reps}×${w} kg ${rpeSmall}</span>`;
         grid.appendChild(cell);
       }
       card.appendChild(grid);
@@ -70,7 +81,8 @@
     }
   };
 
-  A.addRoutineToSession = async function(routineId){
+  // Ajouter la routine choisie (sélecteur) à la séance
+  A.addRoutineToSession = async function addRoutineToSession(routineId){
     const r = await db.get('routines', routineId);
     if (!r) return;
     const key = A.ymd(A.activeDate);
@@ -86,7 +98,7 @@
       });
     }
     await db.saveSession(s);
-    await A.refreshPlannedRoutineName();
+    await A.populateRoutineSelect(); // garder la cohérence du sélecteur
     await A.renderWeek();
     await A.renderSession();
   };
