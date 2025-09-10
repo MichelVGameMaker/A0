@@ -10,7 +10,8 @@
     const start = A.addDays(A.currentAnchor, -3); // 7 jours centrés
     const sessDates = new Set((await db.listSessionDates()).map(x => x.date));
     const tdy = A.today();
-
+    
+    // boucle qui crée les 7 boutons
     for (let i=0; i<7; i++) {
       const d = A.addDays(start, i);
       const key = A.ymd(d);
@@ -39,6 +40,10 @@
 
       wrap.appendChild(btn);
     }
+    
+  // Assure que le jour sélectionné est visible
+  const sel = wrap.querySelector('.day.selected');
+  if (sel) sel.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'instant' });    
   };
 
   // Helper : la date a-t-elle une routine prévue dans le plan actif ?
