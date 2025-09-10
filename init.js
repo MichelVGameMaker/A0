@@ -6,19 +6,18 @@
   A.el.todayLabel      = document.getElementById('todayLabel');
   A.el.weekStrip       = document.getElementById('weekStrip');
   A.el.sessionList     = document.getElementById('sessionList');
-  A.el.btnAddPlanned   = document.getElementById('btnAddPlanned');
   A.el.selectRoutine   = document.getElementById('selectRoutine');
   A.el.btnAddRoutine   = document.getElementById('btnAddRoutine');
   A.el.btnAddExercises = document.getElementById('btnAddExercises');
   A.el.dlgCalendar     = document.getElementById('dlgCalendar');
   A.el.bigCalendar     = document.getElementById('bigCalendar');
 
-  // État initial (défini AVANT toute utilisation)
+  // État initial
   A.activeDate    = A.today();                 // sélection = aujourd’hui
   A.currentAnchor = new Date(A.activeDate);    // ancre semaine
   A.calendarMonth = new Date(A.activeDate.getFullYear(), A.activeDate.getMonth(), 1);
 
-  // Brancher les boutons (si présents)
+  // Boutons calendrier
   const btnQuick = document.getElementById('btnQuickNav');
   if (btnQuick) btnQuick.addEventListener('click', ()=>A.openCalendar());
 
@@ -42,20 +41,11 @@
   await ensureSeed();
 
   // Premier rendu
-  await A.refreshPlannedRoutineName();
-  await A.populateRoutineSelect();
+  await A.populateRoutineSelect();  // <- remplit le sélecteur selon la date
   await A.renderWeek();
   await A.renderSession();
 
-  // Actions
-  A.el.btnAddPlanned?.addEventListener('click', async ()=>{
-    if (!A.plannedRoutineName) return;
-    const plan = await db.getActivePlan();
-    const wd = (A.activeDate.getDay()+6)%7 + 1;
-    const id = plan?.days?.[String(wd)];
-    if (id) await A.addRoutineToSession(id);
-  });
-
+  // Actions (2 lignes)
   A.el.btnAddRoutine?.addEventListener('click', async ()=>{
     const id = A.el.selectRoutine?.value;
     if (id) await A.addRoutineToSession(id);
