@@ -1,5 +1,4 @@
 // init.js — bootstrap (seed, wiring, premiers rendus)
-
 (async function(){
   const A = window.App;
 
@@ -14,27 +13,31 @@
   A.el.dlgCalendar     = document.getElementById('dlgCalendar');
   A.el.bigCalendar     = document.getElementById('bigCalendar');
 
-  // État initial : sélection = aujourd’hui (emphase par défaut)
-  A.activeDate    = A.today();
-  A.currentAnchor = new Date(A.activeDate);
+  // État initial (défini AVANT toute utilisation)
+  A.activeDate    = A.today();                 // sélection = aujourd’hui
+  A.currentAnchor = new Date(A.activeDate);    // ancre semaine
   A.calendarMonth = new Date(A.activeDate.getFullYear(), A.activeDate.getMonth(), 1);
 
-  // Boutons de navigation
-  document.getElementById('calPrev').addEventListener('click', async ()=>{
+  // Brancher les boutons (si présents)
+  const btnQuick = document.getElementById('btnQuickNav');
+  if (btnQuick) btnQuick.addEventListener('click', ()=>A.openCalendar());
+
+  const btnClose = document.getElementById('dlgClose');
+  if (btnClose) btnClose.addEventListener('click', ()=>A.el.dlgCalendar?.close());
+
+  const calPrev = document.getElementById('calPrev');
+  if (calPrev) calPrev.addEventListener('click', async ()=>{
     A.calendarMonth = new Date(A.calendarMonth.getFullYear(), A.calendarMonth.getMonth()-1, 1);
-    await A.openCalendar(); // re-render
+    await A.openCalendar();
   });
-  document.getElementById('calNext').addEventListener('click', async ()=>{
+
+  const calNext = document.getElementById('calNext');
+  if (calNext) calNext.addEventListener('click', async ()=>{
     A.calendarMonth = new Date(A.calendarMonth.getFullYear(), A.calendarMonth.getMonth()+1, 1);
-    await A.openCalendar(); // re-render
+    await A.openCalendar();
   });
 
-  document.getElementById('btnQuickNav').addEventListener('click', ()=>A.openCalendar());
-  document.getElementById('dlgClose').addEventListener('click', ()=>A.el.dlgCalendar.close());
-
-
-
-  // DB + seed
+  // Init DB + seed
   await db.init();
   await ensureSeed();
 
@@ -45,20 +48,20 @@
   await A.renderSession();
 
   // Actions
-  A.el.btnAddPlanned.addEventListener('click', async ()=>{
+  A.el.btnAddPlanned?.addEventListener('click', async ()=>{
     if (!A.plannedRoutineName) return;
     const plan = await db.getActivePlan();
     const wd = (A.activeDate.getDay()+6)%7 + 1;
-    const id = plan.days[String(wd)];
+    const id = plan?.days?.[String(wd)];
     if (id) await A.addRoutineToSession(id);
   });
 
-  A.el.btnAddRoutine.addEventListener('click', async ()=>{
-    const id = A.el.selectRoutine.value;
+  A.el.btnAddRoutine?.addEventListener('click', async ()=>{
+    const id = A.el.selectRoutine?.value;
     if (id) await A.addRoutineToSession(id);
   });
 
-  A.el.btnAddExercises.addEventListener('click', async ()=>{
+  A.el.btnAddExercises?.addEventListener('click', async ()=>{
     const all = await db.getAll('exercises');
     if (!all.length) return alert('Aucun exercice dans la bibliothèque.');
     const names = all.map(e=>e.name).join(', ');
@@ -72,7 +75,9 @@
       await db.saveSession(s);
       await A.renderWeek();
       await A.renderSession();
-    } else alert('Cet exercice est déjà dans la séance.');
+    } else {
+      alert('Cet exercice est déjà dans la séance.');
+    }
   });
 
   // Seed minimal
@@ -88,16 +93,15 @@
     if (!roCount) {
       await db.put('routines', { id:'r_push', name:'Push', type:'Hypertrophie', description:'',
         moves:[{ pos:1, exerciseId:'ex_bp', exerciseName:'Développé couché', sets:[
-          {pos:1,reps:8,rest:90},{pos:2,reps:8,rest:90},{pos:3,reps:8,rest:120}
+          {pos:1,reps:8,weight:0,rest:90},{pos:2,reps:8,weight:0,rest:90},{pos:3,reps:8,weight:0,rest:120}
         ]}]});
       await db.put('routines', { id:'r_pull', name:'Row', type:'Hypertrophie', description:'',
         moves:[{ pos:1, exerciseId:'ex_row', exerciseName:'Rowing barre', sets:[
-          {pos:1,reps:10,rest:90},{pos:2,reps:10,rest:90},{pos:3,reps:10,rest:120}
+          {pos:1,reps:10,weight:0,rest:90},{pos:2,reps:10,weight:0,rest:90},{pos:3,reps:10,weight:0,rest:120}
         ]}]});
     }
     if (!plCount) {
       await db.put('plans', { id:'active', name:'Plan par défaut', days:{ 1:'r_push', 4:'r_pull' }, active:true });
     }
   }
-
 })();
