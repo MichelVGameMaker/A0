@@ -14,6 +14,17 @@
   A.el.dlgCalendar     = document.getElementById('dlgCalendar');
   A.el.bigCalendar     = document.getElementById('bigCalendar');
 
+  // Mois affiché par la modale = mois de la date active
+  A.calendarMonth = new Date(A.activeDate.getFullYear(), A.activeDate.getMonth(), 1);
+  document.getElementById('calPrev').addEventListener('click', async ()=>{
+    A.calendarMonth = new Date(A.calendarMonth.getFullYear(), A.calendarMonth.getMonth()-1, 1);
+    await A.openCalendar(); // re-render
+  });
+  document.getElementById('calNext').addEventListener('click', async ()=>{
+    A.calendarMonth = new Date(A.calendarMonth.getFullYear(), A.calendarMonth.getMonth()+1, 1);
+    await A.openCalendar(); // re-render
+  });
+
   document.getElementById('btnQuickNav').addEventListener('click', ()=>A.openCalendar());
   document.getElementById('dlgClose').addEventListener('click', ()=>A.el.dlgCalendar.close());
 
