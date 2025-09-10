@@ -1,1 +1,82 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Muscu • Séances</title>
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="/A0/icons/icon-192.png" />
+
+  <!-- Manifest -->
+  <link rel="manifest" href="/A0/manifest.webmanifest" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/A0/style.css" />
+</head>
+<body>
+
+  <!-- En-tête: pas d'entête de navigation, juste date à gauche + bouton "Navigation rapide" à droite -->
+  <header class="header-session safe-top">
+    <div class="header-left">
+      <span id="todayLabel">—</span>
+    </div>
+    <div class="header-right">
+      <button id="btnQuickNav" class="btn ghost">Navigation rapide</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <!-- Calendrier 1 semaine défilable -->
+    <section class="week-strip" id="weekStrip" aria-label="Calendrier 1 semaine"></section>
+
+    <!-- Liste des exercices de la séance -->
+    <section id="sessionList" class="session-list" aria-label="Séance du jour"></section>
+
+    <!-- Boutons d'ajout -->
+    <section class="add-actions" id="addActions">
+      <button id="btnAddPlanned" class="btn primary full">Ajouter &lt;routine&gt;</button>
+      <div class="row">
+        <label for="selectRoutine" class="sr-only">Ajouter une routine</label>
+        <select id="selectRoutine" class="input flex-1">
+          <option value="">Ajouter une routine…</option>
+        </select>
+        <button id="btnAddRoutine" class="btn">Ajouter</button>
+      </div>
+      <button id="btnAddExercises" class="btn">Ajouter exercice/s</button>
+    </section>
+  </main>
+
+  <!-- Barre d'onglets fixe en bas (icônes seules) -->
+  <nav class="tabbar safe-bottom" aria-label="Navigation principale">
+    <button class="tab active" title="Séances" aria-label="Séances">🏋️</button>
+    <button class="tab" title="Bibliothèques" aria-label="Bibliothèques">📚</button>
+    <button class="tab" title="Statistiques" aria-label="Statistiques">📈</button>
+    <button class="tab" title="Réglages" aria-label="Réglages">⚙️</button>
+  </nav>
+
+  <!-- Modale calendrier global (Navigation rapide) -->
+  <dialog id="dlgCalendar" class="modal">
+    <div class="modal-header">
+      <strong>Calendrier</strong>
+      <button id="dlgClose" class="btn ghost">Fermer</button>
+    </div>
+    <div id="bigCalendar" class="big-calendar"></div>
+  </dialog>
+
+  <!-- JS -->
+  <script src="/A0/db.js"></script>
+  <script src="/A0/app.js"></script>
+  <script>
+    // SW (installable + offline app shell minimal)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/A0/sw.js');
+      });
+    }
+  </script>
+</body>
+</html>
 
