@@ -62,7 +62,7 @@
       const top = document.createElement('div'); top.className='row between';
       const name = document.createElement('div'); name.className='element'; name.textContent = ex.exerciseName;
       const btn  = document.createElement('button'); btn.className='btn'; btn.textContent='Répétitions ✏️';
-      btn.addEventListener('click', ()=>alert('Écran 3.4.2 “Modifier l’exécution” viendra après.'));
+      btn.addEventListener('click', ()=>A.openExecEdit(ex.exerciseId));
       top.append(name, btn); card.appendChild(top);
 
       const grid = document.createElement('div'); grid.className='set-grid';
@@ -94,7 +94,7 @@
         pos: s.exercises.length+1,
         exerciseId: m.exerciseId,
         exerciseName: m.exerciseName,
-        sets: m.sets.map(x=>({ pos:x.pos, reps:x.reps ?? null, weight:null, rpe:null, rest:x.rest ?? null }))
+        sets: m.sets.map(x=>({ pos:x.pos, reps:x.reps ?? null, weight:null, rpe:null, rest:x.rest ?? null, done:false }))     
       });
     }
     await db.saveSession(s);
