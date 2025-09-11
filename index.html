@@ -69,44 +69,48 @@
       <div class="title">Exercices</div>
       <button class="btn ghost" id="exOkList" disabled>OK</button>
     </header>
-  
-    <!-- Recherche + filtres -->
-    <div class="filters">
-      <input id="exSearch" class="input full" placeholder="Rechercher par nom…" />
-      <div class="row">
-        <select id="exFilterGroup" class="input flex-1">
-          <option value="">Groupe musculaire</option>
-          <option value="Pectoraux">Pectoraux</option>
-          <option value="Dos">Dos</option>
-          <option value="Épaules">Épaules</option>
-          <option value="Biceps">Biceps</option>
-          <option value="Triceps">Triceps</option>
-          <option value="Quadriceps">Quadriceps</option>
-          <option value="Ischio">Ischio</option>
-          <option value="Mollets">Mollets</option>
-          <option value="Abdos">Abdos</option>
-          <option value="Cardio">Cardio</option>
-        </select>
-        <select id="exFilterEquip" class="input flex-1">
-          <option value="">Matériel</option>
-          <option value="Machine">Machine</option>
-          <option value="Poids">Poids</option>
-          <option value="Poids de corps">Poids de corps</option>
-          <option value="Élastique">Élastique</option>
-          <option value="Barre">Barre</option>
-          <option value="Autre">Autre</option>
-        </select>
-      </div>
-    </div>
-  
-    <!-- Bouton Ajouter -->
-    <div class="add-actions">
-      <button id="btnExAdd" class="btn primary full">+ Ajouter un exercice</button>
-    </div>
-  
-    <!-- Liste -->
-    <section id="exList" class="list cards" aria-label="Bibliothèque d’exercices"></section>
+
+    <!-- Corps de l'écran Exercices) -->
+    <main class="content">
       
+      <!-- Recherche + filtres -->
+      <div class="filters">
+        <input id="exSearch" class="input full" placeholder="Rechercher par nom…" />
+        <div class="row">
+          <select id="exFilterGroup" class="input flex-1">
+            <option value="">Groupe musculaire</option>
+            <option value="Pectoraux">Pectoraux</option>
+            <option value="Dos">Dos</option>
+            <option value="Épaules">Épaules</option>
+            <option value="Biceps">Biceps</option>
+            <option value="Triceps">Triceps</option>
+            <option value="Quadriceps">Quadriceps</option>
+            <option value="Ischio">Ischio</option>
+            <option value="Mollets">Mollets</option>
+            <option value="Abdos">Abdos</option>
+            <option value="Cardio">Cardio</option>
+          </select>
+          <select id="exFilterEquip" class="input flex-1">
+            <option value="">Matériel</option>
+            <option value="Machine">Machine</option>
+            <option value="Poids">Poids</option>
+            <option value="Poids de corps">Poids de corps</option>
+            <option value="Élastique">Élastique</option>
+            <option value="Barre">Barre</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+      </div>
+    
+      <!-- Bouton Ajouter -->
+      <div class="add-actions">
+        <button id="btnExAdd" class="btn primary full">+ Ajouter un exercice</button>
+      </div>
+    
+      <!-- Liste -->
+      <section id="exList" class="list cards" aria-label="Bibliothèque d’exercices"></section>
+      
+    </main>    
   </section>
   <!-- ==================== -->
     
@@ -119,52 +123,53 @@
       <div class="title" id="exEditTitle">Ajouter</div>
       <button class="btn" id="exEditOk">OK</button>
     </header>
-  
-    <!-- Zone suppression -->
-    <div class="add-actions">
-      <button id="exEditDelete" class="btn" style="border-color:#c00;color:#c00">🗑️ Supprimer</button>
-    </div>
-  
-    <!-- Formulaire -->
-    <div class="form">
-      <label class="lbl">Nom</label>
-      <input id="exName" class="input full" placeholder="Nom de l’exercice" />
-  
-      <label class="lbl">Groupe musculaire fin</label>
-      <select id="exGroup3" class="input full">
-        <option value="">Choisir…</option>
-        <option value="Pectoraux">Pectoraux</option>
-        <option value="Dos">Dos</option>
-        <option value="Épaules">Épaules</option>
-        <option value="Biceps">Biceps</option>
-        <option value="Triceps">Triceps</option>
-        <option value="Quadriceps">Quadriceps</option>
-        <option value="Ischio">Ischio</option>
-        <option value="Mollets">Mollets</option>
-        <option value="Abdos">Abdos</option>
-        <option value="Cardio">Cardio</option>
-      </select>
-  
-      <label class="lbl">Matériel</label>
-      <select id="exEquip" class="input full">
-        <option value="">Choisir…</option>
-        <option value="Machine">Machine</option>
-        <option value="Poids">Poids</option>
-        <option value="Poids de corps">Poids de corps</option>
-        <option value="Élastique">Élastique</option>
-        <option value="Barre">Barre</option>
-        <option value="Autre">Autre</option>
-      </select>
-  
-      <label class="lbl">Description</label>
-      <textarea id="exDesc" class="input full" rows="4" placeholder="Facultatif"></textarea>
-    </div>
+
+    <!-- Corps de l'écran Ajouter / Modifier Exercices) -->
+    <main class="content">
+      
+      <!-- Zone suppression -->
+      <div class="add-actions">
+        <button id="exEditDelete" class="btn" style="border-color:#c00;color:#c00">🗑️ Supprimer</button>
+      </div>
     
+      <!-- Formulaire -->
+      <div class="form">
+        <label class="lbl">Nom</label>
+        <input id="exName" class="input full" placeholder="Nom de l’exercice" />
+    
+        <label class="lbl">Groupe musculaire fin</label>
+        <select id="exGroup3" class="input full">
+          <option value="">Choisir…</option>
+          <option value="Pectoraux">Pectoraux</option>
+          <option value="Dos">Dos</option>
+          <option value="Épaules">Épaules</option>
+          <option value="Biceps">Biceps</option>
+          <option value="Triceps">Triceps</option>
+          <option value="Quadriceps">Quadriceps</option>
+          <option value="Ischio">Ischio</option>
+          <option value="Mollets">Mollets</option>
+          <option value="Abdos">Abdos</option>
+          <option value="Cardio">Cardio</option>
+        </select>
+    
+        <label class="lbl">Matériel</label>
+        <select id="exEquip" class="input full">
+          <option value="">Choisir…</option>
+          <option value="Machine">Machine</option>
+          <option value="Poids">Poids</option>
+          <option value="Poids de corps">Poids de corps</option>
+          <option value="Élastique">Élastique</option>
+          <option value="Barre">Barre</option>
+          <option value="Autre">Autre</option>
+        </select>
+    
+        <label class="lbl">Description</label>
+        <textarea id="exDesc" class="input full" rows="4" placeholder="Facultatif"></textarea>
+      </div>
+      
+  </main>  
   </section>
   <!-- ==================== -->
-
-   
-  </main>
 
   <!-- Barre d’onglets fixe (icônes) -->
   <nav class="tabbar safe-bottom" aria-label="Navigation principale">
