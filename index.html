@@ -59,7 +59,43 @@
     
   </section>
   <!-- ==================== -->
+
+  <!-- ========== 3.4.2 Modifier l’exécution (Colonne A uniquement) ========== -->
+  <section id="screenExecEdit" class="screen" hidden>
+    <header class="subheader">
+      <button class="btn ghost" id="execBack">←</button>
+      <div class="title" id="execTitle">Exercice</div>
+      <span></span> <!-- pas de bouton OK -->
+    </header>
   
+    <main class="content">
+      <div class="details" id="execDate">—</div>
+  
+      <!-- Entête colonnes -->
+      <div class="exec-grid exec-head">
+        <div>Reps</div>
+        <div>Poids</div>
+        <div>RPE</div>
+        <div>Repos</div>
+        <div></div>
+      </div>
+  
+      <!-- Séries exécutées (lecture seule) -->
+      <div id="execExecuted"></div>
+  
+      <!-- Zone série en cours (1 seule ligne éditable quand des prévues existent),
+           sinon une ligne “Nouvelle série” -->
+      <div id="execEditable"></div>
+  
+      <div class="add-actions">
+        <button id="execDeleteLast" class="btn">Supprimer la dernière série</button>
+      </div>
+  
+      <!-- (Colonnes B/C réservées pour plus tard) -->
+    </main>
+  </section>
+  <!-- ==================== -->
+ 
   <!-- ========== 3.1.1 Bibliothèque d’exercices (liste) ========== -->
   <section id="screenExercises" class="screen" hidden>
     
@@ -203,6 +239,7 @@
   <script src="ui-session.js"></script>
   <script src="ui-exercises.js"></script>
   <script src="ui-exercise-edit.js"></script>
+  <script src="ui-exec-edit.js"></script>
   <script src="init.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
