@@ -111,11 +111,13 @@
     const exCount = await db.count('exercises');
     const roCount = await db.count('routines');
     const plCount = await db.count('plans');
+  
+    // 1) Importer la bibliothèque d'exercices depuis /data/exercises.json si vide
     if (!exCount) {
-      await db.put('exercises', { id:'ex_bp', name:'Développé couché', group3:'Pectoraux',   equipment:'Barre', description:'' });
-      await db.put('exercises', { id:'ex_row',name:'Rowing barre',     group3:'Dos',         equipment:'Barre', description:'' });
-      await db.put('exercises', { id:'ex_sq', name:'Squat',            group3:'Quadriceps',  equipment:'Barre', description:'' });
+      await importExercisesFromJSON('./data/exercises.json'); // <-'./data/exercises.json' (chemin relatif).
     }
+  
+    // 2) Seed routines (si vides) — elles supposent que ex_bp, ex_row, ex_sq existent
     if (!roCount) {
       await db.put('routines', { id:'r_push', name:'Push', type:'Hypertrophie', description:'',
         moves:[{ pos:1, exerciseId:'ex_bp', exerciseName:'Développé couché', sets:[
@@ -126,8 +128,37 @@
           {pos:1,reps:10,weight:0,rest:90},{pos:2,reps:10,weight:0,rest:90},{pos:3,reps:10,weight:0,rest:120}
         ]}]});
     }
+  
+    // 3) Seed plan actif (si vide)
     if (!plCount) {
       await db.put('plans', { id:'active', name:'Plan par défaut', days:{ 1:'r_push', 4:'r_pull' }, active:true });
     }
   }
+  
+  // Import JSON d'exercices
+  async function importExercisesFromJSON(url){
+    try {
+      const res = await fetch(url, { cache: 'no-cache' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const arr = await res.json();
+      for (const raw of arr) {
+        // enrichissement (Group1/Group2 calculés)
+        const { g2, g1 } = A.cfg.mapGroups(raw.group3);
+        await db.put('exercises', {
+          id: raw.id,
+          name: raw.name,
+          group1: g1,
+          group2: g2,
+          group3: raw.group3,
+          equipment: raw.equipment,
+          description: raw.description || ''
+        });
+      }
+    } catch (e) {
+      console.error('Import exercises.json failed:', e);
+      alert("Impossible de charger la bibliothèque d'exercices (data/exercises.json).");
+    }
+  }
+
+  
 })();
