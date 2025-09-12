@@ -1,4 +1,9 @@
-// ui-exec-edit.js — 3.4.2 Modifier l’exécution (Colonne A, édition avancée + timer)
+// ui-exec-edit.js — 3.4.2 (Colonne A) : édition + timer, sans bouton "Enregistrer"
+// - Lignes cliquables pour éditer
+// - Reps/Poids: stepper vertical (+ au-dessus / − au-dessous)
+// - Bouton bas unique "Repos" <-> "Reprendre une série"
+// - Timer en bas (pause/play, -10s / affichage / +10s), visible uniquement pendant le repos
+
 (function(){
   const A = window.App;
 
@@ -8,7 +13,7 @@
   // État du timer
   A.execTimer = { running:false, startSec:0, remainSec:0, iv:null };
 
-  // Ouvrir l’éditeur
+  // -------- Ouvrir l’éditeur --------
   A.openExecEdit = async function(exerciseId){
     const key = A.ymd(A.activeDate);
     const s = await db.getSession(key);
@@ -58,7 +63,7 @@
         wrapEdit.appendChild(rowEditable(it, false));
       } else {
         const row = rowReadOnly(it);
-        row.addEventListener('click', ()=> renderColumnA(it.pos)); // ✅ éditer en cliquant
+        row.addEventListener('click', ()=> renderColumnA(it.pos)); // éditer en cliquant
         wrapExec.appendChild(row);
       }
     }
@@ -69,16 +74,75 @@
       if (firstPlanned) wrapEdit.appendChild(rowEditable(firstPlanned, false));
     }
 
-    // 3) Bouton Ajouter → nouvelle ligne vide en édition
-    document.getElementById('execAddNew').onclick = ()=>{
-      wrapEdit.innerHTML = '';
-      wrapEdit.appendChild(rowEditable(defaultNewSet(ex.sets.length+1), true));
+    // 3) Bouton bas : Repos <-> Reprendre une série
+    const restBtn = document.getElementById('execRestToggle');
+    restBtn.onclick = async ()=>{
+      const timerVisible = !document.getElementById('execTimerBar').hidden;
+
+      if (!timerVisible) {
+        // --- REPOS ---
+        // Sauver la série en cours (ligne éditable) comme done:true
+        const holder = document.querySelector('#execEditable .js-edit-holder');
+        if (!holder || !holder._collect) return alert('Renseigne la série avant le repos.');
+        const payload = JSON.parse(holder.dataset.payload || '{}');
+        const val = holder._collect();
+
+        const s1 = await db.getSession(A.execCtx.dateKey);
+        const ex1 = s1.exercises.find(e => e.exerciseId===A.execCtx.exerciseId);
+        if (payload.isNew) {
+          ex1.sets.push({ pos: ex1.sets.length+1, ...val, done:true });
+        } else {
+          const idx = ex1.sets.findIndex(x=>x.pos===payload.pos);
+          if (idx>=0) ex1.sets[idx] = { ...ex1.sets[idx], ...val, done:true };
+        }
+        await db.saveSession(s1);
+        await renderColumnA(); // repasser en lecture seule
+
+        // Démarrer le timer à partir de ce "rest"
+        startTimer(val.rest);
+        restBtn.textContent = 'Reprendre une série';
+      } else {
+        // --- REPRENDRE UNE SÉRIE ---
+        // Stopper & masquer le timer, et ENREGISTRER LE TEMPS RESTANT dans la DERNIÈRE série
+        const remaining = A.execTimer.remainSec; // demande: "enregistrer le temps restant"
+        const s2 = await db.getSession(A.execCtx.dateKey);
+        const ex2 = s2.exercises.find(e => e.exerciseId===A.execCtx.exerciseId);
+        if (ex2 && ex2.sets.length) {
+          const last = ex2.sets[ex2.sets.length-1];
+          last.rest = Math.max(0, remaining);
+          await db.saveSession(s2);
+          await renderColumnA();
+        }
+        stopTimer();
+        updateTimerUI(); // cache la barre
+        restBtn.textContent = 'Repos';
+
+        // Créer une nouvelle ligne vide en édition
+        const s3  = await db.getSession(A.execCtx.dateKey);
+        const ex3 = s3.exercises.find(e=>e.exerciseId===A.execCtx.exerciseId);
+        const nextPos = (ex3?.sets.length || 0) + 1;
+        wrapEdit.innerHTML = '';
+        wrapEdit.appendChild(rowEditable(defaultNewSet(nextPos), true));
+      }
     };
 
-    // 4) Bouton OK (valider & retour séance)
+    // 4) Bouton OK (valider ce qui est en cours puis retour Séances)
     document.getElementById('execOk').onclick = async ()=>{
-      const saveBtn = document.querySelector('#execEditable .js-save');
-      if (saveBtn) await saveBtn.click(); // valide si un éditeur est ouvert
+      const holder = document.querySelector('#execEditable .js-edit-holder');
+      if (holder && holder._collect) {
+        const payload = JSON.parse(holder.dataset.payload || '{}');
+        const val = holder._collect();
+
+        const s4 = await db.getSession(A.execCtx.dateKey);
+        const ex4 = s4.exercises.find(e => e.exerciseId===A.execCtx.exerciseId);
+        if (payload.isNew) {
+          ex4.sets.push({ pos: ex4.sets.length+1, ...val, done:true });
+        } else {
+          const idx = ex4.sets.findIndex(x=>x.pos===payload.pos);
+          if (idx>=0) ex4.sets[idx] = { ...ex4.sets[idx], ...val, done:true };
+        }
+        await db.saveSession(s4);
+      }
       backToSessions();
     };
 
@@ -86,6 +150,7 @@
     updateTimerUI();
   }
 
+  // -------- Lignes --------
   function rowReadOnly(it){
     const r = document.createElement('div');
     r.className = 'exec-grid exec-row';
@@ -103,11 +168,11 @@
     const r = document.createElement('div');
     r.className = 'exec-grid exec-row';
 
-    // Stepper Reps
-    const reps = stepper(safeInt(it.reps), 0, 100);
-    // Stepper Weight
-    const weight = stepper(safeInt(it.weight), 0, 999);
-    // RPE (5..10, couleur)
+    // Stepper VERTICAUX
+    const reps   = vStepper(safeInt(it.reps),   0, 100);
+    const weight = vStepper(safeInt(it.weight), 0, 999);
+
+    // RPE (5..10)
     const rpeWrap = document.createElement('div');
     const rpe = document.createElement('input');
     rpe.type='number'; rpe.className='input'; rpe.min='5'; rpe.max='10'; rpe.inputMode='numeric';
@@ -115,42 +180,23 @@
     rpe.oninput = ()=>{ rpeWrap.dataset.rpe = clampInt(rpe.value,5,10) || ''; };
     rpeWrap.appendChild(rpe); rpeWrap.className='rpe-wrap';
 
-    // Rest (mm:ss)
+    // Repos (mm:ss)
     const rest = document.createElement('input');
     rest.type='text'; rest.className='input'; rest.placeholder='mm:ss';
     rest.value = fmtTime(safeInt(it.rest)); rest.pattern='^\\d{1,2}:\\d{2}$';
 
-    // Actions
-    const btn = document.createElement('button');
-    btn.className = 'btn js-save';
-    btn.textContent = isNew ? 'Ajouter' : 'Enregistrer';
+    // Pas de bouton "Enregistrer" ici — piloté par Repos/Reprendre
+    const holder = document.createElement('div');
+    holder.className = 'js-edit-holder';
+    holder.dataset.payload = JSON.stringify({ pos: it.pos, isNew });
+    holder._collect = ()=>({
+      reps: parseInt(reps.input.value||'0',10),
+      weight: parseInt(weight.input.value||'0',10),
+      rpe: rpe.value ? parseInt(rpe.value,10) : null,
+      rest: parseTime(rest.value)
+    });
 
-    btn.onclick = async ()=>{
-      const val = {
-        reps: parseInt(reps.input.value||'0',10),
-        weight: parseInt(weight.input.value||'0',10),
-        rpe: rpe.value ? parseInt(rpe.value,10) : null,
-        rest: parseTime(rest.value)
-      };
-      const s = await db.getSession(A.execCtx.dateKey);
-      const ex = s.exercises.find(e => e.exerciseId === A.execCtx.exerciseId);
-
-      if (isNew) {
-        ex.sets.push({ pos: ex.sets.length+1, ...val, done:true });
-      } else {
-        const idx = ex.sets.findIndex(x => x.pos===it.pos);
-        if (idx>=0) ex.sets[idx] = { ...ex.sets[idx], ...val, done:true };
-      }
-
-      await db.saveSession(s);
-
-      // ✅ lancer le timer pour la DERNIÈRE série (celle qu’on vient d’enregistrer)
-      startTimer(val.rest);
-
-      await renderColumnA(); // re-render (retour en lecture seule)
-    };
-
-    r.append(reps.el, weight.el, rpeWrap, rest, btn);
+    r.append(reps.el, weight.el, rpeWrap, rest, holder);
     return r;
   }
 
@@ -158,15 +204,16 @@
     return { pos, reps:8, weight:0, rpe:null, rest:90, done:false };
   }
 
-  // ---- UI helpers ----
-  function stepper(val, min, max){
-    const wrap = document.createElement('div'); wrap.className='stepper';
-    const minus = document.createElement('button'); minus.className='btn'; minus.textContent='−';
-    const input = document.createElement('input'); input.type='number'; input.className='input'; input.inputMode='numeric'; input.value=String(val); input.min=String(min); input.max=String(max);
+  // -------- Helpers UI --------
+  // Stepper vertical (+ au-dessus, − en dessous)
+  function vStepper(val, min, max){
+    const wrap = document.createElement('div'); wrap.className='vstepper';
     const plus  = document.createElement('button'); plus.className='btn'; plus.textContent='+';
-    minus.onclick = ()=>{ input.value = String(Math.max(min, (parseInt(input.value||'0',10)-1))); };
+    const input = document.createElement('input'); input.type='number'; input.className='input'; input.inputMode='numeric'; input.value=String(val); input.min=String(min); input.max=String(max);
+    const minus = document.createElement('button'); minus.className='btn'; minus.textContent='−';
     plus.onclick  = ()=>{ input.value = String(Math.min(max, (parseInt(input.value||'0',10)+1))); };
-    wrap.append(minus, input, plus);
+    minus.onclick = ()=>{ input.value = String(Math.max(min, (parseInt(input.value||'0',10)-1))); };
+    wrap.append(plus, input, minus);
     return { el:wrap, input };
   }
 
@@ -202,7 +249,7 @@
     return parseInt(m[1],10)*60 + parseInt(m[2],10);
   }
 
-  // ---- Timer ----
+  // -------- Timer --------
   function startTimer(startSec){
     const bar = document.getElementById('execTimerBar');
     A.execTimer.startSec  = startSec || 0;
@@ -232,7 +279,7 @@
     A.execTimer.startSec  += delta;
     A.execTimer.remainSec += delta;
 
-    // ✅ et on ajuste le "rest" de la dernière série (en cours de repos)
+    // Et on ajuste le "rest" de la dernière série (en repos)
     const s  = await db.getSession(A.execCtx.dateKey);
     const ex = s.exercises.find(e=>e.exerciseId===A.execCtx.exerciseId);
     if (ex && ex.sets.length){
@@ -244,28 +291,13 @@
     updateTimerUI();
   }
 
-  async function nextTimer(){
-    // ✅ enregistre le temps écoulé sur la DERNIÈRE série
-    const elapsed = A.execTimer.startSec - A.execTimer.remainSec;
-    const s  = await db.getSession(A.execCtx.dateKey);
-    const ex = s.exercises.find(e=>e.exerciseId===A.execCtx.exerciseId);
-    if (ex && ex.sets.length){
-      const last = ex.sets[ex.sets.length-1];
-      last.rest = Math.max(0, elapsed);
-      await db.saveSession(s);
-      await renderColumnA();
-    }
-    stopTimer();
-    updateTimerUI(); // peut masquer la barre
-  }
-
   function updateTimerUI(){
     const bar = document.getElementById('execTimerBar');
     const disp= document.getElementById('tmrDisplay');
     const tgl = document.getElementById('tmrToggle');
     if (!bar) return;
 
-    // Si jamais aucun timer lancé
+    // La barre n'apparaît que pendant un repos (sinon cachée)
     if (!A.execTimer.iv && !A.execTimer.running && A.execTimer.startSec===0){
       bar.hidden = true;
       return;
@@ -281,14 +313,14 @@
     tgl.textContent = A.execTimer.running ? '⏸' : '▶︎';
   }
 
-  // ---- Navigation ----
+  // -------- Navigation --------
   function backToSessions(){
     document.getElementById('screenExecEdit').hidden = true;
     document.getElementById('screenSessions').hidden = false;
     A.renderWeek().then(()=>A.renderSession());
   }
 
-  // ---- Wire global ----
+  // -------- Wire global --------
   document.addEventListener('DOMContentLoaded', ()=>{
     document.getElementById('execBack')?.addEventListener('click', backToSessions);
 
@@ -297,6 +329,6 @@
     });
     document.getElementById('tmrMinus')?.addEventListener('click', ()=>adjustTimer(-10));
     document.getElementById('tmrPlus') ?.addEventListener('click', ()=>adjustTimer(+10));
-    document.getElementById('tmrNext') ?.addEventListener('click', ()=>nextTimer());
+    // pas de bouton Next : la reprise est gérée par "Reprendre une série"
   });
 })();
