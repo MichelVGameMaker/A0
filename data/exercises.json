@@ -1,0 +1,23 @@
+[
+  {
+    "id": "ex_bp",
+    "name": "Développé couché",
+    "group3": "Pectoraux",
+    "equipment": "Barre",
+    "description": ""
+  },
+  {
+    "id": "ex_row",
+    "name": "Rowing barre",
+    "group3": "Dos",
+    "equipment": "Barre",
+    "description": ""
+  },
+  {
+    "id": "ex_sq",
+    "name": "Squat",
+    "group3": "Quadriceps",
+    "equipment": "Barre",
+    "description": ""
+  }
+]
