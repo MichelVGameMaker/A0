@@ -264,25 +264,41 @@ body {
    Edition de séries
    =========================== */
 /* 3.4.2 — Grille d’édition Colonne A */
-.exec-grid{
+.exec-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr) auto; /* Reps | Poids | RPE | Repos | Action */
+  grid-template-columns: 1.2fr 1.2fr 0.8fr 0.8fr auto; /* Reps | Poids | RPE | Repos | Action */
   gap: 8px;
+  text-align: center;      /* tout centré */
   align-items: center;
   margin-top: 8px;
 }
 .exec-head { font-weight: 700; }
-.exec-row .input { width: 100%; }
-/* Option: réduire un peu les inputs dans cette grille */
-.exec-row .input { padding: 8px 10px; }
-
-/* Stepper (− input +) */
-.stepper{ display:flex; align-items:center; gap:6px; }
-.stepper .btn{
-  padding:6px 10px; min-width:44px; line-height:1;
+.exec-row .input { 
+   text-align: center;
+   width: 100%; 
+   margin: 0;              /* plus de marge */
+   padding: 6px 8px;       /* inputs compacts */
 }
 
-/* RPE code couleur */
+/* Stepper vertical pour Reps & Poids */
+.vstepper {
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:4px;
+}
+.vstepper .btn {
+  padding:6px 8px;
+  min-height:32px;
+  line-height:1;
+}
+
+/* Supprimer les flèches natives des <input type=number> */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+/* RPE code couleur (inchangé) */
 .rpe-chip{
   display:inline-block; padding:4px 8px; border-radius:999px; font-weight:700;
   color:#fff; font-size:0.9em;
@@ -293,6 +309,19 @@ body {
 .rpe-8{ background:#c93; }
 .rpe-9{ background:#d55; }
 .rpe-10{ background:#a00; }
+
+/* Champ Repos centré et étroit */
+.exec-row input[placeholder="mm:ss"] {
+  text-align:center;
+  max-width:90px;
+  margin: 0 auto;
+}
+
+/* Champ RPE plus étroit */
+.rpe-wrap .input {
+  max-width:70px;
+  margin:0 auto;
+}
 
 /* Timer bar */
 .exec-timer{
@@ -306,8 +335,15 @@ body {
 }
 .tmr-display{ font-weight:800; min-width:76px; text-align:center; }
 
-/* “Ajouter série” pleine largeur */
+/* Bordures autour des boutons -10s / +10s */
+.exec-timer .btn.ghost {
+  border:1px solid var(--line);
+  border-radius:10px;
+}
+
+/* Bouton pleine largeur (Repos / Reprendre une série) */
 .add-actions .btn.full{ width:100%; }
+
 
 /* ===========================
    Petites responsivités
