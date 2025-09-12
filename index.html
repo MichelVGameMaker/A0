@@ -65,7 +65,7 @@
     <header class="subheader">
       <button class="btn ghost" id="execBack">←</button>
       <div class="title" id="execTitle">Exercice</div>
-      <span></span> <!-- pas de bouton OK -->
+      <button class="btn" id="execOk">OK</button>
     </header>
   
     <main class="content">
@@ -92,6 +92,23 @@
       </div>
   
       <!-- (Colonnes B/C réservées pour plus tard) -->
+
+      <!-- Barre de timer (collante en bas) -->
+      <div id="execTimerBar" class="timerbar" hidden>
+        <!-- Quart 1 : pause/play -->
+        <button id="tbtnToggle" class="btn timerbtn" aria-label="Pause/Play">⏸</button>
+      
+        <!-- Quarts 2-3 : -10s | temps restant | +10s -->
+        <div class="timercenter">
+          <button id="tbtnMinus" class="btn timerbtn" aria-label="-10 secondes">−10s</button>
+          <div id="tDisplay" class="timerdisplay">0:00</div>
+          <button id="tbtnPlus" class="btn timerbtn" aria-label="+10 secondes">+10s</button>
+        </div>
+      
+        <!-- Quart 4 : Next -->
+        <button id="tbtnNext" class="btn timerbtn primary" aria-label="Next">Next ▶</button>
+      </div>
+
     </main>
   </section>
   <!-- ==================== -->
