@@ -55,15 +55,15 @@
     if (!v) return;
 
     // calcul Group1 + Group2
-    const { g2, g1 } = A._mapGroups(v.g3);
+    const { g2, g1 } = A.cfg.mapGroups(v.g3);
 
     const obj = {
       id: currentId || `ex_${Date.now()}`,
       name: v.name,
-      group1: g1,       // calculé
-      group2: g2,       // calculé
-      group3: v.g3,     // choisi
-      equipment: v.eq,
+      group1: g1,         // calculé
+      group2: g2,         // calculé
+      group3: v.g3,       // saisi
+      equipment: v.eq,    // saisi
       description: v.desc
     };
 
@@ -86,10 +86,24 @@
     A.el.exGroup3 = document.getElementById('exGroup3');
     A.el.exEquip = document.getElementById('exEquip');
     A.el.exDesc = document.getElementById('exDesc');
-
+    // Remplir les listes depuis le fichier cfg
+    fillSelect(A.el.exGroup3, A.cfg.musclesG3, 'Choisir…');
+    fillSelect(A.el.exEquip,  A.cfg.equipment, 'Choisir…');
+    // Activer les boutons 
     document.getElementById('exEditBack').addEventListener('click', ()=> A.openExercises());
     document.getElementById('exEditOk').addEventListener('click', save);
     document.getElementById('exEditDelete').addEventListener('click', remove);
   });
 
+
+  function fillSelect(sel, items, placeholder) {
+    sel.innerHTML = '';
+    const o0 = document.createElement('option');
+    o0.value=''; o0.textContent = placeholder; sel.appendChild(o0);
+    for (const v of items){
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v; sel.appendChild(o);
+    }
+  }
+  
 })();
