@@ -1,5 +1,4 @@
 // ui-exec-edit.js — 3.4.2 Modifier l’exécution (Colonne A, édition avancée + timer)
-
 (function(){
   const A = window.App;
 
@@ -7,12 +6,7 @@
   A.execCtx = { dateKey:null, exerciseId:null, exerciseName:'' };
 
   // État du timer
-  A.execTimer = {
-    running:false,
-    startSec:0,      // valeur de départ
-    remainSec:0,     // temps restant (peut devenir négatif)
-    iv:null
-  };
+  A.execTimer = { running:false, startSec:0, remainSec:0, iv:null };
 
   // Ouvrir l’éditeur
   A.openExecEdit = async function(exerciseId){
@@ -23,7 +17,14 @@
     if (!ex) return alert('Exercice introuvable dans la séance.');
 
     // normaliser sets
-    ex.sets = (ex.sets||[]).map((x,i)=>({ pos: x.pos ?? (i+1), done: !!x.done, reps: x.reps ?? null, weight: x.weight ?? null, rpe: x.rpe ?? null, rest: x.rest ?? 90 }));
+    ex.sets = (ex.sets||[]).map((x,i)=>({
+      pos: x.pos ?? (i+1),
+      done: !!x.done,
+      reps: x.reps ?? null,
+      weight: x.weight ?? null,
+      rpe: x.rpe ?? null,
+      rest: x.rest ?? 90
+    }));
 
     A.execCtx = { dateKey:key, exerciseId, exerciseName: ex.exerciseName||'' };
 
@@ -51,14 +52,13 @@
     wrapExec.innerHTML = '';
     wrapEdit.innerHTML = '';
 
-    // 1) Lignes (cliquables) pour séries existantes
+    // 1) Lignes lues (cliquables pour éditer)
     for (const it of ex.sets) {
       if (editPos===it.pos) {
         wrapEdit.appendChild(rowEditable(it, false));
       } else {
         const row = rowReadOnly(it);
-        // ✅ cliquer pour modifier n'importe quel champ
-        row.addEventListener('click', ()=> renderColumnA(it.pos));
+        row.addEventListener('click', ()=> renderColumnA(it.pos)); // ✅ éditer en cliquant
         wrapExec.appendChild(row);
       }
     }
@@ -66,12 +66,10 @@
     // 2) Si aucune ligne en édition ET il reste des prévues, éditer la première prévue
     if (!wrapEdit.children.length) {
       const firstPlanned = ex.sets.find(x=>x.done!==true);
-      if (firstPlanned) {
-        wrapEdit.appendChild(rowEditable(firstPlanned, false));
-      }
+      if (firstPlanned) wrapEdit.appendChild(rowEditable(firstPlanned, false));
     }
 
-    // 3) Bouton Ajouter → ajoute une nouvelle ligne vide en édition
+    // 3) Bouton Ajouter → nouvelle ligne vide en édition
     document.getElementById('execAddNew').onclick = ()=>{
       wrapEdit.innerHTML = '';
       wrapEdit.appendChild(rowEditable(defaultNewSet(ex.sets.length+1), true));
@@ -79,10 +77,8 @@
 
     // 4) Bouton OK (valider & retour séance)
     document.getElementById('execOk').onclick = async ()=>{
-      // si un éditeur est ouvert avec un bouton .js-save, on déclenche son save
       const saveBtn = document.querySelector('#execEditable .js-save');
-      if (saveBtn) await saveBtn.click();
-      // retour séances
+      if (saveBtn) await saveBtn.click(); // valide si un éditeur est ouvert
       backToSessions();
     };
 
@@ -196,8 +192,9 @@
   }
   function fmtTime(sec){
     sec = parseInt(sec||0,10);
-    const m = Math.floor(sec/60), s = Math.abs(sec%60);
-    return `${m}:${String(s).padStart(2,'0')}`;
+    const m = Math.floor(Math.abs(sec)/60), s = Math.abs(sec)%60;
+    const sign = sec<0 ? '-' : '';
+    return `${sign}${m}:${String(s).padStart(2,'0')}`;
   }
   function parseTime(str){
     const m = /^(\d{1,2}):(\d{2})$/.exec(String(str||''));
@@ -217,27 +214,15 @@
     A.execTimer.iv = setInterval(runTick, 1000);
     updateTimerUI();
   }
-
-  function pauseTimer(){
-    A.execTimer.running = false;
-    updateTimerUI();
-  }
-  function resumeTimer(){
-    A.execTimer.running = true;
-    updateTimerUI();
-  }
-  function stopTimer(){
-    if (A.execTimer.iv) clearInterval(A.execTimer.iv);
-    A.execTimer.iv = null;
-    A.execTimer.running = false;
-  }
+  function pauseTimer(){ A.execTimer.running = false; updateTimerUI(); }
+  function resumeTimer(){ A.execTimer.running = true;  updateTimerUI(); }
+  function stopTimer(){ if (A.execTimer.iv) clearInterval(A.execTimer.iv); A.execTimer.iv=null; A.execTimer.running=false; }
 
   function runTick(){
     if (!A.execTimer.running) return;
     A.execTimer.remainSec -= 1;
     updateTimerUI();
     if (A.execTimer.remainSec === 0) {
-      // vibre à zéro (si supporté)
       if (navigator.vibrate) { try { navigator.vibrate(200); } catch{} }
     }
   }
@@ -254,7 +239,7 @@
       const last = ex.sets[ex.sets.length-1];
       last.rest = Math.max(0, (last.rest||0) + delta);
       await db.saveSession(s);
-      await renderColumnA(); // pour refléter le nouveau repos
+      await renderColumnA(); // refléter le nouveau repos
     }
     updateTimerUI();
   }
@@ -271,7 +256,7 @@
       await renderColumnA();
     }
     stopTimer();
-    updateTimerUI(); // masque la barre
+    updateTimerUI(); // peut masquer la barre
   }
 
   function updateTimerUI(){
@@ -280,13 +265,13 @@
     const tgl = document.getElementById('tmrToggle');
     if (!bar) return;
 
+    // Si jamais aucun timer lancé
     if (!A.execTimer.iv && !A.execTimer.running && A.execTimer.startSec===0){
-      bar.hidden = true; // pas de timer
+      bar.hidden = true;
       return;
     }
     bar.hidden = false;
 
-    // affichage mm:ss (positif ou négatif)
     const t = A.execTimer.remainSec;
     const sign = t<0 ? '-' : '';
     const abs = Math.abs(t);
@@ -300,26 +285,18 @@
   function backToSessions(){
     document.getElementById('screenExecEdit').hidden = true;
     document.getElementById('screenSessions').hidden = false;
-    // rafraîchir l’écran séance
     A.renderWeek().then(()=>A.renderSession());
   }
 
-  // ---- Wire boutons barre timer & header ----
+  // ---- Wire global ----
   document.addEventListener('DOMContentLoaded', ()=>{
-    const back = document.getElementById('execBack');
-    if (back) back.addEventListener('click', backToSessions);
+    document.getElementById('execBack')?.addEventListener('click', backToSessions);
 
-    const tgl = document.getElementById('tmrToggle');
-    const mns = document.getElementById('tmrMinus');
-    const pls = document.getElementById('tmrPlus');
-    const nxt = document.getElementById('tmrNext');
-
-    if (tgl) tgl.addEventListener('click', ()=>{
+    document.getElementById('tmrToggle')?.addEventListener('click', ()=>{
       if (A.execTimer.running) pauseTimer(); else resumeTimer();
     });
-    if (mns) mns.addEventListener('click', ()=>adjustTimer(-10));
-    if (pls) pls.addEventListener('click', ()=>adjustTimer(+10));
-    if (nxt) nxt.addEventListener('click', ()=>nextTimer());
+    document.getElementById('tmrMinus')?.addEventListener('click', ()=>adjustTimer(-10));
+    document.getElementById('tmrPlus') ?.addEventListener('click', ()=>adjustTimer(+10));
+    document.getElementById('tmrNext') ?.addEventListener('click', ()=>nextTimer());
   });
-
 })();
