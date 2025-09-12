@@ -9,18 +9,6 @@
     document.getElementById(id).hidden = false;
   }
 
-  // Mapper Group3 -> Group2/Group1 (calcul à l’enregistrement)
-  function mapGroups(g3){
-    const upper = ['Pectoraux','Dos','Épaules','Biceps','Triceps'];
-    const legs  = ['Quadriceps','Ischio','Mollets'];
-    if (!g3) return { g2:'', g1:'' };
-    if (upper.includes(g3)) return { g2: (g3==='Biceps'||g3==='Triceps')?'Bras':g3, g1:'Haut' };
-    if (legs.includes(g3))  return { g2:'Jambes', g1:'Bas' };
-    if (g3==='Abdos')       return { g2:'Abdos', g1:'Cardio' };
-    if (g3==='Cardio')      return { g2:'Cardio', g1:'Cardio' };
-    return { g2:'', g1:'' };
-  }
-
   // Rendu d'un item
   function renderItem(ex){
     const card = document.createElement('article');
@@ -30,6 +18,7 @@
     row.className = 'row between';
 
     const left = document.createElement('div');
+    
     // petite “image” placeholder
     const img = document.createElement('div');
     img.style.width='40px'; img.style.height='40px'; img.style.borderRadius='8px';
@@ -86,17 +75,32 @@
 
   // Handlers init
   document.addEventListener('DOMContentLoaded', ()=>{
-    // refs DOM
+    // refs
     A.el.exSearch      = document.getElementById('exSearch');
     A.el.exFilterGroup = document.getElementById('exFilterGroup');
     A.el.exFilterEquip = document.getElementById('exFilterEquip');
     A.el.exList        = document.getElementById('exList');
-
+  
+    // Remplir les filtres depuis cfg
+    fillSelect(A.el.exFilterGroup, A.cfg.musclesG3, 'Groupe musculaire');
+    fillSelect(A.el.exFilterEquip, A.cfg.equipment, 'Matériel');
+  
     document.getElementById('btnExAdd').addEventListener('click', ()=> A.openExerciseEdit(null));
     A.el.exSearch.addEventListener('input', A.refreshExerciseList);
     A.el.exFilterGroup.addEventListener('change', A.refreshExerciseList);
     A.el.exFilterEquip.addEventListener('change', A.refreshExerciseList);
   });
+  
+  function fillSelect(sel, items, placeholder){
+    sel.innerHTML = '';
+    const opt0 = document.createElement('option');
+    opt0.value = ''; opt0.textContent = placeholder; sel.appendChild(opt0);
+    for (const v of items) {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v; sel.appendChild(o);
+    }
+  }
+
 
   // Exporte util pour l’éditeur (group mapping)
   A._mapGroups = mapGroups;
