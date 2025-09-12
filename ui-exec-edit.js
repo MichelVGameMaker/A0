@@ -1,12 +1,20 @@
-// ui-exec-edit.js — 3.4.2 Modifier l’exécution (Colonne A uniquement)
+// ui-exec-edit.js — 3.4.2 Modifier l’exécution (Colonne A, édition avancée + timer)
 
 (function(){
   const A = window.App;
 
-  // Contexte courant de l'éditeur
-  A.execCtx = { dateKey: null, exerciseId: null, exerciseName: '' };
+  // Contexte courant
+  A.execCtx = { dateKey:null, exerciseId:null, exerciseName:'' };
 
-  // Ouvrir l’éditeur pour un exercice donné à la date active
+  // État du timer
+  A.execTimer = {
+    running:false,
+    startSec:0,      // valeur de départ
+    remainSec:0,     // temps restant (peut devenir négatif)
+    iv:null
+  };
+
+  // Ouvrir l’éditeur
   A.openExecEdit = async function(exerciseId){
     const key = A.ymd(A.activeDate);
     const s = await db.getSession(key);
@@ -14,64 +22,72 @@
     const ex = s.exercises.find(e => e.exerciseId === exerciseId);
     if (!ex) return alert('Exercice introuvable dans la séance.');
 
-    // migration légère : ajout du flag done si manquant
-    ex.sets = (ex.sets || []).map((x,i)=>({ done:false, ...x, pos: x.pos ?? (i+1) }));
+    // normaliser sets
+    ex.sets = (ex.sets||[]).map((x,i)=>({ pos: x.pos ?? (i+1), done: !!x.done, reps: x.reps ?? null, weight: x.weight ?? null, rpe: x.rpe ?? null, rest: x.rest ?? 90 }));
 
-    A.execCtx = { dateKey: key, exerciseId, exerciseName: ex.exerciseName || '' };
+    A.execCtx = { dateKey:key, exerciseId, exerciseName: ex.exerciseName||'' };
 
-    // UI
+    // entête
     document.getElementById('execTitle').textContent = ex.exerciseName || 'Exercice';
-    document.getElementById('execDate').textContent = A.fmtUI(A.activeDate);
+    document.getElementById('execDate').textContent  = A.fmtUI(A.activeDate);
 
     await renderColumnA();
-    // Affiche l’écran
+
+    // afficher écran
     document.getElementById('screenSessions').hidden = true;
     document.getElementById('screenExercises').hidden = true;
     document.getElementById('screenExerciseEdit').hidden = true;
     document.getElementById('screenExecEdit').hidden = false;
   };
 
-  // Rendu Colonne A (Aujourd’hui — saisie)
-  async function renderColumnA(){
-    const s = await db.getSession(A.execCtx.dateKey);
-    if (!s) return;
-    const ex = s.exercises.find(e => e.exerciseId === A.execCtx.exerciseId);
+  // -------- Rendu Colonne A --------
+  async function renderColumnA(editPos=null){
+    const s  = await db.getSession(A.execCtx.dateKey);
+    const ex = s?.exercises.find(e=>e.exerciseId===A.execCtx.exerciseId);
     if (!ex) return;
 
-    const executedWrap = document.getElementById('execExecuted');
-    const editableWrap = document.getElementById('execEditable');
-    executedWrap.innerHTML = '';
-    editableWrap.innerHTML = '';
+    const wrapExec = document.getElementById('execExecuted');
+    const wrapEdit = document.getElementById('execEditable');
+    wrapExec.innerHTML = '';
+    wrapEdit.innerHTML = '';
 
-    // Spliter exécutées vs prévues (non exécutées)
-    const executed = ex.sets.filter(x => x.done === true);
-    const planned  = ex.sets.filter(x => x.done !== true);
-
-    // 1) Séries exécutées : liste en lecture seule
-    for (const it of executed) {
-      executedWrap.appendChild(rowReadOnly(it));
+    // 1) Lignes (cliquables) pour séries existantes
+    for (const it of ex.sets) {
+      if (editPos===it.pos) {
+        wrapEdit.appendChild(rowEditable(it, false));
+      } else {
+        const row = rowReadOnly(it);
+        // ✅ cliquer pour modifier n'importe quel champ
+        row.addEventListener('click', ()=> renderColumnA(it.pos));
+        wrapExec.appendChild(row);
+      }
     }
 
-    // 2) Zone éditable :
-    //    - s'il reste des prévues, on n'édite QUE la première
-    //    - sinon on propose une "Nouvelle série"
-    if (planned.length) {
-      editableWrap.appendChild(rowEditable(planned[0], /*isNew*/false));
-    } else {
-      editableWrap.appendChild(rowEditable(defaultNewSet(), /*isNew*/true));
+    // 2) Si aucune ligne en édition ET il reste des prévues, éditer la première prévue
+    if (!wrapEdit.children.length) {
+      const firstPlanned = ex.sets.find(x=>x.done!==true);
+      if (firstPlanned) {
+        wrapEdit.appendChild(rowEditable(firstPlanned, false));
+      }
     }
 
-    // Bouton "Supprimer la dernière série"
-    const btnDel = document.getElementById('execDeleteLast');
-    btnDel.onclick = async ()=>{
-      const s2 = await db.getSession(A.execCtx.dateKey);
-      const ex2 = s2.exercises.find(e => e.exerciseId === A.execCtx.exerciseId);
-      if (!ex2 || !ex2.sets.length) return;
-      if (!confirm('Supprimer la dernière série ?')) return;
-      ex2.sets.pop();
-      await db.saveSession(s2);
-      await renderColumnA();
+    // 3) Bouton Ajouter → ajoute une nouvelle ligne vide en édition
+    document.getElementById('execAddNew').onclick = ()=>{
+      wrapEdit.innerHTML = '';
+      wrapEdit.appendChild(rowEditable(defaultNewSet(ex.sets.length+1), true));
     };
+
+    // 4) Bouton OK (valider & retour séance)
+    document.getElementById('execOk').onclick = async ()=>{
+      // si un éditeur est ouvert avec un bouton .js-save, on déclenche son save
+      const saveBtn = document.querySelector('#execEditable .js-save');
+      if (saveBtn) await saveBtn.click();
+      // retour séances
+      backToSessions();
+    };
+
+    // 5) Barre timer : masquée tant que non lancée
+    updateTimerUI();
   }
 
   function rowReadOnly(it){
@@ -80,8 +96,8 @@
     r.innerHTML = `
       <div class="details">${safeInt(it.reps)}</div>
       <div class="details">${safeInt(it.weight)} kg</div>
-      <div class="details">${safeInt(it.rpe) || '—'}</div>
-      <div class="details">${fmtRest(it.rest)}</div>
+      <div class="details">${rpeChip(it.rpe)}</div>
+      <div class="details">${fmtTime(safeInt(it.rest))}</div>
       <div></div>
     `;
     return r;
@@ -91,85 +107,96 @@
     const r = document.createElement('div');
     r.className = 'exec-grid exec-row';
 
-    const reps = inputNumber(safeInt(it.reps), 0, 100);
-    const weight = inputNumber(safeInt(it.weight), 0, 999);
-    const rpe = inputNumber(it.rpe ?? null, 5, 10, true); // autorise vide
-    const rest = inputTime(safeInt(it.rest) || 90); // secondes
+    // Stepper Reps
+    const reps = stepper(safeInt(it.reps), 0, 100);
+    // Stepper Weight
+    const weight = stepper(safeInt(it.weight), 0, 999);
+    // RPE (5..10, couleur)
+    const rpeWrap = document.createElement('div');
+    const rpe = document.createElement('input');
+    rpe.type='number'; rpe.className='input'; rpe.min='5'; rpe.max='10'; rpe.inputMode='numeric';
+    rpe.value = it.rpe==null ? '' : String(it.rpe);
+    rpe.oninput = ()=>{ rpeWrap.dataset.rpe = clampInt(rpe.value,5,10) || ''; };
+    rpeWrap.appendChild(rpe); rpeWrap.className='rpe-wrap';
 
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'btn';
-    saveBtn.textContent = isNew ? 'Ajouter' : 'Enregistrer';
+    // Rest (mm:ss)
+    const rest = document.createElement('input');
+    rest.type='text'; rest.className='input'; rest.placeholder='mm:ss';
+    rest.value = fmtTime(safeInt(it.rest)); rest.pattern='^\\d{1,2}:\\d{2}$';
 
-    saveBtn.onclick = async ()=>{
+    // Actions
+    const btn = document.createElement('button');
+    btn.className = 'btn js-save';
+    btn.textContent = isNew ? 'Ajouter' : 'Enregistrer';
+
+    btn.onclick = async ()=>{
       const val = {
-        reps: parseInt(reps.value||'0',10),
-        weight: parseInt(weight.value||'0',10),
+        reps: parseInt(reps.input.value||'0',10),
+        weight: parseInt(weight.input.value||'0',10),
         rpe: rpe.value ? parseInt(rpe.value,10) : null,
-        rest: parseTime(rest.value) // mm:ss -> sec
+        rest: parseTime(rest.value)
       };
-
       const s = await db.getSession(A.execCtx.dateKey);
       const ex = s.exercises.find(e => e.exerciseId === A.execCtx.exerciseId);
 
       if (isNew) {
-        ex.sets.push({
-          pos: ex.sets.length+1,
-          reps: val.reps, weight: val.weight, rpe: val.rpe, rest: val.rest,
-          done: true
-        });
+        ex.sets.push({ pos: ex.sets.length+1, ...val, done:true });
       } else {
-        // marquer la première prévue comme exécutée
-        const idx = ex.sets.findIndex(x => x.done !== true);
-        if (idx >= 0) {
-          ex.sets[idx] = { ...ex.sets[idx], ...val, done: true };
-        } else {
-          // fallback
-          ex.sets.push({
-            pos: ex.sets.length+1, ...val, done: true
-          });
-        }
+        const idx = ex.sets.findIndex(x => x.pos===it.pos);
+        if (idx>=0) ex.sets[idx] = { ...ex.sets[idx], ...val, done:true };
       }
 
       await db.saveSession(s);
-      await renderColumnA();
-      // (Timer à ajouter plus tard)
+
+      // ✅ lancer le timer pour la DERNIÈRE série (celle qu’on vient d’enregistrer)
+      startTimer(val.rest);
+
+      await renderColumnA(); // re-render (retour en lecture seule)
     };
 
-    r.append(reps, weight, rpe, rest, saveBtn);
+    r.append(reps.el, weight.el, rpeWrap, rest, btn);
     return r;
   }
 
-  function defaultNewSet(){
-    return { reps: 8, weight: 0, rpe: null, rest: 90, done:false };
+  function defaultNewSet(pos){
+    return { pos, reps:8, weight:0, rpe:null, rest:90, done:false };
   }
 
-  // Inputs helpers
-  function inputNumber(val, min, max, allowEmpty=false){
-    const i = document.createElement('input');
-    i.type = 'number';
-    i.className = 'input';
-    i.inputMode = 'numeric';
-    if (!allowEmpty) i.value = String(val ?? 0);
-    else i.value = val==null ? '' : String(val);
-    i.min = String(min); i.max = String(max);
-    return i;
-  }
-  function inputTime(sec){
-    const i = document.createElement('input');
-    i.type = 'text';
-    i.className = 'input';
-    i.placeholder = 'mm:ss';
-    i.value = fmtTime(sec);
-    i.pattern = '^\\d{1,2}:\\d{2}$';
-    return i;
+  // ---- UI helpers ----
+  function stepper(val, min, max){
+    const wrap = document.createElement('div'); wrap.className='stepper';
+    const minus = document.createElement('button'); minus.className='btn'; minus.textContent='−';
+    const input = document.createElement('input'); input.type='number'; input.className='input'; input.inputMode='numeric'; input.value=String(val); input.min=String(min); input.max=String(max);
+    const plus  = document.createElement('button'); plus.className='btn'; plus.textContent='+';
+    minus.onclick = ()=>{ input.value = String(Math.max(min, (parseInt(input.value||'0',10)-1))); };
+    plus.onclick  = ()=>{ input.value = String(Math.min(max, (parseInt(input.value||'0',10)+1))); };
+    wrap.append(minus, input, plus);
+    return { el:wrap, input };
   }
 
-  // Formats
+  function rpeChip(v){
+    if (v==null || v==='') return '—';
+    const c = getRpeClass(v);
+    return `<span class="rpe-chip ${c}">${v}</span>`;
+  }
+  function getRpeClass(v){
+    const n = parseInt(v,10);
+    if (n<=5) return 'rpe-5';
+    if (n===6) return 'rpe-6';
+    if (n===7) return 'rpe-7';
+    if (n===8) return 'rpe-8';
+    if (n===9) return 'rpe-9';
+    return 'rpe-10';
+  }
+
   function safeInt(v){ return Number.isFinite(v) ? v : 0; }
-  function fmtRest(sec){ return fmtTime(sec||0); }
+  function clampInt(v, min, max){
+    const n = parseInt(v,10); if (Number.isNaN(n)) return null;
+    return Math.max(min, Math.min(max, n));
+  }
   function fmtTime(sec){
     sec = parseInt(sec||0,10);
-    const m = Math.floor(sec/60), s = sec%60;
+    const m = Math.floor(sec/60), s = Math.abs(sec%60);
     return `${m}:${String(s).padStart(2,'0')}`;
   }
   function parseTime(str){
@@ -178,16 +205,121 @@
     return parseInt(m[1],10)*60 + parseInt(m[2],10);
   }
 
-  // Back button : enregistre déjà fait à chaque clic sur "Enregistrer/Ajouter"
+  // ---- Timer ----
+  function startTimer(startSec){
+    const bar = document.getElementById('execTimerBar');
+    A.execTimer.startSec  = startSec || 0;
+    A.execTimer.remainSec = startSec || 0;
+    A.execTimer.running   = true;
+    bar.hidden = false;
+    runTick();
+    if (A.execTimer.iv) clearInterval(A.execTimer.iv);
+    A.execTimer.iv = setInterval(runTick, 1000);
+    updateTimerUI();
+  }
+
+  function pauseTimer(){
+    A.execTimer.running = false;
+    updateTimerUI();
+  }
+  function resumeTimer(){
+    A.execTimer.running = true;
+    updateTimerUI();
+  }
+  function stopTimer(){
+    if (A.execTimer.iv) clearInterval(A.execTimer.iv);
+    A.execTimer.iv = null;
+    A.execTimer.running = false;
+  }
+
+  function runTick(){
+    if (!A.execTimer.running) return;
+    A.execTimer.remainSec -= 1;
+    updateTimerUI();
+    if (A.execTimer.remainSec === 0) {
+      // vibre à zéro (si supporté)
+      if (navigator.vibrate) { try { navigator.vibrate(200); } catch{} }
+    }
+  }
+
+  async function adjustTimer(delta){
+    // delta en secondes (+/-10)
+    A.execTimer.startSec  += delta;
+    A.execTimer.remainSec += delta;
+
+    // ✅ et on ajuste le "rest" de la dernière série (en cours de repos)
+    const s  = await db.getSession(A.execCtx.dateKey);
+    const ex = s.exercises.find(e=>e.exerciseId===A.execCtx.exerciseId);
+    if (ex && ex.sets.length){
+      const last = ex.sets[ex.sets.length-1];
+      last.rest = Math.max(0, (last.rest||0) + delta);
+      await db.saveSession(s);
+      await renderColumnA(); // pour refléter le nouveau repos
+    }
+    updateTimerUI();
+  }
+
+  async function nextTimer(){
+    // ✅ enregistre le temps écoulé sur la DERNIÈRE série
+    const elapsed = A.execTimer.startSec - A.execTimer.remainSec;
+    const s  = await db.getSession(A.execCtx.dateKey);
+    const ex = s.exercises.find(e=>e.exerciseId===A.execCtx.exerciseId);
+    if (ex && ex.sets.length){
+      const last = ex.sets[ex.sets.length-1];
+      last.rest = Math.max(0, elapsed);
+      await db.saveSession(s);
+      await renderColumnA();
+    }
+    stopTimer();
+    updateTimerUI(); // masque la barre
+  }
+
+  function updateTimerUI(){
+    const bar = document.getElementById('execTimerBar');
+    const disp= document.getElementById('tmrDisplay');
+    const tgl = document.getElementById('tmrToggle');
+    if (!bar) return;
+
+    if (!A.execTimer.iv && !A.execTimer.running && A.execTimer.startSec===0){
+      bar.hidden = true; // pas de timer
+      return;
+    }
+    bar.hidden = false;
+
+    // affichage mm:ss (positif ou négatif)
+    const t = A.execTimer.remainSec;
+    const sign = t<0 ? '-' : '';
+    const abs = Math.abs(t);
+    const m = Math.floor(abs/60), s = abs%60;
+    disp.textContent = `${sign}${m}:${String(s).padStart(2,'0')}`;
+
+    tgl.textContent = A.execTimer.running ? '⏸' : '▶︎';
+  }
+
+  // ---- Navigation ----
+  function backToSessions(){
+    document.getElementById('screenExecEdit').hidden = true;
+    document.getElementById('screenSessions').hidden = false;
+    // rafraîchir l’écran séance
+    A.renderWeek().then(()=>A.renderSession());
+  }
+
+  // ---- Wire boutons barre timer & header ----
   document.addEventListener('DOMContentLoaded', ()=>{
     const back = document.getElementById('execBack');
-    if (back) back.addEventListener('click', async ()=>{
-      // retour à l’écran Séances
-      document.getElementById('screenExecEdit').hidden = true;
-      document.getElementById('screenSessions').hidden = false;
-      await A.renderWeek();
-      await A.renderSession();
+    if (back) back.addEventListener('click', backToSessions);
+
+    const tgl = document.getElementById('tmrToggle');
+    const mns = document.getElementById('tmrMinus');
+    const pls = document.getElementById('tmrPlus');
+    const nxt = document.getElementById('tmrNext');
+
+    if (tgl) tgl.addEventListener('click', ()=>{
+      if (A.execTimer.running) pauseTimer(); else resumeTimer();
     });
+    if (mns) mns.addEventListener('click', ()=>adjustTimer(-10));
+    if (pls) pls.addEventListener('click', ()=>adjustTimer(+10));
+    if (nxt) nxt.addEventListener('click', ()=>nextTimer());
   });
 
 })();
