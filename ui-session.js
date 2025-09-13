@@ -59,7 +59,7 @@
     for (const ex of session.exercises) {
       const card = document.createElement('article'); card.className='exercise-card';
 
-      const top = document.createElement('div'); top.className='row between';
+      const top  = document.createElement('div'); top.className='row between';
       const name = document.createElement('div'); name.className='element'; name.textContent = ex.exerciseName;
       const btn  = document.createElement('button'); btn.className='btn'; btn.textContent='Répétitions ✏️';
       btn.addEventListener('click', ()=>A.openExecEdit(ex.exerciseId));

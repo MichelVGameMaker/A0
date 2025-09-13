@@ -131,6 +131,20 @@ body {
 }
 
 /* ===========================
+   Bibliothèque d'exercices
+   =========================== */
+.exercise-row {
+  display:grid;
+  grid-template-columns: 64px 1fr auto;
+  gap:10px; align-items:center;
+  padding:8px 0; border-bottom:1px solid var(--line);
+}
+.exercise-row img {
+  width:64px; height:64px; object-fit:cover; background:#eee; border-radius:8px;
+}
+
+
+/* ===========================
    Actions d’ajout
    =========================== */
 .add-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
@@ -147,19 +161,24 @@ body {
   background: #f6f6f6;
   font-weight: 600;
 }
+
 .btn {
-  padding: 10px 12px;
-  border: 1px solid #222;
-  background: #fff;
+  padding      : 10px 10px;
+  border       : 1px solid #222;
+  background   : #fff;
   border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  user-select: none;
+  font-weight  : 700;
+  cursor       : pointer;
+  user-select  : none;
 }
 .btn[disabled] { opacity: .5; cursor: not-allowed; border-color: #aaa; }
 .btn.primary   { border-color: var(--emphasis); color: var(--emphasis); }
-.btn.ghost     { border-color: transparent; color: var(--emphasis); background: transparent; }
-.sr-only       { position: absolute; left: -9999px; }
+.btn.ghost     { border-color: transparent;     color: var(--emphasis); background: transparent; }
+
+/* ===========================
+   Screen Reader Only
+   =========================== */
+   .sr-only       { position: absolute; left: -9999px; }
 
 /* ===========================
    Tab bar (barre d’onglets fixe bas)

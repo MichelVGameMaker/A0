@@ -4,9 +4,9 @@
 
   // ---------- Helpers navigation écrans & onglets ----------
   function showOnly(which){
-    const sSessions = document.getElementById('screenSessions');
+    const sSessions  = document.getElementById('screenSessions');
     const sExercises = document.getElementById('screenExercises');
-    const sEdit = document.getElementById('screenExerciseEdit');
+    const sEdit      = document.getElementById('screenExerciseEdit');
 
     if (sSessions)  sSessions.hidden  = (which !== 'sessions');
     if (sExercises) sExercises.hidden = (which !== 'exercises');
@@ -30,9 +30,9 @@
   A.el.bigCalendar     = document.getElementById('bigCalendar');
 
   // ---------- État initial ----------
-  A.activeDate    = A.today();                               // sélection = aujourd’hui
-  A.currentAnchor = new Date(A.activeDate);                  // ancre semaine
-  A.calendarMonth = new Date(A.activeDate.getFullYear(), A.activeDate.getMonth(), 1);
+  A.activeDate         = A.today();                               // sélection = aujourd’hui
+  A.currentAnchor      = new Date(A.activeDate);                  // ancre semaine
+  A.calendarMonth      = new Date(A.activeDate.getFullYear(), A.activeDate.getMonth(), 1);
 
   // ---------- Boutons calendrier ----------
   const btnQuick = document.getElementById('btnQuickNav');
@@ -53,8 +53,18 @@
     await A.openCalendar();
   });
 
-  // ---------- Init DB + seed ----------
-  await db.init();
+  // ---------- Initialisation de la base + seed ----------
+  // initialise la base
+  await db.init();        
+  
+  // importe si la base est vide  
+  try {
+    await db.importExternalExercisesIfNeeded(); // ✅ nouvelle forme exportée par db.js
+   } catch(e) {
+    console.warn('Import exercices ignoré:', e);
+   }
+
+  // Seed
   await ensureSeed();
 
   // ---------- Premier rendu (écran Séances par défaut) ----------
@@ -107,58 +117,58 @@
   });
 
   // ---------- Seed minimal ----------
-  async function ensureSeed(){
-    const exCount = await db.count('exercises');
-    const roCount = await db.count('routines');
-    const plCount = await db.count('plans');
-  
-    // 1) Importer la bibliothèque d'exercices depuis /data/exercises.json si vide
-    if (!exCount) {
-      await importExercisesFromJSON('./data/exercises.json'); // <-'./data/exercises.json' (chemin relatif).
-    }
-  
-    // 2) Seed routines (si vides) — elles supposent que ex_bp, ex_row, ex_sq existent
-    if (!roCount) {
-      await db.put('routines', { id:'r_push', name:'Push', type:'Hypertrophie', description:'',
-        moves:[{ pos:1, exerciseId:'ex_bp', exerciseName:'Développé couché', sets:[
-          {pos:1,reps:8,weight:0,rest:90},{pos:2,reps:8,weight:0,rest:90},{pos:3,reps:8,weight:0,rest:120}
-        ]}]});
-      await db.put('routines', { id:'r_pull', name:'Row', type:'Hypertrophie', description:'',
-        moves:[{ pos:1, exerciseId:'ex_row', exerciseName:'Rowing barre', sets:[
-          {pos:1,reps:10,weight:0,rest:90},{pos:2,reps:10,weight:0,rest:90},{pos:3,reps:10,weight:0,rest:120}
-        ]}]});
-    }
-  
-    // 3) Seed plan actif (si vide)
-    if (!plCount) {
-      await db.put('plans', { id:'active', name:'Plan par défaut', days:{ 1:'r_push', 4:'r_pull' }, active:true });
-    }
-  }
-  
-  // Import JSON d'exercices
-  async function importExercisesFromJSON(url){
-    try {
-      const res = await fetch(url, { cache: 'no-cache' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const arr = await res.json();
-      for (const raw of arr) {
-        // enrichissement (Group1/Group2 calculés)
-        const { g2, g1 } = A.cfg.mapGroups(raw.group3);
-        await db.put('exercises', {
-          id: raw.id,
-          name: raw.name,
-          group1: g1,
-          group2: g2,
-          group3: raw.group3,
-          equipment: raw.equipment,
-          description: raw.description || ''
-        });
-      }
-    } catch (e) {
-      console.error('Import exercises.json failed:', e);
-      alert("Impossible de charger la bibliothèque d'exercices (data/exercises.json).");
-    }
-  }
+ // ---------- Seed minimal ----------
+	async function ensureSeed(){
+	  const roCount = await db.count('routines');
+	  const plCount = await db.count('plans');
+
+	  // S'assure que 3 exos "seed" existent (si absents) pour que les routines puissent pointer quelque chose.
+	  async function ensureExercise(id, name, targetKey, equipmentKey){
+		const exists = await db.get('exercises', id);
+		if (exists) return;
+
+		// Décodage via CFG (les clés sont en lowercase : target "chest", "lats", "quads"...)
+		const mu = CFG.decodeMuscle(targetKey);
+		const eq = CFG.decodeEquipment(equipmentKey);
+
+		await db.put('exercises', {
+		  id,
+		  name,
+		  equipment: equipmentKey,
+		  equipmentGroup1: eq.g1,
+		  equipmentGroup2: eq.g2,
+		  muscle: mu.muscle,
+		  muscleGroup1: mu.g1,
+		  muscleGroup2: mu.g2,
+		  muscleGroup3: mu.g3,
+		  target: targetKey,
+		  bodyPart: null,
+		  image: null
+		});
+	  }
+
+	  // Crée ces exos seulement s'ils n'existent pas déjà
+	  /*await ensureExercise('ex_bp',  'Développé couché', 'chest', 'barbell');
+	  await ensureExercise('ex_row', 'Rowing barre',     'lats',  'barbell');
+	  await ensureExercise('ex_sq',  'Squat',            'quads', 'barbell');
+		*/
+	  // Routines
+	  /*if (!roCount) {
+		await db.put('routines', { id:'r_push', name:'Push', type:'Hypertrophie', description:'',
+		  moves:[{ pos:1, exerciseId:'ex_bp', exerciseName:'Développé couché', sets:[
+			{pos:1,reps:8,weight:0,rest:90},{pos:2,reps:8,weight:0,rest:90},{pos:3,reps:8,weight:0,rest:120}
+		  ]}]} );
+		await db.put('routines', { id:'r_pull', name:'Row', type:'Hypertrophie', description:'',
+		  moves:[{ pos:1, exerciseId:'ex_row', exerciseName:'Rowing barre', sets:[
+			{pos:1,reps:10,weight:0,rest:90},{pos:2,reps:10,weight:0,rest:90},{pos:3,reps:10,weight:0,rest:120}
+		  ]}]} );
+	  }
+		*/
+	  // Plan actif
+	  if (!plCount) {
+		await db.put('plans', { id:'active', name:'Plan par défaut', days:{ 1:'r_push', 4:'r_pull' }, active:true });
+	  }
+	}
 
   
 })();

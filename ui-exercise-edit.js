@@ -55,7 +55,7 @@
     if (!v) return;
 
     // calcul Group1 + Group2
-    const { g2, g1 } = A.cfg.mapGroups(v.g3);
+    const { g2, g1 } = CFG.mapGroups(v.g3);
 
     const obj = {
       id: currentId || `ex_${Date.now()}`,
@@ -86,9 +86,9 @@
     A.el.exGroup3 = document.getElementById('exGroup3');
     A.el.exEquip = document.getElementById('exEquip');
     A.el.exDesc = document.getElementById('exDesc');
-    // Remplir les listes depuis le fichier cfg
-    fillSelect(A.el.exGroup3, A.cfg.musclesG3, 'Choisir…');
-    fillSelect(A.el.exEquip,  A.cfg.equipment, 'Choisir…');
+    // Remplir les listes depuis le fichier CFG
+    fillSelect(A.el.exGroup3, CFG.musclesG3, 'Choisir…');
+    fillSelect(A.el.exEquip,  CFG.equipment, 'Choisir…');
     // Activer les boutons 
     document.getElementById('exEditBack').addEventListener('click', ()=> A.openExercises());
     document.getElementById('exEditOk').addEventListener('click', save);
