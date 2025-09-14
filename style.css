@@ -5,8 +5,22 @@
   --bg: #ffffff;
   --fg: #111111;
   --muted: #777777;
-  --emphasis: #0f62fe;   /* Couleur d’emphase (sélection) */
+  --emphasis_back: #0f62fe;   /* Couleur d’emphase (sélection) */
+  --emphasis_text: #fff;   /* Couleur d’emphase (sélection) */
   --line: #e8e8e8;
+  
+  --white:     #ffffff;
+  --whiteB:    #f8f8f8;
+  --lightGray: #e8e8e8;
+  --lightGrayB:#e4e4e4;
+  --darkGray:  #d4d4d4;
+  --darkGrayB: #d0d0d0;
+  --backGray:  #b3b3b3;
+  --backGrayB: #b7b7b7;
+  --black:     #000000;
+  --emphase:   #000000;
+  --red:       #8b0000;
+  --green:     #06402b;  
 }
 
 * { box-sizing: border-box; }
@@ -87,9 +101,9 @@ body {
 .week-strip .has-session.selected, 
 .week-strip .day.planned.selected,
 .week-strip .day.selected {
-  background: var(--emphasis);
+  background: var(--emphasis_back);
   color: #fff;
-  border-color: var(--emphasis);
+  border-color: var(--emphasis_back);
 }
 
 /* ===========================
@@ -98,10 +112,15 @@ body {
 .session-list { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
 .exercise-card {
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 10px;
   background: #fff;
+   
 }
+.exercise-card.clickable  { 
+  cursor: pointer; 
+  user-select  : none;
+ }
 .row { display: flex; gap: 8px; align-items: center; }
 .row.between { justify-content: space-between; }
 .element { font-weight: 700; }
@@ -143,7 +162,36 @@ body {
   width:64px; height:64px; object-fit:cover; background:#eee; border-radius:8px;
 }
 
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1px;
+  row-gap:    4px;
+}
 
+.tag {
+  display: inline-block;
+  padding: 6px 10px;
+  margin: 4px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  background: #f9f9f9;
+  color: #333;
+}
+
+.tag.selected {
+  background: var(--emphasis_back, #666);
+  border-color: var(--emphasis_back, #666);
+  color: var(--emphasis_text, #fff);;
+}
+
+.hint {
+  margin-top: 6px;
+  color: #666;
+  font-size: 0.9em;
+}
 /* ===========================
    Actions d’ajout
    =========================== */
@@ -172,8 +220,8 @@ body {
   user-select  : none;
 }
 .btn[disabled] { opacity: .5; cursor: not-allowed; border-color: #aaa; }
-.btn.primary   { border-color: var(--emphasis); color: var(--emphasis); }
-.btn.ghost     { border-color: transparent;     color: var(--emphasis); background: transparent; }
+.btn.primary   { border-color: var(--emphasis_back); color: var(--emphasis_back); }
+.btn.ghost     { border-color: transparent;     color: var(--emphasis_back); background: transparent; }
 
 /* ===========================
    Screen Reader Only
@@ -198,7 +246,7 @@ body {
   cursor: pointer;
 }
 .tab.active {
-  outline: 2px solid var(--emphasis);
+  outline: 2px solid var(--emphasis_back);
   border-radius: 12px;
 }
 
@@ -255,9 +303,9 @@ body {
 .day-cell.has-session.selected,
 .day-cell.planned.selected,
 .day-cell.selected {
-  background: var(--emphasis);
+  background: var(--emphasis_back);
   color: #fff;
-  border-color: var(--emphasis);
+  border-color: var(--emphasis_back);
 }
 
 /* Sous-entête (titre + retour/OK) */
@@ -275,6 +323,9 @@ body {
 .filters{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
 .form{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
 .lbl{ font-weight:700; }
+
+
+
 
 /* Cacher/montrer “écrans” (sections dédiées) */
 .screen[hidden]{ display:none !important; }

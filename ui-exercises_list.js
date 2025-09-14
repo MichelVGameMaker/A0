@@ -1,7 +1,8 @@
-// ui-exercises.js — 3.1.1 Bibliothèque d’exercices (liste + filtres + lazy images)
+// ui-exercices_list.js — 3.1.1 Bibliothèque d’exercices (liste + filtres + lazy images)
 
 (function(){
   const A = window.App;
+  let filtersInited = false;
 
   // ----- Navigation: montrer/masquer écrans -----
   function showScreen(id){
@@ -33,6 +34,7 @@
   function renderItem(ex){
     const card = document.createElement('article');
     card.className = 'exercise-card';
+    card.setAttribute('role', 'button');
 
     const row = document.createElement('div');
     row.className = 'row between';
@@ -50,29 +52,37 @@
     img.loading = 'lazy'; img.decoding = 'async';
 
     if (ex.image) {
-      // ex.image est déjà soit ./data/media/<fname>.gif, soit l’URL d’origine
-      // lazy: on met data-src et l’observer se chargera de remplir src
-      img.setAttribute('data-src', ex.image);
+      img.setAttribute('data-src', ex.image);   // ./data/media/<fname>.gif ou URL d’origine
       ensureLazyObserver().observe(img);
     } else {
-      // fallback si pas d’image
       img.src = './icons/placeholder-64.png';
     }
 
-    const txtWrap = document.createElement('div');
-    const name = document.createElement('div');
-    name.className = 'element';
+    const txtWrap    = document.createElement('div');
+    const name       = document.createElement('div');
+    name.className   = 'element';
     name.textContent = ex.name || '—';
 
+    // -------- Détails demandés --------
+    // ordre : Équipement (niveau fin) • Muscle ciblé, muscles secondaires (tous)
     const details = document.createElement('div');
-    details.className = 'details';
-    details.textContent = `${ex.muscleGroup3 || ex.muscle || '-'} • ${ex.equipmentGroup2 || ex.equipment || '-'}`;
+
+    details.className = 'details'
+
+    const eq_details = (ex.equipmentGroup2 || ex.equipment || '-').toString().trim();
+    const target     = (ex.muscle || ex.muscleGroup2 || ex.muscleGroup3 || '-').toString().trim();
+	const secondary  = Array.isArray(ex.secondaryMuscles) ? ex.secondaryMuscles.filter(Boolean) : [];
+	const mu_details = [target, ...secondary].filter(Boolean);
+ 
+	details.textContent = `${eq_details} • ${mu_details.join(', ')}`;
+    // -----------------------------------
 
     txtWrap.append(name, details);
     left.append(img, txtWrap);
 
     const btn = document.createElement('button');
-    btn.className = 'btn'; btn.textContent = 'Modifier ✏️';
+    btn.className   = 'btn';
+    btn.textContent = 'Modifier ✏️';
     btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); A.openExerciseEdit(ex.id); });
 
     row.append(left, btn);
@@ -85,33 +95,25 @@
   // ----- Chargement / filtrage -----
   A.refreshExerciseList = async function(){
     const q = (A.el.exSearch?.value || '').toLowerCase().trim();
-    const g = (A.el.exFilterGroup?.value || '').trim(); // muscleGroup3
+    const g = (A.el.exFilterGroup?.value || '').trim(); // muscleGroup2
     const e = (A.el.exFilterEquip?.value || '').trim(); // equipmentGroup2
 
-    let all = await db.getAll('exercises');
+    const all = await db.getAll('exercises');
 
+    // Filtrage STRICT sur G2
     const filtered = all.filter(x=>{
       if (q && !String(x.name||'').toLowerCase().includes(q)) return false;
-      if (g && x.muscleGroup3 !== g) return false;
-      if (e && x.equipmentGroup2 !== e) return false;
+      if (g) {
+        const mg2 = (x.muscleGroup2 || '').toString().trim();
+        if (mg2 !== g) return false;
+      }
+      if (e) {
+        const eg2 = (x.equipmentGroup2 || '').toString().trim();
+        if (eg2 !== e) return false;
+      }
       return true;
     });
-	const filtered = all.filter(x=>{
-		// recherche par nom
-		if (q && !String(x.name||'').toLowerCase().includes(q)) return false;
-		// filtre muscle (appliquer seulement si la donnée existe)
-		if (g) {
-			const mg3 = x.muscleGroup3 || x.muscle || '';
-			if (mg3 !== g) return false;
-		}
-		// filtre matériel (appliquer seulement si la donnée existe)
-		if (e) {
-			const eg2 = x.equipmentGroup2 || x.equipment || '';
-			if (eg2 !== e) return false;
-		}
-		return true;
-	});
-	
+
     const list = A.el.exList;
     list.innerHTML = '';
 
@@ -130,16 +132,16 @@
   A.openExercises = async function(){
     showScreen('screenExercises');
 
-    // Remplir les filtres depuis CFG (Groupes calculés à partir de tes tables) (une seule fois)
-	if (!filtersInited) {
-+		if (A.el.exFilterGroup) fillSelect(A.el.exFilterGroup, CFG.musclesG3, 'Groupe musculaire');
-		if (A.el.exFilterEquip) fillSelect(A.el.exFilterEquip, CFG.equipment, 'Matériel');
-		filtersInited = true;
-+	}
-	// Toujours remettre les filtres à vide et la recherche à vide à chaque ouverture de l'écran
-	if (A.el.exFilterGroup) A.el.exFilterGroup.value = '';
-	if (A.el.exFilterEquip) A.el.exFilterEquip.value = '';
-	if (A.el.exSearch)      A.el.exSearch.value      = '';
+    // Remplir les filtres depuis CFG (G2) une seule fois
+    if (!filtersInited) {
+      if (A.el.exFilterGroup) fillSelect(A.el.exFilterGroup, CFG.musclesG2, 'Groupe musculaire');
+      if (A.el.exFilterEquip) fillSelect(A.el.exFilterEquip, CFG.equipmentG2 || CFG.equipment, 'Matériel');
+      filtersInited = true;
+    }
+    // Réinitialiser filtres et recherche à chaque ouverture
+    if (A.el.exFilterGroup) A.el.exFilterGroup.value = '';
+    if (A.el.exFilterEquip) A.el.exFilterEquip.value = '';
+    if (A.el.exSearch)      A.el.exSearch.value      = '';
 
     await A.refreshExerciseList();
   };
