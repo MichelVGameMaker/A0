@@ -97,25 +97,6 @@
     if (id) await A.addRoutineToSession(id);
   });
 
-  A.el.btnAddExercises?.addEventListener('click', async ()=>{
-    const all = await db.getAll('exercises');
-    if (!all.length) return alert('Aucun exercice dans la bibliothèque.');
-    const names = all.map(e=>e.name).join(', ');
-    const name = prompt(`Ajouter un exercice (nom exact)\nParmi: ${names}`);
-    const ex = all.find(e => e.name.toLowerCase() === String(name||'').toLowerCase());
-    if (!ex) return alert('Nom non trouvé.');
-    const key = A.ymd(A.activeDate);
-    let s = await db.getSession(key) || { date:key, exercises:[] };
-    if (!s.exercises.some(E=>E.exerciseId===ex.id)) {
-      s.exercises.push({ pos:s.exercises.length+1, exerciseId:ex.id, exerciseName:ex.name, sets:[] });
-      await db.saveSession(s);
-      await A.renderWeek();
-      await A.renderSession();
-    } else {
-      alert('Cet exercice est déjà dans la séance.');
-    }
-  });
-
   // ---------- Seed minimal ----------
  // ---------- Seed minimal ----------
 	async function ensureSeed(){
@@ -147,23 +128,6 @@
 		});
 	  }
 
-	  // Crée ces exos seulement s'ils n'existent pas déjà
-	  /*await ensureExercise('ex_bp',  'Développé couché', 'chest', 'barbell');
-	  await ensureExercise('ex_row', 'Rowing barre',     'lats',  'barbell');
-	  await ensureExercise('ex_sq',  'Squat',            'quads', 'barbell');
-		*/
-	  // Routines
-	  /*if (!roCount) {
-		await db.put('routines', { id:'r_push', name:'Push', type:'Hypertrophie', description:'',
-		  moves:[{ pos:1, exerciseId:'ex_bp', exerciseName:'Développé couché', sets:[
-			{pos:1,reps:8,weight:0,rest:90},{pos:2,reps:8,weight:0,rest:90},{pos:3,reps:8,weight:0,rest:120}
-		  ]}]} );
-		await db.put('routines', { id:'r_pull', name:'Row', type:'Hypertrophie', description:'',
-		  moves:[{ pos:1, exerciseId:'ex_row', exerciseName:'Rowing barre', sets:[
-			{pos:1,reps:10,weight:0,rest:90},{pos:2,reps:10,weight:0,rest:90},{pos:3,reps:10,weight:0,rest:120}
-		  ]}]} );
-	  }
-		*/
 	  // Plan actif
 	  if (!plCount) {
 		await db.put('plans', { id:'active', name:'Plan par défaut', days:{ 1:'r_push', 4:'r_pull' }, active:true });

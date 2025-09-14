@@ -3,23 +3,25 @@
 (function(){
   const A = window.App;
 
-  let currentId = null; // null = ajout
+  let currentId = null;       // null = ajout
+  let callerScreen = null;    // mémorise l'écran d'origine
 
 	/*	=======================================================
 		================   SECTION DONNNES   ==================
 		======================================================= */
-	A.openExerciseEdit = async function(id){
+	A.openExerciseEdit = async function(id, from){
 		
 		ensureRefs();
 		if (!assertRefs()) return;
-		currentId = id || null;
+		currentId    = id || null;
+		callerScreen = from || 'screenExercises'; // par défaut
 
 		// entête
 		document.getElementById('exEditTitle').textContent = currentId ? 'Modifier' : 'Ajouter';
 		// bouton supprimer visible seulement en modification
 		document.getElementById('exEditDelete').style.display = currentId ? 'inline-block' : 'none';
 
-		// remplir si modification
+		// remplir depuis la base de données si modification
 		if (currentId) {
 			
 			const ex = await db.get('exercises', currentId);
@@ -35,7 +37,7 @@
 			const mu = CFG.decodeMuscle(A.el.exTargetMuscle.value);
 			if (A.el.exGroupInfo) A.el.exGroupInfo.textContent = [mu.g1, mu.g2, mu.g3].filter(Boolean).join(' • ');
 
-			// Matériel (tags)
+		// Matériel (tags)
 		unselectAllTags(A.el.exEquip);
 		setSelectedTags(A.el.exEquip, ex.equipmentGroup2 || ex.equipment);
 
@@ -87,7 +89,13 @@
 		});
 
 		// Activer les boutons 
-		document.getElementById('exEditBack').addEventListener('click', ()=> A.openExercises());
+		document.getElementById('exEditBack')?.addEventListener('click', async ()=>{
+			if (callerScreen === 'screenExerciseRead' && currentId){
+				A.openExerciseRead(currentId);   // retour à la fiche
+			} else {
+				A.openExercises();               // retour à la liste
+			}
+		});
 		document.getElementById('exEditOk').addEventListener('click', save);
 		document.getElementById('exEditDelete').addEventListener('click', remove);
 	});
@@ -150,7 +158,11 @@
 		};
 
 	  await db.put('exercises', obj);
-	  await A.openExercises();
+		if (callerScreen === 'screenExerciseRead' && obj.id){
+			await A.openExerciseRead(obj.id);   // revient à la fiche lecture
+		} else {
+			await A.openExercises();            // revient à la liste
+		}
 	}
 	
 	/*	=======================================================

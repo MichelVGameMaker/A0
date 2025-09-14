@@ -80,6 +80,37 @@
       list.appendChild(card);
     }
   };
+  
+// === Ajout d'exercices sélectionnés à la séance courante ===
+A.addExercisesToCurrentSession = async function addExercisesToCurrentSession(ids){
+  if (!Array.isArray(ids) || !ids.length) return;
+
+  const key = A.ymd(A.activeDate);
+  let s = await db.getSession(key) || { date:key, exercises:[] };
+
+  // Construire un set des exercices déjà présents pour éviter les doublons
+  const existing = new Set((s.exercises || []).map(e => e.exerciseId));
+
+  for (const id of ids){
+    if (existing.has(id)) continue; // skip doublons
+    const ex = await db.get('exercises', id);
+    if (!ex) continue;
+
+    s.exercises.push({
+      pos: (s.exercises?.length || 0) + 1,
+      exerciseId: ex.id,
+      exerciseName: ex.name || 'Exercice',
+      // une ligne de set vide par défaut (tu peux adapter)
+      sets: [{ pos:1, reps:null, weight:null, rpe:null, rest:null, done:false }]
+    });
+  }
+
+  await db.saveSession(s);
+  await A.renderWeek?.();
+  await A.renderSession?.();
+};
+
+
 
   // Ajouter la routine choisie (sélecteur) à la séance
   A.addRoutineToSession = async function addRoutineToSession(routineId){
@@ -103,4 +134,27 @@
     await A.renderSession();
   };
 
+
+  // === Init refs & handlers ===
+  document.addEventListener('DOMContentLoaded', ()=>{
+    A.el = A.el || {};
+    A.el.btnAddExercises = document.getElementById('btnAddExercises');
+    A.el.selectRoutine   = document.getElementById('selectRoutine');
+    A.el.todayLabel      = document.getElementById('todayLabel');
+    A.el.sessionList     = document.getElementById('sessionList');
+
+    // Ouvrir la bibliothèque en MODE AJOUT depuis l'écran Séance
+    A.el.btnAddExercises?.addEventListener('click', ()=>{
+      A.openExercises({
+        mode: 'add',
+        from: 'screenSessions',
+        onAdd: async (ids)=> {
+          await A.addExercisesToCurrentSession(ids);
+          // Le retour visuel à l'écran Séance est géré côté ui-exercices_list
+        }
+      });
+    });
+  });
+  
+  
 })();

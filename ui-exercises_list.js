@@ -1,8 +1,14 @@
 // ui-exercices_list.js — 3.1.1 Bibliothèque d’exercices (liste + filtres + lazy images)
-
 (function(){
-  const A = window.App;
+  const A = window.App || (window.App = {});
+  A.el = A.el || {};
+
+  let currentId = null;       // null = ajout
+  let callerScreen = null;    // mémorise l'écran d'origine
+  let listMode = 'view';      // 'add' | 'view'
+  let onAddCallback = null;   // callback(ids: string[]) quand on confirme en mode add
   let filtersInited = false;
+  let selection = new Set();  // ids sélectionnés en mode 'add'
 
   // ----- Navigation: montrer/masquer écrans -----
   function showScreen(id){
@@ -30,6 +36,53 @@
     return lazyObserver;
   }
 
+  // ----- Barre sticky “Ajouter les exercices (N)” (mode add) -----
+  function ensureSelectionBar(){
+    if (!A.el.exSelectBar){
+      const bar = document.createElement('div');
+      bar.id = 'exSelectBar';
+      bar.style.position = 'sticky';
+      bar.style.top = '0';
+      bar.style.zIndex = '10';
+      bar.style.padding = '8px 0';
+      bar.style.background = 'var(--white)';
+      bar.style.display = 'none';
+
+      const btn = document.createElement('button');
+      btn.id = 'btnAddSelected';
+      btn.className = 'btn primary full';
+      btn.textContent = 'Ajouter les exercices';
+      btn.addEventListener('click', ()=>{
+        if (!selection.size) return;
+        const ids = Array.from(selection);
+        if (typeof onAddCallback === 'function') onAddCallback(ids);
+        // retour à l'écran appelant si connu
+        if (callerScreen && document.getElementById(callerScreen)){
+          for (const s of document.querySelectorAll('.screen')) s.hidden = true;
+          document.getElementById(callerScreen).hidden = false;
+        }
+      });
+
+      bar.appendChild(btn);
+      const content = document.querySelector('#screenExercises .content');
+      content?.insertBefore(bar, document.getElementById('exList'));
+      A.el.exSelectBar = bar;
+      A.el.btnAddSelected = btn;
+    }
+  }
+
+  function updateSelectionBar(){
+    if (listMode !== 'add'){ A.el.exSelectBar && (A.el.exSelectBar.style.display='none'); return; }
+    ensureSelectionBar();
+    const has = selection.size > 0;
+    A.el.exSelectBar.style.display = has ? 'block' : 'none';
+    if (A.el.btnAddSelected){
+      A.el.btnAddSelected.textContent = has
+        ? `Ajouter les exercices (${selection.size})`
+        : 'Ajouter les exercices';
+    }
+  }
+
   // ----- Rendu d'un item -----
   function renderItem(ex){
     const card = document.createElement('article');
@@ -40,7 +93,9 @@
     row.className = 'row between';
 
     const left = document.createElement('div');
-    left.style.display='flex'; left.style.alignItems='center';
+    left.style.display='flex';
+    left.style.alignItems='center';
+    left.style.gap='10px';
 
     // image (lazy)
     const img = document.createElement('img');
@@ -63,32 +118,36 @@
     name.className   = 'element';
     name.textContent = ex.name || '—';
 
-    // -------- Détails demandés --------
-    // ordre : Équipement (niveau fin) • Muscle ciblé, muscles secondaires (tous)
+    // Détails : Équipement (fin) • Muscle ciblé, muscles secondaires
     const details = document.createElement('div');
-
-    details.className = 'details'
+    details.className = 'details';
 
     const eq_details = (ex.equipmentGroup2 || ex.equipment || '-').toString().trim();
     const target     = (ex.muscle || ex.muscleGroup2 || ex.muscleGroup3 || '-').toString().trim();
-	const secondary  = Array.isArray(ex.secondaryMuscles) ? ex.secondaryMuscles.filter(Boolean) : [];
-	const mu_details = [target, ...secondary].filter(Boolean);
- 
-	details.textContent = `${eq_details} • ${mu_details.join(', ')}`;
-    // -----------------------------------
+    const secondary  = Array.isArray(ex.secondaryMuscles) ? ex.secondaryMuscles.filter(Boolean) : [];
+    const mu_details = [target, ...secondary].filter(Boolean);
+
+    details.textContent = `${eq_details} • ${mu_details.join(', ')}`;
 
     txtWrap.append(name, details);
     left.append(img, txtWrap);
 
-    const btn = document.createElement('button');
-    btn.className   = 'btn';
-    btn.textContent = 'Modifier ✏️';
-    btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); A.openExerciseEdit(ex.id); });
+    // Comportement selon le mode
+    if (listMode === 'add'){
+      if (selection.has(ex.id)) card.classList.add('selected');
+      card.addEventListener('click', ()=>{
+        if (selection.has(ex.id)) selection.delete(ex.id);
+        else selection.add(ex.id);
+        card.classList.toggle('selected');
+        updateSelectionBar();
+      });
+      row.append(left); // pas de bouton à droite
+    } else {
+      card.addEventListener('click', ()=> A.openExerciseRead(ex.id, 'screenExercises'));
+      row.append(left);
+    }
 
-    row.append(left, btn);
     card.appendChild(row);
-    card.addEventListener('click', ()=> btn.click()); // tout le bloc ouvre l’éditeur
-
     return card;
   }
 
@@ -122,26 +181,70 @@
       empty.className='empty';
       empty.textContent = 'Aucun exercice.';
       list.appendChild(empty);
+      updateSelectionBar();
       return;
     }
 
     for (const ex of filtered) list.appendChild(renderItem(ex));
+    updateSelectionBar();
   };
 
-  // ----- Entrée dans l’écran liste -----
-  A.openExercises = async function(){
+  /**
+   * Ouvrir la bibliothèque d’exercices
+   * @param {Object} opts
+   *   - mode: 'add' | 'view'
+   *   - from: id de l'écran appelant (ex: 'screenSessions', 'screenRoutine'…)
+   *   - onAdd: function(ids: string[])  // callback quand on confirme en mode add
+   */
+  A.openExercises = async function(opts = {}){
+    listMode = opts.mode === 'add' ? 'add' : 'view';
+    callerScreen = opts.from || 'screenExercises';
+    onAddCallback = typeof opts.onAdd === 'function' ? opts.onAdd : null;
+
     showScreen('screenExercises');
 
     // Remplir les filtres depuis CFG (G2) une seule fois
     if (!filtersInited) {
       if (A.el.exFilterGroup) fillSelect(A.el.exFilterGroup, CFG.musclesG2, 'Groupe musculaire');
       if (A.el.exFilterEquip) fillSelect(A.el.exFilterEquip, CFG.equipmentG2 || CFG.equipment, 'Matériel');
+      // handlers de filtres + recherche
+      A.el.exSearch?.addEventListener('input',  A.refreshExerciseList);
+      A.el.exFilterGroup?.addEventListener('change', A.refreshExerciseList);
+      A.el.exFilterEquip?.addEventListener('change', A.refreshExerciseList);
       filtersInited = true;
     }
+
     // Réinitialiser filtres et recherche à chaque ouverture
     if (A.el.exFilterGroup) A.el.exFilterGroup.value = '';
     if (A.el.exFilterEquip) A.el.exFilterEquip.value = '';
     if (A.el.exSearch)      A.el.exSearch.value      = '';
+
+    // Prépare barre de sélection + vide la sélection (mode add)
+    ensureSelectionBar();
+    selection.clear();
+    updateSelectionBar();
+
+    // En-tête : bouton droit “Ajouter” → création d’un exercice
+    if (!A.el.exOkList)   A.el.exOkList   = document.getElementById('exOkList');
+    if (!A.el.exBackList) A.el.exBackList = document.getElementById('exBackList');
+
+    if (A.el.exOkList){
+      A.el.exOkList.textContent = 'Créer nouveau';
+      A.el.exOkList.onclick = ()=> A.openExerciseEdit(null, 'screenExercises');
+    }
+
+    // Retour : en mode add → ne rien ajouter, revenir à l’appelant si connu
+    if (A.el.exBackList){
+      A.el.exBackList.onclick = ()=>{
+        if (listMode === 'add' && callerScreen && document.getElementById(callerScreen)){
+          for (const s of document.querySelectorAll('.screen')) s.hidden = true;
+          document.getElementById(callerScreen).hidden = false;
+        } else {
+          // fallback
+          showScreen('screenSessions');
+        }
+      };
+    }
 
     await A.refreshExerciseList();
   };
@@ -153,15 +256,8 @@
     A.el.exFilterGroup = document.getElementById('exFilterGroup');
     A.el.exFilterEquip = document.getElementById('exFilterEquip');
     A.el.exList        = document.getElementById('exList');
-
-    // bouton ajouter (éditeur)
-    const btnAdd = document.getElementById('btnExAdd');
-    if (btnAdd) btnAdd.addEventListener('click', ()=> A.openExerciseEdit(null));
-
-    // filtres
-    A.el.exSearch?.addEventListener('input',  A.refreshExerciseList);
-    A.el.exFilterGroup?.addEventListener('change', A.refreshExerciseList);
-    A.el.exFilterEquip?.addEventListener('change', A.refreshExerciseList);
+    A.el.exBackList    = document.getElementById('exBackList');
+    A.el.exOkList      = document.getElementById('exOkList');
   });
 
   function fillSelect(sel, items, placeholder){

@@ -58,6 +58,7 @@ const db = (() => {
 			r.onerror   = ()=>rej(r.error);
 		});
 	}
+	
   // Sessions
   async function getSession(date){ return get('sessions', date); }
   async function saveSession(sess){ return put('sessions', sess); }

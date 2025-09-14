@@ -1,35 +1,56 @@
-/* ===========================
-   Base & variables
-   =========================== */
-:root {
-  --bg: #ffffff;
-  --fg: #111111;
-  --muted: #777777;
-  --emphasis_back: #0f62fe;   /* Couleur d’emphase (sélection) */
-  --emphasis_text: #fff;   /* Couleur d’emphase (sélection) */
-  --line: #e8e8e8;
-  
+/* =========================================================
+   0) Variables & fondations
+   ========================================================= */
+:root{
+  /* --- Couleurs (tes variables) --- */
   --white:     #ffffff;
   --whiteB:    #f8f8f8;
   --lightGray: #e8e8e8;
-  --lightGrayB:#e4e4e4;
+  --lightGrayB:#e0e0e0;
   --darkGray:  #d4d4d4;
-  --darkGrayB: #d0d0d0;
-  --backGray:  #b3b3b3;
-  --backGrayB: #b7b7b7;
+  --darkGrayB: #ccc;
+  --backGray:  #bfbfbf;
+  --backGrayB: #bbb;
   --black:     #000000;
-  --emphase:   #000000;
+  --emphase:   #0080FF;
   --red:       #8b0000;
-  --green:     #06402b;  
+  --green:     #06402b;
+
+  /* --- Mesures unifiées --- */
+  --control-h:   44px;       /* hauteur unique pour TOUT (inputs, selects, tags, boutons, etc.) */
+  --header-h:    44px;
+  --tab-h:       48px;
+  --radius:      12px;       /* border-radius unique */
+  --pad-x:       12px;       /* padding horizontal par défaut */
+  --pad-y:       10px;       /* padding vertical par défaut */
+  --gap:         6px;        /* marge/gap par défaut entre éléments */
+
+  /* --- Typo unifiée --- */
+  --font: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  --fs-base: 15px;           /* base */
+  --fs-base: 15px;           /* base */
+  --fs-small: 13px;          /* petits textes (ex: cellules série) */
+  --fs-rpe: 13px;            /* taille spécifique RPE dans série */
+  --fw-strong: 700;
+
+  /* --- Légers helpers --- */
+  --border-default: var(--lightGrayB);
+  --border-strong:  var(--darkGrayB);
+/* Hauteurs “réelles” en tenant compte des bordures */
+  --tabbar-h: calc(var(--tab-h) + 2px);      /* 2px = border-top de .tabbar */
+  --header-total-h: calc(var(--header-h) + 2px); /* 2px = border-bottom du header/subheader */
+}
 }
 
-* { box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+/* Reset simple */
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  background: var(--backGray);          /* 4.Fond app */
+  color: var(--black);
+  font-family: var(--font);
+  font-size: var(--fs-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -38,386 +59,372 @@ body {
 .safe-top    { padding-top: env(safe-area-inset-top, 0); }
 .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 8px); }
 
-/* ===========================
-   Header (écran Séances)
-   =========================== */
-.header-session {
-  position: sticky; top: 0; z-index: 5;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid var(--line);
-}
-.header-right { display: flex; gap: 8px; }
+/* États invisibles */
+.sr-only{ position:absolute; left:-9999px; }
 
-/* ===========================
-   Zone contenu
-   =========================== */
-.content {
-  padding: 12px 12px 92px;   /* place pour la tabbar */
-  max-width: 700px;
-  margin: 0 auto;
-}
-
-/* ===========================
-   Calendrier — barre semaine
-   RÈGLES (spécification mise à jour) :
-   - Sélection (jour actif) : fond emphase
-   - Jours avec séance (passé ou futur) : fond noir
-   - Jours FUTURS prévus (plan) : fond gris
-   =========================== */
-.week-strip {
-  display: flex; gap: 8px; overflow-x: auto;
-  padding-bottom: 8px; margin-bottom: 12px;
-  border-bottom: 1px dashed var(--line);
-  -webkit-overflow-scrolling: touch;
-}
-.week-strip .day {
-  flex: 0 0 auto;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #f8f8f8;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-  transition: transform .06s ease;
-}
-.week-strip .day:active { transform: scale(0.98); }
-
-/* États — ordre visuel de priorité :
-   .selected (emphase) > .has-session (noir) > .planned (gris) */
-.week-strip .day.planned {
-  background: #dddddd;
-  color: #333;
-  border-color: #dddddd;
-}
-.week-strip .day.planned.has-session,
-.week-strip .day.has-session {
-  background: #000;
-  color: #fff;
-  border-color: #000;
-}
-.week-strip .has-session.selected, 
-.week-strip .day.planned.selected,
-.week-strip .day.selected {
-  background: var(--emphasis_back);
-  color: #fff;
-  border-color: var(--emphasis_back);
-}
-
-/* ===========================
-   Liste de la séance du jour
-   =========================== */
-.session-list { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
-.exercise-card {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px;
-  background: #fff;
-   
-}
-.exercise-card.clickable  { 
-  cursor: pointer; 
-  user-select  : none;
- }
-.row { display: flex; gap: 8px; align-items: center; }
-.row.between { justify-content: space-between; }
-.element { font-weight: 700; }
-.details { color: var(--muted); }
-
-/* Séries (3 par ligne max) */
-.set-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-top: 10px;
-}
-.set-cell {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 8px 10px;
-  text-align: center;
-}
-.set-cell sup { font-size: 0.7em; color: var(--muted); }
-
-.empty {
-  color: var(--muted);
-  border: 1px dashed var(--line);
-  border-radius: 10px;
-  padding: 12px;
-  text-align: center;
-}
-
-/* ===========================
-   Bibliothèque d'exercices
-   =========================== */
-.exercise-row {
-  display:grid;
-  grid-template-columns: 64px 1fr auto;
-  gap:10px; align-items:center;
-  padding:8px 0; border-bottom:1px solid var(--line);
-}
-.exercise-row img {
-  width:64px; height:64px; object-fit:cover; background:#eee; border-radius:8px;
-}
-
-.tags {
+/* Ecran */
+.screen {
   display: flex;
-  flex-wrap: wrap;
-  column-gap: 1px;
-  row-gap:    4px;
+  flex-direction: column;
+  min-height: 100svh;
+  background: var(--backGray); /* fond global */
+}
+.screen[hidden] { display: none !important; }
+/* Paneau de contenu */
+.content {
+  flex: 1;
+  background: var(--whiteB);                /* panneau blanc */
+  border: 1px solid var(--lightGrayB);
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  margin-left: auto;                       /* centré horizontalement */
+  margin-right: auto;                      /* centré horizontalement */
+  width: 96%;                              /* largeur proportionnelle */
+  max-width: 700px;                        /* limite max sur grands écrans */
+  min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
 }
 
-.tag {
-  display: inline-block;
-  padding: 6px 10px;
-  margin: 4px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  cursor: pointer;
+/* Grilles utilitaires */
+.row{ display:flex; align-items:center; gap:var(--gap); }
+.row.between{ justify-content:space-between; }
+.full{ width:100%; }
+.flex-1{ flex:1; }
+  
+/* Détails textes (gris) */
+.details{ color: var(--darkGrayB); }            /* 3.Texte détails */
+
+
+
+/* =========================================================
+   1) En-têtes & panneaux
+   ========================================================= */
+/* Header principal / Sous-header : fond blanc + bordure */
+.header-session,
+.subheader{
+  position: sticky; top: 0; left:0; right:0; z-index: 5;
+  display:flex; align-items:center; justify-content:space-between;
+  padding: var(--pad-y) var(--pad-x);
+  background: var(--white);                     /* 4.Header blanc */
+  border-bottom: 2px solid var(--whiteB);       /* 4.Bordure basse whiteB */
+}
+.subheader{ z-index:4; }
+.subheader .title{ font-weight: var(--fw-strong); }
+
+/* =========================================================
+   2) Tab bar (bas)
+   ========================================================= */
+.tabbar{
+  position:fixed; bottom:0; left:0; right:0; z-index:10;
+  height: var(--tab-h);
+  display:flex;
+  gap: 0;
+  padding: 0;
+  background: var(--white);                     /* 4.Tab bar fond blanc */
+  border-top: 2px solid var(--whiteB);          /* 4.Bordure haute whiteB */
+}
+.tab{
+  flex: 1 1 25%;
+  height: 100%;
+  box-sizing: border-box;
+  font-size: 32px;
+  display:flex; align-items:center; justify-content:center;
+  padding: 0 var(--pad-x);
+  background: transparent;
+  border:3px solid transparent;
+  cursor:pointer;
   user-select: none;
-  background: #f9f9f9;
-  color: #333;
+}
+.tab.active{
+  border-top: 3px solid var(--emphase);         /* 4.Onglet actif bordure haute emphase */
 }
 
-.tag.selected {
-  background: var(--emphasis_back, #666);
-  border-color: var(--emphasis_back, #666);
-  color: var(--emphasis_text, #fff);;
-}
-
-.hint {
-  margin-top: 6px;
-  color: #666;
-  font-size: 0.9em;
-}
-/* ===========================
-   Actions d’ajout
-   =========================== */
-.add-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
-.full { width: 100%; }
-.flex-1 { flex: 1; }
-
-/* ===========================
-   Inputs & Buttons
-   =========================== */
-.input {
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #f6f6f6;
+/* =========================================================
+   3) Contrôles unifiés (inputs, selects, tags, listes)
+   ========================================================= */
+/* Base champs & listes */
+.input, select, textarea{
+  height: var(--control-h);
+  width: 100%;
+  padding: 0 var(--pad-x);
+  border-radius: var(--radius);
+  border: 1px solid var(--lightGrayB);
+  background: var(--lightGray);                 /* 4.Saisie fond lightGray */
+  color: var(--black);
   font-weight: 600;
 }
 
-.btn {
-  padding      : 10px 10px;
-  border       : 1px solid #222;
-  background   : #fff;
-  border-radius: 10px;
-  font-weight  : 700;
-  cursor       : pointer;
-  user-select  : none;
-}
-.btn[disabled] { opacity: .5; cursor: not-allowed; border-color: #aaa; }
-.btn.primary   { border-color: var(--emphasis_back); color: var(--emphasis_back); }
-.btn.ghost     { border-color: transparent;     color: var(--emphasis_back); background: transparent; }
-
-/* ===========================
-   Screen Reader Only
-   =========================== */
-   .sr-only       { position: absolute; left: -9999px; }
-
-/* ===========================
-   Tab bar (barre d’onglets fixe bas)
-   =========================== */
-.tabbar {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
-  display: flex; justify-content: space-around; gap: 8px;
-  padding: 8px 12px;
-  border-top: 1px solid var(--line);
-  background: #fff;
-}
-.tab {
-  font-size: 22px;
-  padding: 10px 12px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-.tab.active {
-  outline: 2px solid var(--emphasis_back);
-  border-radius: 12px;
+/* Placeholder / valeur par défaut en gris */
+.input::placeholder,
+select:has(option:checked[value=""]) ,
+textarea:placeholder-shown{
+  color: var(--darkGrayB);                      /* 3.Texte de champ vide/défaut */
 }
 
-/* ===========================
-   Modale "Navigation rapide" (calendrier mensuel)
-   =========================== */
-.modal {
-  border: none;
-  border-radius: 14px;
-  padding: 0;
-  max-width: 420px;
-  width: 90vw;
+/* Focus/actif -> fond gris + bordure strong */
+.input:focus,
+select:focus,
+textarea:focus{
+  outline: none;
+  border-color: var(--darkGrayB);
+  background: var(--darkGray);                  /* 4.Change en darkGray quand sélectionné */
 }
-.modal::backdrop { background: rgba(0,0,0,.25); }
-.modal-header {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 14px; border-bottom: 1px solid var(--line);
-}
-.big-calendar { padding: 12px; }
 
-.month-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+/* Valeur définie (non vide) — forcer style “défini” */
+.has-value{
+  border-color: var(--darkGrayB);
+  background: var(--darkGray);
+  color: var(--black);
 }
-.dow {
-  text-align: center;
-  color: var(--muted);
-  font-weight: 700;
+
+/* Textarea plus haut (instructions) */
+textarea{
+  height: calc(var(--control-h) * 2);           /* 2x plus haut par défaut */
+  padding-top: 8px;
+  padding-bottom: 8px;
+  resize: vertical;
 }
-.day-cell {
-  padding: 8px 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fafafa;
-  cursor: pointer;
-  user-select: none;
+
+/* Grosse image pour l'exécution */
+image_big{
+	 width:100%;
+	 height:auto;
+	 max-height:320px;
+	 object-fit:cover;
+	 border-radius:12px;
+	 border:1px solid var(--lightGrayB);
+	 background:var(--lightGray);
+}
+
+/* Panneaux/cartes (listes, cartes) */
+.panel,
+.exercise-card{
+  background: var(--white);                     /* 4.Panneaux blancs */
+  border: 1px solid var(--whiteB);              /* 4.Bordure whiteB */
+  border-radius: var(--radius);
+  padding: var(--pad-y) var(--pad-x);
+}
+.exercise-card.clickable{ cursor:pointer; user-select:none; }
+
+
+/* =========================================================
+   4) Tags (sélecteurs multi/single)
+   ========================================================= */
+.tags{
+  display:flex; flex-wrap:wrap;
+  gap: 1px;                                    /* UN seul pixel d’écart */
+}
+.tag{
+  height: var(--control-h);
+  display:inline-flex; align-items:center; justify-content:center;
+  padding: 0 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--lightGrayB);
+  background: var(--lightGray);
+  color: var(--darkGrayB);                      /* 3.Texte gris pour “non sélectionné” */
+  user-select:none;
+  cursor:pointer;
+}
+.tag.selected{
+  border-color: var(--darkGrayB);
+  background: var(--darkGray);                  /* 6.Tag cliqué */
+  color: var(--black);
+}
+
+/* =========================================================
+   5) Boutons
+   ========================================================= */
+.btn{
+  height: var(--control-h);
+  display:inline-flex; align-items:center; justify-content:center;
+  padding: 0 var(--pad-x);
+  border-radius: var(--radius);
+  border: 1px solid var(--black);               /* 5.Autres: bordure noire */
+  color: var(--emphase);                        /* 5.Autres: texte emphase */
+  font-weight: var(--fw-strong);
+  cursor:pointer; user-select:none;
+}
+
+/* En-tête RETOUR */
+.btn.ghost{
+  border-color: var(--darkGrayB);
+  color: var(--darkGrayB);
+}
+
+/* En-tête OK */
+.btn.primary{
+  border-color: var(--emphase);
+  color: var(--emphase);
+}
+
+/* Supprimer */
+.btn.danger{
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* Image cliquable (ex: preview) */
+.btn.image{
+  border-color: var(--black);                   /* 5.Image cliquable : bordure noire */
+}
+
+/* Disabled */
+.btn[disabled]{ opacity:.5; cursor:not-allowed; }
+
+/* =========================================================
+   6) Listes / Filtres (écran Bibliothèque)
+   ========================================================= */
+.list.cards{ display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }
+.filters{    display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }
+.form{       display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }
+.lbl{ font-weight: var(--fw-strong); }
+.listing{ margin: 0; font-weight: var(--fw-strong); padding-left: 0; list-style-position: inside; }
+.hint{ margin-top:6px; color: var(--darkGrayB); font-size: var(--fs-small); }
+/* Placeholders d’images */
+.exercise-row{
+  display:grid; grid-template-columns: 64px 1fr auto;
+  gap:10px; align-items:center;
+  padding:8px 0; border-bottom:1px solid var(--whiteB);
+}
+.exercise-row img{
+  width:64px; height:64px; object-fit:cover; border-radius:8px; background: var(--lightGray);
+}
+
+/* =========================================================
+   7) Semaine & calendrier
+   ========================================================= */
+.week-strip{
+  display:flex; gap:var(--gap); overflow-x:auto;
+  padding-bottom:8px; margin-bottom:12px;
+  border-bottom:1px dashed var(--whiteB);
+  -webkit-overflow-scrolling:touch;
+}
+.week-strip .day{
+  height: var(--control-h);
+  display:flex; align-items:center; justify-content:center;
+  padding: 0 var(--pad-x);
+  border:1px solid var(--whiteB);
+  border-radius: var(--radius);
+  background: var(--whiteB);
+  font-weight: var(--fw-strong);
+  user-select:none; cursor:pointer;
   transition: transform .06s ease;
 }
-.day-cell:active { transform: scale(0.98); }
+.week-strip .day:active{ transform: scale(.98); }
 
-/* États pour la grille mensuelle — mêmes règles que la semaine */
-.day-cell.planned {
-  background: #dddddd;
-  color: #333;
-  border-color: #dddddd;
+/* Règles de priorité: selected > has-session > planned */
+.week-strip .day.planned{
+  background: var(--backGrayB); color: #333; border-color: var(--backGrayB);
 }
-.day-cell.planned.has-session,
-.day-cell.has-session {
-  background: #000;
-  color: #fff;
-  border-color: #000;
+.week-strip .day.has-session{
+  background: var(--black); color:#fff; border-color: var(--black);
 }
-.day-cell.has-session.selected,
-.day-cell.planned.selected,
-.day-cell.selected {
-  background: var(--emphasis_back);
-  color: #fff;
-  border-color: var(--emphasis_back);
+.week-strip .day.selected{
+  background: var(--emphase); color:#fff; border-color: var(--emphase);
 }
 
-/* Sous-entête (titre + retour/OK) */
-.subheader{
-  position: sticky; top: 0; z-index: 4;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:10px 12px; background:#fff; border-bottom:1px solid var(--line);
+/* Modale calendrier */
+.modal{
+  border:none; border-radius:14px; padding:0;
+  max-width:420px; width:90vw;
 }
-.subheader .title{ font-size:1.1rem; font-weight:800; }
-
-/* Listes cartes (bibliothèque) */
-.list.cards{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
-
-/* Zone filtres / formulaire */
-.filters{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
-.form{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
-.lbl{ font-weight:700; }
-
-
-
-
-/* Cacher/montrer “écrans” (sections dédiées) */
-.screen[hidden]{ display:none !important; }
-
-/* ===========================
-   Edition de séries
-   =========================== */
-/* 3.4.2 — Grille d’édition Colonne A */
-.exec-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1.2fr 0.8fr 0.8fr auto; /* Reps | Poids | RPE | Repos | Action */
-  gap: 8px;
-  text-align: center;      /* tout centré */
-  align-items: center;
-  margin-top: 8px;
+.modal::backdrop{ background: rgba(0,0,0,.25); }
+.modal-header{
+  display:flex; justify-content:space-between; align-items:center;
+  padding: var(--pad-y) var(--pad-x);
+  border-bottom:1px solid var(--whiteB);
 }
-.exec-head { font-weight: 700; }
-.exec-row .input { 
-   text-align: center;
-   width: 100%; 
-   margin: 0;              /* plus de marge */
-   padding: 6px 8px;       /* inputs compacts */
+.big-calendar{ padding: var(--pad-y); }
+.month-grid{ display:grid; grid-template-columns: repeat(7,1fr); gap:6px; }
+.dow{ text-align:center; color: var(--darkGrayB); font-weight: var(--fw-strong); }
+.day-cell{
+  padding:8px 0; border:1px solid var(--whiteB); border-radius:8px;
+  background:#fafafa; cursor:pointer; user-select:none;
+  transition: transform .06s ease;
 }
+.day-cell:active{ transform: scale(.98); }
+.day-cell.planned{ background: var(--backGrayB); color:#333; border-color: var(--backGrayB); }
+.day-cell.has-session{ background: var(--black); color:#fff; border-color: var(--black); }
+.day-cell.selected{ background: var(--emphase); color:#fff; border-color: var(--emphase); }
 
-/* Stepper vertical pour Reps & Poids */
-.vstepper {
-  display:flex;
-  flex-direction:column;
-  align-items:stretch;
-  gap:4px;
+/* =========================================================
+   8) Séance du jour & séries
+   ========================================================= */
+.session-list{ display:flex; flex-direction:column; gap:12px; margin:16px 0; }
+.element{ font-weight: var(--fw-strong); }
+
+/* Grille des séries (3 par ligne) */
+.set-grid{
+  display:grid; grid-template-columns: repeat(3,1fr);
+  gap: var(--gap); margin-top: var(--gap);
 }
-.vstepper .btn {
-  padding:6px 8px;
-  min-height:32px;
-  line-height:1;
-}
-
-/* Supprimer les flèches natives des <input type=number> */
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-input[type="number"] { -moz-appearance: textfield; }
-
-/* RPE code couleur (inchangé) */
-.rpe-chip{
-  display:inline-block; padding:4px 8px; border-radius:999px; font-weight:700;
-  color:#fff; font-size:0.9em;
-}
-.rpe-5{ background:#3a7; }
-.rpe-6{ background:#3c8; }
-.rpe-7{ background:#6c6; }
-.rpe-8{ background:#c93; }
-.rpe-9{ background:#d55; }
-.rpe-10{ background:#a00; }
-
-/* Champ Repos centré et étroit */
-.exec-row input[placeholder="mm:ss"] {
+.set-cell{
+  border:1px solid var(--whiteB);
+  border-radius: var(--radius);
+  padding: 8px 10px;
   text-align:center;
-  max-width:90px;
-  margin: 0 auto;
+  font-size: var(--fs-small);                 /* 3.Texte plus petit */
+}
+.set-cell sup{ font-size:.7em; color: var(--darkGrayB); }
+.set-cell .rpe{ font-size: var(--fs-rpe); }   /* 3.RPE a sa propre taille */
+
+/* État “vide” */
+.empty{
+  color: var(--darkGrayB);
+  border:1px dashed var(--whiteB);
+  border-radius: var(--radius);
+  padding: 12px; text-align:center;
 }
 
-/* Champ RPE plus étroit */
-.rpe-wrap .input {
-  max-width:70px;
-  margin:0 auto;
+/* =========================================================
+   9) Édition exécution (Colonne A) & Timer
+   ========================================================= */
+.exec-grid{
+  display:grid; gap:8px; margin-top:8px;
+  grid-template-columns: 1.2fr 1.2fr .8fr .8fr auto; /* Reps | Poids | RPE | Repos | Action */
+  text-align:center; align-items:center;
+}
+.exec-head{ font-weight: var(--fw-strong); }
+.exec-row .input{
+  height: var(--control-h); width:100%;
+  text-align:center; margin:0; padding:0 8px;
 }
 
-/* Timer bar */
+/* Stepper vertical */
+.vstepper{ display:flex; flex-direction:column; gap:4px; }
+.vstepper .btn{ min-height:32px; line-height:1; }
+
+/* number sans flèches natives */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+input[type="number"]{ -moz-appearance:textfield; }
+
+/* RPE chips (couleurs existantes) */
+.rpe-chip{ display:inline-block; padding:4px 8px; border-radius:999px; color:#fff; font-weight: var(--fw-strong); font-size:.9em; }
+.rpe-5{ background:#3a7; } .rpe-6{ background:#3c8; } .rpe-7{ background:#6c6; }
+.rpe-8{ background:#c93; } .rpe-9{ background:#d55; } .rpe-10{ background:#a00; }
+
+/* Champs spécifiques */
+.exec-row input[placeholder="mm:ss"]{ text-align:center; max-width:90px; margin:0 auto; }
+.rpe-wrap .input{ max-width:70px; margin:0 auto; }
+
+/* Timer bas */
 .exec-timer{
   position:sticky; bottom:0; z-index:5;
   display:grid; grid-template-columns: 1fr 2fr 1fr;
   align-items:center; gap:8px;
-  padding:10px 12px; background:#fff; border-top:1px solid var(--line);
+  padding:10px 12px;
+  background: var(--white);
+  border-top:1px solid var(--whiteB);
 }
-.exec-timer .tmr-center{
-  display:flex; align-items:center; justify-content:center; gap:10px;
-}
-.tmr-display{ font-weight:800; min-width:76px; text-align:center; }
+.exec-timer .tmr-center{ display:flex; align-items:center; justify-content:center; gap:10px; }
+.tmr-display{ font-weight: var(--fw-strong); min-width:76px; text-align:center; }
+.exec-timer .btn.ghost{ border:1px solid var(--whiteB); }
 
-/* Bordures autour des boutons -10s / +10s */
-.exec-timer .btn.ghost {
-  border:1px solid var(--line);
-  border-radius:10px;
-}
-
-/* Bouton pleine largeur (Repos / Reprendre une série) */
-.add-actions .btn.full{ width:100%; }
-
-
-/* ===========================
-   Petites responsivités
-   =========================== */
-@media (min-width: 720px) {
-  .content { padding-left: 16px; padding-right: 16px; }
+/* =========================================================
+   10) Responsivité
+   ========================================================= */
+@media (min-width: 720px){
+  .content{ padding-left:16px; padding-right:16px; }
 }
