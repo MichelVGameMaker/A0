@@ -171,8 +171,9 @@
 
         const button = document.createElement('button');
         button.id = 'btnAddSelected';
-        button.className = 'btn primary full';
-        button.textContent = 'Ajouter les exercices';
+        button.className = 'btn full';
+        button.disabled = true;
+        button.textContent = 'Ajouter 0 exercice(s)';
         button.addEventListener('click', () => {
             if (!state.selection.size) {
                 return;
@@ -191,17 +192,19 @@
     }
 
     function updateSelectionBar() {
-        if (state.listMode !== 'add' || !refs.exSelectBar) {
-            refs.exSelectBar?.classList.add('hidden');
+        if (!refs.exSelectBar) {
             return;
         }
-        const hasSelection = state.selection.size > 0;
-        refs.exSelectBar.classList.toggle('hidden', !hasSelection);
-        if (refs.btnAddSelected) {
-            refs.btnAddSelected.textContent = hasSelection
-                ? `Ajouter les exercices (${state.selection.size})`
-                : 'Ajouter les exercices';
+        const isAddMode = state.listMode === 'add';
+        refs.exSelectBar.classList.toggle('hidden', !isAddMode);
+        if (!isAddMode || !refs.btnAddSelected) {
+            return;
         }
+
+        const count = state.selection.size;
+        refs.btnAddSelected.disabled = count === 0;
+        refs.btnAddSelected.classList.toggle('primary', count > 0);
+        refs.btnAddSelected.textContent = `Ajouter ${count} exercice(s)`;
     }
 
     function renderItem(exercise) {
@@ -263,6 +266,7 @@
             });
             row.append(left);
         } else {
+            card.classList.add('clickable');
             card.addEventListener('click', () => {
                 A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
             });
