@@ -1,241 +1,262 @@
 // ui-exercise-edit.js — 3.1.2 Ajouter / Modifier un exercice
+(() => {
+    const A = window.App;
 
-(function(){
-  const A = window.App;
+    /* STATE */
+    const refs = {};
+    let refsResolved = false;
+    const state = { currentId: null, callerScreen: 'screenExercises' };
 
-  let currentId = null;       // null = ajout
-  let callerScreen = null;    // mémorise l'écran d'origine
+    /* WIRE */
+    document.addEventListener('DOMContentLoaded', () => {
+        ensureRefs();
+        assertRefs();
+        populateSelectors();
+        wireForm();
+    });
 
-	/*	=======================================================
-		================   SECTION DONNNES   ==================
-		======================================================= */
-	A.openExerciseEdit = async function(id, from){
-		
-		ensureRefs();
-		if (!assertRefs()) return;
-		currentId    = id || null;
-		callerScreen = from || 'screenExercises'; // par défaut
+    /* ACTIONS */
+    /**
+     * Ouvre l'écran d'édition d'exercice.
+     * @param {{currentId?: string|null, callerScreen?: string}} [options] Contexte d'ouverture.
+     * @returns {Promise<void>} Promesse résolue après affichage.
+     */
+    A.openExerciseEdit = async function openExerciseEdit(options = {}) {
+        const { currentId = null, callerScreen = 'screenExercises' } = options;
+        ensureRefs();
+        assertRefs();
 
-		// entête
-		document.getElementById('exEditTitle').textContent = currentId ? 'Modifier' : 'Ajouter';
-		// bouton supprimer visible seulement en modification
-		document.getElementById('exEditDelete').style.display = currentId ? 'inline-block' : 'none';
+        state.currentId = currentId;
+        state.callerScreen = callerScreen;
 
-		// remplir depuis la base de données si modification
-		if (currentId) {
-			
-			const ex = await db.get('exercises', currentId);
-			if (!ex) return alert('Exercice introuvable.');
-			
-			// Champs simples
-			A.el.exName.value          = ex.name || '';
-			A.el.exTargetMuscle.value  = ex.muscle || '';
-			A.el.exImage.value   = ex.image || '';
-			A.el.exInstr.value   = Array.isArray(ex.instructions) ? ex.instructions.join('\n') : '';
+        refs.exEditTitle.textContent = currentId ? 'Modifier' : 'Ajouter';
+        refs.exEditDelete.hidden = !currentId;
 
-			// Info groupes (g1•g2•g3)
-			const mu = CFG.decodeMuscle(A.el.exTargetMuscle.value);
-			if (A.el.exGroupInfo) A.el.exGroupInfo.textContent = [mu.g1, mu.g2, mu.g3].filter(Boolean).join(' • ');
+        if (currentId) {
+            const exercise = await db.get('exercises', currentId);
+            if (!exercise) {
+                alert('Exercice introuvable.');
+                return;
+            }
+            refs.exName.value = exercise.name || '';
+            refs.exTargetMuscle.value = exercise.muscle || '';
+            refs.exImage.value = exercise.image || '';
+            refs.exInstr.value = Array.isArray(exercise.instructions)
+                ? exercise.instructions.join('\n')
+                : '';
+            updateGroupInfo();
+            unselectAllTags(refs.exEquip);
+            setSelectedTags(refs.exEquip, exercise.equipmentGroup2 || exercise.equipment);
+            unselectAllTags(refs.exSecMuscles);
+            setSelectedTags(refs.exSecMuscles, exercise.secondaryMuscles);
+        } else {
+            refs.exName.value = '';
+            refs.exTargetMuscle.value = '';
+            refs.exImage.value = '';
+            refs.exInstr.value = '';
+            unselectAllTags(refs.exEquip);
+            unselectAllTags(refs.exSecMuscles);
+            refs.exGroupInfo.textContent = '';
+        }
 
-		// Matériel (tags)
-		unselectAllTags(A.el.exEquip);
-		setSelectedTags(A.el.exEquip, ex.equipmentGroup2 || ex.equipment);
+        switchScreen('screenExerciseEdit');
+    };
 
-		// Muscles secondaires (tags)
-		unselectAllTags(A.el.exSecMuscles);
-		setSelectedTags(A.el.exSecMuscles, ex.secondaryMuscles);
+    /* UTILS */
+    function ensureRefs() {
+        if (refsResolved) {
+            return refs;
+        }
+        refs.screenExercises = document.getElementById('screenExercises');
+        refs.screenExerciseRead = document.getElementById('screenExerciseRead');
+        refs.screenExerciseEdit = document.getElementById('screenExerciseEdit');
+        refs.screenSessions = document.getElementById('screenSessions');
+        refs.screenExecEdit = document.getElementById('screenExecEdit');
+        refs.exEditTitle = document.getElementById('exEditTitle');
+        refs.exEditDelete = document.getElementById('exEditDelete');
+        refs.exEditBack = document.getElementById('exEditBack');
+        refs.exEditOk = document.getElementById('exEditOk');
+        refs.exName = document.getElementById('exName');
+        refs.exTargetMuscle = document.getElementById('exTargetMuscle');
+        refs.exGroupInfo = document.getElementById('exGroupInfo');
+        refs.exEquip = document.getElementById('exEquip');
+        refs.exSecMuscles = document.getElementById('exSecMuscles');
+        refs.exImage = document.getElementById('exImage');
+        refs.exInstr = document.getElementById('exInstr');
+        refsResolved = true;
+        return refs;
+    }
 
-	  
-		} else {
-			
-			// Champs simples
-			A.el.exName.value         = '';
-			A.el.exTargetMuscle.value = '';
-			A.el.exImage.value        = '';
-			A.el.exInstr.value        = '';	
-			
-			// Matériel (checklist)
-			unselectAllTags(A.el.exEquip);
-			
-			// Muscles secondaires (checklist)
-			unselectAllTags(A.el.exSecMuscles);
-			
-			// Info groupes (g1•g2•g3)
-			if (A.el.exGroupInfo) A.el.exGroupInfo.textContent = '';
-			
-		}
+    function assertRefs() {
+        ensureRefs();
+        const required = [
+            'screenExercises',
+            'screenExerciseEdit',
+            'exEditTitle',
+            'exEditDelete',
+            'exEditBack',
+            'exEditOk',
+            'exName',
+            'exTargetMuscle',
+            'exGroupInfo',
+            'exEquip',
+            'exSecMuscles',
+            'exImage',
+            'exInstr'
+        ];
+        const missing = required.filter((key) => !refs[key]);
+        if (missing.length) {
+            throw new Error(`ui-exercise-edit.js: références manquantes (${missing.join(', ')})`);
+        }
+        return refs;
+    }
 
-		showScreen('screenExerciseEdit');
-	};
+    function populateSelectors() {
+        const muscleKeys = Object.keys(CFG.muscleTranscode).sort();
+        fillTags(refs.exEquip, CFG.equipment);
+        fillSelect(refs.exTargetMuscle, muscleKeys, 'Choisir…');
+        fillTags(refs.exSecMuscles, muscleKeys);
+    }
 
-	/*	=======================================================
-		==================   SECTION WIRE   ===================
-		======================================================= */
-	document.addEventListener('DOMContentLoaded', ()=>{
-		// Références au DOMContentLoaded
-		ensureRefs();
+    function wireForm() {
+        refs.exTargetMuscle.addEventListener('change', updateGroupInfo);
+        refs.exEditBack?.addEventListener('click', async () => {
+            if (state.callerScreen === 'screenExerciseRead' && state.currentId) {
+                await A.openExerciseRead({ currentId: state.currentId, callerScreen: 'screenExercises' });
+            } else {
+                await A.openExercises({ callerScreen: 'screenExerciseEdit' });
+            }
+        });
+        refs.exEditOk?.addEventListener('click', () => {
+            void save();
+        });
+        refs.exEditDelete?.addEventListener('click', () => {
+            void removeExercise();
+        });
+    }
 
-		// Remplir les listes depuis le fichier CFG
-		const MUSCLE_KEYS = Object.keys(CFG.muscleTranscode).sort();
-		fillTags(A.el.exEquip, CFG.equipment);
-		fillSelect(A.el.exTargetMuscle, MUSCLE_KEYS, 'Choisir…');
-		fillTags(A.el.exSecMuscles, MUSCLE_KEYS);
+    async function removeExercise() {
+        if (!state.currentId) {
+            return;
+        }
+        if (!confirm('Supprimer cet exercice ?')) {
+            return;
+        }
+        await db.del('exercises', state.currentId);
+        await A.openExercises({ callerScreen: 'screenExerciseEdit' });
+    }
 
-		// Mettre à jour les champs calculés en cas de modification
-		A.el.exTargetMuscle.addEventListener('change', ()=>{
-			const val = A.el.exTargetMuscle.value;
-			const mu  = CFG.decodeMuscle(val);
-			A.el.exGroupInfo.textContent = [mu.g1, mu.g2, mu.g3].filter(Boolean).join(' • ');
-		});
+    async function save() {
+        assertRefs();
+        const name = refs.exName.value.trim();
+        const targetRaw = refs.exTargetMuscle.value;
+        const eqList = getSelectedTags(refs.exEquip);
+        if (!name || !targetRaw || eqList.length === 0) {
+            alert('Les champs Nom, Muscle ciblé et Matériel sont requis.');
+            return;
+        }
 
-		// Activer les boutons 
-		document.getElementById('exEditBack')?.addEventListener('click', async ()=>{
-			if (callerScreen === 'screenExerciseRead' && currentId){
-				A.openExerciseRead(currentId);   // retour à la fiche
-			} else {
-				A.openExercises();               // retour à la liste
-			}
-		});
-		document.getElementById('exEditOk').addEventListener('click', save);
-		document.getElementById('exEditDelete').addEventListener('click', remove);
-	});
+        const secondary = getSelectedTags(refs.exSecMuscles);
+        const instructions = (refs.exInstr.value || '')
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean);
+        const image = (refs.exImage.value || '').trim() || null;
 
-	/*	=======================================================
-		=================   SECTION ACTION   ==================
-		======================================================= */
-	function showScreen(id){
-		for (const s of document.querySelectorAll('.screen')) s.hidden = true;
-		document.getElementById(id).hidden = false;
-	}	
-	// Supprimer
-	async function remove(){
-		if (!currentId) return;
-		if (!confirm('Supprimer cet exercice ?')) return;
-		await db.del('exercises', currentId);
-		await A.openExercises();
-	}
-	// Enregistrer (OK)
-	async function save(){
-		ensureRefs();
-		if (!assertRefs()) return;
+        const muscle = CFG.muscleTranscode[String(targetRaw).trim().toLowerCase()] || {};
+        const exercise = {
+            id: state.currentId || `ex_${Date.now()}`,
+            name,
+            muscle: targetRaw,
+            muscleGroup1: muscle.g1 || null,
+            muscleGroup2: muscle.g2 || null,
+            muscleGroup3: muscle.g3 || null,
+            equipment: eqList,
+            equipmentGroup2: eqList,
+            secondaryMuscles: secondary,
+            instructions,
+            image,
+            bodyPart: muscle.g1 || null
+        };
 
-		const name      = A.el.exName.value.trim();
-		const targetRaw = A.el.exTargetMuscle.value
-		const eqList    = getSelectedTags(A.el.exEquip);
-		
-		if (!name || !targetRaw || eqList.length === 0) {
-			alert('Les champs Nom, Muscle ciblé et Matériel sont requis.');
-			return;
-		}
+        await db.put('exercises', exercise);
+        if (state.callerScreen === 'screenExerciseRead' && exercise.id) {
+            await A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
+        } else {
+            await A.openExercises({ callerScreen: 'screenExerciseEdit' });
+        }
+    }
 
-		const secondary = getSelectedTags(A.el.exSecMuscles);
-		const instructions = (A.el.exInstr.value || '')
-		.split(/\r?\n/)
-		.map(s=>s.trim())
-		.filter(Boolean);
-	
-		const image = (A.el.exImage.value || '').trim() || null;
-		
-		const mu = CFG.muscleTranscode[String(targetRaw).trim().toLowerCase()] || {};
-		const bodyPart = mu.g1 || null;   // <- pas de mapping externe : on prend g1
-	
-		const obj = {
-			id: currentId || `ex_${Date.now()}`,
-			name,
-			// champ brut et calculs des groupes
-			muscle      : targetRaw,
-			muscleGroup1: mu.g1 || null,
-			muscleGroup2: mu.g2 || null,
-			muscleGroup3: mu.g3 || null,
-			// champ brut et calculs des groupes
-			equipment      : eqList,
-			equipmentGroup2: eqList,
-			// champ brut
-			secondaryMuscles: secondary,
-			instructions,
-			image,
-			bodyPart
-		};
+    function updateGroupInfo() {
+        const value = refs.exTargetMuscle.value;
+        const muscle = CFG.decodeMuscle(value);
+        refs.exGroupInfo.textContent = [muscle.g1, muscle.g2, muscle.g3].filter(Boolean).join(' • ');
+    }
 
-	  await db.put('exercises', obj);
-		if (callerScreen === 'screenExerciseRead' && obj.id){
-			await A.openExerciseRead(obj.id);   // revient à la fiche lecture
-		} else {
-			await A.openExercises();            // revient à la liste
-		}
-	}
-	
-	/*	=======================================================
-		=================   SECTION UTILS   ===================
-		======================================================= */
-	// Valider les données
-	function ensureRefs(){
-	  // Si déjà branché, on sort
-	  if (A.el && A.el.exName) return;
-	  A.el                = A.el || {};
-	  A.el.exName         = document.getElementById('exName');
-	  A.el.exEquip        = document.getElementById('exEquip');
-	  A.el.exTargetMuscle = document.getElementById('exTargetMuscle');   // Muscle ciblé
-	  A.el.exGroupInfo    = document.getElementById('exGroupInfo')
-	  A.el.exSecMuscles   = document.getElementById('exSecMuscles');
-	  A.el.exImage        = document.getElementById('exImage');
-	  A.el.exInstr        = document.getElementById('exInstr');
-	}
-	// Vérifier que tout est bien présent
-	function assertRefs(){
-		const must = ['exName','exTargetMuscle','exGroupInfo','exEquip','exSecMuscles','exImage','exInstr'];
-		const missing = must.filter(k => !A.el[k]);
-		if (missing.length){
-			console.error('Champs manquants dans le DOM:', missing);
-			alert('Formulaire incomplet dans le HTML. Manque: ' + missing.join(', '));
-			return false;
-		}
-		return true;
-	}
-	// Remplir une liste déroulante
-	function fillSelect(sel, items, placeholder){
-		sel.innerHTML = '';
-		if (placeholder && !sel.multiple) {
-			const o0 = document.createElement('option');
-			o0.value=''; o0.textContent = placeholder;
-			sel.appendChild(o0);
-		}
-		for (const v of items){
-			const o = document.createElement('option');
-			o.value = v;
-			o.textContent = v;
-			sel.appendChild(o);
-		}
-	}
-	// Remplir une liste de tags
-	function fillTags(container, items){
-		container.innerHTML = '';
-		for (const v of items){
-			const tag = document.createElement('span');
-			tag.className = 'tag';
-			tag.textContent = v;
-			tag.dataset.value = v;
-			tag.addEventListener('click', ()=>{
-				tag.classList.toggle('selected');
-			});
-			container.appendChild(tag);
-		}
-	}
-	// Tags
-	function getSelectedTags(container){
-		return Array.from(container.querySelectorAll('.tag.selected'))
-					.map(el => el.dataset.value);
-	}
-	function unselectAllTags(container){
-		container.querySelectorAll('.tag').forEach(el => el.classList.remove('selected'));
-	}
-	function setSelectedTags(container, values){
-		if (!values) return;
-		const arr = Array.isArray(values) ? values : [values];
-		const set = new Set(arr);
-		container.querySelectorAll('.tag').forEach(tag => {
-			if (set.has(tag.dataset.value)) tag.classList.add('selected');
-		});
-	}
+    function fillSelect(select, items, placeholder) {
+        select.innerHTML = '';
+        if (placeholder && !select.multiple) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = placeholder;
+            select.appendChild(option);
+        }
+        items.forEach((value) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+        });
+    }
 
+    function fillTags(container, items) {
+        container.innerHTML = '';
+        items.forEach((value) => {
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = value;
+            tag.dataset.value = value;
+            tag.addEventListener('click', () => {
+                tag.classList.toggle('selected');
+            });
+            container.appendChild(tag);
+        });
+    }
+
+    function getSelectedTags(container) {
+        return Array.from(container.querySelectorAll('.tag.selected')).map((element) => element.dataset.value);
+    }
+
+    function unselectAllTags(container) {
+        container.querySelectorAll('.tag').forEach((element) => element.classList.remove('selected'));
+    }
+
+    function setSelectedTags(container, values) {
+        if (!values) {
+            return;
+        }
+        const arr = Array.isArray(values) ? values : [values];
+        const set = new Set(arr);
+        container.querySelectorAll('.tag').forEach((tag) => {
+            if (set.has(tag.dataset.value)) {
+                tag.classList.add('selected');
+            }
+        });
+    }
+
+    function switchScreen(target) {
+        const { screenExercises, screenExerciseEdit, screenSessions, screenExecEdit } = assertRefs();
+        const map = {
+            screenExercises,
+            screenExerciseEdit,
+            screenSessions,
+            screenExecEdit,
+            screenExerciseRead: refs.screenExerciseRead
+        };
+        Object.entries(map).forEach(([key, element]) => {
+            if (element) {
+                element.hidden = key !== target;
+            }
+        });
+    }
 })();
