@@ -205,7 +205,32 @@ image_big{
   border-radius: var(--radius);
   padding: var(--pad-y) var(--pad-x);
 }
+.exercise-card-row{ display:flex; align-items:center; justify-content:space-between; gap:var(--gap); }
+.exercise-card-left{ display:flex; align-items:center; gap:10px; }
+.exercise-card-text{ display:flex; flex-direction:column; gap:2px; }
+.exercise-card-thumb{
+  width:40px;
+  height:40px;
+  border-radius:8px;
+  object-fit:cover;
+  background:#eee;
+  flex-shrink:0;
+}
+.exercise-card.selected{
+  border-color: var(--emphase);
+  box-shadow:0 0 0 2px rgba(0,128,255,0.2);
+}
 .exercise-card.clickable{ cursor:pointer; user-select:none; }
+.exercise-thumb-placeholder{ object-fit:contain; }
+.exercise-selection-bar{
+  position:sticky;
+  top:0;
+  z-index:10;
+  padding:8px 0;
+  background:var(--white);
+}
+.exercise-selection-bar.hidden{ display:none; }
+.exercise-hero-placeholder{ object-fit:contain; background:var(--lightGray); }
 
 
 /* =========================================================

@@ -1,138 +1,181 @@
 // ui-exercise-read.js — écran lecture d’un exercice
-(function () {
-  // Assure l'espace de noms
-  const A = window.App || (window.App = {});
-  A.el = A.el || {};
+(() => {
+    const A = window.App;
 
-  // ---------- Utils ----------
-  const toArray = v => Array.isArray(v) ? v : (v ? [v] : []);
-  const joinNice = arr => toArray(arr).filter(Boolean).join(', ');
-  const ucFirst = s => (s || '').charAt(0).toUpperCase() + (s || '').slice(1);
+    /* STATE */
+    const refs = {};
+    let refsResolved = false;
+    const state = { currentId: null, callerScreen: 'screenExercises' };
 
-  let currentId = null;       // null = ajout
-  let callerScreen = null;    // mémorise l'écran d'origine
-  
-  function showScreen(id) {
-    for (const s of document.querySelectorAll('.screen')) s.hidden = true;
-    const scr = document.getElementById(id);
-    if (scr) scr.hidden = false;
-  }
+    /* WIRE */
+    document.addEventListener('DOMContentLoaded', () => {
+        ensureRefs();
+        wireNavigation();
+    });
 
-  // ---------- Références DOM (READ) ----------
-  function ensureReadRefs() {
-    // Si déjà branché, on sort
-    if (A.el.exReadTitle && A.el.exReadHero && A.el.exReadMuscle && A.el.exReadEquipment && A.el.exReadInstruc) return;
+    /* ACTIONS */
+    /**
+     * Ouvre l'écran de lecture d'un exercice.
+     * @param {{currentId: string, callerScreen?: string}} options Contexte d'ouverture.
+     * @returns {Promise<void>} Promesse résolue après rendu.
+     */
+    A.openExerciseRead = async function openExerciseRead(options) {
+        const { currentId, callerScreen = 'screenExercises' } = options || {};
+        if (!currentId) {
+            return;
+        }
+        ensureRefs();
+        assertRefs();
 
-    A.el.exReadTitle     = document.getElementById('exReadTitle');
-    A.el.exReadHero      = document.getElementById('exReadHero');
-    A.el.exReadMuscle    = document.getElementById('exReadMuscle');
-    A.el.exReadEquipment = document.getElementById('exReadEquipment');
-    A.el.exReadInstruc   = document.getElementById('exReadInstruc');
-    A.el.exReadBack      = document.getElementById('exReadBack');
-    A.el.exReadEdit      = document.getElementById('exReadEdit');
-  }
+        state.currentId = currentId;
+        state.callerScreen = callerScreen;
 
-  function assertReadRefs() {
-    const must = {
-      exReadTitle: A.el.exReadTitle,
-      exReadHero: A.el.exReadHero,
-      exReadMuscle: A.el.exReadMuscle,
-      exReadEquipment: A.el.exReadEquipment,
-      exReadInstruc: A.el.exReadInstruc
+        const exercise = await db.get('exercises', currentId);
+        if (!exercise) {
+            alert('Exercice introuvable.');
+            return;
+        }
+
+        refs.exReadTitle.textContent = exercise.name || 'Exercice';
+        updateHero(exercise);
+        updateMuscles(exercise);
+        updateEquipment(exercise);
+        updateInstructions(exercise);
+
+        switchScreen('screenExerciseRead');
     };
-    const missing = Object.entries(must).filter(([, v]) => !v).map(([k]) => k);
-    if (missing.length) {
-      console.error('IDs manquants dans screenExerciseRead :', missing);
-      alert('Écran "Consulter un exercice" incomplet dans le HTML. Manque : ' + missing.join(', '));
-      return false;
+
+    /* UTILS */
+    function ensureRefs() {
+        if (refsResolved) {
+            return refs;
+        }
+        refs.screenExerciseRead = document.getElementById('screenExerciseRead');
+        refs.screenExercises = document.getElementById('screenExercises');
+        refs.screenSessions = document.getElementById('screenSessions');
+        refs.screenExerciseEdit = document.getElementById('screenExerciseEdit');
+        refs.screenExecEdit = document.getElementById('screenExecEdit');
+        refs.exReadTitle = document.getElementById('exReadTitle');
+        refs.exReadHero = document.getElementById('exReadHero');
+        refs.exReadMuscle = document.getElementById('exReadMuscle');
+        refs.exReadEquipment = document.getElementById('exReadEquipment');
+        refs.exReadInstruc = document.getElementById('exReadInstruc');
+        refs.exReadBack = document.getElementById('exReadBack');
+        refs.exReadEdit = document.getElementById('exReadEdit');
+        refsResolved = true;
+        return refs;
     }
-    return true;
-  }
 
-  /* =======================================================
-     ==============   Ouvrir l’écran LECTURE   =============
-     ======================================================= */
-  A.openExerciseRead = async function (id, from) {
-    try {
-	ensureReadRefs();
-	if (!assertReadRefs()) return;
+    function assertRefs() {
+        ensureRefs();
+        const required = [
+            'screenExerciseRead',
+            'exReadTitle',
+            'exReadHero',
+            'exReadMuscle',
+            'exReadEquipment',
+            'exReadInstruc',
+            'exReadBack',
+            'exReadEdit'
+        ];
+        const missing = required.filter((key) => !refs[key]);
+        if (missing.length) {
+            throw new Error(`ui-exercise-read.js: références manquantes (${missing.join(', ')})`);
+        }
+        return refs;
+    }
 
-		currentId    = id || null;
-		callerScreen = from || 'screenExercises'; // par défaut
-
-      // Récupération depuis la base
-      const ex = await db.get('exercises', id);
-      if (!ex) { alert('Exercice introuvable.'); return; }
-
-      // Titre
-      A.el.exReadTitle.textContent = ex.name || 'Exercice';
-
-      // Image / GIF
-      const hero = A.el.exReadHero;
-      if (ex.image) {
-        hero.src = ex.image;
-        hero.style.objectFit = ''; // reset si précédemment "contain"
-      } else {
-        hero.src = './icons/placeholder-64.png';
-        hero.style.objectFit = 'contain';
-      }
-      hero.alt = ex.name || 'exercice';
-
-      // Muscles
-      const targetMuscle    = ex.muscle || ex.muscleGroup2 || ex.muscleGroup3 || '—';
-      const secondaryMuscle = joinNice(ex.secondaryMuscles);
-      const primaryLine = secondaryMuscle
-        ? `Principal : ${ucFirst(targetMuscle)} · Secondaires : ${secondaryMuscle}`
-        : `Principal : ${ucFirst(targetMuscle)}`;
-      A.el.exReadMuscle.textContent = primaryLine;
-
-      // Matériel
-      const equipLine = `Matériel : ${joinNice(ex.equipmentGroup2 || ex.equipment) || '—'}`;
-      A.el.exReadEquipment.textContent = equipLine;
-
-      // Instructions
-      const steps = toArray(ex.instructions);
-      const ol = A.el.exReadInstruc;
-      ol.innerHTML = '';
-      if (steps.length) {
-        steps.forEach(t => {
-          const li = document.createElement('li');
-          li.textContent = String(t).replace(/^Step:\d+\s*/i, '');
-          ol.appendChild(li);
+    function wireNavigation() {
+        const { exReadBack, exReadEdit } = assertRefs();
+        exReadBack?.addEventListener('click', () => {
+            if (state.callerScreen === 'screenExercises') {
+                void A.openExercises({ callerScreen: 'screenExerciseRead' });
+            } else {
+                switchScreen(state.callerScreen || 'screenExercises');
+            }
         });
-      } else {
-        const li = document.createElement('li');
-        li.textContent = '—';
-        ol.appendChild(li);
-      }
-
-      // Afficher l’écran
-      showScreen('screenExerciseRead');
-    } catch (err) {
-      console.error('Erreur dans openExerciseRead:', err);
-      alert('Une erreur est survenue lors de l’ouverture de la fiche exercice. Consulte la console pour les détails.');
+        exReadEdit?.addEventListener('click', () => {
+            if (!state.currentId) {
+                alert('Aucun exercice sélectionné.');
+                return;
+            }
+            A.openExerciseEdit({ currentId: state.currentId, callerScreen: 'screenExerciseRead' });
+        });
     }
-  };
 
-  /* =======================================================
-     ======================   WIRE   =======================
-     ======================================================= */
-	document.addEventListener('DOMContentLoaded', () => {
-		ensureReadRefs();
+    function updateHero(exercise) {
+        const { exReadHero } = assertRefs();
+        if (exercise.image) {
+            exReadHero.src = exercise.image;
+            exReadHero.classList.remove('exercise-hero-placeholder');
+        } else {
+            exReadHero.src = new URL('icons/placeholder-64.png', document.baseURI).href;
+            exReadHero.classList.add('exercise-hero-placeholder');
+        }
+        exReadHero.alt = exercise.name || 'exercice';
+    }
 
-		// Bouton retour → retour à la liste
-		A.el.exReadBack?.addEventListener('click', () => A.openExercises?.());
+    function updateMuscles(exercise) {
+        const { exReadMuscle } = assertRefs();
+        const main = exercise.muscle || exercise.muscleGroup2 || exercise.muscleGroup3 || '—';
+        const secondary = toArray(exercise.secondaryMuscles).filter(Boolean).join(', ');
+        const primaryLine = secondary
+            ? `Principal : ${ucFirst(main)} · Secondaires : ${secondary}`
+            : `Principal : ${ucFirst(main)}`;
+        exReadMuscle.textContent = primaryLine;
+    }
 
-		// Bouton éditer → ouvre l’éditeur sur le même id
-		A.el.exReadEdit?.addEventListener('click', () => {
-			if (currentId && typeof A.openExerciseEdit === 'function') {
-				A.openExerciseEdit(currentId, 'screenExerciseRead');
-			} else if (!currentId) {
-				alert('Aucun exercice sélectionné.');
-			} else {
-				console.error('A.openExerciseEdit est introuvable. Charge ui-exercise-edit.js avant.');
-			}
-		});
-	});
-	
+    function updateEquipment(exercise) {
+        const { exReadEquipment } = assertRefs();
+        const line = `Matériel : ${toArray(exercise.equipmentGroup2 || exercise.equipment).filter(Boolean).join(', ') || '—'}`;
+        exReadEquipment.textContent = line;
+    }
+
+    function updateInstructions(exercise) {
+        const { exReadInstruc } = assertRefs();
+        exReadInstruc.innerHTML = '';
+        const steps = toArray(exercise.instructions);
+        if (steps.length) {
+            steps.forEach((step) => {
+                const li = document.createElement('li');
+                li.textContent = String(step).replace(/^Step:\d+\s*/i, '');
+                exReadInstruc.appendChild(li);
+            });
+        } else {
+            const li = document.createElement('li');
+            li.textContent = '—';
+            exReadInstruc.appendChild(li);
+        }
+    }
+
+    function switchScreen(target) {
+        const { screenExerciseRead, screenExercises, screenSessions, screenExerciseEdit, screenExecEdit } = assertRefs();
+        const map = {
+            screenExerciseRead,
+            screenExercises,
+            screenSessions,
+            screenExerciseEdit,
+            screenExecEdit
+        };
+        Object.entries(map).forEach(([key, element]) => {
+            if (element) {
+                element.hidden = key !== target;
+            }
+        });
+    }
+
+    function toArray(value) {
+        if (Array.isArray(value)) {
+            return value;
+        }
+        if (value) {
+            return [value];
+        }
+        return [];
+    }
+
+    function ucFirst(value) {
+        const text = value || '';
+        return text.charAt(0).toUpperCase() + text.slice(1);
+    }
 })();
