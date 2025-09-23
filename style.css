@@ -149,15 +149,15 @@ body{
   width: 100%;
   padding: 0 var(--pad-x);
   border-radius: var(--radius);
-  border: 1px solid var(--lightGrayB);
-  background: var(--lightGray);                 /* 4.Saisie fond lightGray */
-  color: var(--black);
+  border: 1px solid var(--emphase);
+  background: var(--white);
+  color: var(--darkGrayB);
   font-weight: 600;
 }
 
 /* Placeholder / valeur par défaut en gris */
 .input::placeholder,
-select:has(option:checked[value=""]) ,
+select:has(option:checked[value=""]),
 textarea:placeholder-shown{
   color: var(--darkGrayB);                      /* 3.Texte de champ vide/défaut */
 }
@@ -167,15 +167,34 @@ textarea:placeholder-shown{
 select:focus,
 textarea:focus{
   outline: none;
-  border-color: var(--darkGrayB);
-  background: var(--darkGray);                  /* 4.Change en darkGray quand sélectionné */
+  border-color: var(--emphase);
+  background: var(--emphase);
+  color: var(--white);
+}
+
+.input:focus::placeholder,
+select:focus option,
+textarea:focus::placeholder{
+  color: var(--white);
 }
 
 /* Valeur définie (non vide) — forcer style “défini” */
 .has-value{
-  border-color: var(--darkGrayB);
-  background: var(--darkGray);
-  color: var(--black);
+  border-color: var(--emphase);
+  background: var(--white);
+}
+
+.has-value:not(:focus){
+  color: var(--emphase);
+}
+
+.input:not(:focus):not(:placeholder-shown),
+textarea:not(:focus):not(:placeholder-shown){
+  color: var(--emphase);
+}
+
+select:has(option:checked:not([value=""])):not(:focus){
+  color: var(--emphase);
 }
 
 /* Textarea plus haut (instructions) */
@@ -198,10 +217,15 @@ image_big{
 }
 
 /* Panneaux/cartes (listes, cartes) */
-.panel,
-.exercise-card{
+.panel{
   background: var(--white);                     /* 4.Panneaux blancs */
   border: 1px solid var(--whiteB);              /* 4.Bordure whiteB */
+  border-radius: var(--radius);
+  padding: var(--pad-y) var(--pad-x);
+}
+.exercise-card{
+  background: var(--white);
+  border: 1px solid var(--emphase);
   border-radius: var(--radius);
   padding: var(--pad-y) var(--pad-x);
 }
@@ -221,12 +245,22 @@ image_big{
   object-fit:cover;
   background:#eee;
   flex-shrink:0;
+  border: 1px solid var(--darkGrayB);
 }
 .exercise-card.selected{
-  border-color: var(--darkGrayB);
-  background: var(--darkGray);
+  border-color: var(--emphase);
+  background: var(--emphase);
+  color: var(--white);
 }
 .exercise-card.clickable{ cursor:pointer; user-select:none; }
+.exercise-card.selected .element,
+.exercise-card.selected .details{
+  color: var(--white);
+}
+.exercise-card-thumb.clickable{
+  cursor: pointer;
+  border-color: var(--emphase);
+}
 .exercise-thumb-placeholder{ object-fit:contain; }
 .exercise-selection-bar{
   position:sticky;
@@ -251,16 +285,16 @@ image_big{
   display:inline-flex; align-items:center; justify-content:center;
   padding: 0 12px;
   border-radius: var(--radius);
-  border: 1px solid var(--lightGrayB);
-  background: var(--lightGray);
+  border: 1px solid var(--emphase);
+  background: var(--white);
   color: var(--darkGrayB);                      /* 3.Texte gris pour “non sélectionné” */
   user-select:none;
   cursor:pointer;
 }
 .tag.selected{
-  border-color: var(--darkGrayB);
-  background: var(--darkGray);                  /* 6.Tag cliqué */
-  color: var(--black);
+  border-color: var(--emphase);
+  background: var(--emphase);                  /* 6.Tag cliqué */
+  color: var(--white);
 }
 
 /* =========================================================
@@ -271,8 +305,9 @@ image_big{
   display:inline-flex; align-items:center; justify-content:center;
   padding: 0 var(--pad-x);
   border-radius: var(--radius);
-  border: 1px solid var(--black);               /* 5.Autres: bordure noire */
-  color: var(--emphase);                        /* 5.Autres: texte emphase */
+  border: 1px solid var(--emphase);
+  background: transparent;
+  color: var(--emphase);
   font-weight: var(--fw-strong);
   cursor:pointer; user-select:none;
 }
@@ -286,7 +321,8 @@ image_big{
 /* En-tête OK */
 .btn.primary{
   border-color: var(--emphase);
-  color: var(--emphase);
+  background: var(--emphase);
+  color: var(--white);
 }
 
 /* Supprimer */
@@ -297,7 +333,7 @@ image_big{
 
 /* Image cliquable (ex: preview) */
 .btn.image{
-  border-color: var(--black);                   /* 5.Image cliquable : bordure noire */
+  border-color: var(--emphase);
 }
 
 /* Disabled */
