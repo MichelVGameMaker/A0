@@ -255,6 +255,7 @@
             if (state.selection.has(exercise.id)) {
                 card.classList.add('selected');
             }
+            card.classList.add('clickable');
             card.addEventListener('click', () => {
                 if (state.selection.has(exercise.id)) {
                     state.selection.delete(exercise.id);
@@ -263,6 +264,11 @@
                 }
                 card.classList.toggle('selected');
                 updateSelectionBar();
+            });
+            image.classList.add('clickable');
+            image.addEventListener('click', (event) => {
+                event.stopPropagation();
+                A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
             });
             row.append(left);
         } else {
