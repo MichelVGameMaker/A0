@@ -30,6 +30,8 @@
         state.currentId = currentId;
         state.callerScreen = callerScreen;
 
+        A.showExerciseBaseScreen?.(callerScreen);
+
         const exercise = await db.get('exercises', currentId);
         if (!exercise) {
             alert('Exercice introuvable.');
@@ -42,7 +44,7 @@
         updateEquipment(exercise);
         updateInstructions(exercise);
 
-        switchScreen('screenExerciseRead');
+        A.showExerciseModal?.('read');
     };
 
     /* UTILS */
@@ -62,6 +64,8 @@
         refs.exReadInstruc = document.getElementById('exReadInstruc');
         refs.exReadBack = document.getElementById('exReadBack');
         refs.exReadEdit = document.getElementById('exReadEdit');
+        refs.exerciseModal = document.getElementById('exerciseModal');
+        refs.exerciseModalBackdrop = document.querySelector('#exerciseModal .exercise-modal-backdrop');
         refsResolved = true;
         return refs;
     }
@@ -76,7 +80,8 @@
             'exReadEquipment',
             'exReadInstruc',
             'exReadBack',
-            'exReadEdit'
+            'exReadEdit',
+            'exerciseModal'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -86,20 +91,28 @@
     }
 
     function wireNavigation() {
-        const { exReadBack, exReadEdit } = assertRefs();
+        const { exReadBack, exReadEdit, exerciseModalBackdrop } = assertRefs();
         exReadBack?.addEventListener('click', () => {
-            if (state.callerScreen === 'screenExercises') {
-                void A.openExercises({ callerScreen: 'screenExerciseRead' });
-            } else {
-                switchScreen(state.callerScreen || 'screenExercises');
-            }
+            A.hideExerciseModal?.();
+            A.showExerciseBaseScreen?.(state.callerScreen || 'screenExercises');
         });
         exReadEdit?.addEventListener('click', () => {
             if (!state.currentId) {
                 alert('Aucun exercice sélectionné.');
                 return;
             }
-            A.openExerciseEdit({ currentId: state.currentId, callerScreen: 'screenExerciseRead' });
+            A.openExerciseEdit({
+                currentId: state.currentId,
+                callerScreen: state.callerScreen || 'screenExercises',
+                returnTo: 'read'
+            });
+        });
+        exerciseModalBackdrop?.addEventListener('click', () => {
+            if (!refs.screenExerciseEdit?.hidden) {
+                return;
+            }
+            A.hideExerciseModal?.();
+            A.showExerciseBaseScreen?.(state.callerScreen || 'screenExercises');
         });
     }
 
@@ -148,20 +161,50 @@
         }
     }
 
-    function switchScreen(target) {
-        const { screenExerciseRead, screenExercises, screenSessions, screenExerciseEdit, screenExecEdit } = assertRefs();
+    A.showExerciseModal = function showExerciseModal(panel = 'read') {
+        const { exerciseModal } = assertRefs();
+        setModalPanel(panel);
+        exerciseModal.hidden = false;
+        document.body.classList.add('modal-open');
+    };
+
+    A.hideExerciseModal = function hideExerciseModal() {
+        const { exerciseModal } = assertRefs();
+        exerciseModal.hidden = true;
+        setModalPanel(null);
+        document.body.classList.remove('modal-open');
+    };
+
+    A.showExerciseBaseScreen = function showExerciseBaseScreen(target = 'screenExercises') {
+        const { screenExercises, screenSessions, screenExecEdit } = assertRefs();
         const map = {
-            screenExerciseRead,
             screenExercises,
             screenSessions,
-            screenExerciseEdit,
             screenExecEdit
         };
+        const normalized = map[target] ? target : 'screenExercises';
         Object.entries(map).forEach(([key, element]) => {
             if (element) {
-                element.hidden = key !== target;
+                element.hidden = key !== normalized;
             }
         });
+    };
+
+    function setModalPanel(panel) {
+        const { screenExerciseRead, screenExerciseEdit } = assertRefs();
+        if (!screenExerciseRead || !screenExerciseEdit) {
+            return;
+        }
+        if (panel === 'edit') {
+            screenExerciseRead.hidden = true;
+            screenExerciseEdit.hidden = false;
+        } else if (panel === 'read') {
+            screenExerciseRead.hidden = false;
+            screenExerciseEdit.hidden = true;
+        } else {
+            screenExerciseRead.hidden = true;
+            screenExerciseEdit.hidden = true;
+        }
     }
 
     function toArray(value) {

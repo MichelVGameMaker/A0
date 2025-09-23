@@ -72,11 +72,15 @@
      * Ouvre la bibliothèque d'exercices.
      * @param {{mode?: 'add'|'view', callerScreen?: string, onAdd?: (ids: string[]) => void}} [options] Paramètres d'ouverture.
      * @returns {Promise<void>} Promesse résolue après rendu.
-     */
+    */
     A.openExercises = async function openExercises(options = {}) {
         const { mode = 'view', callerScreen = 'screenExercises', onAdd = null } = options;
         ensureRefs();
         assertRefs();
+
+        if (typeof A.hideExerciseModal === 'function') {
+            A.hideExerciseModal();
+        }
 
         state.listMode = mode === 'add' ? 'add' : 'view';
         state.callerScreen = callerScreen;
@@ -90,6 +94,15 @@
         updateSelectionBar();
         configureHeaderButtons();
         await A.refreshExerciseList();
+    };
+
+    A.removeExerciseFromSelection = function removeExerciseFromSelection(id) {
+        if (!id) {
+            return;
+        }
+        if (state.selection.delete(id)) {
+            updateSelectionBar();
+        }
     };
 
     /* UTILS */
@@ -251,33 +264,65 @@
 
         left.append(image, textWrapper);
 
+        const right = document.createElement('div');
+        right.className = 'exercise-card-right';
+        const isSelected = state.selection.has(exercise.id);
+        if (isSelected) {
+            card.classList.add('selected');
+        }
+
         if (state.listMode === 'add') {
-            if (state.selection.has(exercise.id)) {
-                card.classList.add('selected');
-            }
             card.classList.add('clickable');
-            card.addEventListener('click', () => {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'exercise-card-checkbox';
+            checkbox.checked = isSelected;
+            checkbox.setAttribute('aria-label', `Sélectionner ${exercise.name || 'cet exercice'}`);
+
+            const toggleSelection = () => {
                 if (state.selection.has(exercise.id)) {
                     state.selection.delete(exercise.id);
                 } else {
                     state.selection.add(exercise.id);
                 }
-                card.classList.toggle('selected');
+                const nowSelected = state.selection.has(exercise.id);
+                card.classList.toggle('selected', nowSelected);
+                checkbox.checked = nowSelected;
                 updateSelectionBar();
+            };
+
+            card.addEventListener('click', () => {
+                toggleSelection();
             });
             image.classList.add('clickable');
             image.addEventListener('click', (event) => {
                 event.stopPropagation();
                 A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
             });
-            row.append(left);
+            checkbox.addEventListener('click', (event) => {
+                event.stopPropagation();
+                toggleSelection();
+            });
+            right.appendChild(checkbox);
         } else {
             card.classList.add('clickable');
-            card.addEventListener('click', () => {
+            const openRead = () => {
                 A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
+            };
+            card.addEventListener('click', openRead);
+            const eye = document.createElement('button');
+            eye.type = 'button';
+            eye.className = 'exercise-card-eye';
+            eye.setAttribute('aria-label', 'Voir la fiche exercice');
+            eye.textContent = '👁️';
+            eye.addEventListener('click', (event) => {
+                event.stopPropagation();
+                openRead();
             });
-            row.append(left);
+            right.appendChild(eye);
         }
+
+        row.append(left, right);
 
         card.appendChild(row);
         return card;

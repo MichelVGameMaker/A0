@@ -5,7 +5,7 @@
     /* STATE */
     const refs = {};
     let refsResolved = false;
-    const state = { currentId: null, callerScreen: 'screenExercises' };
+    const state = { currentId: null, callerScreen: 'screenExercises', returnTo: null };
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -22,12 +22,15 @@
      * @returns {Promise<void>} Promesse résolue après affichage.
      */
     A.openExerciseEdit = async function openExerciseEdit(options = {}) {
-        const { currentId = null, callerScreen = 'screenExercises' } = options;
+        const { currentId = null, callerScreen = 'screenExercises', returnTo = null } = options;
         ensureRefs();
         assertRefs();
 
         state.currentId = currentId;
         state.callerScreen = callerScreen;
+        state.returnTo = returnTo;
+
+        A.showExerciseBaseScreen?.(callerScreen);
 
         refs.exEditTitle.textContent = currentId ? 'Modifier' : 'Ajouter';
         refs.exEditDelete.hidden = !currentId;
@@ -59,7 +62,7 @@
             refs.exGroupInfo.textContent = '';
         }
 
-        switchScreen('screenExerciseEdit');
+        A.showExerciseModal?.('edit');
     };
 
     /* UTILS */
@@ -121,10 +124,16 @@
     function wireForm() {
         refs.exTargetMuscle.addEventListener('change', updateGroupInfo);
         refs.exEditBack?.addEventListener('click', async () => {
-            if (state.callerScreen === 'screenExerciseRead' && state.currentId) {
-                await A.openExerciseRead({ currentId: state.currentId, callerScreen: 'screenExercises' });
+            if (state.returnTo === 'read' && state.currentId) {
+                await A.openExerciseRead({
+                    currentId: state.currentId,
+                    callerScreen: state.callerScreen || 'screenExercises'
+                });
             } else {
-                await A.openExercises({ callerScreen: 'screenExerciseEdit' });
+                A.hideExerciseModal?.();
+                A.showExerciseBaseScreen?.(state.callerScreen || 'screenExercises');
+                state.currentId = null;
+                state.returnTo = null;
             }
         });
         refs.exEditOk?.addEventListener('click', () => {
@@ -143,7 +152,12 @@
             return;
         }
         await db.del('exercises', state.currentId);
-        await A.openExercises({ callerScreen: 'screenExerciseEdit' });
+        A.removeExerciseFromSelection?.(state.currentId);
+        await A.refreshExerciseList?.();
+        A.hideExerciseModal?.();
+        A.showExerciseBaseScreen?.(state.callerScreen || 'screenExercises');
+        state.currentId = null;
+        state.returnTo = null;
     }
 
     async function save() {
@@ -180,10 +194,17 @@
         };
 
         await db.put('exercises', exercise);
-        if (state.callerScreen === 'screenExerciseRead' && exercise.id) {
-            await A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
+        if (state.returnTo === 'read' && exercise.id) {
+            await A.openExerciseRead({
+                currentId: exercise.id,
+                callerScreen: state.callerScreen || 'screenExercises'
+            });
         } else {
-            await A.openExercises({ callerScreen: 'screenExerciseEdit' });
+            await A.refreshExerciseList?.();
+            A.hideExerciseModal?.();
+            A.showExerciseBaseScreen?.(state.callerScreen || 'screenExercises');
+            state.currentId = null;
+            state.returnTo = null;
         }
     }
 
@@ -244,19 +265,4 @@
         });
     }
 
-    function switchScreen(target) {
-        const { screenExercises, screenExerciseEdit, screenSessions, screenExecEdit } = assertRefs();
-        const map = {
-            screenExercises,
-            screenExerciseEdit,
-            screenSessions,
-            screenExecEdit,
-            screenExerciseRead: refs.screenExerciseRead
-        };
-        Object.entries(map).forEach(([key, element]) => {
-            if (element) {
-                element.hidden = key !== target;
-            }
-        });
-    }
 })();

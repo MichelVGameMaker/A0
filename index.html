@@ -157,93 +157,99 @@
   </section>
   <!-- ==================== -->
  
-  <!-- ========== 3.1.2A Consulter un exercice ========== -->
-  <section id="screenExerciseRead" class="screen" hidden>
-    
-    <!-- En-tête -->
-    <header class="subheader">
-      <button class="btn" id="exReadBack">←</button>
-      <div class="title" id="exReadTitle">Exercice</div>
-      <button class="btn" id="exReadEdit">✏️ Editer</button>
-    </header>
+  <!-- ========== 3.1.2A/B Modale exercice (lecture / édition) ========== -->
+  <div id="exerciseModal" class="exercise-modal" hidden role="dialog" aria-modal="true" aria-labelledby="exReadTitle exEditTitle">
+    <div class="exercise-modal-backdrop"></div>
+    <div class="exercise-modal-wrapper">
+      <!-- ========== 3.1.2A Consulter un exercice ========== -->
+      <section id="screenExerciseRead" class="modal-screen" hidden>
+
+        <!-- En-tête -->
+        <header class="subheader">
+          <button class="btn" id="exReadBack">←</button>
+          <div class="title" id="exReadTitle">Exercice</div>
+          <button class="btn" id="exReadEdit">✏️ Editer</button>
+        </header>
 
 
-	<!-- Corps de l'écran Consulter un Exercice) -->
-	<main class="content">
+            <!-- Corps de l'écran Consulter un Exercice) -->
+            <main class="content">
 
-		<div class="panel" style="display:flex;flex-direction:column;gap:12px;">
-			<!-- Image / GIF -->
-			<img id="exReadHero" alt="aperçu exercice" class="image_big" />
+                    <div class="panel" style="display:flex;flex-direction:column;gap:12px;">
+                            <!-- Image / GIF -->
+                            <img id="exReadHero" alt="aperçu exercice" class="image_big" />
 
-			<!-- Lignes d’info -->
-			<div id="exReadMuscle"    class="element"></div>
-			<div id="exReadEquipment" class="details"></div>
+                            <!-- Lignes d’info -->
+                            <div id="exReadMuscle"    class="element"></div>
+                            <div id="exReadEquipment" class="details"></div>
 
-			<!-- Instructions -->
-			<div>
-				<div class="lbl">Instructions</div>
-				<ol id="exReadInstruc" class="listing"></ol>
-			</div>
-		</div>
- 
-	</main>  
-  </section>
-  <!-- ==================== -->
-  
-  <!-- ========== 3.1.2B Ajouter / Modifier un exercice ========== -->
-  <section id="screenExerciseEdit" class="screen" hidden>
-    
-    <!-- En-tête -->
-    <header class="subheader">
-      <button class="btn" id="exEditBack">←</button>
-      <div class="title" id="exEditTitle">Ajouter</div>
-      <button class="btn" id="exEditOk">OK</button>
-    </header>
+                            <!-- Instructions -->
+                            <div>
+                                    <div class="lbl">Instructions</div>
+                                    <ol id="exReadInstruc" class="listing"></ol>
+                            </div>
+                    </div>
+
+            </main>
+      </section>
+      <!-- ==================== -->
+
+      <!-- ========== 3.1.2B Ajouter / Modifier un exercice ========== -->
+      <section id="screenExerciseEdit" class="modal-screen" hidden>
+
+        <!-- En-tête -->
+        <header class="subheader">
+          <button class="btn" id="exEditBack">←</button>
+          <div class="title" id="exEditTitle">Ajouter</div>
+          <button class="btn" id="exEditOk">OK</button>
 
 
-	<!-- Corps de l'écran Ajouter / Modifier Exercices) -->
-	<main class="content">
+            <!-- Corps de l'écran Ajouter / Modifier Exercices) -->
+            <main class="content">
 
-		<!-- Cartouche haut -->
-		<div class="filters">   
-		
-			<!-- Zone suppression -->
-			<div class="row">
-				<button id="exEditDelete" class="btn danger full">🗑️ Supprimer</button>
-			</div>
-		</div>
-		
-		<!-- Cartouche bas : Formulaire -->
-		<div class="form">
-	  
-			<label class="lbl">Nom</label>
-			<input id="exName" class="input full" placeholder="Nom de l’exercice" />
-	 
-			<label class="lbl">Matériel</label>
-			<div id="exEquip" class="tags"></div>
-			
-			<label class="lbl">Muscle ciblé</label>
-			<select id="exTargetMuscle" class="input full">
-			  <option value="">Choisir…</option>
-			</select>
-			
-			<div id="exGroupInfo" class="hint"></div>
-			
-			<label class="lbl">Muscles secondaires</label>
-			<div id="exSecMuscles" class="tags"></div>
-	  
-			<label class="lbl">Image (URL)</label>
-			<input id="exImage" class="input full" type="url" placeholder="https://… ou ./data/media/xxx.gif" />
+                    <!-- Cartouche haut -->
+                    <div class="filters">
 
-			<label class="lbl">Instructions (1 par ligne)</label>
-			<textarea id="exInstr" class="input full" rows="8" placeholder="Étape 1…
+                            <!-- Zone suppression -->
+                            <div class="row">
+                                    <button id="exEditDelete" class="btn danger full">🗑️ Supprimer</button>
+                            </div>
+                    </div>
+
+                    <!-- Cartouche bas : Formulaire -->
+                    <div class="form">
+
+                            <label class="lbl">Nom</label>
+                            <input id="exName" class="input full" placeholder="Nom de l’exercice" />
+
+                            <label class="lbl">Matériel</label>
+                            <div id="exEquip" class="tags"></div>
+
+                            <label class="lbl">Muscle ciblé</label>
+                            <select id="exTargetMuscle" class="input full">
+                              <option value="">Choisir…</option>
+                            </select>
+
+                            <div id="exGroupInfo" class="hint"></div>
+
+                            <label class="lbl">Muscles secondaires</label>
+                            <div id="exSecMuscles" class="tags"></div>
+
+                            <label class="lbl">Image (URL)</label>
+                            <input id="exImage" class="input full" type="url" placeholder="https://… ou ./data/media/xxx.gif" />
+
+                            <label class="lbl">Instructions (1 par ligne)</label>
+                            <textarea id="exInstr" class="input full" rows="8" placeholder="Étape 1…
 Étape 2…"></textarea>
- 
-		</div>
 
-	   
-	</main>  
-  </section>
+                    </div>
+
+
+            </main>
+      </section>
+      <!-- ==================== -->
+    </div>
+  </div>
   <!-- ==================== -->
 
   <!-- Barre d’onglets fixe (icônes) -->
