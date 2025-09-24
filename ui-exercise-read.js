@@ -4,7 +4,6 @@
 
     /* STATE */
     const refs = {};
-    let refsResolved = false;
     const state = { currentId: null, callerScreen: 'screenExercises' };
 
     /* WIRE */
@@ -49,24 +48,20 @@
 
     /* UTILS */
     function ensureRefs() {
-        if (refsResolved) {
-            return refs;
-        }
-        refs.screenExerciseRead = document.getElementById('screenExerciseRead');
-        refs.screenExercises = document.getElementById('screenExercises');
-        refs.screenSessions = document.getElementById('screenSessions');
-        refs.screenExerciseEdit = document.getElementById('screenExerciseEdit');
-        refs.screenExecEdit = document.getElementById('screenExecEdit');
-        refs.exReadTitle = document.getElementById('exReadTitle');
-        refs.exReadHero = document.getElementById('exReadHero');
-        refs.exReadMuscle = document.getElementById('exReadMuscle');
-        refs.exReadEquipment = document.getElementById('exReadEquipment');
-        refs.exReadInstruc = document.getElementById('exReadInstruc');
-        refs.exReadBack = document.getElementById('exReadBack');
-        refs.exReadEdit = document.getElementById('exReadEdit');
-        refs.exerciseModal = document.getElementById('exerciseModal');
-        refs.exerciseModalBackdrop = document.querySelector('#exerciseModal .exercise-modal-backdrop');
-        refsResolved = true;
+        refs.screenExerciseRead ??= document.getElementById('screenExerciseRead');
+        refs.screenExercises ??= document.getElementById('screenExercises');
+        refs.screenSessions ??= document.getElementById('screenSessions');
+        refs.screenExerciseEdit ??= document.getElementById('screenExerciseEdit');
+        refs.screenExecEdit ??= document.getElementById('screenExecEdit');
+        refs.exReadTitle ??= document.getElementById('exReadTitle');
+        refs.exReadHero ??= document.getElementById('exReadHero');
+        refs.exReadMuscle ??= document.getElementById('exReadMuscle');
+        refs.exReadEquipment ??= document.getElementById('exReadEquipment');
+        refs.exReadInstruc ??= document.getElementById('exReadInstruc');
+        refs.exReadBack ??= document.getElementById('exReadBack');
+        refs.exReadEdit ??= document.getElementById('exReadEdit');
+        refs.exerciseModal ??= document.getElementById('exerciseModal');
+        refs.exerciseModalBackdrop ??= document.querySelector('#exerciseModal .exercise-modal-backdrop');
         return refs;
     }
 
@@ -81,7 +76,8 @@
             'exReadInstruc',
             'exReadBack',
             'exReadEdit',
-            'exerciseModal'
+            'exerciseModal',
+            'screenExerciseEdit'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -191,19 +187,28 @@
     };
 
     function setModalPanel(panel) {
-        const { screenExerciseRead, screenExerciseEdit } = assertRefs();
-        if (!screenExerciseRead || !screenExerciseEdit) {
-            return;
-        }
+        const { screenExerciseRead, screenExerciseEdit } = ensureRefs();
         if (panel === 'edit') {
-            screenExerciseRead.hidden = true;
-            screenExerciseEdit.hidden = false;
+            if (screenExerciseRead) {
+                screenExerciseRead.hidden = true;
+            }
+            if (screenExerciseEdit) {
+                screenExerciseEdit.hidden = false;
+            }
         } else if (panel === 'read') {
-            screenExerciseRead.hidden = false;
-            screenExerciseEdit.hidden = true;
+            if (screenExerciseRead) {
+                screenExerciseRead.hidden = false;
+            }
+            if (screenExerciseEdit) {
+                screenExerciseEdit.hidden = true;
+            }
         } else {
-            screenExerciseRead.hidden = true;
-            screenExerciseEdit.hidden = true;
+            if (screenExerciseRead) {
+                screenExerciseRead.hidden = true;
+            }
+            if (screenExerciseEdit) {
+                screenExerciseEdit.hidden = true;
+            }
         }
     }
 

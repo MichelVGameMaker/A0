@@ -11,7 +11,9 @@
         onAddCallback: null,
         filtersInited: false,
         selection: new Set(),
-        lazyObserver: null
+        lazyObserver: null,
+        contextKey: null,
+        filters: { search: '', group: '', equip: '' }
     };
 
     /* WIRE */
@@ -82,15 +84,24 @@
             A.hideExerciseModal();
         }
 
-        state.listMode = mode === 'add' ? 'add' : 'view';
+        const nextMode = mode === 'add' ? 'add' : 'view';
+        const nextContextKey = `${nextMode}::${callerScreen}`;
+        const shouldResetState = state.contextKey !== nextContextKey;
+
+        state.listMode = nextMode;
         state.callerScreen = callerScreen;
         state.onAddCallback = typeof onAdd === 'function' ? onAdd : null;
+        state.contextKey = nextContextKey;
 
         switchScreen('screenExercises');
         initializeFilters();
-        resetFilters();
+        if (shouldResetState) {
+            resetFilters();
+            state.selection.clear();
+        } else {
+            restoreFilters();
+        }
         ensureSelectionBar();
-        state.selection.clear();
         updateSelectionBar();
         configureHeaderButtons();
         await A.refreshExerciseList();
@@ -147,12 +158,15 @@
     function wireFilters() {
         const { exSearch, exFilterGroup, exFilterEquip } = assertRefs();
         exSearch.addEventListener('input', () => {
+            state.filters.search = exSearch.value;
             void A.refreshExerciseList();
         });
         exFilterGroup.addEventListener('change', () => {
+            state.filters.group = exFilterGroup.value;
             void A.refreshExerciseList();
         });
         exFilterEquip.addEventListener('change', () => {
+            state.filters.equip = exFilterEquip.value;
             void A.refreshExerciseList();
         });
     }
@@ -169,9 +183,21 @@
 
     function resetFilters() {
         const { exFilterGroup, exFilterEquip, exSearch } = assertRefs();
+        state.filters = { search: '', group: '', equip: '' };
         exFilterGroup.value = '';
         exFilterEquip.value = '';
         exSearch.value = '';
+    }
+
+    function restoreFilters() {
+        const { exFilterGroup, exFilterEquip, exSearch } = assertRefs();
+        exSearch.value = state.filters.search || '';
+        if (exFilterGroup) {
+            exFilterGroup.value = state.filters.group || '';
+        }
+        if (exFilterEquip) {
+            exFilterEquip.value = state.filters.equip || '';
+        }
     }
 
     function ensureSelectionBar() {
