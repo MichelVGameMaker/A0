@@ -212,15 +212,15 @@ image_big{
   height:40px;
   border-radius:8px;
   object-fit:cover;
-  background:#eee;
+  background:var(--lightGray)
   flex-shrink:0;
-  border: 1px solid var(--darkGrayB);
+  border: 1px solid var(--lightGrayB);
 }
 .exercise-card.selected{
   background: var(--darkGray);
   color: var(--white);
 }
-.exercise-card.clickable{ cursor:pointer; user-select:none; }
+.exercise-card.clickable{ cursor:pointer; user-select:none; border: var(--black);}
 .exercise-card.selected .element,
 .exercise-card.selected .details{
   color: var(--white);
