@@ -47,21 +47,19 @@
       <!-- Liste des exercices de la séance -->
       <section id="sessionList" class="session-list" aria-label="Séance du jour"></section>
   
-      <!-- Boutons d'ajout (2 lignes) -->
-      <section class="bloque" id="addActions">
-        <!-- Ligne 1 : Sélecteur Ajouter <routine> (pré-sélection = routine prévue du jour) -->
-        <div class="row">
-          <label for="selectRoutine" class="sr-only">Ajouter une routine</label>
-          <select id="selectRoutine" class="input flex-1">
-            <option value="">Ajouter une routine…</option>
-          </select>
-          <button id="btnAddRoutine" class="btn">Ajouter</button>
-        </div>
-         <div class="row"> 
-        <!-- Ligne 2 : Ajouter exercices (ouvre la bibliothèque) -->
-         <button id="btnAddExercises" class="btn full">Ajouter exercice/s</button>
-        </div>
-	   </section>
+        <!-- Boutons d'ajout (2 lignes) -->
+		<div class="bloque">
+            <div class="row">
+                <label for="selectRoutine" class="sr-only">Ajouter une routine</label>
+                <select id="selectRoutine" class="input flex-1">
+                <option value="">Ajouter une routine…</option>
+                </select>
+                <button id="btnAddRoutine" class="btn">Ajouter</button>
+			</div>
+			<div class="row"> 
+                 <button id="btnAddExercises" class="btn full">Ajouter exercice/s</button>
+			</div>
+		</div>		
     </main>
     
   </section>
@@ -141,13 +139,11 @@
 			<div class="row">
 				<select id="exFilterGroup" class="input flex-1">
 					<option value="">Groupe musculaire</option>
-				</select>
-			  
+				</select> 
 				<select id="exFilterEquip" class="input flex-1">
 					<option value="">Matériel</option>
 				</select>
 			</div>
-
 		
       </div>
  
@@ -206,9 +202,7 @@
 	<main class="content">
 
 		<!-- Cartouche haut -->
-		<div class="bloque">   
-		
-			<!-- Zone suppression -->
+		<div class="bloque">   		
 			<div class="row">
 				<button id="exEditDelete" class="btn danger full">🗑️ Supprimer</button>
 			</div>
