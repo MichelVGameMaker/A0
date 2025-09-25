@@ -27,8 +27,7 @@
 
   /* --- Typo unifiée --- */
   --font: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  --fs-base: 15px;           /* base */
-  --fs-base: 15px;           /* base */
+  --fs-base: 16px;           /* base */
   --fs-small: 13px;          /* petits textes (ex: cellules série) */
   --fs-rpe:    13px;            /* taille spécifique RPE dans série */
   --fw-base:   600;
@@ -55,6 +54,7 @@ body{
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+html { -webkit-text-size-adjust: 100%; }
 
 /* Safe areas iOS */
 .safe-top    { padding-top: env(safe-area-inset-top, 0); }
@@ -154,6 +154,8 @@ body{
   background: var(--white);
   color: var(--darkGrayB);
   font-weight: var(--fw-base);
+  touch-action: manipulation;       /* coupe le geste double-tap=zoom */
+  -webkit-tap-highlight-color: transparent; 
 }
 textarea{
   resize: vertical;
@@ -365,6 +367,8 @@ image_big{
   color: var(--black);
   font-weight: var(--fw-strong);
   cursor:pointer; user-select:none;
+  touch-action: manipulation;       /* coupe le geste double-tap=zoom */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* En-tête RETOUR */
@@ -514,8 +518,14 @@ image_big{
 }
 
 /* Stepper vertical */
-.vstepper{ display:flex; flex-direction:column; gap:4px; }
-.vstepper .btn{ min-height:32px; line-height:1; }
+.vstepper{ 
+	display:flex; 
+	flex-direction:column; 
+	gap:4px;
+	touch-action: manipulation;       /* coupe le geste double-tap=zoom */
+    -webkit-tap-highlight-color: transparent; 
+}
+.vstepper .btn{ font-size: var(--fs-base); min-height:32px; line-height:1; }
 
 /* number sans flèches natives */
 input[type="number"]::-webkit-outer-spin-button,
