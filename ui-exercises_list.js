@@ -10,6 +10,11 @@
         callerScreen: 'screenExercises',
         onAddCallback: null,
         filtersInited: false,
+        filters: {
+            search: '',
+            group: '',
+            equip: ''
+        },
         selection: new Set(),
         lazyObserver: null
     };
@@ -28,9 +33,14 @@
      */
     A.refreshExerciseList = async function refreshExerciseList() {
         const { exSearch, exFilterGroup, exFilterEquip, exList } = assertRefs();
-        const query = (exSearch.value || '').toLowerCase().trim();
-        const groupFilter = (exFilterGroup.value || '').trim();
-        const equipFilter = (exFilterEquip.value || '').trim();
+
+        state.filters.search = exSearch.value || '';
+        state.filters.group = (exFilterGroup.value || '').trim();
+        state.filters.equip = (exFilterEquip.value || '').trim();
+
+        const query = state.filters.search.toLowerCase().trim();
+        const groupFilter = state.filters.group;
+        const equipFilter = state.filters.equip;
 
         const all = await db.getAll('exercises');
         const filtered = all.filter((exercise) => {
@@ -78,15 +88,38 @@
         ensureRefs();
         assertRefs();
 
-        state.listMode = mode === 'add' ? 'add' : 'view';
-        state.callerScreen = callerScreen;
-        state.onAddCallback = typeof onAdd === 'function' ? onAdd : null;
+        const preserveContext = callerScreen === 'screenExerciseEdit' || callerScreen === 'screenExerciseRead';
+        const modeProvided = Object.prototype.hasOwnProperty.call(options, 'mode');
+        const onAddProvided = Object.prototype.hasOwnProperty.call(options, 'onAdd');
+
+        const shouldKeepCaller = preserveContext && state.listMode === 'add' && Boolean(state.onAddCallback);
+        if (!shouldKeepCaller) {
+            state.callerScreen = callerScreen;
+        } else if (!state.callerScreen) {
+            state.callerScreen = callerScreen;
+        }
+
+        if (modeProvided) {
+            state.listMode = mode === 'add' ? 'add' : 'view';
+        } else if (!preserveContext) {
+            state.listMode = 'view';
+        }
+
+        if (onAddProvided) {
+            state.onAddCallback = typeof onAdd === 'function' ? onAdd : null;
+        } else if (!preserveContext) {
+            state.onAddCallback = null;
+        }
+
+        if (!preserveContext) {
+            clearFilterState();
+            state.selection.clear();
+        }
 
         switchScreen('screenExercises');
         initializeFilters();
-        resetFilters();
+        applyFilterStateToInputs();
         ensureSelectionBar();
-        state.selection.clear();
         updateSelectionBar();
         configureHeaderButtons();
         await A.refreshExerciseList();
@@ -134,12 +167,15 @@
     function wireFilters() {
         const { exSearch, exFilterGroup, exFilterEquip } = assertRefs();
         exSearch.addEventListener('input', () => {
+            state.filters.search = exSearch.value || '';
             void A.refreshExerciseList();
         });
         exFilterGroup.addEventListener('change', () => {
+            state.filters.group = (exFilterGroup.value || '').trim();
             void A.refreshExerciseList();
         });
         exFilterEquip.addEventListener('change', () => {
+            state.filters.equip = (exFilterEquip.value || '').trim();
             void A.refreshExerciseList();
         });
     }
@@ -154,11 +190,17 @@
         state.filtersInited = true;
     }
 
-    function resetFilters() {
+    function applyFilterStateToInputs() {
         const { exFilterGroup, exFilterEquip, exSearch } = assertRefs();
-        exFilterGroup.value = '';
-        exFilterEquip.value = '';
-        exSearch.value = '';
+        exFilterGroup.value = state.filters.group || '';
+        exFilterEquip.value = state.filters.equip || '';
+        exSearch.value = state.filters.search || '';
+    }
+
+    function clearFilterState() {
+        state.filters.search = '';
+        state.filters.group = '';
+        state.filters.equip = '';
     }
 
     function ensureSelectionBar() {
@@ -217,6 +259,8 @@
 
         const left = document.createElement('div');
         left.className = 'exercise-card-left';
+        const right = document.createElement('div');
+        right.className = 'exercise-card-right';
 
         const image = document.createElement('img');
         image.alt = exercise.name || 'exercice';
@@ -252,33 +296,73 @@
         left.append(image, textWrapper);
 
         if (state.listMode === 'add') {
-            if (state.selection.has(exercise.id)) {
+            let checkbox = null;
+            const isSelected = state.selection.has(exercise.id);
+            if (isSelected) {
                 card.classList.add('selected');
             }
             card.classList.add('clickable');
-            card.addEventListener('click', () => {
-                if (state.selection.has(exercise.id)) {
-                    state.selection.delete(exercise.id);
-                } else {
+
+            const syncSelection = (selected) => {
+                if (selected) {
                     state.selection.add(exercise.id);
+                } else {
+                    state.selection.delete(exercise.id);
                 }
-                card.classList.toggle('selected');
+                const finalState = state.selection.has(exercise.id);
+                card.classList.toggle('selected', finalState);
+                if (checkbox) {
+                    checkbox.checked = finalState;
+                }
                 updateSelectionBar();
+            };
+
+            card.addEventListener('click', () => {
+                syncSelection(!state.selection.has(exercise.id));
             });
+
+            checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'exercise-card-check';
+            checkbox.checked = isSelected;
+            checkbox.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+            checkbox.addEventListener('change', (event) => {
+                event.stopPropagation();
+                const target = event.currentTarget;
+                if (target instanceof HTMLInputElement) {
+                    syncSelection(target.checked);
+                } else {
+                    syncSelection(checkbox.checked);
+                }
+            });
+            right.appendChild(checkbox);
+
             image.classList.add('clickable');
             image.addEventListener('click', (event) => {
                 event.stopPropagation();
                 A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
             });
-            row.append(left);
         } else {
             card.classList.add('clickable');
             card.addEventListener('click', () => {
                 A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
             });
-            row.append(left);
+
+            const eyeButton = document.createElement('button');
+            eyeButton.type = 'button';
+            eyeButton.className = 'exercise-card-eye';
+            eyeButton.setAttribute('aria-label', 'Voir l\'exercice');
+            eyeButton.textContent = '👁';
+            eyeButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
+            });
+            right.appendChild(eyeButton);
         }
 
+        row.append(left, right);
         card.appendChild(row);
         return card;
     }
