@@ -81,39 +81,101 @@
 
         session.exercises.forEach((exercise) => {
             const card = document.createElement('article');
-            card.className = 'exercise-card';
+            card.className = 'exercise-card clickable';
+            card.dataset.exerciseId = exercise.exerciseId;
 
-            const top = document.createElement('div');
-            top.className = 'row between';
+            const row = document.createElement('div');
+            row.className = 'exercise-card-row';
+
+            const left = document.createElement('div');
+            left.className = 'exercise-card-left';
+
+            const handle = document.createElement('button');
+            handle.type = 'button';
+            handle.className = 'session-card-handle';
+            handle.setAttribute('aria-label', 'Réordonner l\'exercice');
+            const grip = document.createElement('span');
+            grip.className = 'session-card-grip';
+            for (let index = 0; index < 3; index += 1) {
+                const dot = document.createElement('span');
+                dot.className = 'session-card-grip-dot';
+                grip.appendChild(dot);
+            }
+            handle.appendChild(grip);
+
+            const exerciseName = exercise.exerciseName || 'Exercice';
+
+            const textWrapper = document.createElement('div');
+            textWrapper.className = 'exercise-card-text';
             const name = document.createElement('div');
             name.className = 'element';
-            name.textContent = exercise.exerciseName;
-            const button = document.createElement('button');
-            button.className = 'btn';
-            button.textContent = 'Répétitions ✏️';
-            button.addEventListener('click', () => A.openExecEdit({
-                currentId: exercise.exerciseId,
-                callerScreen: 'screenSessions'
-            }));
-            top.append(name, button);
-            card.appendChild(top);
-
-            const grid = document.createElement('div');
-            grid.className = 'set-grid';
-            exercise.sets.forEach((set) => {
-                const cell = document.createElement('div');
-                cell.className = 'set-cell';
+            name.textContent = exerciseName;
+            const setsWrapper = document.createElement('div');
+            setsWrapper.className = 'session-card-sets';
+            const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+            sets.forEach((set) => {
+                const block = document.createElement('span');
+                block.className = 'session-card-set';
                 const reps = set.reps ?? 0;
                 const weight = set.weight ?? 0;
                 const rpeSmall = set.rpe ? `<sup>${set.rpe}</sup>` : '';
-                cell.innerHTML = `<span class="details">${reps}×${weight} kg ${rpeSmall}</span>`;
-                grid.appendChild(cell);
+                const details = `${reps}×${weight} kg`;
+                block.innerHTML = rpeSmall ? `${details} ${rpeSmall}` : details;
+                setsWrapper.appendChild(block);
             });
-            card.appendChild(grid);
-            card.addEventListener('click', () => button.click());
+            textWrapper.append(name, setsWrapper);
+
+            left.append(handle, textWrapper);
+
+            const right = document.createElement('div');
+            right.className = 'exercise-card-right';
+            const pencil = document.createElement('span');
+            pencil.className = 'session-card-pencil';
+            pencil.setAttribute('aria-hidden', 'true');
+            pencil.textContent = '✏️';
+            right.appendChild(pencil);
+
+            row.append(left, right);
+            card.appendChild(row);
+
+            card.setAttribute('aria-label', `${exerciseName} — éditer`);
+
+            makeSessionCardInteractive(card, handle, () => A.openExecEdit({
+                currentId: exercise.exerciseId,
+                callerScreen: 'screenSessions'
+            }));
 
             sessionList.appendChild(card);
         });
+    };
+
+    A.reorderSessionExercises = async function reorderSessionExercises(order) {
+        if (!Array.isArray(order) || !order.length) {
+            return;
+        }
+        const key = A.ymd(A.activeDate);
+        const session = await db.getSession(key);
+        if (!session?.exercises?.length) {
+            return;
+        }
+        const byId = new Map(session.exercises.map((item) => [item.exerciseId, item]));
+        const reordered = [];
+        order.forEach((id) => {
+            const match = byId.get(id);
+            if (match) {
+                reordered.push(match);
+            }
+        });
+        session.exercises.forEach((item) => {
+            if (!reordered.includes(item)) {
+                reordered.push(item);
+            }
+        });
+        reordered.forEach((item, index) => {
+            item.pos = index + 1;
+        });
+        session.exercises = reordered;
+        await db.saveSession(session);
     };
 
     /**
@@ -190,6 +252,182 @@
     };
 
     /* UTILS */
+    const dragCtx = {
+        active: false,
+        card: null,
+        handle: null,
+        placeholder: null,
+        pointerId: null,
+        offsetY: 0,
+        initialOrder: []
+    };
+
+    function makeSessionCardInteractive(card, handle, open) {
+        card.setAttribute('role', 'button');
+        card.tabIndex = 0;
+        card.addEventListener('click', open);
+        card.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                open();
+            }
+        });
+
+        handle.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+        handle.addEventListener('pointerdown', (event) => startDrag(event, card, handle));
+    }
+
+    function startDrag(event, card, handle) {
+        if (dragCtx.active) {
+            return;
+        }
+        if (event.button !== 0 && event.pointerType !== 'touch') {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+
+        const { sessionList } = assertRefs();
+        dragCtx.active = true;
+        dragCtx.card = card;
+        dragCtx.handle = handle;
+        dragCtx.pointerId = event.pointerId;
+        dragCtx.initialOrder = getSessionOrder(sessionList);
+
+        const rect = card.getBoundingClientRect();
+        dragCtx.offsetY = event.clientY - rect.top;
+        const placeholder = document.createElement('div');
+        placeholder.className = 'session-card-placeholder';
+        placeholder.style.height = `${rect.height}px`;
+        placeholder.style.width = `${rect.width}px`;
+        dragCtx.placeholder = placeholder;
+
+        sessionList.insertBefore(placeholder, card);
+        sessionList.appendChild(card);
+
+        card.classList.add('session-card-dragging');
+        card.style.width = `${rect.width}px`;
+        card.style.height = `${rect.height}px`;
+        card.style.position = 'fixed';
+        card.style.left = `${rect.left}px`;
+        card.style.top = `${rect.top}px`;
+        card.style.zIndex = '1000';
+        card.style.pointerEvents = 'none';
+
+        if (handle.setPointerCapture) {
+            handle.setPointerCapture(event.pointerId);
+        }
+        handle.addEventListener('pointermove', onDragMove);
+        handle.addEventListener('pointerup', onDragEnd);
+        handle.addEventListener('pointercancel', onDragCancel);
+    }
+
+    function onDragMove(event) {
+        if (!dragCtx.active || event.pointerId !== dragCtx.pointerId) {
+            return;
+        }
+        event.preventDefault();
+
+        dragCtx.card.style.top = `${event.clientY - dragCtx.offsetY}px`;
+
+        const { sessionList } = assertRefs();
+        const siblings = Array.from(sessionList.children)
+            .filter((node) => node !== dragCtx.card && node !== dragCtx.placeholder);
+
+        for (const sibling of siblings) {
+            const rect = sibling.getBoundingClientRect();
+            if (event.clientY < rect.top + rect.height / 2) {
+                if (dragCtx.placeholder !== sibling) {
+                    sessionList.insertBefore(dragCtx.placeholder, sibling);
+                }
+                return;
+            }
+        }
+        sessionList.appendChild(dragCtx.placeholder);
+    }
+
+    async function onDragEnd(event) {
+        if (!dragCtx.active || event.pointerId !== dragCtx.pointerId) {
+            return;
+        }
+        event.preventDefault();
+
+        await finishDrag(true);
+    }
+
+    async function onDragCancel(event) {
+        if (!dragCtx.active || event.pointerId !== dragCtx.pointerId) {
+            return;
+        }
+        event.preventDefault();
+
+        await finishDrag(false);
+    }
+
+    async function finishDrag(shouldPersist) {
+        const { sessionList } = assertRefs();
+        const { handle } = dragCtx;
+
+        handle?.removeEventListener('pointermove', onDragMove);
+        handle?.removeEventListener('pointerup', onDragEnd);
+        handle?.removeEventListener('pointercancel', onDragCancel);
+        if (handle?.releasePointerCapture && dragCtx.pointerId != null) {
+            handle.releasePointerCapture(dragCtx.pointerId);
+        }
+
+        if (dragCtx.placeholder && dragCtx.card) {
+            sessionList.insertBefore(dragCtx.card, dragCtx.placeholder);
+            dragCtx.placeholder.remove();
+        }
+
+        if (dragCtx.card) {
+            dragCtx.card.classList.remove('session-card-dragging');
+            dragCtx.card.style.position = '';
+            dragCtx.card.style.left = '';
+            dragCtx.card.style.top = '';
+            dragCtx.card.style.width = '';
+            dragCtx.card.style.height = '';
+            dragCtx.card.style.zIndex = '';
+            dragCtx.card.style.pointerEvents = '';
+        }
+
+        const newOrder = getSessionOrder(sessionList);
+        const initial = dragCtx.initialOrder;
+
+        dragCtx.active = false;
+        dragCtx.card = null;
+        dragCtx.handle = null;
+        dragCtx.placeholder = null;
+        dragCtx.pointerId = null;
+        dragCtx.offsetY = 0;
+        dragCtx.initialOrder = [];
+
+        if (!shouldPersist) {
+            await A.renderSession();
+            return;
+        }
+
+        if (!arraysEqual(initial, newOrder)) {
+            await A.reorderSessionExercises(newOrder);
+            await A.renderSession();
+        }
+    }
+
+    function getSessionOrder(container) {
+        return Array.from(container.querySelectorAll('.exercise-card'))
+            .map((node) => node.dataset.exerciseId)
+            .filter(Boolean);
+    }
+
+    function arraysEqual(a, b) {
+        if (a.length !== b.length) {
+            return false;
+        }
+        return a.every((value, index) => value === b[index]);
+    }
+
     function ensureRefs() {
         if (refsResolved) {
             return refs;
