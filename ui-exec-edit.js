@@ -7,6 +7,9 @@
     let refsResolved = false;
     let execCtx = { dateKey: null, exerciseId: null, exerciseName: '', callerScreen: 'screenSessions' };
     let execTimer = { running: false, startSec: 0, remainSec: 0, intervalId: null };
+    let currentSelection = null;
+    let currentHolder = null;
+    let currentAction = 'add';
 
     A.execCtx = execCtx;
     A.execTimer = execTimer;
@@ -120,7 +123,7 @@
         return refs;
     }
 
-    async function renderColumnA(editPos = null) {
+    async function renderColumnA(selectionOverride = null) {
         const { execExecuted, execEditable, execRestToggle, execOk } = assertRefs();
         const session = await db.getSession(execCtx.dateKey);
         const exercise = session?.exercises.find((item) => item.exerciseId === execCtx.exerciseId);
@@ -130,66 +133,91 @@
 
         execExecuted.innerHTML = '';
         execEditable.innerHTML = '';
+        currentHolder = null;
 
-        exercise.sets.forEach((set) => {
-            if (editPos === set.pos) {
-                execEditable.appendChild(rowEditable(set, false));
-            } else {
-                const row = rowReadOnly(set);
-                row.addEventListener('click', () => {
-                    void renderColumnA(set.pos);
-                });
-                execExecuted.appendChild(row);
-            }
-        });
+        const orderedSets = [...exercise.sets].sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0));
+        const executedSets = orderedSets.filter((set) => set.done === true);
+        const nextPlanned = orderedSets.find((set) => set.done !== true) || null;
+        const entryKind = nextPlanned ? 'planned' : 'new';
+        const entryTemplate = nextPlanned ? { ...nextPlanned } : createTemplateFromLast(orderedSets);
 
-        if (!execEditable.children.length) {
-            const firstPlanned = exercise.sets.find((set) => set.done !== true);
-            if (firstPlanned) {
-                execEditable.appendChild(rowEditable(firstPlanned, false));
+        if (selectionOverride) {
+            currentSelection = selectionOverride;
+        }
+
+        const executedPositions = new Set(executedSets.map((set) => set.pos));
+        if (currentSelection?.kind === 'existing' && !executedPositions.has(currentSelection.pos)) {
+            currentSelection = null;
+        }
+        if (currentSelection?.kind === 'planned' && entryKind !== 'planned') {
+            currentSelection = null;
+        }
+        if (currentSelection?.kind === 'new' && entryKind !== 'new') {
+            currentSelection = null;
+        }
+
+        if (!currentSelection) {
+            if (entryTemplate) {
+                currentSelection = entryKind === 'planned' ? { kind: 'planned', pos: entryTemplate.pos } : { kind: 'new', pos: entryTemplate.pos };
+            } else if (executedSets.length) {
+                const last = executedSets[executedSets.length - 1];
+                currentSelection = { kind: 'existing', pos: last.pos };
             }
         }
 
+        executedSets.forEach((set) => {
+            const row = rowReadOnly(set);
+            const isSelected = currentSelection?.kind === 'existing' && currentSelection.pos === set.pos;
+            applySelectionStyle(row, isSelected);
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', () => {
+                void renderColumnA({ kind: 'existing', pos: set.pos });
+            });
+            execExecuted.appendChild(row);
+        });
+
+        if (entryTemplate) {
+            const entryRow = rowPreview(entryTemplate, entryKind);
+            const isEntrySelected = currentSelection && currentSelection.kind !== 'existing';
+            applySelectionStyle(entryRow, Boolean(isEntrySelected));
+            entryRow.style.cursor = 'pointer';
+            entryRow.addEventListener('click', () => {
+                void renderColumnA(entryKind === 'planned' ? { kind: 'planned', pos: entryTemplate.pos } : { kind: 'new', pos: entryTemplate.pos });
+            });
+            execExecuted.appendChild(entryRow);
+        }
+
+        const formContext = resolveFormContext({ entryKind, entryTemplate, orderedSets });
+        const formRow = rowEditable(formContext.set, formContext.isNew);
+        execEditable.appendChild(formRow);
+        currentHolder = formRow.querySelector('.js-edit-holder');
+        currentAction = formContext.action;
+        setupFormInteractions();
+
         execRestToggle.onclick = async () => {
-            const timerVisible = !refs.execTimerBar.hidden;
-            const holder = execEditable.querySelector('.js-edit-holder');
-            if (!holder || !holder._collect) {
-                alert('Renseigne la série avant le repos.');
+            if (!currentHolder || !currentHolder._collect) {
                 return;
             }
-            const payload = JSON.parse(holder.dataset.payload || '{}');
-            const value = holder._collect();
-
-            if (!timerVisible) {
-                await saveSet(payload, value, true);
-                startTimer(value.rest);
-                execRestToggle.textContent = 'Reprendre une série';
-            } else {
-                const remaining = execTimer.remainSec;
-                await saveRemainingRest(remaining);
-                stopTimer();
-                updateTimerUI();
-                execRestToggle.textContent = 'Repos';
-                const sessionAfter = await db.getSession(execCtx.dateKey);
-                const exerciseAfter = sessionAfter.exercises.find((item) => item.exerciseId === execCtx.exerciseId);
-                const nextPos = (exerciseAfter?.sets.length || 0) + 1;
-                execEditable.innerHTML = '';
-                execEditable.appendChild(rowEditable(defaultNewSet(nextPos), true));
+            if (execRestToggle.disabled) {
+                return;
             }
+            const payload = JSON.parse(currentHolder.dataset.payload || '{}');
+            const value = currentHolder._collect();
+            await saveSet(payload, value, true);
+            startTimer(value.rest);
         };
 
         execOk.onclick = async () => {
-            const holder = execEditable.querySelector('.js-edit-holder');
-            if (holder && holder._collect) {
-                const payload = JSON.parse(holder.dataset.payload || '{}');
-                const value = holder._collect();
+            if (currentHolder && currentHolder._collect) {
+                const payload = JSON.parse(currentHolder.dataset.payload || '{}');
+                const value = currentHolder._collect();
                 await saveSet(payload, value, true);
+                startTimer(value.rest);
             }
             backToCaller();
         };
 
         updateTimerUI();
-        execRestToggle.textContent = refs.execTimerBar?.hidden ? 'Repos' : 'Reprendre une série';
     }
 
     async function saveSet(payload, value, markDone) {
@@ -204,6 +232,7 @@
             }
         }
         await db.saveSession(session);
+        currentSelection = null;
         await renderColumnA();
     }
 
@@ -231,12 +260,102 @@
         return row;
     }
 
+    function rowPreview(set, kind) {
+        const row = rowReadOnly(set);
+        row.classList.add('exec-preview');
+        row.style.opacity = '0.7';
+        row.style.fontStyle = 'italic';
+        const hint = kind === 'planned' ? 'Prévue' : 'Nouvelle série';
+        const hintCell = row.children[4];
+        if (hintCell) {
+            hintCell.textContent = hint;
+            hintCell.className = 'details';
+        }
+        return row;
+    }
+
+    function applySelectionStyle(row, isSelected) {
+        row.classList.toggle('is-selected', isSelected);
+        row.style.background = isSelected ? 'var(--whiteB)' : '';
+        row.style.borderRadius = isSelected ? 'var(--radius)' : '';
+        if (row.classList.contains('exec-preview')) {
+            row.style.opacity = isSelected ? '1' : '0.7';
+        }
+    }
+
+    function resolveFormContext({ entryKind, entryTemplate, orderedSets }) {
+        if (currentSelection?.kind === 'existing') {
+            const match = orderedSets.find((set) => set.pos === currentSelection.pos);
+            if (match) {
+                return { set: { ...match }, isNew: false, action: 'edit' };
+            }
+        }
+        if (currentSelection?.kind === 'planned' && entryKind === 'planned' && entryTemplate) {
+            return { set: { ...entryTemplate }, isNew: false, action: 'add' };
+        }
+        if (entryTemplate) {
+            return { set: { ...entryTemplate }, isNew: entryKind === 'new', action: 'add' };
+        }
+        const fallbackPos = orderedSets.reduce((acc, item) => Math.max(acc, item.pos ?? 0), 0) + 1;
+        return { set: defaultNewSet(fallbackPos), isNew: true, action: 'add' };
+    }
+
+    function setupFormInteractions() {
+        const { execRestToggle } = assertRefs();
+        if (!execRestToggle) {
+            return;
+        }
+
+        const label = currentAction === 'edit' ? 'Editer' : 'Ajouter';
+        execRestToggle.textContent = label;
+
+        if (!currentHolder || !currentHolder._controls) {
+            execRestToggle.disabled = true;
+            return;
+        }
+
+        const controls = currentHolder._controls;
+        const updateState = () => {
+            const repsValue = parseInt(controls?.reps?.input?.value || '0', 10);
+            execRestToggle.disabled = !repsValue;
+        };
+
+        const bindStepper = (stepper) => {
+            if (!stepper) {
+                return;
+            }
+            if (stepper.input) {
+                stepper.input.addEventListener('input', updateState);
+            }
+            if (stepper.plus) {
+                stepper.plus.addEventListener('click', () => {
+                    window.setTimeout(updateState, 0);
+                });
+            }
+            if (stepper.minus) {
+                stepper.minus.addEventListener('click', () => {
+                    window.setTimeout(updateState, 0);
+                });
+            }
+        };
+
+        bindStepper(controls.reps);
+        bindStepper(controls.weight);
+
+        controls.rpe?.addEventListener('input', updateState);
+        controls.rest?.addEventListener('input', updateState);
+
+        updateState();
+    }
+
     function rowEditable(set, isNew) {
         const row = document.createElement('div');
         row.className = 'exec-grid exec-row';
 
         const reps = vStepper(safeInt(set.reps), 0, 100);
         const weight = vStepper(safeInt(set.weight), 0, 999);
+        reps.input.dataset.role = 'reps';
+        weight.input.dataset.role = 'weight';
 
         const rpeWrap = document.createElement('div');
         const rpe = document.createElement('input');
@@ -246,6 +365,7 @@
         rpe.max = '10';
         rpe.inputMode = 'numeric';
         rpe.value = set.rpe == null ? '' : String(set.rpe);
+        rpe.dataset.role = 'rpe';
         rpe.oninput = () => {
             rpeWrap.dataset.rpe = clampInt(rpe.value, 5, 10) || '';
         };
@@ -258,6 +378,7 @@
         rest.placeholder = 'mm:ss';
         rest.value = fmtTime(safeInt(set.rest));
         rest.pattern = '^\\d{1,2}:\\d{2}$';
+        rest.dataset.role = 'rest';
 
         const holder = document.createElement('div');
         holder.className = 'js-edit-holder';
@@ -268,9 +389,20 @@
             rpe: rpe.value ? parseInt(rpe.value, 10) : null,
             rest: parseTime(rest.value)
         });
+        holder._controls = { reps, weight, rpe, rest };
 
         row.append(reps.el, weight.el, rpeWrap, rest, holder);
         return row;
+    }
+
+    function createTemplateFromLast(sets) {
+        const nextPos = sets.reduce((acc, item) => Math.max(acc, item.pos ?? 0), 0) + 1;
+        const lastDone = [...sets].reverse().find((item) => item.done === true);
+        if (lastDone) {
+            const { reps = 0, weight = 0, rpe = null, rest = 90 } = lastDone;
+            return { pos: nextPos, reps, weight, rpe, rest, done: false };
+        }
+        return defaultNewSet(nextPos);
     }
 
     function defaultNewSet(pos) {
@@ -300,7 +432,7 @@
             input.value = String(Math.max(min, parseInt(input.value || '0', 10) - 1));
         };
         wrap.append(plus, input, minus);
-        return { el: wrap, input };
+        return { el: wrap, input, plus, minus };
     }
 
     function rpeChip(value) {
