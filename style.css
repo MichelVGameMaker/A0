@@ -30,7 +30,8 @@
   --fs-base: 15px;           /* base */
   --fs-base: 15px;           /* base */
   --fs-small: 13px;          /* petits textes (ex: cellules série) */
-  --fs-rpe: 13px;            /* taille spécifique RPE dans série */
+  --fs-rpe:    13px;            /* taille spécifique RPE dans série */
+  --fw-base:   600;
   --fw-strong: 700;
 
   /* --- Légers helpers --- */
@@ -40,7 +41,7 @@
   --tabbar-h: calc(var(--tab-h) + 2px);      /* 2px = border-top de .tabbar */
   --header-total-h: calc(var(--header-h) + 2px); /* 2px = border-bottom du header/subheader */
 }
-}
+
 
 /* Reset simple */
 *{ box-sizing:border-box; }
@@ -149,60 +150,28 @@ body{
   width: 100%;
   padding: 0 var(--pad-x);
   border-radius: var(--radius);
-  border: 1px solid var(--emphase);
+  border: 1px solid var(--black);
   background: var(--white);
   color: var(--darkGrayB);
-  font-weight: 600;
+  font-weight: var(--fw-base);
 }
-
-/* Placeholder / valeur par défaut en gris */
-.input::placeholder,
-select:has(option:checked[value=""]),
-textarea:placeholder-shown{
-  color: var(--darkGrayB);                      /* 3.Texte de champ vide/défaut */
+textarea{
+  resize: vertical;
 }
 
 /* Focus/actif -> fond gris + bordure strong */
 .input:focus,
 select:focus,
 textarea:focus{
-  outline: none;
-  border-color: var(--emphase);
-  background: var(--emphase);
-  color: var(--white);
-}
-
-.input:focus::placeholder,
-select:focus option,
-textarea:focus::placeholder{
-  color: var(--white);
+  background: var(--darkGray);
+  color: var(--black);
+  font-weight: var(--fw-strong);
 }
 
 /* Valeur définie (non vide) — forcer style “défini” */
 .has-value{
-  border-color: var(--emphase);
-  background: var(--white);
-}
-
-.has-value:not(:focus){
-  color: var(--emphase);
-}
-
-.input:not(:focus):not(:placeholder-shown),
-textarea:not(:focus):not(:placeholder-shown){
-  color: var(--emphase);
-}
-
-select:has(option:checked:not([value=""])):not(:focus){
-  color: var(--emphase);
-}
-
-/* Textarea plus haut (instructions) */
-textarea{
-  height: calc(var(--control-h) * 2);           /* 2x plus haut par défaut */
-  padding-top: 8px;
-  padding-bottom: 8px;
-  resize: vertical;
+  color: var(--black);
+  font-weight: var(--fw-strong);
 }
 
 /* Grosse image pour l'exécution */
