@@ -185,6 +185,12 @@ image_big{
 	 border-radius:12px;
 	 border:1px solid var(--lightGrayB);
 	 background:var(--lightGray);
+
+     touch-action: manipulation;      /* coupe le double-tap zoom sur iOS récents */
+     -webkit-user-select: none;
+     user-select: none;
+     -webkit-user-drag: none;
+     user-drag: none;
 }
 
 /* Panneaux/cartes (listes, cartes) */
