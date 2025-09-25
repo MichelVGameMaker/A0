@@ -138,7 +138,7 @@ body{
   user-select: none;
 }
 .tab.active{
-  border-top: 3px solid var(--emphase);         /* 4.Onglet actif bordure haute emphase */
+  border-top: 3px solid var(--black);         /* 4.Onglet actif bordure haute noir */
 }
 
 /* =========================================================
@@ -194,7 +194,7 @@ image_big{
 }
 .exercise-card{
   background: var(--white);
-  border: 1px solid var(--emphase);
+  border: 1px solid var(--black);
   border-radius: var(--radius);
   padding: var(--pad-y) var(--pad-x);
 }
@@ -217,8 +217,7 @@ image_big{
   border: 1px solid var(--darkGrayB);
 }
 .exercise-card.selected{
-  border-color: var(--emphase);
-  background: var(--emphase);
+  background: var(--darkGray);
   color: var(--white);
 }
 .exercise-card.clickable{ cursor:pointer; user-select:none; }
@@ -228,7 +227,7 @@ image_big{
 }
 .exercise-card-thumb.clickable{
   cursor: pointer;
-  border-color: var(--emphase);
+  border-color: var(--black);
 }
 .exercise-thumb-placeholder{ object-fit:contain; }
 .exercise-selection-bar{
@@ -254,15 +253,14 @@ image_big{
   display:inline-flex; align-items:center; justify-content:center;
   padding: 0 12px;
   border-radius: var(--radius);
-  border: 1px solid var(--emphase);
+  border: 1px solid var(--black);
   background: var(--white);
   color: var(--darkGrayB);                      /* 3.Texte gris pour “non sélectionné” */
   user-select:none;
   cursor:pointer;
 }
 .tag.selected{
-  border-color: var(--emphase);
-  background: var(--emphase);                  /* 6.Tag cliqué */
+  background: var(--darkGrayB);                  /* 6.Tag cliqué */
   color: var(--white);
 }
 
@@ -274,9 +272,9 @@ image_big{
   display:inline-flex; align-items:center; justify-content:center;
   padding: 0 var(--pad-x);
   border-radius: var(--radius);
-  border: 1px solid var(--emphase);
+  border: 1px solid var(--black);
   background: transparent;
-  color: var(--emphase);
+  color: var(--black);
   font-weight: var(--fw-strong);
   cursor:pointer; user-select:none;
 }
@@ -302,7 +300,7 @@ image_big{
 
 /* Image cliquable (ex: preview) */
 .btn.image{
-  border-color: var(--emphase);
+  border-color: var(--black);
 }
 
 /* Disabled */
