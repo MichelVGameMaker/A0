@@ -407,9 +407,9 @@ image_big{
 /* =========================================================
    6) Listes / Filtres (écran Bibliothèque)
    ========================================================= */
-.list.cards{ display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }
-.filters{    display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }
-.form{       display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }
+/*.list.cards{ display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }*/
+.bloque{    display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }
+/*.form{       display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }*/
 .lbl{ font-weight: var(--fw-strong); }
 .listing{ margin: 0; font-weight: var(--fw-strong); padding-left: 0; list-style-position: inside; }
 .hint{ margin-top:6px; color: var(--darkGrayB); font-size: var(--fs-small); }
