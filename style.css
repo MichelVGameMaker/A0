@@ -208,6 +208,74 @@ image_big{
   text-overflow:ellipsis;
   white-space:nowrap;
 }
+.session-card-handle{
+  border:none;
+  background:none;
+  color:inherit;
+  padding:4px;
+  border-radius:8px;
+  cursor:grab;
+  touch-action: none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.session-card-handle:focus-visible{
+  outline:2px solid var(--black);
+  outline-offset:2px;
+}
+.session-card-handle:active{
+  cursor:grabbing;
+}
+.session-card-grip{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  align-items:center;
+  justify-content:center;
+}
+.session-card-grip-dot{
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:currentColor;
+  opacity:.7;
+}
+.session-card-sets{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-top:4px;
+}
+.session-card-sets:empty{
+  display:none;
+}
+.session-card-set{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:4px 8px;
+  border-radius:8px;
+  background:var(--lightGray);
+  border:1px solid var(--lightGrayB);
+  font-size:var(--fs-small);
+  line-height:1.1;
+}
+.session-card-set sup{
+  font-size:.7em;
+  color:var(--darkGrayB);
+}
+.session-card-pencil{
+  font-size:20px;
+  line-height:1;
+}
+.session-card-dragging{
+  box-shadow:0 10px 24px rgba(0,0,0,.18);
+}
+.session-card-placeholder{
+  border:1px dashed var(--whiteB);
+  border-radius:var(--radius);
+}
 .exercise-card-thumb{
   width:40px;
   height:40px;
