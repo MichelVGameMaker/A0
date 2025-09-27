@@ -69,13 +69,7 @@ body{
 }
 .screen[hidden] { display: none !important; }
 /* Paneau de contenu */
-.content {
-    flex: 1;
-    background: var(--whiteB);                /* panneau blanc */
-    border: 10px solid var(--lightGrayB);
-    padding:  12px;
-    min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
-}
+
 
 /* Grilles utilitaires */
 .row{ display:flex; align-items:center; gap:var(--gap); }
@@ -92,20 +86,35 @@ body{
    ========================================================= */
 /* Header principal / Sous-header : fond blanc + bordure */
 header{
-    position: sticky; top: 0; left:0; right:0; z-index: 5;
+    z-index:5;
+    position: sticky; top: 0; left:0; right:0;
     display:flex; align-items:center; justify-content:space-between;
     padding: var(--pad-y) var(--pad-x);
     background: var(--white);                     /* 4.Header blanc */
     border-bottom: 2px solid var(--whiteB);       /* 4.Bordure basse whiteB */
+
 }
-header{ z-index:4; }
+
 header .title{ font-weight: var(--fw-strong); }
+
+/* =========================================================
+   2) Contenu
+   ========================================================= */
+ .content {
+    flex: 1;
+    background: var(--whiteB);                /* panneau blanc */
+    border: 10px solid var(--lightGrayB);
+    padding:  12px;
+    min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
+}
+
 
 /* =========================================================
    2) Tab bar (bas)
    ========================================================= */
 .tabbar{
-    position:fixed; bottom:0; left:0; right:0; z-index:10;
+    z-index:10;
+    position: fixed; bottom:0; left:0; right:0; 
     height: var(--tab-h);
     display:flex;
     gap: 0;
@@ -129,18 +138,31 @@ header .title{ font-weight: var(--fw-strong); }
     border-top: 3px solid var(--black);         /* 4.Onglet actif bordure haute noir */
 }
 
-
 /* =========================================================
-   3) Système
+   4) Timer
    ========================================================= */
-   
-/* États invisibles */
-.sr-only{ position:absolute; left:-9999px; }
-
+/* Timer bas */
+.exec-timer{
+    z-index:15;
+    position:sticky; 
+    bottom:0; 
+    
+    display:grid; grid-template-columns: 1fr 2fr 1fr;
+    align-items:center; gap:8px;
+    padding:10px 12px;
+    background: var(--white);
+    border-top:1px solid var(--whiteB);
+}
+.exec-timer .tmr-center{ display:flex; align-items:center; justify-content:center; gap:10px; }
+.tmr-display{ font-weight: var(--fw-strong); min-width:76px; text-align:center; }
+.exec-timer .btn.ghost{ border:1px solid var(--whiteB); }
 
 /* =========================================================
    4) Contrôles unifiés (inputs, selects, tags, listes)
    ========================================================= */
+/* États invisibles */
+.sr-only{ position:absolute; left:-9999px; }
+
 /* Base champs & listes */
 .input, select, textarea{
   height: var(--control-h);
@@ -606,19 +628,6 @@ input[type="number"]{ -moz-appearance:textfield; }
 /* Champs spécifiques */
 .exec-row input[placeholder="mm:ss"]{ text-align:center; max-width:90px; margin:0 auto; }
 .rpe-wrap .input{ max-width:70px; margin:0 auto; }
-
-/* Timer bas */
-.exec-timer{
-  position:sticky; bottom:0; z-index:5;
-  display:grid; grid-template-columns: 1fr 2fr 1fr;
-  align-items:center; gap:8px;
-  padding:10px 12px;
-  background: var(--white);
-  border-top:1px solid var(--whiteB);
-}
-.exec-timer .tmr-center{ display:flex; align-items:center; justify-content:center; gap:10px; }
-.tmr-display{ font-weight: var(--fw-strong); min-width:76px; text-align:center; }
-.exec-timer .btn.ghost{ border:1px solid var(--whiteB); }
 
 /* =========================================================
    10) Responsivité
