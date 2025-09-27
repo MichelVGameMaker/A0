@@ -6,7 +6,22 @@
     const refs = {};
     let refsResolved = false;
     let execCtx = { dateKey: null, exerciseId: null, exerciseName: '', callerScreen: 'screenSessions' };
-    let execTimer = { running: false, startSec: 0, remainSec: 0, intervalId: null };
+    const defaultTimerState = () => ({ running: false, startSec: 0, remainSec: 0, intervalId: null, exerciseKey: null });
+
+    let execTimer = A.execTimer;
+    if (!execTimer) {
+        execTimer = defaultTimerState();
+        A.execTimer = execTimer;
+    } else {
+        execTimer.running = Boolean(execTimer.running);
+        execTimer.startSec = safeInt(execTimer.startSec);
+        execTimer.remainSec = safeInt(execTimer.remainSec);
+        execTimer.intervalId = execTimer.intervalId ?? null;
+        if (!('exerciseKey' in execTimer)) {
+            execTimer.exerciseKey = null;
+        }
+    }
+
     let currentSelection = null;
     let currentHolder = null;
     let currentAction = 'add';
@@ -62,8 +77,13 @@
         };
         A.execCtx = execCtx;
 
-        execTimer = { running: false, startSec: 0, remainSec: 0, intervalId: null };
-        A.execTimer = execTimer;
+        const timerKey = `${dateKey}::${currentId}`;
+        const timer = ensureSharedTimer();
+        if (timer.exerciseKey && timer.exerciseKey !== timerKey) {
+            resetTimerState();
+        }
+        timer.exerciseKey = timerKey;
+        updateTimerUI();
 
         const { execTitle, execDate } = assertRefs();
         execTitle.textContent = exercise.exerciseName || 'Exercice';
@@ -491,42 +511,82 @@
         return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
     }
 
-    function startTimer(startSec) {
-        execTimer.startSec = startSec || 0;
-        execTimer.remainSec = startSec || 0;
-        execTimer.running = true;
-        if (execTimer.intervalId) {
-            clearInterval(execTimer.intervalId);
+    function ensureSharedTimer() {
+        if (!A.execTimer) {
+            A.execTimer = defaultTimerState();
         }
-        execTimer.intervalId = window.setInterval(runTick, 1000);
-        A.execTimer = execTimer;
+        if (execTimer !== A.execTimer) {
+            execTimer = A.execTimer;
+            if (!('exerciseKey' in execTimer)) {
+                execTimer.exerciseKey = null;
+            }
+        }
+        return execTimer;
+    }
+
+    function resetTimerState() {
+        const timer = ensureSharedTimer();
+        stopTimer();
+        timer.startSec = 0;
+        timer.remainSec = 0;
+        timer.exerciseKey = null;
+    }
+
+    function currentTimerKey() {
+        if (!execCtx.dateKey || !execCtx.exerciseId) {
+            return null;
+        }
+        return `${execCtx.dateKey}::${execCtx.exerciseId}`;
+    }
+
+    function startTimer(startSec) {
+        const timer = ensureSharedTimer();
+        const startValue = startSec || 0;
+        timer.startSec = startValue;
+        timer.remainSec = startValue;
+        timer.running = true;
+        if (timer.intervalId) {
+            clearInterval(timer.intervalId);
+        }
+        timer.intervalId = window.setInterval(runTick, 1000);
+        const timerKey = currentTimerKey();
+        if (timerKey) {
+            timer.exerciseKey = timerKey;
+        }
         updateTimerUI();
     }
 
     function pauseTimer() {
-        execTimer.running = false;
+        const timer = ensureSharedTimer();
+        timer.running = false;
         updateTimerUI();
     }
 
     function resumeTimer() {
-        execTimer.running = true;
+        const timer = ensureSharedTimer();
+        timer.running = true;
+        if (!timer.intervalId) {
+            timer.intervalId = window.setInterval(runTick, 1000);
+        }
         updateTimerUI();
     }
 
     function stopTimer() {
-        if (execTimer.intervalId) {
-            clearInterval(execTimer.intervalId);
+        const timer = ensureSharedTimer();
+        if (timer.intervalId) {
+            clearInterval(timer.intervalId);
         }
-        execTimer.intervalId = null;
-        execTimer.running = false;
+        timer.intervalId = null;
+        timer.running = false;
     }
 
     function runTick() {
-        if (!execTimer.running) {
+        const timer = ensureSharedTimer();
+        if (!timer.running) {
             return;
         }
-        execTimer.remainSec -= 1;
-        if (execTimer.remainSec === 0 && navigator.vibrate) {
+        timer.remainSec -= 1;
+        if (timer.remainSec === 0 && navigator.vibrate) {
             try {
                 navigator.vibrate(200);
             } catch {
@@ -537,8 +597,9 @@
     }
 
     async function adjustTimer(delta) {
-        execTimer.startSec += delta;
-        execTimer.remainSec += delta;
+        const timer = ensureSharedTimer();
+        timer.startSec += delta;
+        timer.remainSec += delta;
 
         const session = await db.getSession(execCtx.dateKey);
         const exercise = session.exercises.find((item) => item.exerciseId === execCtx.exerciseId);
@@ -552,24 +613,25 @@
     }
 
     function updateTimerUI() {
+        const timer = ensureSharedTimer();
         const { execTimerBar, timerDisplay, timerToggle } = assertRefs();
         if (!execTimerBar) {
             return;
         }
 
-        const shouldHide = !execTimer.intervalId && !execTimer.running && execTimer.startSec === 0;
+        const shouldHide = !timer.intervalId && !timer.running && timer.startSec === 0;
         execTimerBar.hidden = shouldHide;
         if (shouldHide) {
             return;
         }
 
-        const remaining = execTimer.remainSec;
+        const remaining = timer.remainSec;
         const sign = remaining < 0 ? '-' : '';
         const abs = Math.abs(remaining);
         const minutes = Math.floor(abs / 60);
         const seconds = abs % 60;
         timerDisplay.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
-        timerToggle.textContent = execTimer.running ? '⏸' : '▶︎';
+        timerToggle.textContent = timer.running ? '⏸' : '▶︎';
     }
 
     function wireNavigation() {
@@ -580,7 +642,8 @@
     function wireTimerControls() {
         const { timerToggle, timerMinus, timerPlus } = assertRefs();
         timerToggle?.addEventListener('click', () => {
-            if (execTimer.running) {
+            const timer = ensureSharedTimer();
+            if (timer.running) {
                 pauseTimer();
             } else {
                 resumeTimer();
