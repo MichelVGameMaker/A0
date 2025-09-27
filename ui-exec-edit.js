@@ -159,9 +159,9 @@
 
         const orderedSets = [...exercise.sets].sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0));
         const executedSets = orderedSets.filter((set) => set.done === true);
-        const nextPlanned = orderedSets.find((set) => set.done !== true) || null;
-        const entryKind = nextPlanned ? 'planned' : 'new';
-        const entryTemplate = nextPlanned ? { ...nextPlanned } : createTemplateFromLast(orderedSets);
+        const plannedSets = orderedSets.filter((set) => set.done !== true);
+        const entryKind = plannedSets.length ? 'planned' : 'new';
+        let entryTemplate = null;
 
         if (selectionOverride) {
             currentSelection = selectionOverride;
@@ -171,17 +171,35 @@
         if (currentSelection?.kind === 'existing' && !executedPositions.has(currentSelection.pos)) {
             currentSelection = null;
         }
-        if (currentSelection?.kind === 'planned' && entryKind !== 'planned') {
+        const plannedPositions = new Set(plannedSets.map((set) => set.pos));
+        if (currentSelection?.kind === 'planned' && !plannedPositions.has(currentSelection.pos)) {
             currentSelection = null;
         }
         if (currentSelection?.kind === 'new' && entryKind !== 'new') {
             currentSelection = null;
         }
 
+        if (entryKind === 'planned') {
+            let target = null;
+            if (currentSelection?.kind === 'planned') {
+                target = plannedSets.find((set) => set.pos === currentSelection.pos) || null;
+            }
+            if (!target) {
+                target = plannedSets[0] || null;
+            }
+            if (!currentSelection && target) {
+                currentSelection = { kind: 'planned', pos: target.pos };
+            }
+            entryTemplate = target ? { ...target } : null;
+        } else {
+            entryTemplate = createTemplateFromLast(orderedSets);
+            if (!currentSelection && entryTemplate) {
+                currentSelection = { kind: 'new', pos: entryTemplate.pos };
+            }
+        }
+
         if (!currentSelection) {
-            if (entryTemplate) {
-                currentSelection = entryKind === 'planned' ? { kind: 'planned', pos: entryTemplate.pos } : { kind: 'new', pos: entryTemplate.pos };
-            } else if (executedSets.length) {
+            if (executedSets.length) {
                 const last = executedSets[executedSets.length - 1];
                 currentSelection = { kind: 'existing', pos: last.pos };
             }
@@ -199,13 +217,24 @@
             execExecuted.appendChild(row);
         });
 
-        if (entryTemplate) {
+        plannedSets.forEach((set) => {
+            const row = rowPreview(set, 'planned');
+            const isSelected = currentSelection?.kind === 'planned' && currentSelection.pos === set.pos;
+            applySelectionStyle(row, isSelected);
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', () => {
+                void renderColumnA({ kind: 'planned', pos: set.pos });
+            });
+            execExecuted.appendChild(row);
+        });
+
+        if (entryTemplate && entryKind === 'new') {
             const entryRow = rowPreview(entryTemplate, entryKind);
             const isEntrySelected = currentSelection && currentSelection.kind !== 'existing';
             applySelectionStyle(entryRow, Boolean(isEntrySelected));
             entryRow.style.cursor = 'pointer';
             entryRow.addEventListener('click', () => {
-                void renderColumnA(entryKind === 'planned' ? { kind: 'planned', pos: entryTemplate.pos } : { kind: 'new', pos: entryTemplate.pos });
+                void renderColumnA({ kind: 'new', pos: entryTemplate.pos });
             });
             execExecuted.appendChild(entryRow);
         }
