@@ -101,22 +101,11 @@
 
     </main>
     
-      <!-- ✅ Barre de timer collante en bas -->
-      <footer id="execTimerBar" class="exec-timer" hidden>
-        <!-- Q1: pause/play -->
-        <button id="tmrToggle" class="btn ghost">⏸</button>
-        <!-- Q2+Q3: timer avec - [temps] + -->
-        <div class="tmr-center">
-          <button id="tmrMinus" class="btn ghost">−10s</button>
-          <div id="tmrDisplay" class="tmr-display">0:00</div>
-          <button id="tmrPlus" class="btn ghost">+10s</button>
-        </div>
-      </footer>
-    
   </section>
   <!-- ==================== -->
  
   <!-- ========== 3.1.1 Bibliothèque d’exercices (liste) ========== -->
+  
   <section id="screenExercises" class="screen" hidden>
     
     <!-- En-tête -->
@@ -241,50 +230,62 @@
   </section>
   <!-- ==================== -->
 
-  <!-- Barre d’onglets fixe (icônes) -->
-  <nav class="tabbar safe-bottom" aria-label="Navigation principale">
-    <button id="tabSessions" class="tab active" title="Séances" aria-label="Séances">🏋️</button>
-    <button id="tabLibraries" class="tab" title="Bibliothèques" aria-label="Bibliothèques">📚</button>
-    <button id="tabStats" class="tab" title="Statistiques" aria-label="Statistiques">📈</button>
-    <button id="tabSettings" class="tab" title="Réglages" aria-label="Réglages">⚙️</button>
-  </nav>
-
-  
-  <!-- ==========  Modale calendrier (Navigation rapide) ========== -->
-  <dialog id="dlgCalendar" class="modal">
-  <div class="modal-header">
-    <button id="calPrev" class="btn ghost" aria-label="Mois précédent">◀︎</button>
-    <strong id="calTitle">Calendrier</strong>
-    <div style="display:flex; gap:8px;">
-      <button id="calNext" class="btn ghost" aria-label="Mois suivant">▶︎</button>
-      <button id="dlgClose" class="btn ghost">Fermer</button>
+<!-- ✅ Barre de timer collante en bas -->
+<footer id="execTimerBar" class="exec-timer" hidden>
+    <!-- pause/play -->
+    <button id="tmrToggle" class="btn ghost">⏸</button>
+    <!-- timer avec - [temps] + -->
+    <div class="tmr-center">
+        <button id="tmrMinus" class="btn ghost">−10s</button>
+        <div id="tmrDisplay" class="tmr-display">0:00</div>
+        <button id="tmrPlus" class="btn ghost">+10s</button>
     </div>
-  </div>
-  <div id="bigCalendar" class="big-calendar"></div>
-</dialog>
-  <!-- ==================== -->
+</footer>
+ <!-- ==================== -->
+ 
+<!-- Barre d’onglets fixe (icônes) -->
+<nav class="tabbar safe-bottom" aria-label="Navigation principale">
+    <button id="tabSessions"  class="tab active" title="Séances" aria-label="Séances">🏋️</button>
+    <button id="tabLibraries" class="tab" title="Bibliothèques" aria-label="Bibliothèques">📚</button>
+    <button id="tabStats"     class="tab" title="Statistiques" aria-label="Statistiques">📈</button>
+    <button id="tabSettings"  class="tab" title="Réglages" aria-label="Réglages">⚙️</button>
+</nav>
+<!-- ==================== -->
   
-  <!-- ==================== -->
-  <!-- JS (ordre important) -->
-	<script src="cfg.js"></script> 
-	<script src="db.js"></script>
-	<script src="state.js"></script>
-	<script src="ui-week.js"></script>
-	<script src="ui-calendar.js"></script>
-	<script src="ui-session.js"></script>
-	<script src="ui-exercise-read.js"></script>
-	<script src="ui-exercise-edit.js"></script>
-	<script src="ui-exercises_list.js"></script>
-	<script src="ui-exec-edit.js"></script>
-	<script src="init.js"></script>
-	<script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js');
-      });
-    }
-  </script>
-  <!-- ==================== -->
+<!-- ==========  Modale calendrier ========== -->
+<dialog id="dlgCalendar" class="modal">
+    <div class="modal-header">
+        <button id="calPrev" class="btn ghost" aria-label="Mois précédent">◀︎</button>
+        <strong id="calTitle">Calendrier</strong>
+        <div style="display:flex; gap:8px;">
+            <button id="calNext" class="btn ghost" aria-label="Mois suivant">▶︎</button>
+            <button id="dlgClose" class="btn ghost">Fermer</button>
+        </div>
+    </div>
+    <div id="bigCalendar" class="big-calendar"></div>
+</dialog>
+<!-- ==================== -->
+  
+<!-- JS (ordre important) -->
+<script src="cfg.js"></script> 
+<script src="db.js"></script>
+<script src="state.js"></script>
+<script src="ui-week.js"></script>
+<script src="ui-calendar.js"></script>
+<script src="ui-session.js"></script>
+<script src="ui-exercise-read.js"></script>
+<script src="ui-exercise-edit.js"></script>
+<script src="ui-exercises_list.js"></script>
+<script src="ui-exec-edit.js"></script>
+<script src="init.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js');
+    });
+  }
+</script>
+<!-- ==================== -->
   
 </body>
 </html>
