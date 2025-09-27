@@ -20,46 +20,46 @@
 <body>
 
   <!-- ========== 3.4. Séance  ========== -->
-  <section id="screenSessions" class="screen">
+<section id="screenSessions" class="screen">
     
     <!-- En-tête (spécifique à l'écran Séances) -->
     <header class="header-session safe-top">
-	  <div class="header-left">
-		<button id="btnPrevSession" class="btn ghost" title="Séance précédente">◀︎</button>
-	 </div>
+        <div class="header-left">
+            <button id="btnPrevSession" class="btn ghost" title="Séance précédente">◀︎</button>
+        </div>
 
-	  <div class="header-center">
+        <div class="header-center">
 		<span id="todayLabel">—</span>
 		<button id="btnQuickNav" class="btn ghost" title="Calendrier">📅</button>
-	  </div>
+        </div>
 
-	  <div class="header-right">
+        <div class="header-right">
 		<button id="btnNextSession" class="btn ghost" title="Séance suivante">▶︎</button>
-	   </div>
-	</header>
+        </div>
+    </header>
     
     <!-- Corps de l'écran Séances) -->
     <main class="content">
   
-      <!-- Calendrier 1 semaine défilable -->
-      <section class="week-strip" id="weekStrip" aria-label="Calendrier 1 semaine"></section>
+        <!-- Calendrier 1 semaine défilable -->
+        <section class="week-strip" id="weekStrip" aria-label="Calendrier 1 semaine"></section>
   
-      <!-- Liste des exercices de la séance -->
-      <section id="sessionList" class="session-list" aria-label="Séance du jour"></section>
+        <!-- Liste des exercices de la séance -->
+        <section id="sessionList" class="session-list" aria-label="Séance du jour"></section>
   
         <!-- Boutons d'ajout (2 lignes) -->
-		<div class="bloque">
+        <div class="bloque">
             <div class="row">
                 <label for="selectRoutine" class="sr-only">Ajouter une routine</label>
                 <select id="selectRoutine" class="input flex-1">
                 <option value="">Ajouter une routine…</option>
                 </select>
                 <button id="btnAddRoutine" class="btn">Ajouter</button>
-			</div>
-			<div class="row"> 
-                 <button id="btnAddExercises" class="btn full">Ajouter exercice/s</button>
-			</div>
-		</div>		
+            </div>
+            <div class="row"> 
+                <button id="btnAddExercises" class="btn full">Ajouter exercice/s</button>
+            </div>
+        </div>		
     </main>
     
   </section>
