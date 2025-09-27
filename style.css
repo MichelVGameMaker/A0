@@ -249,6 +249,19 @@ image_big{
   align-items:center;
   justify-content:center;
 }
+.session-card-handle,
+.session-card-handle *,
+.session-card-grip,
+.session-card-grip *,
+.session-card-sets,
+.session-card-sets *,
+.session-card-text,
+.session-card-text *,
+.session-card-pencil,
+.session-card-pencil *{
+  -webkit-user-select: none;
+  user-select: none;
+}
 .session-card-handle:focus-visible{
   outline:2px solid var(--black);
   outline-offset:2px;
@@ -599,6 +612,13 @@ image_big{
   font-size:20px;
   color:var(--darkGrayB);
   user-select:none;
+}
+.routine-set-row,
+.routine-set-row *,
+.routine-set-actions,
+.routine-set-actions *{
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .routine-set-row.routine-set-dragging{
