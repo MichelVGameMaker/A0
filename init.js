@@ -38,7 +38,7 @@
     }
 
     function wireNavigation() {
-        const { tabLibraries, tabSessions, screenSessions, screenExercises, screenExerciseEdit } = refs;
+        const { tabLibraries, tabSessions, tabSettings, screenSessions, screenExercises, screenExerciseEdit, screenRoutineEdit, screenRoutineMoveEdit } = refs;
 
         tabLibraries?.addEventListener('click', async () => {
             setActiveTab('tabLibraries');
@@ -54,9 +54,17 @@
             await A.renderSession();
         });
 
+        tabSettings?.addEventListener('click', async () => {
+            setActiveTab('tabSettings');
+            showOnly('routine');
+            await A.openRoutineEdit({ routineId: 'routine-test' });
+        });
+
         screenSessions?.setAttribute('data-screen', 'sessions');
         screenExercises?.setAttribute('data-screen', 'exercises');
         screenExerciseEdit?.setAttribute('data-screen', 'edit');
+        screenRoutineEdit?.setAttribute('data-screen', 'routine');
+        screenRoutineMoveEdit?.setAttribute('data-screen', 'routineMove');
     }
 
     function wireCalendar() {
@@ -105,9 +113,13 @@
         refs.calNext = document.getElementById('calNext');
         refs.tabLibraries = document.getElementById('tabLibraries');
         refs.tabSessions = document.getElementById('tabSessions');
+        refs.tabSettings = document.getElementById('tabSettings');
         refs.screenSessions = document.getElementById('screenSessions');
         refs.screenExercises = document.getElementById('screenExercises');
         refs.screenExerciseEdit = document.getElementById('screenExerciseEdit');
+        refs.screenRoutineEdit = document.getElementById('screenRoutineEdit');
+        refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
+        refs.screenExecEdit = document.getElementById('screenExecEdit');
         refsResolved = true;
         return refs;
     }
@@ -122,7 +134,8 @@
             'dlgCalendar',
             'bigCalendar',
             'tabLibraries',
-            'tabSessions'
+            'tabSessions',
+            'tabSettings'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -140,7 +153,7 @@
     }
 
     function showOnly(which) {
-        const { screenSessions, screenExercises, screenExerciseEdit } = refs;
+        const { screenSessions, screenExercises, screenExerciseEdit, screenRoutineEdit, screenRoutineMoveEdit, screenExecEdit } = refs;
         if (screenSessions) {
             screenSessions.hidden = which !== 'sessions';
         }
@@ -149,6 +162,15 @@
         }
         if (screenExerciseEdit) {
             screenExerciseEdit.hidden = which !== 'edit';
+        }
+        if (screenRoutineEdit) {
+            screenRoutineEdit.hidden = which !== 'routine';
+        }
+        if (screenRoutineMoveEdit) {
+            screenRoutineMoveEdit.hidden = which !== 'routineMove';
+        }
+        if (screenExecEdit) {
+            screenExecEdit.hidden = which !== 'exec';
         }
     }
 
@@ -183,6 +205,46 @@
             await ensureExercise('push_up', 'Pompes', 'chest', 'body weight');
             await ensureExercise('pull_up', 'Tractions', 'lats', 'body weight');
             await ensureExercise('squat', 'Squat', 'quads', 'barbell');
+            await db.put('routines', {
+                id: 'routine-test',
+                name: 'Routine test',
+                icon: '🏋️',
+                moves: [
+                    {
+                        id: 'move-push-test',
+                        pos: 1,
+                        exerciseId: 'push_up',
+                        exerciseName: 'Pompes',
+                        sets: [
+                            { pos: 1, reps: 12, weight: null, rpe: 7, rest: null },
+                            { pos: 2, reps: 12, weight: null, rpe: 8, rest: null },
+                            { pos: 3, reps: 12, weight: null, rpe: 9, rest: null }
+                        ]
+                    },
+                    {
+                        id: 'move-pull-test',
+                        pos: 2,
+                        exerciseId: 'pull_up',
+                        exerciseName: 'Tractions',
+                        sets: [
+                            { pos: 1, reps: 6, weight: null, rpe: 7, rest: null },
+                            { pos: 2, reps: 6, weight: null, rpe: 8, rest: null },
+                            { pos: 3, reps: 6, weight: null, rpe: 9, rest: null }
+                        ]
+                    },
+                    {
+                        id: 'move-squat-test',
+                        pos: 3,
+                        exerciseId: 'squat',
+                        exerciseName: 'Squat',
+                        sets: [
+                            { pos: 1, reps: 8, weight: 60, rpe: 7, rest: null },
+                            { pos: 2, reps: 8, weight: 60, rpe: 8, rest: null },
+                            { pos: 3, reps: 8, weight: 60, rpe: 9, rest: null }
+                        ]
+                    }
+                ]
+            });
         }
 
         if (!planCount) {

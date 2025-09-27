@@ -580,6 +580,19 @@ image_big{
   font-weight: var(--fw-strong);
 }
 
+.routine-set-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.btn-icon{
+  min-width:36px;
+  padding:8px;
+  font-size:18px;
+  line-height:1;
+}
+
 .exec-row.is-selected{
   background: var(--darkGray);
   color: var(--white);

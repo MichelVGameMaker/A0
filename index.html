@@ -67,6 +67,77 @@
   </section>
 <!-- ==================== -->
 
+<!-- ========== Routine : édition template ========== -->
+<section id="screenRoutineEdit" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left"></div>
+        <div class="header-center">
+            <div class="title">Routine</div>
+        </div>
+        <div class="header-right"></div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <div class="row">
+                <input id="routineName" class="input flex-1" placeholder="Nom de la routine" />
+                <select id="routineIcon" class="input" aria-label="Icône de routine"></select>
+            </div>
+        </div>
+
+        <section id="routineList" class="session-list" aria-label="Exercices de la routine"></section>
+
+        <div class="bloque">
+            <div class="row">
+                <button id="btnRoutineAddExercises" class="btn full">Ajouter exercice/s</button>
+            </div>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Routine : édition des séries prévues ========== -->
+<section id="screenRoutineMoveEdit" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="routineMoveBack" class="btn ghost" title="Retour">◀︎</button>
+        </div>
+
+        <div class="header-center">
+            <div class="title" id="routineMoveTitle">Exercice</div>
+        </div>
+
+        <div class="header-right">
+            <button id="routineMoveDone" class="btn primary" title="Terminer">OK</button>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <button id="routineMoveDelete" class="btn danger full">🗑️ Retirer de la routine</button>
+        </div>
+
+        <div class="exec-grid exec-head">
+            <div>#</div>
+            <div>Reps</div>
+            <div>Poids</div>
+            <div>RPE</div>
+            <div></div>
+        </div>
+
+        <div id="routineMoveSets"></div>
+
+        <div class="add-actions">
+            <button id="routineMoveAddSet" class="btn primary full">Ajouter une série</button>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
 <!-- ========== 3.4.2 Modifier l’exécution (Colonne A uniquement) ========== -->
 <section id="screenExecEdit" class="screen" hidden>
 
@@ -287,6 +358,8 @@
 <script src="ui-exercise-read.js"></script>
 <script src="ui-exercise-edit.js"></script>
 <script src="ui-exercises_list.js"></script>
+<script src="ui-routine-edit.js"></script>
+<script src="ui-routine-move-edit.js"></script>
 <script src="ui-exec-edit.js"></script>
 <script src="init.js"></script>
 <script>
