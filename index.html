@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="fr">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover", maximum-scale=1", user-scalable=no"/>
@@ -17,28 +18,29 @@
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-  <!-- ========== 3.4. Séance  ========== -->
+<!-- ========== 3.4. Séance  ========== -->
 <section id="screenSessions" class="screen">
     
-    <!-- En-tête (spécifique à l'écran Séances) -->
-    <header class="header-session safe-top">
+    <!-- En-tête -->
+    <header class="header">
         <div class="header-left">
             <button id="btnPrevSession" class="btn ghost" title="Séance précédente">◀︎</button>
         </div>
 
         <div class="header-center">
-		<span id="todayLabel">—</span>
-		<button id="btnQuickNav" class="btn ghost" title="Calendrier">📅</button>
+            <span id="todayLabel">—</span>
+            <button id="btnQuickNav" class="btn ghost" title="Calendrier">📅</button>
         </div>
 
         <div class="header-right">
-		<button id="btnNextSession" class="btn ghost" title="Séance suivante">▶︎</button>
+            <button id="btnNextSession" class="btn ghost" title="Séance suivante">▶︎</button>
         </div>
     </header>
     
-    <!-- Corps de l'écran Séances) -->
+    <!-- Corps de l'écran -->
     <main class="content">
   
         <!-- Calendrier 1 semaine défilable -->
@@ -63,14 +65,24 @@
     </main>
     
   </section>
-  <!-- ==================== -->
+<!-- ==================== -->
 
-  <!-- ========== 3.4.2 Modifier l’exécution (Colonne A uniquement) ========== -->
-  <section id="screenExecEdit" class="screen" hidden>
-    <header class="subheader">
-      <button class="btn ghost" id="execBack">←</button>
-      <div class="title" id="execTitle">Exercice</div>
-      <button class="btn" id="execOk">OK</button>
+<!-- ========== 3.4.2 Modifier l’exécution (Colonne A uniquement) ========== -->
+<section id="screenExecEdit" class="screen" hidden>
+
+    <!-- En-tête -->
+    <header class="header">
+        <div class="header-left">
+            <button id="execBack" class="btn ghost" title="Retour">◀︎</button>
+        </div>
+
+        <div class="header-center">
+            <div class="title" id="execTitle">Exercice</div>
+       </div>
+
+        <div class="header-right">
+            <button id="execOk" class="btn primary" title="Valider">OK︎</button>
+        </div>
     </header>
   
     <main class="content">
@@ -102,14 +114,13 @@
     </main>
     
   </section>
-  <!-- ==================== -->
+<!-- ==================== -->
  
-  <!-- ========== 3.1.1 Bibliothèque d’exercices (liste) ========== -->
-  
-  <section id="screenExercises" class="screen" hidden>
+<!-- ========== 3.1.1 Bibliothèque d’exercices (liste) ========== -->
+<section id="screenExercises" class="screen" hidden>
     
     <!-- En-tête -->
-    <header class="subheader">
+    <header class="header">
       <button class="btn" id="exBackList">←</button>
       <div class="title">Exercices</div>
       <button class="btn primary" id="exOkList">OK</button>
@@ -141,13 +152,13 @@
       
 	</main>    
   </section>
-  <!-- ==================== -->
+<!-- ==================== -->
  
-  <!-- ========== 3.1.2A Consulter un exercice ========== -->
-  <section id="screenExerciseRead" class="screen" hidden>
+<!-- ========== 3.1.2A Consulter un exercice ========== -->
+<section id="screenExerciseRead" class="screen" hidden>
     
     <!-- En-tête -->
-    <header class="subheader">
+    <header class="header">
       <button class="btn" id="exReadBack">←</button>
       <div class="title" id="exReadTitle">Exercice</div>
       <button class="btn" id="exReadEdit">✏️ Editer</button>
@@ -174,13 +185,13 @@
  
 	</main>  
   </section>
-  <!-- ==================== -->
+<!-- ==================== -->
   
-  <!-- ========== 3.1.2B Ajouter / Modifier un exercice ========== -->
-  <section id="screenExerciseEdit" class="screen" hidden>
+<!-- ========== 3.1.2B Ajouter / Modifier un exercice ========== -->
+<section id="screenExerciseEdit" class="screen" hidden>
     
     <!-- En-tête -->
-    <header class="subheader">
+    <header class="header">
       <button class="btn" id="exEditBack">←</button>
       <div class="title" id="exEditTitle">Ajouter</div>
       <button class="btn" id="exEditOk">OK</button>
@@ -228,7 +239,7 @@
 	   
 	</main>  
   </section>
-  <!-- ==================== -->
+<!-- ==================== -->
 
 <!-- ✅ Barre de timer collante en bas -->
 <footer id="execTimerBar" class="exec-timer" hidden>

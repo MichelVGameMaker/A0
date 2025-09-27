@@ -33,7 +33,7 @@
 
 /* Hauteurs “réelles” en tenant compte des bordures */
   --header-h:  44px;       /* hauteur du header */
-  --tab-h:     48px;       /* hauteur de la tab bar */
+  --tab-h:     44px;       /* hauteur de la tab bar */
   --tabbar-h: calc(var(--tab-h) + 2px);      /* 2px = border-top de .tabbar */
   --header-total-h: calc(var(--header-h) + 2px); /* 2px = border-bottom du header/subheader */
 }
@@ -65,23 +65,15 @@ body{
 .screen {
     display: flex;
     flex-direction: column;
-    min-height: 100svh;
-    background: var(--backGray); /* fond global */
+
 }
 .screen[hidden] { display: none !important; }
 /* Paneau de contenu */
 .content {
     flex: 1;
     background: var(--whiteB);                /* panneau blanc */
-    border: 1px solid var(--lightGrayB);
-    padding-left: 12px;
-    padding-right: 12px;
-    padding-top: 0px;
-    padding-bottom: 0px;
-    margin-left: auto;                       /* centré horizontalement */
-    margin-right: auto;                      /* centré horizontalement */
-    width: 96%;                              /* largeur proportionnelle */
-    max-width: 700px;                        /* limite max sur grands écrans */
+    border: 10px solid var(--lightGrayB);
+    padding:  12px;
     min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
 }
 
@@ -99,16 +91,15 @@ body{
    1) En-têtes & panneaux
    ========================================================= */
 /* Header principal / Sous-header : fond blanc + bordure */
-.header-session,
-.subheader{
+header{
     position: sticky; top: 0; left:0; right:0; z-index: 5;
     display:flex; align-items:center; justify-content:space-between;
     padding: var(--pad-y) var(--pad-x);
     background: var(--white);                     /* 4.Header blanc */
     border-bottom: 2px solid var(--whiteB);       /* 4.Bordure basse whiteB */
 }
-.subheader{ z-index:4; }
-.subheader .title{ font-weight: var(--fw-strong); }
+header{ z-index:4; }
+header .title{ font-weight: var(--fw-strong); }
 
 /* =========================================================
    2) Tab bar (bas)
