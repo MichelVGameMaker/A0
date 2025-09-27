@@ -167,6 +167,7 @@
 
         executedSets.forEach((set) => {
             const row = rowReadOnly(set);
+            row.classList.add('exec-executed');
             const isSelected = currentSelection?.kind === 'existing' && currentSelection.pos === set.pos;
             applySelectionStyle(row, isSelected);
             row.style.cursor = 'pointer';
@@ -263,9 +264,10 @@
     function rowPreview(set, kind) {
         const row = rowReadOnly(set);
         row.classList.add('exec-preview');
+        row.classList.add(kind === 'planned' ? 'exec-planned' : 'exec-new');
         row.style.opacity = '0.7';
         row.style.fontStyle = 'italic';
-        const hint = kind === 'planned' ? 'Prévue' : 'Nouvelle série';
+        const hint = kind === 'planned' ? 'Prévue' : 'À faire';
         const hintCell = row.children[4];
         if (hintCell) {
             hintCell.textContent = hint;
@@ -276,8 +278,6 @@
 
     function applySelectionStyle(row, isSelected) {
         row.classList.toggle('is-selected', isSelected);
-        row.style.background = isSelected ? 'var(--whiteB)' : '';
-        row.style.borderRadius = isSelected ? 'var(--radius)' : '';
         if (row.classList.contains('exec-preview')) {
             row.style.opacity = isSelected ? '1' : '0.7';
         }
@@ -342,7 +342,7 @@
         bindStepper(controls.reps);
         bindStepper(controls.weight);
 
-        controls.rpe?.addEventListener('input', updateState);
+        controls.rpe?.addEventListener('change', updateState);
         controls.rest?.addEventListener('input', updateState);
 
         updateState();
@@ -350,7 +350,7 @@
 
     function rowEditable(set, isNew) {
         const row = document.createElement('div');
-        row.className = 'exec-grid exec-row';
+        row.className = 'exec-grid exec-row exec-edit-row';
 
         const reps = vStepper(safeInt(set.reps), 0, 100);
         const weight = vStepper(safeInt(set.weight), 0, 999);
@@ -358,17 +358,27 @@
         weight.input.dataset.role = 'weight';
 
         const rpeWrap = document.createElement('div');
-        const rpe = document.createElement('input');
-        rpe.type = 'number';
+        const rpe = document.createElement('select');
         rpe.className = 'input';
-        rpe.min = '5';
-        rpe.max = '10';
-        rpe.inputMode = 'numeric';
-        rpe.value = set.rpe == null ? '' : String(set.rpe);
+        const emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.textContent = '—';
+        rpe.appendChild(emptyOption);
+        for (let value = 5; value <= 10; value += 1) {
+            const option = document.createElement('option');
+            option.value = String(value);
+            option.textContent = String(value);
+            rpe.appendChild(option);
+        }
+        const clampedRpe = clampInt(set.rpe, 5, 10);
+        rpe.value = clampedRpe ? String(clampedRpe) : '';
         rpe.dataset.role = 'rpe';
-        rpe.oninput = () => {
-            rpeWrap.dataset.rpe = clampInt(rpe.value, 5, 10) || '';
+        const updateRpeDataset = () => {
+            const numeric = clampInt(rpe.value, 5, 10);
+            rpeWrap.dataset.rpe = numeric ? String(numeric) : '';
         };
+        rpe.addEventListener('change', updateRpeDataset);
+        updateRpeDataset();
         rpeWrap.appendChild(rpe);
         rpeWrap.className = 'rpe-wrap';
 

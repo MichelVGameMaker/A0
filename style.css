@@ -523,6 +523,69 @@ image_big{
   text-align:center; margin:0; padding:0 8px;
 }
 
+.exec-row.exec-executed,
+.exec-row.exec-planned,
+.exec-row.exec-new,
+.exec-edit-row{
+  font-size: var(--fs-base);
+}
+
+.exec-row.exec-executed{
+  color: var(--black);
+  font-weight: var(--fw-base);
+}
+
+.exec-row.exec-planned,
+.exec-row.exec-new{
+  color: var(--darkGrayB);
+  font-weight: var(--fw-base);
+}
+
+.exec-row.exec-executed .details,
+.exec-row.exec-planned .details,
+.exec-row.exec-new .details{
+  color: inherit;
+  font-size: var(--fs-base);
+  font-weight: inherit;
+}
+
+.exec-edit-row{
+  color: var(--black);
+  font-weight: var(--fw-strong);
+}
+
+.exec-edit-row .input,
+.exec-edit-row select{
+  color: var(--black);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-strong);
+}
+
+.exec-row.is-selected{
+  background: var(--darkGray);
+  color: var(--white);
+  box-shadow: 0 0 0 2px var(--emphase);
+  border-radius: var(--radius);
+}
+
+.exec-row.is-selected .details,
+.exec-row.is-selected .details *,
+.exec-row.is-selected .input,
+.exec-row.is-selected select,
+.exec-row.is-selected .btn{
+  color: var(--white);
+}
+
+.exec-row.is-selected .input,
+.exec-row.is-selected select{
+  background: transparent;
+  border-color: var(--white);
+}
+
+.exec-row.is-selected .btn{
+  border-color: var(--white);
+}
+
 /* Stepper vertical */
 .vstepper{ 
 	display:flex; 
