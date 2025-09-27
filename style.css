@@ -17,74 +17,72 @@
   --green:     #06402b;
 
   /* --- Mesures unifiées --- */
-  --control-h:   44px;       /* hauteur unique pour TOUT (inputs, selects, tags, boutons, etc.) */
-  --header-h:    44px;
-  --tab-h:       48px;
-  --radius:      12px;       /* border-radius unique */
-  --pad-x:       12px;       /* padding horizontal par défaut */
-  --pad-y:       10px;       /* padding vertical par défaut */
-  --gap:         6px;        /* marge/gap par défaut entre éléments */
+  --control-h: 44px;       /* hauteur unique pour TOUT (inputs, selects, tags, boutons, etc.) */
+  --radius:    12px;       /* border-radius unique */
+  --pad-x:     12px;       /* padding horizontal par défaut */
+  --pad-y:     10px;       /* padding vertical par défaut */
+  --gap:       6px;        /* marge/gap par défaut entre éléments */
 
   /* --- Typo unifiée --- */
-  --font: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  --fs-base: 16px;           /* base */
-  --fs-small: 13px;          /* petits textes (ex: cellules série) */
-  --fs-rpe:    13px;            /* taille spécifique RPE dans série */
+  --font:      system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  --fs-base:   16px;        /* base */
+  --fs-small:  13px;        /* petits textes (ex: cellules série) */
+  --fs-rpe:    13px;        /* taille spécifique RPE dans série */
   --fw-base:   600;
   --fw-strong: 700;
 
-  /* --- Légers helpers --- */
-  --border-default: var(--lightGrayB);
-  --border-strong:  var(--darkGrayB);
 /* Hauteurs “réelles” en tenant compte des bordures */
+  --header-h:  44px;       /* hauteur du header */
+  --tab-h:     48px;       /* hauteur de la tab bar */
   --tabbar-h: calc(var(--tab-h) + 2px);      /* 2px = border-top de .tabbar */
   --header-total-h: calc(var(--header-h) + 2px); /* 2px = border-bottom du header/subheader */
 }
 
 
-/* Reset simple */
-*{ box-sizing:border-box; }
-html,body{ height:100%; }
-body{
-  margin:0;
-  background: var(--backGray);          /* 4.Fond app */
-  color: var(--black);
-  font-family: var(--font);
-  font-size: var(--fs-base);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-html { -webkit-text-size-adjust: 100%; }
-
 /* Safe areas iOS */
 .safe-top    { padding-top: env(safe-area-inset-top, 0); }
 .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 8px); }
 
-/* États invisibles */
-.sr-only{ position:absolute; left:-9999px; }
+
+/* Reset simple */
+*{ box-sizing:border-box; }
+html {
+   height:100%;
+   -webkit-text-size-adjust: 100%;
+}
+body{
+    height:100%;
+    margin:0;
+    background: var(--backGray);          /* 4.Fond app */
+    color: var(--black);
+    font-family: var(--font);
+    font-size: var(--fs-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
 
 /* Ecran */
 .screen {
-  display: flex;
-  flex-direction: column;
-  min-height: 100svh;
-  background: var(--backGray); /* fond global */
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+    background: var(--backGray); /* fond global */
 }
 .screen[hidden] { display: none !important; }
 /* Paneau de contenu */
 .content {
-  flex: 1;
-  background: var(--whiteB);                /* panneau blanc */
-  border: 1px solid var(--lightGrayB);
-  padding-left: 12px;
-  padding-right: 12px;
-  padding-top: 0px;
-  padding-bottom: 0px;
-  margin-left: auto;                       /* centré horizontalement */
-  margin-right: auto;                      /* centré horizontalement */
-  width: 96%;                              /* largeur proportionnelle */
-  max-width: 700px;                        /* limite max sur grands écrans */
-  min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
+    flex: 1;
+    background: var(--whiteB);                /* panneau blanc */
+    border: 1px solid var(--lightGrayB);
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-left: auto;                       /* centré horizontalement */
+    margin-right: auto;                      /* centré horizontalement */
+    width: 96%;                              /* largeur proportionnelle */
+    max-width: 700px;                        /* limite max sur grands écrans */
+    min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
 }
 
 /* Grilles utilitaires */
@@ -97,18 +95,17 @@ html { -webkit-text-size-adjust: 100%; }
 .details{ color: var(--darkGrayB); }            /* 3.Texte détails */
 
 
-
 /* =========================================================
    1) En-têtes & panneaux
    ========================================================= */
 /* Header principal / Sous-header : fond blanc + bordure */
 .header-session,
 .subheader{
-  position: sticky; top: 0; left:0; right:0; z-index: 5;
-  display:flex; align-items:center; justify-content:space-between;
-  padding: var(--pad-y) var(--pad-x);
-  background: var(--white);                     /* 4.Header blanc */
-  border-bottom: 2px solid var(--whiteB);       /* 4.Bordure basse whiteB */
+    position: sticky; top: 0; left:0; right:0; z-index: 5;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: var(--pad-y) var(--pad-x);
+    background: var(--white);                     /* 4.Header blanc */
+    border-bottom: 2px solid var(--whiteB);       /* 4.Bordure basse whiteB */
 }
 .subheader{ z-index:4; }
 .subheader .title{ font-weight: var(--fw-strong); }
@@ -117,32 +114,41 @@ html { -webkit-text-size-adjust: 100%; }
    2) Tab bar (bas)
    ========================================================= */
 .tabbar{
-  position:fixed; bottom:0; left:0; right:0; z-index:10;
-  height: var(--tab-h);
-  display:flex;
-  gap: 0;
-  padding: 0;
-  background: var(--white);                     /* 4.Tab bar fond blanc */
-  border-top: 2px solid var(--whiteB);          /* 4.Bordure haute whiteB */
+    position:fixed; bottom:0; left:0; right:0; z-index:10;
+    height: var(--tab-h);
+    display:flex;
+    gap: 0;
+    padding: 0;
+    background: var(--white);                     /* 4.Tab bar fond blanc */
+    border-top: 2px solid var(--whiteB);          /* 4.Bordure haute whiteB */
 }
 .tab{
-  flex: 1 1 25%;
-  height: 100%;
-  box-sizing: border-box;
-  font-size: 32px;
-  display:flex; align-items:center; justify-content:center;
-  padding: 0 var(--pad-x);
-  background: transparent;
-  border:3px solid transparent;
-  cursor:pointer;
-  user-select: none;
+    flex: 1 1 25%;
+    height: 100%;
+    box-sizing: border-box;
+    font-size: 32px;
+    display:flex; align-items:center; justify-content:center;
+    padding: 0 var(--pad-x);
+    background: transparent;
+    border:3px solid transparent;
+    cursor:pointer;
+    user-select: none;
 }
 .tab.active{
-  border-top: 3px solid var(--black);         /* 4.Onglet actif bordure haute noir */
+    border-top: 3px solid var(--black);         /* 4.Onglet actif bordure haute noir */
 }
 
+
 /* =========================================================
-   3) Contrôles unifiés (inputs, selects, tags, listes)
+   3) Système
+   ========================================================= */
+   
+/* États invisibles */
+.sr-only{ position:absolute; left:-9999px; }
+
+
+/* =========================================================
+   4) Contrôles unifiés (inputs, selects, tags, listes)
    ========================================================= */
 /* Base champs & listes */
 .input, select, textarea{
