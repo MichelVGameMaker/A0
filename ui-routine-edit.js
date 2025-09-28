@@ -27,6 +27,7 @@
         ensureRefs();
         wireInputs();
         wireAddExercisesButton();
+        wireHeaderButtons();
     });
 
     /* ACTIONS */
@@ -61,12 +62,15 @@
         refs.screenExerciseRead = document.getElementById('screenExerciseRead');
         refs.screenExerciseEdit = document.getElementById('screenExerciseEdit');
         refs.screenExecEdit = document.getElementById('screenExecEdit');
+        refs.screenRoutineList = document.getElementById('screenRoutineList');
         refs.screenRoutineEdit = document.getElementById('screenRoutineEdit');
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
         refs.routineName = document.getElementById('routineName');
         refs.routineIcon = document.getElementById('routineIcon');
         refs.routineList = document.getElementById('routineList');
         refs.btnRoutineAddExercises = document.getElementById('btnRoutineAddExercises');
+        refs.routineEditBack = document.getElementById('routineEditBack');
+        refs.routineEditOk = document.getElementById('routineEditOk');
         refsResolved = true;
         return refs;
     }
@@ -78,13 +82,25 @@
             'routineName',
             'routineIcon',
             'routineList',
-            'btnRoutineAddExercises'
+            'btnRoutineAddExercises',
+            'routineEditBack',
+            'routineEditOk'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
             throw new Error(`ui-routine-edit.js: références manquantes (${missing.join(', ')})`);
         }
         return refs;
+    }
+
+    function wireHeaderButtons() {
+        const { routineEditBack, routineEditOk } = assertRefs();
+        routineEditBack.addEventListener('click', () => {
+            void A.openRoutineList();
+        });
+        routineEditOk.addEventListener('click', () => {
+            void A.openRoutineList();
+        });
     }
 
     async function loadRoutine(force = false) {
@@ -472,6 +488,12 @@
         }
         await db.put('routines', serializeRoutine(state.routine));
         void A.refreshRoutineEdit();
+        if (typeof A.refreshRoutineList === 'function') {
+            void A.refreshRoutineList();
+        }
+        if (typeof A.populateRoutineSelect === 'function') {
+            void A.populateRoutineSelect();
+        }
     }
 
     function scheduleSave() {
@@ -544,7 +566,7 @@
     }
 
     function switchScreen(target) {
-        const { screenSessions, screenExercises, screenExerciseEdit, screenExerciseRead, screenExecEdit, screenRoutineEdit, screenRoutineMoveEdit } = assertRefs();
+        const { screenSessions, screenExercises, screenExerciseEdit, screenExerciseRead, screenExecEdit, screenRoutineEdit, screenRoutineMoveEdit, screenRoutineList } = assertRefs();
         const map = {
             screenSessions,
             screenExercises,
@@ -552,6 +574,7 @@
             screenExerciseRead,
             screenExecEdit,
             screenRoutineEdit,
+            screenRoutineList,
             screenRoutineMoveEdit
         };
         Object.entries(map).forEach(([key, element]) => {

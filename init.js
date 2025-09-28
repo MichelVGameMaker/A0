@@ -38,7 +38,7 @@
     }
 
     function wireNavigation() {
-        const { tabLibraries, tabSessions, tabSettings, screenSessions, screenExercises, screenExerciseEdit, screenRoutineEdit, screenRoutineMoveEdit } = refs;
+        const { tabLibraries, tabSessions, tabSettings, tabStats, screenSessions, screenExercises, screenExerciseEdit, screenRoutineEdit, screenRoutineMoveEdit, screenRoutineList } = refs;
 
         tabLibraries?.addEventListener('click', async () => {
             setActiveTab('tabLibraries');
@@ -54,6 +54,12 @@
             await A.renderSession();
         });
 
+        tabStats?.addEventListener('click', async () => {
+            setActiveTab('tabStats');
+            showOnly('routineList');
+            await A.openRoutineList();
+        });
+
         tabSettings?.addEventListener('click', async () => {
             setActiveTab('tabSettings');
             showOnly('routine');
@@ -65,6 +71,7 @@
         screenExerciseEdit?.setAttribute('data-screen', 'edit');
         screenRoutineEdit?.setAttribute('data-screen', 'routine');
         screenRoutineMoveEdit?.setAttribute('data-screen', 'routineMove');
+        screenRoutineList?.setAttribute('data-screen', 'routineList');
     }
 
     function wireCalendar() {
@@ -113,12 +120,14 @@
         refs.calNext = document.getElementById('calNext');
         refs.tabLibraries = document.getElementById('tabLibraries');
         refs.tabSessions = document.getElementById('tabSessions');
+        refs.tabStats = document.getElementById('tabStats');
         refs.tabSettings = document.getElementById('tabSettings');
         refs.screenSessions = document.getElementById('screenSessions');
         refs.screenExercises = document.getElementById('screenExercises');
         refs.screenExerciseEdit = document.getElementById('screenExerciseEdit');
         refs.screenRoutineEdit = document.getElementById('screenRoutineEdit');
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
+        refs.screenRoutineList = document.getElementById('screenRoutineList');
         refs.screenExecEdit = document.getElementById('screenExecEdit');
         refsResolved = true;
         return refs;
@@ -135,6 +144,7 @@
             'bigCalendar',
             'tabLibraries',
             'tabSessions',
+            'tabStats',
             'tabSettings'
         ];
         const missing = required.filter((key) => !refs[key]);
@@ -153,7 +163,7 @@
     }
 
     function showOnly(which) {
-        const { screenSessions, screenExercises, screenExerciseEdit, screenRoutineEdit, screenRoutineMoveEdit, screenExecEdit } = refs;
+        const { screenSessions, screenExercises, screenExerciseEdit, screenRoutineEdit, screenRoutineMoveEdit, screenExecEdit, screenRoutineList } = refs;
         if (screenSessions) {
             screenSessions.hidden = which !== 'sessions';
         }
@@ -171,6 +181,9 @@
         }
         if (screenExecEdit) {
             screenExecEdit.hidden = which !== 'exec';
+        }
+        if (screenRoutineList) {
+            screenRoutineList.hidden = which !== 'routineList';
         }
     }
 
