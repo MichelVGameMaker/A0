@@ -67,15 +67,49 @@
   </section>
 <!-- ==================== -->
 
+<!-- ========== Routine : liste ========== -->
+<section id="screenRoutineList" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button class="btn ghost" title="Retour">◀︎</button>
+        </div>
+
+        <div class="header-center">
+            <div class="title">Routines</div>
+        </div>
+
+        <div class="header-right">
+            <button class="btn primary" title="OK">OK</button>
+        </div>
+    </header>
+
+    <main class="content">
+        <section id="routineCatalog" class="session-list" aria-label="Routines enregistrées"></section>
+
+        <div class="bloque">
+            <div class="row">
+                <button id="btnRoutineCreate" class="btn full">Créer une nouvelle routine</button>
+            </div>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
 <!-- ========== Routine : édition template ========== -->
 <section id="screenRoutineEdit" class="screen" hidden>
 
     <header class="header">
-        <div class="header-left"></div>
+        <div class="header-left">
+            <button id="routineEditBack" class="btn ghost" title="Retour">◀︎</button>
+        </div>
         <div class="header-center">
             <div class="title">Routine</div>
         </div>
-        <div class="header-right"></div>
+        <div class="header-right">
+            <button id="routineEditOk" class="btn primary" title="Valider">OK</button>
+        </div>
     </header>
 
     <main class="content">
@@ -359,6 +393,7 @@
 <script src="ui-exercise-read.js"></script>
 <script src="ui-exercise-edit.js"></script>
 <script src="ui-exercises_list.js"></script>
+<script src="ui-routine-list.js"></script>
 <script src="ui-routine-edit.js"></script>
 <script src="ui-routine-move-edit.js"></script>
 <script src="ui-exec-edit.js"></script>
