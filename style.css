@@ -466,6 +466,10 @@ image_big{
   border-bottom:1px dashed var(--whiteB);
   -webkit-overflow-scrolling:touch;
 }
+.week-strip .week-page{
+  display:flex; gap:var(--gap);
+  flex:0 0 auto;
+}
 .week-strip .day{
   height: var(--control-h);
   display:flex; align-items:center; justify-content:center;
