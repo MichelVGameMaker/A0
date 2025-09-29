@@ -19,6 +19,8 @@
             this.button.setAttribute('aria-haspopup', 'dialog');
             this.button.addEventListener('click', () => this.open());
             this.container.appendChild(this.button);
+            this.dialog = null;
+            this.dialogRefs = null;
             this.#updateDisplay();
         }
 
@@ -39,110 +41,58 @@
         }
 
         open() {
-            const dialog = this.#ensureDialog();
+            const shared = this.#ensureDialog();
+            if (!shared?.dialog) {
+                return;
+            }
+
             const totalSeconds = this.value ?? this.defaultValue ?? 0;
             const currentMinutes = Math.floor(totalSeconds / 60);
             const currentSeconds = Math.max(0, Math.round(totalSeconds - currentMinutes * 60));
-            this.minuteSelect.value = String(Math.min(currentMinutes, this.maxMinutes));
-            this.secondSelect.value = String(Math.min(currentSeconds, 59));
-            dialog.showModal();
+            const minutesValue = Math.min(currentMinutes, this.maxMinutes);
+            const secondsValue = Math.min(currentSeconds, 59);
+
+            if (shared.label) {
+                shared.label.textContent = this.label;
+            }
+            if (shared.minutesInput) {
+                shared.minutesInput.value = String(minutesValue);
+                shared.minutesInput.setAttribute('max', String(this.maxMinutes));
+            }
+            if (shared.secondsInput) {
+                shared.secondsInput.value = String(secondsValue);
+                shared.secondsInput.setAttribute('max', '59');
+            }
+
+            TimePicker.#sanitizeInputValue(shared.minutesInput, this.maxMinutes);
+            TimePicker.#sanitizeInputValue(shared.secondsInput, 59);
+
+            TimePicker.#activeInstance = this;
+            shared.dialog.returnValue = '';
+            shared.dialog.showModal();
+
+            window.requestAnimationFrame(() => {
+                shared.minutesInput?.focus();
+                shared.minutesInput?.select?.();
+            });
         }
 
         #ensureDialog() {
-            if (this.dialog) {
-                return this.dialog;
+            if (this.dialogRefs) {
+                return this.dialogRefs;
             }
-            const dialog = document.createElement('dialog');
-            dialog.className = 'time-picker-dialog';
+            const refs = TimePicker.#ensureSharedDialog();
+            this.dialog = refs.dialog;
+            this.dialogRefs = refs;
+            return refs;
+        }
 
-            const form = document.createElement('form');
-            form.method = 'dialog';
-            form.className = 'time-picker-form';
-
-            const title = document.createElement('div');
-            title.className = 'time-picker-title';
-            title.textContent = this.label;
-            form.appendChild(title);
-
-            const wheels = document.createElement('div');
-            wheels.className = 'time-picker-wheels';
-
-            const minutesWrap = document.createElement('label');
-            minutesWrap.className = 'time-picker-wheel';
-            minutesWrap.textContent = 'Minutes';
-            const minuteSelect = document.createElement('select');
-            minuteSelect.size = 5;
-            minuteSelect.className = 'time-picker-select';
-            for (let minute = 0; minute <= this.maxMinutes; minute += 1) {
-                const option = document.createElement('option');
-                option.value = String(minute);
-                option.textContent = minute.toString().padStart(2, '0');
-                minuteSelect.appendChild(option);
-            }
-            minutesWrap.appendChild(minuteSelect);
-
-            const secondsWrap = document.createElement('label');
-            secondsWrap.className = 'time-picker-wheel';
-            secondsWrap.textContent = 'Secondes';
-            const secondSelect = document.createElement('select');
-            secondSelect.size = 5;
-            secondSelect.className = 'time-picker-select';
-            for (let second = 0; second < 60; second += 1) {
-                const option = document.createElement('option');
-                option.value = String(second);
-                option.textContent = second.toString().padStart(2, '0');
-                secondSelect.appendChild(option);
-            }
-            secondsWrap.appendChild(secondSelect);
-
-            wheels.append(minutesWrap, secondsWrap);
-            form.appendChild(wheels);
-
-            const actions = document.createElement('div');
-            actions.className = 'time-picker-actions';
-            const cancelButton = document.createElement('button');
-            cancelButton.type = 'submit';
-            cancelButton.value = 'cancel';
-            cancelButton.className = 'btn ghost';
-            cancelButton.textContent = 'Annuler';
-            const okButton = document.createElement('button');
-            okButton.type = 'submit';
-            okButton.value = 'confirm';
-            okButton.className = 'btn primary';
-            okButton.textContent = 'Valider';
-            actions.append(cancelButton, okButton);
-            form.appendChild(actions);
-
-            form.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const submitter = event.submitter;
-                if (submitter?.value === 'confirm') {
-                    dialog.close('confirm');
-                } else {
-                    dialog.close('cancel');
-                }
-            });
-
-            dialog.addEventListener('cancel', (event) => {
-                event.preventDefault();
-                dialog.close('cancel');
-            });
-
-            dialog.addEventListener('close', () => {
-                if (dialog.returnValue === 'confirm') {
-                    const selectedMinutes = Number.parseInt(this.minuteSelect.value, 10) || 0;
-                    const selectedSeconds = Number.parseInt(this.secondSelect.value, 10) || 0;
-                    const total = selectedMinutes * 60 + selectedSeconds;
-                    this.setValue(total, true);
-                }
-                this.button.focus();
-            });
-
-            document.body.appendChild(dialog);
-            this.dialog = dialog;
-            this.minuteSelect = minuteSelect;
-            this.secondSelect = secondSelect;
-            return dialog;
+        #applySelection() {
+            const refs = this.dialogRefs || TimePicker.#ensureSharedDialog();
+            const minutes = TimePicker.#sanitizeInputValue(refs.minutesInput, this.maxMinutes);
+            const seconds = TimePicker.#sanitizeInputValue(refs.secondsInput, 59);
+            const total = minutes * 60 + seconds;
+            this.setValue(total, true);
         }
 
         #sanitize(value) {
@@ -176,6 +126,118 @@
             const secondsPart = (seconds % 60).toString().padStart(2, '0');
             return `${minutesPart}:${secondsPart}`;
         }
+
+        static #ensureSharedDialog() {
+            if (this.#sharedDialog) {
+                return this.#sharedDialog;
+            }
+
+            const dialog = document.getElementById('dlgTimePicker');
+            if (!dialog) {
+                throw new Error('TimePicker: élément #dlgTimePicker introuvable.');
+            }
+
+            const refs = {
+                dialog,
+                form: dialog.querySelector('[data-role="timepicker-form"]') || dialog.querySelector('form'),
+                label: dialog.querySelector('[data-role="timepicker-label"]'),
+                minutesInput: dialog.querySelector('[data-role="minutes"]'),
+                secondsInput: dialog.querySelector('[data-role="seconds"]'),
+                minutesPlus: dialog.querySelector('[data-action="minutes-plus"]'),
+                minutesMinus: dialog.querySelector('[data-action="minutes-minus"]'),
+                secondsPlus: dialog.querySelector('[data-action="seconds-plus"]'),
+                secondsMinus: dialog.querySelector('[data-action="seconds-minus"]'),
+                cancelButton: dialog.querySelector('[data-action="cancel"]'),
+                confirmButton: dialog.querySelector('[data-action="confirm"]')
+            };
+
+            refs.form?.addEventListener('submit', (event) => {
+                event.preventDefault();
+                refs.dialog.close('confirm');
+            });
+
+            refs.cancelButton?.addEventListener('click', (event) => {
+                event.preventDefault();
+                refs.dialog.close('cancel');
+            });
+
+            refs.confirmButton?.addEventListener('click', (event) => {
+                event.preventDefault();
+                refs.dialog.close('confirm');
+            });
+
+            refs.dialog.addEventListener('cancel', (event) => {
+                event.preventDefault();
+                refs.dialog.close('cancel');
+            });
+
+            refs.dialog.addEventListener('close', () => {
+                const active = TimePicker.#activeInstance;
+                if (!active) {
+                    return;
+                }
+                if (refs.dialog.returnValue === 'confirm') {
+                    active.#applySelection();
+                }
+                window.requestAnimationFrame(() => {
+                    active.button?.focus();
+                });
+                TimePicker.#activeInstance = null;
+            });
+
+            refs.minutesPlus?.addEventListener('click', () => {
+                const max = TimePicker.#activeInstance?.maxMinutes ?? 59;
+                TimePicker.#adjustInput(refs.minutesInput, 1, max);
+            });
+            refs.minutesMinus?.addEventListener('click', () => {
+                const max = TimePicker.#activeInstance?.maxMinutes ?? 59;
+                TimePicker.#adjustInput(refs.minutesInput, -1, max);
+            });
+            refs.secondsPlus?.addEventListener('click', () => {
+                TimePicker.#adjustInput(refs.secondsInput, 1, 59);
+            });
+            refs.secondsMinus?.addEventListener('click', () => {
+                TimePicker.#adjustInput(refs.secondsInput, -1, 59);
+            });
+
+            refs.minutesInput?.addEventListener('input', () => {
+                const max = TimePicker.#activeInstance?.maxMinutes ?? 59;
+                TimePicker.#sanitizeInputValue(refs.minutesInput, max);
+            });
+            refs.secondsInput?.addEventListener('input', () => {
+                TimePicker.#sanitizeInputValue(refs.secondsInput, 59);
+            });
+
+            this.#sharedDialog = refs;
+            return refs;
+        }
+
+        static #sanitizeInputValue(input, max) {
+            if (!input) {
+                return 0;
+            }
+            const numeric = Number.parseInt(input.value ?? '0', 10);
+            const safe = Number.isFinite(numeric) ? numeric : 0;
+            const clamped = Math.max(0, Math.min(max, safe));
+            if (String(clamped) !== input.value) {
+                input.value = String(clamped);
+            }
+            return clamped;
+        }
+
+        static #adjustInput(input, delta, max) {
+            if (!input) {
+                return 0;
+            }
+            const numeric = Number.parseInt(input.value ?? '0', 10);
+            const safe = Number.isFinite(numeric) ? numeric : 0;
+            const next = Math.max(0, Math.min(max, safe + delta));
+            input.value = String(next);
+            return next;
+        }
+
+        static #sharedDialog = null;
+        static #activeInstance = null;
     }
 
     components.TimePicker = TimePicker;
