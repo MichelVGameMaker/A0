@@ -105,7 +105,7 @@ header .title{ font-weight: var(--fw-strong); }
  .content {
     flex: 1;
     background: var(--whiteB);                /* panneau blanc */
-    border: 10px solid var(--lightGrayB);
+    border-inline: 10px solid var(--lightGrayB);
     padding:  12px;
     min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
 }
