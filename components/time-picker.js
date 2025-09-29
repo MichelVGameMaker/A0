@@ -194,10 +194,10 @@
                 TimePicker.#adjustInput(refs.minutesInput, -1, max);
             });
             refs.secondsPlus?.addEventListener('click', () => {
-                TimePicker.#adjustInput(refs.secondsInput, 1, 59);
+                TimePicker.#adjustInput(refs.secondsInput, 10, 59);
             });
             refs.secondsMinus?.addEventListener('click', () => {
-                TimePicker.#adjustInput(refs.secondsInput, -1, 59);
+                TimePicker.#adjustInput(refs.secondsInput, -10, 59);
             });
 
             refs.minutesInput?.addEventListener('input', () => {
@@ -207,6 +207,9 @@
             refs.secondsInput?.addEventListener('input', () => {
                 TimePicker.#sanitizeInputValue(refs.secondsInput, 59);
             });
+
+            refs.minutesInput?.addEventListener('focus', TimePicker.#selectInputOnFocus);
+            refs.secondsInput?.addEventListener('focus', TimePicker.#selectInputOnFocus);
 
             this.#sharedDialog = refs;
             return refs;
@@ -234,6 +237,16 @@
             const next = Math.max(0, Math.min(max, safe + delta));
             input.value = String(next);
             return next;
+        }
+
+        static #selectInputOnFocus(event) {
+            const target = event?.target;
+            if (!target?.select) {
+                return;
+            }
+            window.requestAnimationFrame(() => {
+                target.select();
+            });
         }
 
         static #sharedDialog = null;
