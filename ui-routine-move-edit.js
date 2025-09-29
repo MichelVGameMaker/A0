@@ -12,16 +12,6 @@
         routine: null,
         pendingSave: null
     };
-    const dragState = {
-        active: false,
-        row: null,
-        handle: null,
-        placeholder: null,
-        pointerId: null,
-        offsetY: 0,
-        container: null,
-        initialOrder: []
-    };
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -139,13 +129,8 @@
         row.className = 'exec-grid exec-row routine-set-row routine-set-grid';
         row.dataset.idx = String(index);
 
-        const handle = document.createElement('div');
-        handle.className = 'routine-set-handle';
-        handle.title = 'Réordonner la série';
-        handle.setAttribute('role', 'button');
-        handle.textContent = '⋮⋮';
-
         const order = document.createElement('div');
+        order.className = 'routine-set-order';
         order.textContent = index + 1;
 
         const reps = document.createElement('input');
@@ -171,209 +156,40 @@
             updateSetField(index, 'weight', value);
         });
 
-        const rest = document.createElement('input');
-        rest.type = 'number';
-        rest.min = '0';
-        rest.step = '1';
-        rest.inputMode = 'numeric';
-        rest.className = 'input';
-        rest.placeholder = 'Repos (s)';
-        rest.value = set.rest ?? '';
-        rest.addEventListener('input', (event) => {
-            const value = readIntValue(event.currentTarget);
-            updateSetField(index, 'rest', value);
-        });
+        const TimePicker = A.components?.TimePicker;
+        let restElement;
+        if (typeof TimePicker === 'function') {
+            const picker = new TimePicker({
+                value: set.rest,
+                defaultValue: A.preferences?.getDefaultTimerDuration?.() ?? 0,
+                label: 'Repos (mm:ss)',
+                onChange: (value) => {
+                    updateSetField(index, 'rest', value ?? null);
+                }
+            });
+            picker.button?.setAttribute('aria-label', `Temps de repos pour la série ${index + 1}`);
+            restElement = picker.element;
+        } else {
+            const fallback = document.createElement('input');
+            fallback.type = 'number';
+            fallback.className = 'input';
+            fallback.min = '0';
+            fallback.step = '1';
+            fallback.placeholder = 'Repos (s)';
+            fallback.value = set.rest ?? '';
+            fallback.addEventListener('input', (event) => {
+                const value = readIntValue(event.currentTarget);
+                updateSetField(index, 'rest', value);
+            });
+            restElement = fallback;
+        }
 
         const actions = document.createElement('div');
         actions.className = 'routine-set-actions';
         actions.appendChild(createActionButton('🗑️', 'Supprimer', () => removeSet(index)));
 
-        row.append(handle, order, reps, weight, rest, actions);
-        makeSetRowDraggable(row, handle);
+        row.append(order, reps, weight, restElement, actions);
         return row;
-    }
-
-    function makeSetRowDraggable(row, handle) {
-        handle.addEventListener('pointerdown', (event) => startSetDrag(event, row, handle));
-    }
-
-    function startSetDrag(event, row, handle) {
-        if (dragState.active) {
-            return;
-        }
-        if (event.button !== 0 && event.pointerType !== 'touch') {
-            return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
-
-        const { routineMoveSets } = assertRefs();
-        dragState.active = true;
-        dragState.row = row;
-        dragState.handle = handle;
-        dragState.pointerId = event.pointerId;
-        dragState.container = routineMoveSets;
-        dragState.initialOrder = getSetOrder(routineMoveSets);
-
-        const rect = row.getBoundingClientRect();
-        dragState.offsetY = event.clientY - rect.top;
-
-        const placeholder = document.createElement('div');
-        placeholder.className = 'exec-grid exec-row routine-set-row routine-set-placeholder routine-set-grid';
-        placeholder.style.height = `${rect.height}px`;
-        placeholder.style.width = `${rect.width}px`;
-        for (let i = 0; i < 6; i += 1) {
-            placeholder.appendChild(document.createElement('div'));
-        }
-        dragState.placeholder = placeholder;
-
-        routineMoveSets.insertBefore(placeholder, row);
-        routineMoveSets.appendChild(row);
-
-        row.classList.add('routine-set-dragging');
-        row.style.width = `${rect.width}px`;
-        row.style.height = `${rect.height}px`;
-        row.style.position = 'fixed';
-        row.style.left = `${rect.left}px`;
-        row.style.top = `${rect.top}px`;
-        row.style.zIndex = '1000';
-        row.style.pointerEvents = 'none';
-
-        if (handle.setPointerCapture) {
-            handle.setPointerCapture(event.pointerId);
-        }
-        handle.addEventListener('pointermove', onSetDragMove);
-        handle.addEventListener('pointerup', onSetDragEnd);
-        handle.addEventListener('pointercancel', onSetDragCancel);
-    }
-
-    function onSetDragMove(event) {
-        if (!dragState.active || event.pointerId !== dragState.pointerId) {
-            return;
-        }
-        event.preventDefault();
-
-        const { row, container } = dragState;
-        if (!row || !container) {
-            return;
-        }
-        row.style.top = `${event.clientY - dragState.offsetY}px`;
-
-        const siblings = Array.from(container.children).filter(
-            (node) => node !== row && node !== dragState.placeholder
-        );
-
-        for (const sibling of siblings) {
-            const rect = sibling.getBoundingClientRect();
-            const midpoint = rect.top + rect.height / 2;
-            if (event.clientY < midpoint) {
-                container.insertBefore(dragState.placeholder, sibling);
-                return;
-            }
-        }
-        container.appendChild(dragState.placeholder);
-    }
-
-    function onSetDragEnd(event) {
-        if (!dragState.active || event.pointerId !== dragState.pointerId) {
-            return;
-        }
-        finalizeSetDrag(false);
-    }
-
-    function onSetDragCancel(event) {
-        if (!dragState.active || event.pointerId !== dragState.pointerId) {
-            return;
-        }
-        finalizeSetDrag(true);
-    }
-
-    function finalizeSetDrag(cancelled) {
-        const { handle, row, placeholder, container, pointerId } = dragState;
-        if (handle?.releasePointerCapture) {
-            try {
-                handle.releasePointerCapture(pointerId);
-            } catch (error) {
-                console.warn('releasePointerCapture ignoré:', error);
-            }
-        }
-        handle?.removeEventListener('pointermove', onSetDragMove);
-        handle?.removeEventListener('pointerup', onSetDragEnd);
-        handle?.removeEventListener('pointercancel', onSetDragCancel);
-
-        if (container && row && placeholder && placeholder.parentNode === container) {
-            container.insertBefore(row, placeholder);
-            container.removeChild(placeholder);
-        }
-
-        if (row) {
-            row.classList.remove('routine-set-dragging');
-            Object.assign(row.style, {
-                position: '',
-                left: '',
-                top: '',
-                width: '',
-                height: '',
-                zIndex: '',
-                pointerEvents: ''
-            });
-        }
-
-        const order = container ? getSetOrder(container) : [];
-        const changed = !cancelled && container && !ordersEqual(order, dragState.initialOrder);
-
-        dragState.active = false;
-        dragState.row = null;
-        dragState.handle = null;
-        dragState.placeholder = null;
-        dragState.pointerId = null;
-        dragState.offsetY = 0;
-        dragState.container = null;
-        dragState.initialOrder = [];
-
-        if (changed) {
-            applySetOrder(order);
-        }
-    }
-
-    function getSetOrder(container) {
-        return Array.from(container.children)
-            .filter(
-                (node) =>
-                    node instanceof HTMLElement &&
-                    node.classList.contains('routine-set-row') &&
-                    !node.classList.contains('routine-set-placeholder')
-            )
-            .map((node) => safeInt(node.dataset.idx, -1))
-            .filter((value) => value >= 0);
-    }
-
-    function applySetOrder(order) {
-        const move = findMove();
-        if (!move?.sets?.length) {
-            return;
-        }
-        const sets = Array.isArray(move.sets) ? [...move.sets] : [];
-        if (order.length !== sets.length) {
-            return;
-        }
-        const newSets = order.map((index) => sets[index]).filter(Boolean);
-        if (newSets.length !== sets.length) {
-            return;
-        }
-        newSets.forEach((set, idx) => {
-            set.pos = idx + 1;
-        });
-        move.sets = newSets;
-        scheduleSave();
-        renderSets();
-    }
-
-    function ordersEqual(a, b) {
-        if (a.length !== b.length) {
-            return false;
-        }
-        return a.every((value, index) => value === b[index]);
     }
 
     function createActionButton(symbol, title, handler) {
@@ -395,13 +211,24 @@
             return;
         }
         const sets = Array.isArray(move.sets) ? move.sets : [];
-        sets.push({
-            pos: sets.length + 1,
-            reps: null,
-            weight: null,
-            rpe: null,
-            rest: null
-        });
+        const previous = sets.length ? sets[sets.length - 1] : null;
+        const defaultRest = A.preferences?.getDefaultTimerDuration?.() ?? 90;
+        const newSet = previous
+            ? {
+                  pos: sets.length + 1,
+                  reps: previous.reps ?? null,
+                  weight: previous.weight ?? null,
+                  rpe: previous.rpe ?? null,
+                  rest: previous.rest ?? null
+              }
+            : {
+                  pos: sets.length + 1,
+                  reps: 10,
+                  weight: null,
+                  rpe: null,
+                  rest: defaultRest
+              };
+        sets.push(newSet);
         move.sets = sets;
         scheduleSave();
         renderSets();
@@ -415,9 +242,10 @@
         if (!Array.isArray(move.sets) || !move.sets[index]) {
             return;
         }
+        const nextValue = field === 'rest' ? (Number.isFinite(value) ? Math.max(0, Math.round(value)) : null) : value;
         move.sets[index] = {
             ...move.sets[index],
-            [field]: value,
+            [field]: nextValue,
             pos: index + 1
         };
         scheduleSave();
