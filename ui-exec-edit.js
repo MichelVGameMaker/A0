@@ -394,7 +394,13 @@
         bindStepper(controls.weight);
 
         controls.rpe?.addEventListener('change', updateState);
-        controls.rest?.addEventListener('input', updateState);
+        if (controls.rest?.addEventListener) {
+            controls.rest.addEventListener('input', updateState);
+            controls.rest.addEventListener('change', updateState);
+            controls.rest.addEventListener('click', () => {
+                window.setTimeout(updateState, 0);
+            });
+        }
 
         updateState();
     }
@@ -433,13 +439,36 @@
         rpeWrap.appendChild(rpe);
         rpeWrap.className = 'rpe-wrap';
 
-        const rest = document.createElement('input');
-        rest.type = 'text';
-        rest.className = 'input';
-        rest.placeholder = 'mm:ss';
-        rest.value = fmtTime(safeInt(set.rest));
-        rest.pattern = '^\\d{1,2}:\\d{2}$';
-        rest.dataset.role = 'rest';
+        const TimePicker = A.components?.TimePicker;
+        let restPicker = null;
+        let restElement = null;
+        let restControl = null;
+        let fallbackRest = null;
+        if (typeof TimePicker === 'function') {
+            restPicker = new TimePicker({
+                value: safeInt(set.rest),
+                defaultValue: A.preferences?.getDefaultTimerDuration?.() ?? 0,
+                label: 'Temps de repos (mm:ss)',
+                onChange: () => {
+                    window.setTimeout(() => {
+                        updateExecRestToggle();
+                    }, 0);
+                }
+            });
+            restPicker.button?.setAttribute('aria-label', `Temps de repos pour la série ${set.pos}`);
+            restElement = restPicker.element;
+            restControl = restPicker.button;
+        } else {
+            fallbackRest = document.createElement('input');
+            fallbackRest.type = 'text';
+            fallbackRest.className = 'input';
+            fallbackRest.placeholder = 'mm:ss';
+            fallbackRest.value = fmtTime(safeInt(set.rest));
+            fallbackRest.pattern = '^\\d{1,2}:\\d{2}$';
+            fallbackRest.dataset.role = 'rest';
+            restElement = fallbackRest;
+            restControl = fallbackRest;
+        }
 
         const holder = document.createElement('div');
         holder.className = 'js-edit-holder';
@@ -448,11 +477,12 @@
             reps: parseInt(reps.input.value || '0', 10),
             weight: parseInt(weight.input.value || '0', 10),
             rpe: rpe.value ? parseInt(rpe.value, 10) : null,
-            rest: parseTime(rest.value)
+            rest: restPicker ? restPicker.valueSeconds ?? 0 : parseTime(fallbackRest?.value)
         });
-        holder._controls = { reps, weight, rpe, rest };
+        holder._controls = { reps, weight, rpe, rest: restControl };
+        holder._timePicker = restPicker;
 
-        row.append(reps.el, weight.el, rpeWrap, rest, holder);
+        row.append(reps.el, weight.el, rpeWrap, restElement, holder);
         return row;
     }
 
