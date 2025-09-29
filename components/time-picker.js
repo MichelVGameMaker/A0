@@ -42,7 +42,8 @@
 
         open() {
             const shared = this.#ensureDialog();
-            if (!shared?.dialog) {
+            const dialog = shared?.dialog;
+            if (!dialog) {
                 return;
             }
 
@@ -91,13 +92,58 @@
             TimePicker.#sanitizeInputValue(shared.secondsInput, 59);
 
             TimePicker.#activeInstance = this;
-            shared.dialog.returnValue = '';
-            shared.dialog.showModal();
+            dialog.returnValue = '';
+
+            // Prepare the dialog for positioning near the triggering button.
+            dialog.style.opacity = '0';
+            dialog.style.margin = '0';
+            dialog.style.transform = 'none';
+            dialog.style.position = 'fixed';
+            dialog.style.top = '';
+            dialog.style.left = '';
+
+            dialog.showModal();
 
             window.requestAnimationFrame(() => {
+                this.#positionDialog(dialog);
                 shared.minutesInput?.focus();
                 shared.minutesInput?.select?.();
             });
+        }
+
+        #positionDialog(dialog) {
+            const button = this.button;
+            const margin = 12;
+            const viewportWidth = Math.max(document.documentElement?.clientWidth || 0, window.innerWidth || 0);
+            const viewportHeight = Math.max(document.documentElement?.clientHeight || 0, window.innerHeight || 0);
+            const dialogRect = dialog.getBoundingClientRect();
+            const buttonRect = button?.getBoundingClientRect();
+
+            let top = margin;
+            let left = margin;
+
+            if (buttonRect) {
+                top = buttonRect.bottom + margin;
+                left = buttonRect.left + buttonRect.width / 2 - dialogRect.width / 2;
+
+                const spaceBelow = viewportHeight - buttonRect.bottom;
+                const fitsBelow = spaceBelow >= dialogRect.height + margin;
+                const spaceAbove = buttonRect.top;
+                const fitsAbove = spaceAbove >= dialogRect.height + margin;
+
+                if (!fitsBelow && fitsAbove) {
+                    top = buttonRect.top - dialogRect.height - margin;
+                }
+            }
+
+            const maxTop = Math.max(margin, viewportHeight - dialogRect.height - margin);
+            const maxLeft = Math.max(margin, viewportWidth - dialogRect.width - margin);
+            top = Math.min(Math.max(margin, top), maxTop);
+            left = Math.min(Math.max(margin, left), maxLeft);
+
+            dialog.style.top = `${top}px`;
+            dialog.style.left = `${left}px`;
+            dialog.style.opacity = '';
         }
 
         #ensureDialog() {
@@ -197,6 +243,12 @@
             refs.dialog.addEventListener('close', () => {
                 const active = TimePicker.#activeInstance;
                 if (!active) {
+                    refs.dialog.style.opacity = '';
+                    refs.dialog.style.top = '';
+                    refs.dialog.style.left = '';
+                    refs.dialog.style.position = '';
+                    refs.dialog.style.margin = '';
+                    refs.dialog.style.transform = '';
                     return;
                 }
                 if (refs.dialog.returnValue === 'confirm') {
@@ -205,6 +257,12 @@
                 window.requestAnimationFrame(() => {
                     active.button?.focus();
                 });
+                refs.dialog.style.opacity = '';
+                refs.dialog.style.top = '';
+                refs.dialog.style.left = '';
+                refs.dialog.style.position = '';
+                refs.dialog.style.margin = '';
+                refs.dialog.style.transform = '';
                 TimePicker.#activeInstance = null;
             });
 
