@@ -14,7 +14,8 @@
         sessionDates: new Set(),
         plan: null,
         today: null,
-        bound: false
+        bound: false,
+        controlsBound: false
     };
 
     /* WIRE */
@@ -62,6 +63,13 @@
             return refs;
         }
         refs.weekStrip = document.getElementById('weekStrip');
+        refs.weekPrev = document.getElementById('weekPrev');
+        refs.weekNext = document.getElementById('weekNext');
+        if (!virtualState.controlsBound) {
+            refs.weekPrev?.addEventListener('click', () => handleNavClick(-1));
+            refs.weekNext?.addEventListener('click', () => handleNavClick(1));
+            virtualState.controlsBound = true;
+        }
         refsResolved = true;
         return refs;
     }
@@ -90,6 +98,13 @@
             virtualState.bound = true;
         }
         return virtualState.pages;
+    }
+
+    function handleNavClick(direction) {
+        if (virtualState.adjusting) {
+            return;
+        }
+        shiftPages(direction);
     }
 
     function renderPage(container, startDate) {

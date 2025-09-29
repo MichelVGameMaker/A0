@@ -462,12 +462,30 @@ image_big{
 /* =========================================================
    7) Semaine & calendrier
    ========================================================= */
+.week-strip-wrapper{
+  display:flex; align-items:center; gap:var(--gap);
+  margin-bottom:12px;
+}
 .week-strip{
   display:flex; gap:var(--gap); overflow-x:auto;
-  padding-bottom:8px; margin-bottom:12px;
+  padding-bottom:8px; margin-bottom:0;
   border-bottom:1px dashed var(--whiteB);
   -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
 }
+.week-strip::-webkit-scrollbar{ display:none; }
+.week-strip-nav{
+  display:flex; align-items:center; justify-content:center;
+  width: var(--control-h); height: var(--control-h);
+  border-radius: var(--radius);
+  border:1px solid var(--whiteB);
+  background: var(--whiteB);
+  font-size:1.2rem;
+  cursor:pointer;
+  user-select:none;
+}
+.week-strip-nav:active{ transform: scale(.97); }
+.week-strip-wrapper .week-strip{ flex:1; }
 .week-strip .week-page{
   display:grid; grid-template-columns:repeat(7,minmax(0,1fr));
   gap:var(--gap);

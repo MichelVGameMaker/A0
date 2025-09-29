@@ -44,7 +44,11 @@
     <main class="content">
   
         <!-- Calendrier 1 semaine défilable -->
-        <section class="week-strip" id="weekStrip" aria-label="Calendrier 1 semaine"></section>
+        <div class="week-strip-wrapper">
+            <button id="weekPrev" class="week-strip-nav" type="button" title="Semaine précédente" aria-label="Afficher les jours précédents">◀︎</button>
+            <section class="week-strip" id="weekStrip" aria-label="Calendrier 1 semaine"></section>
+            <button id="weekNext" class="week-strip-nav" type="button" title="Semaine suivante" aria-label="Afficher les jours suivants">▶︎</button>
+        </div>
   
         <!-- Liste des exercices de la séance -->
         <section id="sessionList" class="session-list" aria-label="Séance du jour"></section>
