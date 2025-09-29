@@ -650,6 +650,43 @@ image_big{
   cursor:pointer;
 }
 
+.timepicker-form{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  padding: var(--pad-y) var(--pad-x);
+}
+
+.timepicker-label{
+  text-align:center;
+  font-weight: var(--fw-strong);
+}
+
+.timepicker-body{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:16px;
+}
+
+.timepicker-value{
+  text-align:center;
+  font-weight: var(--fw-strong);
+  min-width:72px;
+}
+
+.timepicker-separator{
+  font-size:32px;
+  line-height:1;
+  font-weight: var(--fw-strong);
+}
+
+.timepicker-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
 .time-picker-dialog{
   border:none;
   border-radius:var(--radius);

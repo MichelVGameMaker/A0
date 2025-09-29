@@ -385,7 +385,32 @@
     <div id="bigCalendar" class="big-calendar"></div>
 </dialog>
 <!-- ==================== -->
-  
+
+<!-- ==========  Modale timepicker ========== -->
+<dialog id="dlgTimePicker" class="modal">
+    <form method="dialog" class="timepicker-form" data-role="timepicker-form">
+        <div id="dlgTimePickerLabel" class="timepicker-label" data-role="timepicker-label">Temps de repos</div>
+        <div class="timepicker-body">
+            <div class="vstepper">
+                <button type="button" class="btn" data-action="minutes-plus">+</button>
+                <input id="timePickerMinutes" class="input timepicker-value" type="number" min="0" max="59" inputmode="numeric" data-role="minutes" />
+                <button type="button" class="btn" data-action="minutes-minus">−</button>
+            </div>
+            <div class="timepicker-separator" aria-hidden="true">:</div>
+            <div class="vstepper">
+                <button type="button" class="btn" data-action="seconds-plus">+</button>
+                <input id="timePickerSeconds" class="input timepicker-value" type="number" min="0" max="59" inputmode="numeric" data-role="seconds" />
+                <button type="button" class="btn" data-action="seconds-minus">−</button>
+            </div>
+        </div>
+        <div class="timepicker-actions">
+            <button type="button" class="btn ghost" data-action="cancel">Retour</button>
+            <button type="submit" class="btn primary" data-action="confirm">OK</button>
+        </div>
+    </form>
+</dialog>
+<!-- ==================== -->
+
 <!-- JS (ordre important) -->
 <script src="cfg.js"></script>
 <script src="db.js"></script>
