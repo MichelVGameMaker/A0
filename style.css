@@ -469,13 +469,16 @@ image_big{
   -webkit-overflow-scrolling:touch;
 }
 .week-strip .week-page{
-  display:flex; gap:var(--gap);
-  flex:0 0 auto;
+  display:grid; grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:var(--gap);
+  flex:0 0 100%; width:100%;
 }
 .week-strip .day{
   height: var(--control-h);
-  display:flex; align-items:center; justify-content:center;
-  padding: 0 var(--pad-x);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px;
+  padding:6px 4px;
+  text-align:center; white-space:normal; line-height:1.1;
   border:1px solid var(--whiteB);
   border-radius: var(--radius);
   background: var(--whiteB);
@@ -483,6 +486,9 @@ image_big{
   user-select:none; cursor:pointer;
   transition: transform .06s ease;
 }
+.week-strip .day span{ display:block; }
+.week-strip .day-weekday{ font-size: var(--fs-small); text-transform:capitalize; }
+.week-strip .day-number{ font-size:1.1em; }
 .week-strip .day:active{ transform: scale(.98); }
 
 /* Règles de priorité: selected > has-session > planned */

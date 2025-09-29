@@ -6,7 +6,6 @@
     const refs = {};
     let refsResolved = false;
     const DAYS_PER_PAGE = 7;
-    const HALF_WINDOW = Math.floor(DAYS_PER_PAGE / 2);
     const VIRTUAL_PAGE_COUNT = 3;
     const virtualState = {
         pages: [],
@@ -40,8 +39,9 @@
         virtualState.today = A.today();
 
         const anchor = A.currentAnchor || A.activeDate || virtualState.today || A.today();
-        const centerStart = A.addDays(anchor, -HALF_WINDOW);
+        const centerStart = A.startOfWeek(anchor);
         virtualState.centerStart = centerStart;
+        A.currentAnchor = centerStart;
 
         renderPage(pages[0], A.addDays(centerStart, -DAYS_PER_PAGE));
         renderPage(pages[1], centerStart);
@@ -106,12 +106,12 @@
             const planned = isPlannedDate(date, virtualState.plan);
             const isFuture = virtualState.today && date >= virtualState.today;
 
+            const { weekdayLabel, dayLabel } = formatDayLabel(date);
+
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'day';
-            button.textContent = date
-                .toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })
-                .replace('.', '');
+            button.innerHTML = `<span class="day-weekday">${weekdayLabel}</span><span class="day-number">${dayLabel}</span>`;
 
             if (hasSession) {
                 button.classList.add('has-session');
@@ -124,7 +124,7 @@
 
             button.addEventListener('click', async () => {
                 A.activeDate = date;
-                A.currentAnchor = new Date(date);
+                A.currentAnchor = A.startOfWeek(date);
                 await A.populateRoutineSelect();
                 await A.renderWeek();
                 await A.renderSession();
@@ -166,20 +166,24 @@
 
         virtualState.adjusting = true;
 
-        const baseAnchor = A.currentAnchor || virtualState.centerStart || virtualState.today || A.today();
+        const baseAnchor = A.startOfWeek(
+            A.currentAnchor || virtualState.centerStart || virtualState.today || A.today()
+        );
 
         if (direction > 0) {
             const [prev, center, next] = virtualState.pages;
             weekStrip.appendChild(prev);
             virtualState.pages = [center, next, prev];
-            virtualState.centerStart = A.addDays(virtualState.centerStart || baseAnchor, DAYS_PER_PAGE);
-            A.currentAnchor = A.addDays(baseAnchor, DAYS_PER_PAGE);
+            const nextStart = A.addDays(virtualState.centerStart || baseAnchor, DAYS_PER_PAGE);
+            virtualState.centerStart = nextStart;
+            A.currentAnchor = nextStart;
         } else {
             const [prev, center, next] = virtualState.pages;
             weekStrip.insertBefore(next, prev);
             virtualState.pages = [next, prev, center];
-            virtualState.centerStart = A.addDays(virtualState.centerStart || baseAnchor, -DAYS_PER_PAGE);
-            A.currentAnchor = A.addDays(baseAnchor, -DAYS_PER_PAGE);
+            const prevStart = A.addDays(virtualState.centerStart || baseAnchor, -DAYS_PER_PAGE);
+            virtualState.centerStart = prevStart;
+            A.currentAnchor = prevStart;
         }
 
         renderPage(virtualState.pages[0], A.addDays(virtualState.centerStart, -DAYS_PER_PAGE));
@@ -200,5 +204,20 @@
         }
         const weekday = (date.getDay() + 6) % 7 + 1;
         return Boolean(plan.days?.[String(weekday)]);
+    }
+
+    function formatDayLabel(date) {
+        const raw = date
+            .toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })
+            .replace(/\./g, '')
+            .replace(/[\u202f\u00a0]/g, ' ')
+            .trim();
+        const parts = raw.split(' ').filter(Boolean);
+        if (!parts.length) {
+            return { weekdayLabel: raw, dayLabel: '' };
+        }
+        const weekdayLabel = parts.shift() || raw;
+        const dayLabel = parts.join(' ') || '';
+        return { weekdayLabel, dayLabel };
     }
 })();
