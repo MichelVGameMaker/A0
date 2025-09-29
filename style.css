@@ -683,8 +683,12 @@ image_big{
 
 .timepicker-actions{
   display:flex;
-  justify-content:flex-end;
   gap:8px;
+  width:100%;
+}
+
+.timepicker-actions .btn{
+  flex:1 1 0%;
 }
 
 .time-picker-dialog{
