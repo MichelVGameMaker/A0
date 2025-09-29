@@ -52,6 +52,29 @@
             const minutesValue = Math.min(currentMinutes, this.maxMinutes);
             const secondsValue = Math.min(currentSeconds, 59);
 
+            const button = this.button;
+            if (button) {
+                const content = button.closest?.('.content');
+                const scroller =
+                    (content instanceof HTMLElement && content) ||
+                    document.scrollingElement ||
+                    document.documentElement ||
+                    document.body;
+
+                if (scroller && scroller instanceof HTMLElement && scroller !== document.body) {
+                    const scrollerRect = scroller.getBoundingClientRect();
+                    const buttonRect = button.getBoundingClientRect();
+                    const targetTop = buttonRect.top - scrollerRect.top + scroller.scrollTop;
+                    if (typeof scroller.scrollTo === 'function') {
+                        scroller.scrollTo({ top: targetTop, behavior: 'smooth' });
+                    } else {
+                        scroller.scrollTop = targetTop;
+                    }
+                } else if (button.scrollIntoView) {
+                    button.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                }
+            }
+
             if (shared.label) {
                 shared.label.textContent = this.label;
             }
