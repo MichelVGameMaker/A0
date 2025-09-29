@@ -19,7 +19,7 @@
     /* ACTIONS */
     async function bootstrap() {
         A.activeDate = A.today();
-        A.currentAnchor = new Date(A.activeDate);
+        A.currentAnchor = A.startOfWeek(A.activeDate);
         A.calendarMonth = new Date(A.activeDate.getFullYear(), A.activeDate.getMonth(), 1);
 
         await db.init();

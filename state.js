@@ -54,5 +54,18 @@
         return next;
     };
 
+    /**
+     * Retourne le lundi de la semaine contenant la date fournie.
+     * @param {Date} date Date de base.
+     * @returns {Date} Lundi correspondant.
+     */
+    existing.startOfWeek = function startOfWeek(date) {
+        const base = new Date(date);
+        const day = base.getDay();
+        const diff = (day + 6) % 7;
+        base.setDate(base.getDate() - diff);
+        return new Date(base.toDateString());
+    };
+
     window.App = existing;
 })();

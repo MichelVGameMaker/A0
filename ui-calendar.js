@@ -73,7 +73,7 @@
 
             cell.addEventListener('click', async () => {
                 A.activeDate = date;
-                A.currentAnchor = date;
+                A.currentAnchor = A.startOfWeek(date);
                 await A.populateRoutineSelect();
                 await A.renderWeek();
                 await A.renderSession();
