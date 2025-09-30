@@ -578,11 +578,11 @@ image_big{
    ========================================================= */
 .exec-grid{
   display:grid; gap:8px; margin-top:8px;
-  grid-template-columns: 1.2fr 1.2fr .8fr .8fr auto; /* Reps | Poids | RPE | Repos | Action */
+  grid-template-columns: 1.2fr 1.2fr .8fr .8fr .8fr auto; /* Reps | Poids | RPE | Repos mn | Repos sec | Action */
   text-align:center; align-items:center;
 }
 .exec-grid.routine-set-grid{
-  grid-template-columns: minmax(48px, 0.6fr) 1fr 1fr 1fr auto; /* # | Reps | Poids | Repos | Actions */
+  grid-template-columns: minmax(48px, 0.6fr) 1fr 1fr .8fr .8fr .8fr auto; /* # | Reps | Poids | RPE | Repos mn | Repos sec | Actions */
 }
 .exec-head{ font-weight: var(--fw-strong); }
 .exec-row .input{
@@ -638,110 +638,78 @@ image_big{
   font-weight: var(--fw-strong);
 }
 
-.time-picker{
+.set-edit-button{
   width:100%;
-}
-
-.time-picker-input{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:4px;
-  cursor:pointer;
-}
-
-.timepicker-form{
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-  padding: var(--pad-y) var(--pad-x);
-}
-
-.timepicker-label{
-  text-align:center;
+  min-height: var(--control-h);
   font-weight: var(--fw-strong);
-}
-
-.timepicker-body{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:16px;
-}
-
-.timepicker-value{
-  text-align:center;
-  font-weight: var(--fw-strong);
-  min-width:72px;
-}
-
-.timepicker-separator{
-  font-size:32px;
-  line-height:1;
-  font-weight: var(--fw-strong);
-}
-
-.timepicker-actions{
-  display:flex;
-  gap:8px;
-  width:100%;
-}
-
-.timepicker-actions .btn{
-  flex:1 1 0%;
-}
-
-.time-picker-dialog{
-  border:none;
-  border-radius:var(--radius);
-  padding:16px;
-  width:min(320px, 90vw);
-}
-
-.time-picker-dialog::backdrop{
-  background:rgba(0,0,0,0.35);
-}
-
-.time-picker-form{
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-}
-
-.time-picker-title{
-  font-weight: var(--fw-strong);
-  text-align:center;
-}
-
-.time-picker-wheels{
-  display:flex;
-  justify-content:center;
-  gap:16px;
-}
-
-.time-picker-wheel{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:8px;
-  font-weight: var(--fw-strong);
-  color: var(--darkGrayB);
-}
-
-.time-picker-select{
-  width:72px;
-  height:160px;
-  text-align:center;
   font-size: var(--fs-base);
-  border:1px solid var(--whiteB);
-  border-radius:var(--radius);
+  color: var(--black);
+  background: var(--whiteB);
 }
 
-.time-picker-actions{
+.set-edit-button:hover,
+.set-edit-button:focus{
+  background: var(--whiteA);
+  outline:none;
+}
+
+.exec-rest-cell{
+  font-variant-numeric: tabular-nums;
+}
+
+.set-editor-form{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  min-width:280px;
+}
+
+.set-editor-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.set-editor-title{
+  font-weight: var(--fw-strong);
+  font-size: var(--fs-large);
+}
+
+.set-editor-grid{
+  display:grid;
+  gap:12px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.set-editor-field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.set-editor-label{
+  font-weight: var(--fw-strong);
+  text-align:left;
+}
+
+.set-editor-actions{
   display:flex;
   justify-content:flex-end;
-  gap:8px;
 }
+
+.set-editor-actions .btn{
+  min-width:120px;
+}
+
+.set-editor-form .vstepper{
+  width:100%;
+}
+
+.set-editor-form .vstepper .input{
+  text-align:center;
+}
+
 
 .btn-icon{
   min-width:36px;
@@ -796,9 +764,6 @@ input[type="number"]{ -moz-appearance:textfield; }
 .rpe-8{ background:#c93; } .rpe-9{ background:#d55; } .rpe-10{ background:#a00; }
 
 /* Champs spécifiques */
-.exec-row input[placeholder="mm:ss"]{ text-align:center; max-width:90px; margin:0 auto; }
-.rpe-wrap .input{ max-width:70px; margin:0 auto; }
-
 /* =========================================================
    10) Responsivité
    ========================================================= */
