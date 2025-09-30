@@ -74,6 +74,8 @@
         refs.screenExecEdit = document.getElementById('screenExecEdit');
         refs.screenRoutineEdit = document.getElementById('screenRoutineEdit');
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
+        refs.screenStatsList = document.getElementById('screenStatsList');
+        refs.screenStatsDetail = document.getElementById('screenStatsDetail');
         refs.exEditTitle = document.getElementById('exEditTitle');
         refs.exEditDelete = document.getElementById('exEditDelete');
         refs.exEditBack = document.getElementById('exEditBack');
@@ -255,7 +257,9 @@
             screenExecEdit,
             screenExerciseRead: refs.screenExerciseRead,
             screenRoutineEdit: refs.screenRoutineEdit,
-            screenRoutineMoveEdit: refs.screenRoutineMoveEdit
+            screenRoutineMoveEdit: refs.screenRoutineMoveEdit,
+            screenStatsList: refs.screenStatsList,
+            screenStatsDetail: refs.screenStatsDetail
         };
         Object.entries(map).forEach(([key, element]) => {
             if (element) {

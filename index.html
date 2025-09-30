@@ -176,6 +176,65 @@
 </section>
 <!-- ==================== -->
 
+<!-- ========== Statistiques : liste ========== -->
+<section id="screenStatsList" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left"></div>
+        <div class="header-center">
+            <div class="title">Statistiques</div>
+        </div>
+        <div class="header-right"></div>
+    </header>
+
+    <main class="content">
+        <section id="statsExerciseList" class="session-list" aria-label="Exercices suivis"></section>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Statistiques : détail exercice ========== -->
+<section id="screenStatsDetail" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="statsBack" class="btn ghost" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title" id="statsExerciseTitle">Exercice</div>
+        </div>
+        <div class="header-right"></div>
+    </header>
+
+    <main class="content">
+        <div class="bloque stats-header">
+            <div class="stats-subtitle" id="statsExerciseSubtitle"></div>
+        </div>
+
+        <div class="stats-chart-card">
+            <div id="statsChart" class="stats-chart" role="img" aria-label="Évolution dans le temps"></div>
+            <div id="statsChartEmpty" class="stats-chart-empty" hidden>Aucune donnée enregistrée.</div>
+        </div>
+
+        <div class="bloque">
+            <label class="sr-only" for="statsMetricSelector">Choisir la statistique</label>
+            <select id="statsMetricSelector" class="input full">
+                <option value="reps">Répétitions totales</option>
+                <option value="weight">Poids maximum</option>
+                <option value="orm">1RM estimé</option>
+            </select>
+        </div>
+
+        <section>
+            <h2 class="stats-section-title">Historique</h2>
+            <ul id="statsTimeline" class="stats-timeline" aria-live="polite"></ul>
+        </section>
+    </main>
+
+</section>
+<!-- ==================== -->
+
 <!-- ========== 3.4.2 Modifier l’exécution (Colonne A uniquement) ========== -->
 <section id="screenExecEdit" class="screen" hidden>
 
@@ -426,6 +485,7 @@
 <script src="ui-routine-list.js"></script>
 <script src="ui-routine-edit.js"></script>
 <script src="ui-routine-move-edit.js"></script>
+<script src="ui-stats.js"></script>
 <script src="ui-exec-edit.js"></script>
 <script src="init.js"></script>
 <script>

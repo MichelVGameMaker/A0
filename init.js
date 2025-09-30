@@ -38,7 +38,20 @@
     }
 
     function wireNavigation() {
-        const { tabLibraries, tabSessions, tabSettings, tabStats, screenSessions, screenExercises, screenExerciseEdit, screenRoutineEdit, screenRoutineMoveEdit, screenRoutineList } = refs;
+        const {
+            tabLibraries,
+            tabSessions,
+            tabSettings,
+            tabStats,
+            screenSessions,
+            screenExercises,
+            screenExerciseEdit,
+            screenRoutineEdit,
+            screenRoutineMoveEdit,
+            screenRoutineList,
+            screenStatsList,
+            screenStatsDetail
+        } = refs;
 
         tabLibraries?.addEventListener('click', async () => {
             setActiveTab('tabLibraries');
@@ -56,8 +69,7 @@
 
         tabStats?.addEventListener('click', async () => {
             setActiveTab('tabStats');
-            showOnly('routineList');
-            await A.openRoutineList();
+            await A.openStatsList();
         });
 
         tabSettings?.addEventListener('click', async () => {
@@ -72,6 +84,8 @@
         screenRoutineEdit?.setAttribute('data-screen', 'routine');
         screenRoutineMoveEdit?.setAttribute('data-screen', 'routineMove');
         screenRoutineList?.setAttribute('data-screen', 'routineList');
+        screenStatsList?.setAttribute('data-screen', 'statsList');
+        screenStatsDetail?.setAttribute('data-screen', 'statsDetail');
     }
 
     function wireCalendar() {
@@ -129,6 +143,8 @@
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
         refs.screenRoutineList = document.getElementById('screenRoutineList');
         refs.screenExecEdit = document.getElementById('screenExecEdit');
+        refs.screenStatsList = document.getElementById('screenStatsList');
+        refs.screenStatsDetail = document.getElementById('screenStatsDetail');
         refsResolved = true;
         return refs;
     }
@@ -163,7 +179,17 @@
     }
 
     function showOnly(which) {
-        const { screenSessions, screenExercises, screenExerciseEdit, screenRoutineEdit, screenRoutineMoveEdit, screenExecEdit, screenRoutineList } = refs;
+        const {
+            screenSessions,
+            screenExercises,
+            screenExerciseEdit,
+            screenRoutineEdit,
+            screenRoutineMoveEdit,
+            screenExecEdit,
+            screenRoutineList,
+            screenStatsList,
+            screenStatsDetail
+        } = refs;
         if (screenSessions) {
             screenSessions.hidden = which !== 'sessions';
         }
@@ -184,6 +210,12 @@
         }
         if (screenRoutineList) {
             screenRoutineList.hidden = which !== 'routineList';
+        }
+        if (screenStatsList) {
+            screenStatsList.hidden = which !== 'statsList';
+        }
+        if (screenStatsDetail) {
+            screenStatsDetail.hidden = which !== 'statsDetail';
         }
     }
 
