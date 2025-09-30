@@ -105,6 +105,8 @@
         refs.screenExecEdit = document.getElementById('screenExecEdit');
         refs.screenRoutineEdit = document.getElementById('screenRoutineEdit');
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
+        refs.screenStatsList = document.getElementById('screenStatsList');
+        refs.screenStatsDetail = document.getElementById('screenStatsDetail');
         refs.execTitle = document.getElementById('execTitle');
         refs.execDate = document.getElementById('execDate');
         refs.execExecuted = document.getElementById('execExecuted');
@@ -745,7 +747,7 @@
 
     function switchScreen(target) {
         const { screenSessions, screenExercises, screenExerciseEdit, screenExecEdit, screenExerciseRead } = assertRefs();
-        const { screenRoutineEdit, screenRoutineMoveEdit } = refs;
+        const { screenRoutineEdit, screenRoutineMoveEdit, screenStatsList, screenStatsDetail } = refs;
         const map = {
             screenSessions,
             screenExercises,
@@ -753,7 +755,9 @@
             screenExecEdit,
             screenExerciseRead,
             screenRoutineEdit,
-            screenRoutineMoveEdit
+            screenRoutineMoveEdit,
+            screenStatsList,
+            screenStatsDetail
         };
         Object.entries(map).forEach(([key, element]) => {
             if (element) {
