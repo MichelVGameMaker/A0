@@ -754,8 +754,8 @@ image_big{
 
 .set-editor-grid{
   display:grid;
-  gap:12px;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap:8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .set-editor-field{
