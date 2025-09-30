@@ -19,7 +19,7 @@
     /* ACTIONS */
     A.openRoutineList = async function openRoutineList() {
         ensureRefs();
-        highlightStatsTab();
+        highlightSettingsTab();
         await loadRoutines(true);
         renderList();
         switchScreen('screenRoutineList');
@@ -51,7 +51,7 @@
         refs.screenStatsDetail = document.getElementById('screenStatsDetail');
         refs.routineCatalog = document.getElementById('routineCatalog');
         refs.btnRoutineCreate = document.getElementById('btnRoutineCreate');
-        refs.tabStats = document.getElementById('tabStats');
+        refs.tabSettings = document.getElementById('tabSettings');
         refsResolved = true;
         return refs;
     }
@@ -73,7 +73,7 @@
         }
         btnRoutineCreate.addEventListener('click', () => {
             const id = createRoutineId();
-            highlightStatsTab();
+            highlightSettingsTab();
             A.openRoutineEdit({ routineId: id });
         });
     }
@@ -145,7 +145,7 @@
         card.appendChild(row);
 
         card.addEventListener('click', () => {
-            highlightStatsTab();
+            highlightSettingsTab();
             A.openRoutineEdit({ routineId: routine?.id });
         });
 
@@ -189,10 +189,10 @@
         return `routine-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
     }
 
-    function highlightStatsTab() {
+    function highlightSettingsTab() {
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
-        if (refs.tabStats) {
-            refs.tabStats.classList.add('active');
+        if (refs.tabSettings) {
+            refs.tabSettings.classList.add('active');
         }
     }
 

@@ -74,8 +74,7 @@
 
         tabSettings?.addEventListener('click', async () => {
             setActiveTab('tabSettings');
-            showOnly('routine');
-            await A.openRoutineEdit({ routineId: 'routine-test' });
+            await A.openRoutineList();
         });
 
         screenSessions?.setAttribute('data-screen', 'sessions');
