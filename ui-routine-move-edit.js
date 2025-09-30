@@ -133,63 +133,90 @@
         order.className = 'routine-set-order';
         order.textContent = index + 1;
 
-        const reps = document.createElement('input');
-        reps.type = 'number';
-        reps.inputMode = 'numeric';
-        reps.className = 'input';
-        reps.placeholder = 'Reps';
-        reps.value = set.reps ?? '';
-        reps.addEventListener('input', (event) => {
-            const value = readIntValue(event.currentTarget);
-            updateSetField(index, 'reps', value);
-        });
+        const value = {
+            reps: safePositiveInt(set.reps),
+            weight: sanitizeWeight(set.weight),
+            rpe: clampRpe(set.rpe),
+            rest: Math.max(0, safeInt(set.rest, 0))
+        };
 
-        const weight = document.createElement('input');
-        weight.type = 'number';
-        weight.step = '0.5';
-        weight.inputMode = 'decimal';
-        weight.className = 'input';
-        weight.placeholder = 'Poids';
-        weight.value = set.weight ?? '';
-        weight.addEventListener('input', (event) => {
-            const value = readFloatValue(event.currentTarget);
-            updateSetField(index, 'weight', value);
-        });
+        const title = `Série ${index + 1}`;
 
-        const TimePicker = A.components?.TimePicker;
-        let restElement;
-        if (typeof TimePicker === 'function') {
-            const picker = new TimePicker({
-                value: set.rest,
-                defaultValue: A.preferences?.getDefaultTimerDuration?.() ?? 0,
-                label: 'Repos (mm:ss)',
-                onChange: (value) => {
-                    updateSetField(index, 'rest', value ?? null);
+        const openEditor = (focusField) => {
+            const SetEditor = A.components?.SetEditor;
+            if (!SetEditor?.open) {
+                return;
+            }
+            const { minutes, seconds } = splitRest(value.rest);
+            SetEditor.open({
+                title,
+                values: {
+                    reps: value.reps,
+                    weight: value.weight,
+                    rpe: value.rpe,
+                    minutes,
+                    seconds
+                },
+                focus: focusField
+            }).then((result) => {
+                if (!result) {
+                    return;
                 }
+                const nextValues = {
+                    reps: safePositiveInt(result.reps),
+                    weight: sanitizeWeight(result.weight),
+                    rpe: result.rpe != null ? clampRpe(result.rpe) : null,
+                    rest: Math.max(0, Math.round((result.minutes ?? 0) * 60 + (result.seconds ?? 0)))
+                };
+                applySetEditorResult(index, nextValues);
             });
-            picker.button?.setAttribute('aria-label', `Temps de repos pour la série ${index + 1}`);
-            restElement = picker.element;
-        } else {
-            const fallback = document.createElement('input');
-            fallback.type = 'number';
-            fallback.className = 'input';
-            fallback.min = '0';
-            fallback.step = '1';
-            fallback.placeholder = 'Repos (s)';
-            fallback.value = set.rest ?? '';
-            fallback.addEventListener('input', (event) => {
-                const value = readIntValue(event.currentTarget);
-                updateSetField(index, 'rest', value);
-            });
-            restElement = fallback;
-        }
+        };
+
+        const createButton = (getText, focusField, extraClass = '') => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `btn ghost set-edit-button${extraClass ? ` ${extraClass}` : ''}`;
+            button.addEventListener('click', () => openEditor(focusField));
+            const update = () => {
+                button.textContent = getText();
+            };
+            button._update = update;
+            update();
+            return button;
+        };
+
+        const repsButton = createButton(() => formatRepsDisplay(value.reps), 'reps');
+        const weightButton = createButton(() => formatWeightValue(value.weight), 'weight');
+        const rpeButton = createButton(() => formatRpeDisplay(value.rpe), 'rpe');
+        const restMinutesButton = createButton(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell');
+        const restSecondsButton = createButton(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell');
 
         const actions = document.createElement('div');
         actions.className = 'routine-set-actions';
         actions.appendChild(createActionButton('🗑️', 'Supprimer', () => removeSet(index)));
 
-        row.append(order, reps, weight, restElement, actions);
+        row.append(order, repsButton, weightButton, rpeButton, restMinutesButton, restSecondsButton, actions);
         return row;
+    }
+
+    function applySetEditorResult(index, values) {
+        const move = findMove();
+        if (!move) {
+            return;
+        }
+        if (!Array.isArray(move.sets) || !move.sets[index]) {
+            return;
+        }
+        move.sets[index] = {
+            ...move.sets[index],
+            reps: values.reps ?? null,
+            weight: values.weight ?? null,
+            rpe: values.rpe ?? null,
+            rest: values.rest ?? null,
+            pos: index + 1
+        };
+        scheduleSave();
+        renderSets();
     }
 
     function createActionButton(symbol, title, handler) {
@@ -232,23 +259,6 @@
         move.sets = sets;
         scheduleSave();
         renderSets();
-    }
-
-    function updateSetField(index, field, value) {
-        const move = findMove();
-        if (!move) {
-            return;
-        }
-        if (!Array.isArray(move.sets) || !move.sets[index]) {
-            return;
-        }
-        const nextValue = field === 'rest' ? (Number.isFinite(value) ? Math.max(0, Math.round(value)) : null) : value;
-        move.sets[index] = {
-            ...move.sets[index],
-            [field]: nextValue,
-            pos: index + 1
-        };
-        scheduleSave();
     }
 
     function removeSet(index) {
@@ -404,18 +414,74 @@
         return Number.isFinite(number) ? number : null;
     }
 
-    function readIntValue(input) {
-        if (!(input instanceof HTMLInputElement)) {
-            return null;
-        }
-        return safeIntOrNull(input.value);
+    function safePositiveInt(value) {
+        const numeric = safeInt(value, 0);
+        return numeric > 0 ? numeric : 0;
     }
 
-    function readFloatValue(input) {
-        if (!(input instanceof HTMLInputElement)) {
+    function sanitizeWeight(value) {
+        if (value == null || value === '') {
             return null;
         }
-        return safeFloatOrNull(input.value);
+        const numeric = Number.parseFloat(String(value).replace(',', '.'));
+        if (!Number.isFinite(numeric)) {
+            return null;
+        }
+        return Math.max(0, Math.round(numeric * 100) / 100);
+    }
+
+    function clampRpe(value) {
+        const numeric = Number.parseInt(value, 10);
+        if (!Number.isFinite(numeric)) {
+            return null;
+        }
+        return Math.max(5, Math.min(10, numeric));
+    }
+
+    function splitRest(value) {
+        const total = Math.max(0, safeInt(value, 0));
+        const minutes = Math.floor(total / 60);
+        const seconds = total % 60;
+        return { minutes, seconds };
+    }
+
+    function formatRepsDisplay(value) {
+        return String(value ?? 0);
+    }
+
+    function formatWeightValue(value) {
+        if (value == null) {
+            return '—';
+        }
+        return formatNumber(value);
+    }
+
+    function formatRpeDisplay(value) {
+        return value == null ? '—' : String(value);
+    }
+
+    function formatRestMinutes(value) {
+        const { minutes } = splitRest(value);
+        return String(minutes);
+    }
+
+    function formatRestSeconds(value) {
+        const { seconds } = splitRest(value);
+        return String(seconds).padStart(2, '0');
+    }
+
+    function formatNumber(value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return '0';
+        }
+        if (Number.isInteger(numeric)) {
+            return String(numeric);
+        }
+        return numeric
+            .toFixed(2)
+            .replace(/\.0+$/, '')
+            .replace(/(\.\d*?)0+$/, '$1');
     }
 
     function uid(prefix) {

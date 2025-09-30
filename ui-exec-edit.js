@@ -302,12 +302,14 @@
     function rowReadOnly(set) {
         const row = document.createElement('div');
         row.className = 'exec-grid exec-row';
+        const { minutes, seconds } = splitRest(set.rest);
         row.innerHTML = `
-            <div class="details">${safeInt(set.reps)}</div>
-            <div class="details">${safeInt(set.weight)} kg</div>
-            <div class="details">${rpeChip(set.rpe)}</div>
-            <div class="details">${fmtTime(safeInt(set.rest))}</div>
-            <div></div>
+            <div class="details">${formatRepsDisplay(set.reps)}</div>
+            <div class="details">${formatWeightWithUnit(set.weight)}</div>
+            <div class="details">${rpeChip(clampInt(set.rpe, 5, 10))}</div>
+            <div class="details exec-rest-cell">${minutes}</div>
+            <div class="details exec-rest-cell">${String(seconds).padStart(2, '0')}</div>
+            <div class="details"></div>
         `;
         return row;
     }
@@ -319,7 +321,7 @@
         row.style.opacity = '0.7';
         row.style.fontStyle = 'italic';
         const hint = kind === 'planned' ? 'Prévue' : 'À faire';
-        const hintCell = row.children[4];
+        const hintCell = row.children[5];
         if (hintCell) {
             hintCell.textContent = hint;
             hintCell.className = 'details';
@@ -359,130 +361,115 @@
 
         const label = currentAction === 'edit' ? 'Editer' : 'Ajouter';
         execRestToggle.textContent = label;
+        updateExecRestToggle();
+    }
 
-        if (!currentHolder || !currentHolder._controls) {
+    function updateExecRestToggle() {
+        const { execRestToggle } = assertRefs();
+        if (!execRestToggle) {
+            return;
+        }
+
+        if (!currentHolder || !currentHolder._value) {
             execRestToggle.disabled = true;
             return;
         }
 
-        const controls = currentHolder._controls;
-        const updateState = () => {
-            const repsValue = parseInt(controls?.reps?.input?.value || '0', 10);
-            execRestToggle.disabled = !repsValue;
-        };
-
-        const bindStepper = (stepper) => {
-            if (!stepper) {
-                return;
-            }
-            if (stepper.input) {
-                stepper.input.addEventListener('input', updateState);
-            }
-            if (stepper.plus) {
-                stepper.plus.addEventListener('click', () => {
-                    window.setTimeout(updateState, 0);
-                });
-            }
-            if (stepper.minus) {
-                stepper.minus.addEventListener('click', () => {
-                    window.setTimeout(updateState, 0);
-                });
-            }
-        };
-
-        bindStepper(controls.reps);
-        bindStepper(controls.weight);
-
-        controls.rpe?.addEventListener('change', updateState);
-        if (controls.rest?.addEventListener) {
-            controls.rest.addEventListener('input', updateState);
-            controls.rest.addEventListener('change', updateState);
-            controls.rest.addEventListener('click', () => {
-                window.setTimeout(updateState, 0);
-            });
-        }
-
-        updateState();
+        const repsValue = safePositiveInt(currentHolder._value.reps);
+        execRestToggle.disabled = repsValue <= 0;
     }
 
     function rowEditable(set, isNew) {
         const row = document.createElement('div');
         row.className = 'exec-grid exec-row exec-edit-row';
 
-        const reps = vStepper(safeInt(set.reps), 0, 100);
-        const weight = vStepper(safeInt(set.weight), 0, 999);
-        reps.input.dataset.role = 'reps';
-        weight.input.dataset.role = 'weight';
-
-        const rpeWrap = document.createElement('div');
-        const rpe = document.createElement('select');
-        rpe.className = 'input';
-        const emptyOption = document.createElement('option');
-        emptyOption.value = '';
-        emptyOption.textContent = '—';
-        rpe.appendChild(emptyOption);
-        for (let value = 5; value <= 10; value += 1) {
-            const option = document.createElement('option');
-            option.value = String(value);
-            option.textContent = String(value);
-            rpe.appendChild(option);
-        }
-        const clampedRpe = clampInt(set.rpe, 5, 10);
-        rpe.value = clampedRpe ? String(clampedRpe) : '';
-        rpe.dataset.role = 'rpe';
-        const updateRpeDataset = () => {
-            const numeric = clampInt(rpe.value, 5, 10);
-            rpeWrap.dataset.rpe = numeric ? String(numeric) : '';
-        };
-        rpe.addEventListener('change', updateRpeDataset);
-        updateRpeDataset();
-        rpeWrap.appendChild(rpe);
-        rpeWrap.className = 'rpe-wrap';
-
-        const TimePicker = A.components?.TimePicker;
-        let restPicker = null;
-        let restElement = null;
-        let restControl = null;
-        let fallbackRest = null;
-        if (typeof TimePicker === 'function') {
-            restPicker = new TimePicker({
-                value: safeInt(set.rest),
-                defaultValue: A.preferences?.getDefaultTimerDuration?.() ?? 0,
-                label: 'Temps de repos (mm:ss)',
-                onChange: () => {
-                    window.setTimeout(() => {
-                        updateExecRestToggle();
-                    }, 0);
-                }
-            });
-            restPicker.button?.setAttribute('aria-label', `Temps de repos pour la série ${set.pos}`);
-            restElement = restPicker.element;
-            restControl = restPicker.button;
-        } else {
-            fallbackRest = document.createElement('input');
-            fallbackRest.type = 'text';
-            fallbackRest.className = 'input';
-            fallbackRest.placeholder = 'mm:ss';
-            fallbackRest.value = fmtTime(safeInt(set.rest));
-            fallbackRest.pattern = '^\\d{1,2}:\\d{2}$';
-            fallbackRest.dataset.role = 'rest';
-            restElement = fallbackRest;
-            restControl = fallbackRest;
-        }
-
         const holder = document.createElement('div');
         holder.className = 'js-edit-holder';
         holder.dataset.payload = JSON.stringify({ pos: set.pos, isNew });
-        holder._collect = () => ({
-            reps: parseInt(reps.input.value || '0', 10),
-            weight: parseInt(weight.input.value || '0', 10),
-            rpe: rpe.value ? parseInt(rpe.value, 10) : null,
-            rest: restPicker ? restPicker.valueSeconds ?? 0 : parseTime(fallbackRest?.value)
-        });
-        holder._controls = { reps, weight, rpe, rest: restControl };
-        holder._timePicker = restPicker;
 
-        row.append(reps.el, weight.el, rpeWrap, restElement, holder);
+        const defaultRest = A.preferences?.getDefaultTimerDuration?.() ?? 90;
+        const value = {
+            reps: safePositiveInt(set.reps),
+            weight: sanitizeWeight(set.weight, true),
+            rpe: clampInt(set.rpe, 5, 10),
+            rest: Math.max(0, safeInt(set.rest, defaultRest))
+        };
+
+        holder._value = value;
+
+        const title = set.pos ? `Série ${set.pos}` : 'Nouvelle série';
+
+        const openEditor = (focusField) => {
+            const SetEditor = A.components?.SetEditor;
+            if (!SetEditor?.open) {
+                return;
+            }
+            const { minutes, seconds } = splitRest(value.rest);
+            SetEditor.open({
+                title,
+                values: {
+                    reps: value.reps,
+                    weight: value.weight,
+                    rpe: value.rpe,
+                    minutes,
+                    seconds
+                },
+                focus: focusField
+            }).then((result) => {
+                if (!result) {
+                    return;
+                }
+                value.reps = safePositiveInt(result.reps);
+                value.weight = sanitizeWeight(result.weight, true);
+                value.rpe = result.rpe != null ? clampInt(result.rpe, 5, 10) : null;
+                const totalRest = Math.max(0, Math.round((result.minutes ?? 0) * 60 + (result.seconds ?? 0)));
+                value.rest = totalRest;
+                updateButtons();
+                updateExecRestToggle();
+            });
+        };
+
+        const createButton = (getText, focusField, extraClass = '') => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `btn ghost set-edit-button${extraClass ? ` ${extraClass}` : ''}`;
+            button.addEventListener('click', () => openEditor(focusField));
+            button._update = () => {
+                button.textContent = getText();
+            };
+            button._update();
+            return button;
+        };
+
+        const repsButton = createButton(() => formatRepsDisplay(value.reps), 'reps');
+        const weightButton = createButton(() => formatWeightValue(value.weight), 'weight');
+        const rpeButton = createButton(() => formatRpeDisplay(value.rpe), 'rpe');
+        const restMinutesButton = createButton(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell');
+        const restSecondsButton = createButton(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell');
+
+        const updateButtons = () => {
+            repsButton._update();
+            weightButton._update();
+            rpeButton._update();
+            restMinutesButton._update();
+            restSecondsButton._update();
+        };
+
+        holder._collect = () => ({
+            reps: safePositiveInt(value.reps),
+            weight: sanitizeWeight(value.weight, true),
+            rpe: value.rpe != null ? clampInt(value.rpe, 5, 10) : null,
+            rest: Math.max(0, Math.round(value.rest))
+        });
+
+        const actionCell = document.createElement('div');
+        actionCell.className = 'exec-edit-actions';
+        actionCell.style.visibility = 'hidden';
+        holder.style.display = 'none';
+        actionCell.appendChild(holder);
+
+        row.append(repsButton, weightButton, rpeButton, restMinutesButton, restSecondsButton, actionCell);
+        updateButtons();
         return row;
     }
 
@@ -498,32 +485,6 @@
 
     function defaultNewSet(pos) {
         return { pos, reps: 8, weight: 0, rpe: null, rest: 90, done: false };
-    }
-
-    function vStepper(val, min, max) {
-        const wrap = document.createElement('div');
-        wrap.className = 'vstepper';
-        const plus = document.createElement('button');
-        plus.className = 'btn';
-        plus.textContent = '+';
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.className = 'input';
-        input.inputMode = 'numeric';
-        input.value = String(val);
-        input.min = String(min);
-        input.max = String(max);
-        const minus = document.createElement('button');
-        minus.className = 'btn';
-        minus.textContent = '−';
-        plus.onclick = () => {
-            input.value = String(Math.min(max, parseInt(input.value || '0', 10) + 1));
-        };
-        minus.onclick = () => {
-            input.value = String(Math.max(min, parseInt(input.value || '0', 10) - 1));
-        };
-        wrap.append(plus, input, minus);
-        return { el: wrap, input, plus, minus };
     }
 
     function rpeChip(value) {
@@ -544,32 +505,91 @@
         return 'rpe-10';
     }
 
-    function safeInt(value) {
-        return Number.isFinite(value) ? value : 0;
+    function formatRepsDisplay(value) {
+        return String(safePositiveInt(value));
+    }
+
+    function formatWeightValue(value) {
+        return formatNumber(sanitizeWeight(value, true));
+    }
+
+    function formatWeightWithUnit(value) {
+        const numeric = sanitizeWeight(value);
+        if (numeric == null) {
+            return '—';
+        }
+        return `${formatNumber(numeric)} kg`;
+    }
+
+    function formatRpeDisplay(value) {
+        const numeric = clampInt(value, 5, 10);
+        return numeric ? String(numeric) : '—';
+    }
+
+    function formatRestMinutes(value) {
+        const { minutes } = splitRest(value);
+        return String(minutes);
+    }
+
+    function formatRestSeconds(value) {
+        const { seconds } = splitRest(value);
+        return String(seconds).padStart(2, '0');
+    }
+
+    function formatNumber(value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return '0';
+        }
+        if (Number.isInteger(numeric)) {
+            return String(numeric);
+        }
+        return numeric
+            .toFixed(2)
+            .replace(/\.0+$/, '')
+            .replace(/(\.\d*?)0+$/, '$1');
+    }
+
+    function sanitizeWeight(value, defaultZero = false) {
+        const numeric = safeFloat(value, defaultZero ? 0 : null);
+        if (numeric == null) {
+            return defaultZero ? 0 : null;
+        }
+        return Math.max(0, Math.round(numeric * 100) / 100);
+    }
+
+    function safePositiveInt(value) {
+        const numeric = safeInt(value, 0);
+        return numeric > 0 ? numeric : 0;
+    }
+
+    function safeInt(value, fallback = 0) {
+        const numeric = Number.parseInt(value, 10);
+        return Number.isFinite(numeric) ? numeric : fallback;
+    }
+
+    function safeFloat(value, fallback = null) {
+        if (value == null || value === '') {
+            return fallback;
+        }
+        const normalized = typeof value === 'string' ? value.replace(',', '.') : value;
+        const numeric = Number.parseFloat(normalized);
+        return Number.isFinite(numeric) ? numeric : fallback;
     }
 
     function clampInt(value, min, max) {
-        const numeric = parseInt(value, 10);
-        if (Number.isNaN(numeric)) {
+        const numeric = Number.parseInt(value, 10);
+        if (!Number.isFinite(numeric)) {
             return null;
         }
         return Math.max(min, Math.min(max, numeric));
     }
 
-    function fmtTime(seconds) {
-        const safe = parseInt(seconds || 0, 10);
-        const minutes = Math.floor(Math.abs(safe) / 60);
-        const secs = Math.abs(safe) % 60;
-        const sign = safe < 0 ? '-' : '';
-        return `${sign}${minutes}:${String(secs).padStart(2, '0')}`;
-    }
-
-    function parseTime(raw) {
-        const match = /^(\d{1,2}):(\d{2})$/.exec(String(raw || ''));
-        if (!match) {
-            return 0;
-        }
-        return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+    function splitRest(value) {
+        const total = Math.max(0, safeInt(value, 0));
+        const minutes = Math.floor(total / 60);
+        const seconds = total % 60;
+        return { minutes, seconds };
     }
 
     function ensureSharedTimer() {
