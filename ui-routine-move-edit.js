@@ -172,7 +172,7 @@
                 return;
             }
             const { minutes, seconds } = splitRest(value.rest);
-            row.classList.add('routine-set-row-active');
+            row.classList.add('routine-set-row-active', 'set-editor-highlight');
             SetEditor.open({
                 title,
                 values: {
@@ -200,7 +200,7 @@
                     applySetEditorResult(index, nextValues);
                 })
                 .finally(() => {
-                    row.classList.remove('routine-set-row-active');
+                    row.classList.remove('routine-set-row-active', 'set-editor-highlight');
                 });
         };
 

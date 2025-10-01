@@ -407,7 +407,8 @@
                 return;
             }
             const { minutes, seconds } = splitRest(value.rest);
-            SetEditor.open({
+            row.classList.add('set-editor-highlight');
+            const promise = SetEditor.open({
                 title,
                 values: {
                     reps: value.reps,
@@ -417,18 +418,27 @@
                     seconds
                 },
                 focus: focusField
-            }).then((result) => {
-                if (!result) {
-                    return;
-                }
-                value.reps = safePositiveInt(result.reps);
-                value.weight = sanitizeWeight(result.weight, true);
-                value.rpe = result.rpe != null ? clampInt(result.rpe, 5, 10) : null;
-                const totalRest = Math.max(0, Math.round((result.minutes ?? 0) * 60 + (result.seconds ?? 0)));
-                value.rest = totalRest;
-                updateButtons();
-                updateExecRestToggle();
             });
+            if (!promise || typeof promise.then !== 'function') {
+                row.classList.remove('set-editor-highlight');
+                return;
+            }
+            promise
+                .then((result) => {
+                    if (!result) {
+                        return;
+                    }
+                    value.reps = safePositiveInt(result.reps);
+                    value.weight = sanitizeWeight(result.weight, true);
+                    value.rpe = result.rpe != null ? clampInt(result.rpe, 5, 10) : null;
+                    const totalRest = Math.max(0, Math.round((result.minutes ?? 0) * 60 + (result.seconds ?? 0)));
+                    value.rest = totalRest;
+                    updateButtons();
+                    updateExecRestToggle();
+                })
+                .finally(() => {
+                    row.classList.remove('set-editor-highlight');
+                });
         };
 
         const createButton = (getText, focusField, extraClass = '') => {

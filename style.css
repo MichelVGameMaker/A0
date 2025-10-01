@@ -735,6 +735,24 @@ image_big{
   outline:none;
 }
 
+.set-editor-highlight{
+  background: var(--lightGray);
+  border-radius: var(--radius);
+  outline: 2px solid var(--emphase);
+  outline-offset: 0;
+}
+
+.set-editor-highlight .set-edit-button{
+  background: var(--lightGray);
+  outline: 2px solid var(--emphase);
+  outline-offset: 0;
+}
+
+.set-editor-highlight .set-edit-button:hover,
+.set-editor-highlight .set-edit-button:focus{
+  background: var(--lightGray);
+}
+
 .exec-rest-cell{
   font-variant-numeric: tabular-nums;
 }
