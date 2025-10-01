@@ -144,12 +144,35 @@
 
         const title = `Série ${index + 1}`;
 
+        const buttons = [];
+        const collectButtons = (...items) => {
+            items.forEach((btn) => {
+                if (btn) {
+                    buttons.push(btn);
+                }
+            });
+        };
+
+        const updatePreview = (source) => {
+            if (!source) {
+                return;
+            }
+            value.reps = safePositiveInt(source.reps);
+            value.weight = sanitizeWeight(source.weight);
+            value.rpe = source.rpe != null ? clampRpe(source.rpe) : null;
+            const minutes = Math.max(0, safeInt(source.minutes, 0));
+            const seconds = Math.max(0, safeInt(source.seconds, 0));
+            value.rest = Math.max(0, minutes * 60 + seconds);
+            buttons.forEach((button) => button?._update?.());
+        };
+
         const openEditor = (focusField) => {
             const SetEditor = A.components?.SetEditor;
             if (!SetEditor?.open) {
                 return;
             }
             const { minutes, seconds } = splitRest(value.rest);
+            row.classList.add('routine-set-row-active');
             SetEditor.open({
                 title,
                 values: {
@@ -159,19 +182,26 @@
                     minutes,
                     seconds
                 },
-                focus: focusField
-            }).then((result) => {
-                if (!result) {
-                    return;
+                focus: focusField,
+                onChange: (next) => {
+                    updatePreview(next);
                 }
-                const nextValues = {
-                    reps: safePositiveInt(result.reps),
-                    weight: sanitizeWeight(result.weight),
-                    rpe: result.rpe != null ? clampRpe(result.rpe) : null,
-                    rest: Math.max(0, Math.round((result.minutes ?? 0) * 60 + (result.seconds ?? 0)))
-                };
-                applySetEditorResult(index, nextValues);
-            });
+            })
+                .then((result) => {
+                    if (!result) {
+                        return;
+                    }
+                    const nextValues = {
+                        reps: safePositiveInt(result.reps),
+                        weight: sanitizeWeight(result.weight),
+                        rpe: result.rpe != null ? clampRpe(result.rpe) : null,
+                        rest: Math.max(0, Math.round((result.minutes ?? 0) * 60 + (result.seconds ?? 0)))
+                    };
+                    applySetEditorResult(index, nextValues);
+                })
+                .finally(() => {
+                    row.classList.remove('routine-set-row-active');
+                });
         };
 
         const createButton = (getText, focusField, extraClass = '') => {
@@ -192,6 +222,7 @@
         const rpeButton = createButton(() => formatRpeDisplay(value.rpe), 'rpe');
         const restMinutesButton = createButton(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell');
         const restSecondsButton = createButton(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell');
+        collectButtons(repsButton, weightButton, rpeButton, restMinutesButton, restSecondsButton);
 
         const actions = document.createElement('div');
         actions.className = 'routine-set-actions';
