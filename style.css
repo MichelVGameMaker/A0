@@ -757,13 +757,19 @@ image_big{
 .set-editor-header{
   display:flex;
   align-items:center;
-  justify-content:space-between;
   gap:12px;
+  flex-wrap:nowrap;
 }
 
 .set-editor-title{
   font-weight: var(--fw-strong);
   font-size: var(--fs-large);
+  flex:1;
+  min-width:0;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .set-editor-grid{
@@ -785,12 +791,17 @@ image_big{
 
 .set-editor-rest{
   grid-column: span 2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
 }
 
 .set-editor-rest-grid{
   display:grid;
   gap:8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-items:center;
+  width:100%;
 }
 
 .set-editor-subfield{
