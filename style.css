@@ -658,9 +658,11 @@ image_big{
   text-align:center; align-items:center;
 }
 .exec-grid.routine-set-grid{
-  grid-template-columns: minmax(48px, 0.6fr) 1fr 1fr .8fr .8fr .8fr auto; /* # | Reps | Poids | RPE | Repos mn | Repos sec | Actions */
+  grid-template-columns: minmax(32px, 0.4fr) 1fr 1fr .8fr .8fr .8fr auto; /* # | Reps | Poids | RPE | Repos mn | Repos sec | Actions */
 }
+.routine-set-grid > *{ min-width:0; }
 .exec-head{ font-weight: var(--fw-strong); }
+.exec-head > *{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
 .exec-row .input{
   height: var(--control-h); width:100%;
   text-align:center; margin:0; padding:0 8px;
@@ -710,6 +712,10 @@ image_big{
   gap:8px;
 }
 
+.routine-set-row-active{
+  box-shadow: inset 0 -2px var(--emphase);
+}
+
 .routine-set-order{
   font-weight: var(--fw-strong);
 }
@@ -731,6 +737,14 @@ image_big{
 
 .exec-rest-cell{
   font-variant-numeric: tabular-nums;
+}
+
+.routine-set-head-rest{
+  grid-column: span 2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
 }
 
 .set-editor-form{
@@ -766,7 +780,31 @@ image_big{
 
 .set-editor-label{
   font-weight: var(--fw-strong);
-  text-align:left;
+  text-align:center;
+}
+
+.set-editor-rest{
+  grid-column: span 2;
+}
+
+.set-editor-rest-grid{
+  display:grid;
+  gap:8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.set-editor-subfield{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.set-editor-rest-grid .vstepper{
+  width:72px;
+}
+
+.set-editor-rest-grid .vstepper .input{
+  text-align:center;
 }
 
 .set-editor-actions{

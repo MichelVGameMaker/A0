@@ -163,8 +163,7 @@
             <div>Reps</div>
             <div>Poids</div>
             <div>RPE</div>
-            <div>Repos mn</div>
-            <div>Repos sec</div>
+            <div class="routine-set-head-rest">Repos</div>
             <div>Sup.</div>
         </div>
 
@@ -480,22 +479,25 @@
                     <button type="button" class="btn" data-action="rpe-minus">−</button>
                 </div>
             </label>
-            <label class="set-editor-field">
-                <span class="set-editor-label">Minutes</span>
-                <div class="vstepper">
-                    <button type="button" class="btn" data-action="minutes-plus">+</button>
-                    <input id="setEditorMinutes" class="input" type="number" min="0" inputmode="numeric" data-role="minutes" />
-                    <button type="button" class="btn" data-action="minutes-minus">−</button>
+            <div class="set-editor-field set-editor-rest">
+                <span class="set-editor-label">Repos</span>
+                <div class="set-editor-rest-grid">
+                    <label class="set-editor-subfield">
+                        <div class="vstepper">
+                            <button type="button" class="btn" data-action="minutes-plus">+</button>
+                            <input id="setEditorMinutes" class="input" type="number" min="0" inputmode="numeric" data-role="minutes" aria-label="Minutes de repos" />
+                            <button type="button" class="btn" data-action="minutes-minus">−</button>
+                        </div>
+                    </label>
+                    <label class="set-editor-subfield">
+                        <div class="vstepper">
+                            <button type="button" class="btn" data-action="seconds-plus">+</button>
+                            <input id="setEditorSeconds" class="input" type="number" min="0" step="10" inputmode="numeric" data-role="seconds" aria-label="Secondes de repos" />
+                            <button type="button" class="btn" data-action="seconds-minus">−</button>
+                        </div>
+                    </label>
                 </div>
-            </label>
-            <label class="set-editor-field">
-                <span class="set-editor-label">Secondes</span>
-                <div class="vstepper">
-                    <button type="button" class="btn" data-action="seconds-plus">+</button>
-                    <input id="setEditorSeconds" class="input" type="number" min="0" step="10" inputmode="numeric" data-role="seconds" />
-                    <button type="button" class="btn" data-action="seconds-minus">−</button>
-                </div>
-            </label>
+            </div>
         </div>
         <div class="set-editor-actions">
             <button type="submit" class="btn primary" data-action="submit">Valider</button>

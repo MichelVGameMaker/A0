@@ -101,18 +101,38 @@
                 refs.minutesInput,
                 refs.secondsInput
             ].forEach((input) => {
-                input?.addEventListener('focus', SetEditor.#selectOnFocus);
+                if (!input) {
+                    return;
+                }
+                input.addEventListener('focus', SetEditor.#selectOnFocus);
+                input.addEventListener('input', () => SetEditor.#notifyChange());
             });
-            refs.minutesInput?.addEventListener('change', () => SetEditor.#sanitizeTimeInputs());
-            refs.minutesInput?.addEventListener('blur', () => SetEditor.#sanitizeTimeInputs());
-            refs.secondsInput?.addEventListener('change', () => SetEditor.#sanitizeTimeInputs());
-            refs.secondsInput?.addEventListener('blur', () => SetEditor.#sanitizeTimeInputs());
+            const syncTime = () => {
+                SetEditor.#sanitizeTimeInputs();
+                SetEditor.#notifyChange();
+            };
+            refs.minutesInput?.addEventListener('change', syncTime);
+            refs.minutesInput?.addEventListener('blur', syncTime);
+            refs.secondsInput?.addEventListener('change', syncTime);
+            refs.secondsInput?.addEventListener('blur', syncTime);
         }
 
         static #selectOnFocus(event) {
             const target = event.currentTarget;
             if (target?.select) {
                 target.select();
+            }
+        }
+
+        static #notifyChange() {
+            const active = SetEditor.#active;
+            const onChange = active?.options?.onChange;
+            if (typeof onChange !== 'function') {
+                return;
+            }
+            const values = SetEditor.#getCurrentValues();
+            if (values) {
+                onChange(values);
             }
         }
 
@@ -161,6 +181,7 @@
             const current = SetEditor.#parseInt(input.value, 0);
             const next = Math.max(0, current + delta);
             input.value = String(next);
+            SetEditor.#notifyChange();
         }
 
         static #adjustWeight(delta) {
@@ -174,6 +195,7 @@
                 next = 0;
             }
             input.value = SetEditor.#formatDecimal(next);
+            SetEditor.#notifyChange();
         }
 
         static #adjustRpe(delta) {
@@ -190,6 +212,7 @@
             }
             const next = Math.max(5, Math.min(10, base));
             input.value = String(next);
+            SetEditor.#notifyChange();
         }
 
         static #adjustMinutes(delta) {
@@ -200,6 +223,7 @@
             const current = SetEditor.#parseInt(input.value, 0);
             const next = Math.max(0, current + delta);
             input.value = String(next);
+            SetEditor.#notifyChange();
         }
 
         static #adjustSeconds(delta) {
@@ -225,6 +249,7 @@
             }
             refs.minutesInput.value = String(Math.max(0, minutes));
             refs.secondsInput.value = String(Math.max(0, seconds));
+            SetEditor.#notifyChange();
         }
 
         static #sanitizeTimeInputs() {
@@ -318,12 +343,11 @@
             }
         }
 
-        static #collectValues() {
+        static #getCurrentValues() {
             const refs = SetEditor.#refs;
             if (!refs) {
                 return null;
             }
-            SetEditor.#sanitizeTimeInputs();
             const reps = Math.max(0, SetEditor.#parseInt(refs.repsInput?.value, 0));
             const weightRaw = refs.weightInput?.value ?? '';
             const hasWeight = String(weightRaw).trim() !== '';
@@ -334,6 +358,15 @@
             const minutes = Math.max(0, SetEditor.#parseInt(refs.minutesInput?.value, 0));
             const seconds = Math.max(0, SetEditor.#parseInt(refs.secondsInput?.value, 0));
             return { reps, weight, rpe, minutes, seconds };
+        }
+
+        static #collectValues() {
+            const refs = SetEditor.#refs;
+            if (!refs) {
+                return null;
+            }
+            SetEditor.#sanitizeTimeInputs();
+            return SetEditor.#getCurrentValues();
         }
 
         static #handleClose() {
