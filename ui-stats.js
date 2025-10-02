@@ -6,17 +6,62 @@
     const refs = {};
     let refsResolved = false;
     const state = {
-        activeMetric: 'reps',
+        activeMetric: 'orm',
+        activeRange: '3M',
         exercises: [],
         usageByExercise: new Map(),
         activeExercise: null
     };
 
-    const METRIC_LABELS = {
-        reps: 'Répétitions totales',
-        weight: 'Poids maximum',
-        orm: '1RM estimé'
-    };
+    const METRIC_DEFINITIONS = [
+        {
+            key: 'orm',
+            tagLabel: '1RM',
+            label: '1RM estimé',
+            axisUnit: 'kg',
+            format: formatKilograms
+        },
+        {
+            key: 'tenrm',
+            tagLabel: '10RM',
+            label: '10RM estimé',
+            axisUnit: 'kg',
+            format: formatKilograms
+        },
+        {
+            key: 'reps',
+            tagLabel: 'Répétitions',
+            label: 'Répétitions totales du jour',
+            axisUnit: 'répétitions',
+            format: formatRepetitions
+        },
+        {
+            key: 'weight',
+            tagLabel: 'Charge max',
+            label: 'Charge maximale du jour',
+            axisUnit: 'kg',
+            format: formatKilograms
+        }
+    ];
+
+    const METRIC_MAP = METRIC_DEFINITIONS.reduce((acc, item) => {
+        acc[item.key] = item;
+        return acc;
+    }, {});
+
+    const RANGE_OPTIONS = [
+        { key: '1M', label: '1M', days: 30 },
+        { key: '3M', label: '3M', days: 91 },
+        { key: '6M', label: '6M', days: 182 },
+        { key: '12M', label: '12M', days: 365 }
+    ];
+
+    const RANGE_MAP = RANGE_OPTIONS.reduce((acc, item) => {
+        acc[item.key] = item;
+        return acc;
+    }, {});
+
+    const DAY_MS = 24 * 60 * 60 * 1000;
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -69,9 +114,11 @@
         refs.statsExerciseSubtitle = document.getElementById('statsExerciseSubtitle');
         refs.statsChart = document.getElementById('statsChart');
         refs.statsChartEmpty = document.getElementById('statsChartEmpty');
-        refs.statsMetricSelector = document.getElementById('statsMetricSelector');
+        refs.statsMetricTags = document.getElementById('statsMetricTags');
+        refs.statsRangeTags = document.getElementById('statsRangeTags');
         refs.statsTimeline = document.getElementById('statsTimeline');
         refs.statsBack = document.getElementById('statsBack');
+        refs.statsGoal = document.getElementById('statsGoal');
         refs.tabStats = document.getElementById('tabStats');
         refsResolved = true;
         return refs;
@@ -87,7 +134,8 @@
             'statsExerciseSubtitle',
             'statsChart',
             'statsChartEmpty',
-            'statsMetricSelector',
+            'statsMetricTags',
+            'statsRangeTags',
             'statsTimeline',
             'statsBack'
         ];
@@ -99,17 +147,41 @@
     }
 
     function wireEvents() {
-        const { statsBack, statsMetricSelector } = assertStatsRefs();
+        const { statsBack, statsMetricTags, statsRangeTags } = assertStatsRefs();
         statsBack.addEventListener('click', () => {
             highlightStatsTab();
             state.activeExercise = null;
             renderExerciseList();
             switchScreen('screenStatsList');
         });
-        statsMetricSelector.addEventListener('change', () => {
-            state.activeMetric = statsMetricSelector.value;
-            renderExerciseDetail();
-        });
+        if (statsMetricTags) {
+            statsMetricTags.addEventListener('click', (event) => {
+                const target = event.target.closest('[data-metric]');
+                if (!target) {
+                    return;
+                }
+                const next = target.getAttribute('data-metric');
+                if (!next || next === state.activeMetric || !METRIC_MAP[next]) {
+                    return;
+                }
+                state.activeMetric = next;
+                renderExerciseDetail();
+            });
+        }
+        if (statsRangeTags) {
+            statsRangeTags.addEventListener('click', (event) => {
+                const target = event.target.closest('[data-range]');
+                if (!target) {
+                    return;
+                }
+                const next = target.getAttribute('data-range');
+                if (!next || next === state.activeRange || !RANGE_MAP[next]) {
+                    return;
+                }
+                state.activeRange = next;
+                renderExerciseDetail();
+            });
+        }
     }
 
     async function loadData(force = false) {
@@ -259,13 +331,51 @@
     }
 
     function renderExerciseDetail() {
-        const { statsExerciseTitle, statsExerciseSubtitle, statsMetricSelector } = assertStatsRefs();
+        const { statsExerciseTitle, statsExerciseSubtitle } = assertStatsRefs();
         const exercise = state.activeExercise;
         statsExerciseTitle.textContent = exercise?.name || 'Exercice';
-        statsMetricSelector.value = state.activeMetric;
+        renderMetricTags();
+        renderRangeTags();
         updateExerciseSummary(statsExerciseSubtitle);
         renderChart();
         renderTimeline();
+    }
+
+    function renderMetricTags() {
+        const { statsMetricTags } = assertStatsRefs();
+        if (!statsMetricTags) {
+            return;
+        }
+        statsMetricTags.querySelectorAll('[data-metric]').forEach((button) => {
+            const key = button.getAttribute('data-metric');
+            const definition = key ? METRIC_MAP[key] : null;
+            if (definition) {
+                button.textContent = definition.tagLabel;
+                button.setAttribute('aria-label', definition.label);
+            }
+            const isActive = key === state.activeMetric;
+            button.classList.toggle('selected', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+    }
+
+    function renderRangeTags() {
+        const { statsRangeTags } = assertStatsRefs();
+        if (!statsRangeTags) {
+            return;
+        }
+        statsRangeTags.querySelectorAll('[data-range]').forEach((button) => {
+            const key = button.getAttribute('data-range');
+            const definition = key ? RANGE_MAP[key] : null;
+            if (definition) {
+                button.textContent = definition.label;
+                const { days } = definition;
+                button.setAttribute('aria-label', `Afficher les ${days} derniers jours`);
+            }
+            const isActive = key === state.activeRange;
+            button.classList.toggle('selected', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
     }
 
     function updateExerciseSummary(element) {
@@ -280,12 +390,13 @@
             return;
         }
         const last = usage[usage.length - 1];
+        const definition = METRIC_MAP[state.activeMetric] || METRIC_DEFINITIONS[0];
         const metricValue = last?.metrics ? last.metrics[state.activeMetric] || 0 : 0;
         const metricText = formatMetricValue(metricValue, state.activeMetric);
         const count = usage.length;
         const sessionLabel = count > 1 ? 'séances' : 'séance';
         const lastLabel = last?.dateObj ? A.fmtUI(last.dateObj) : '—';
-        element.textContent = `${count} ${sessionLabel} • Dernière : ${lastLabel} • ${metricText}`;
+        element.textContent = `${count} ${sessionLabel} • Dernière : ${lastLabel} • ${definition.label} : ${metricText}`;
     }
 
     function renderChart() {
@@ -295,26 +406,45 @@
         const exercise = state.activeExercise;
         if (!exercise) {
             statsChartEmpty.hidden = false;
+            statsChartEmpty.textContent = 'Aucune donnée enregistrée.';
             return;
         }
         const usage = state.usageByExercise.get(exercise.id) || [];
         if (!usage.length) {
             statsChartEmpty.hidden = false;
+            statsChartEmpty.textContent = 'Aucune donnée enregistrée.';
+            return;
+        }
+        const metricDefinition = METRIC_MAP[state.activeMetric] || METRIC_DEFINITIONS[0];
+        const rangeDefinition = RANGE_MAP[state.activeRange] || RANGE_OPTIONS[0];
+        const cutoff = computeRangeCutoff(rangeDefinition);
+        const filtered = cutoff ? usage.filter((entry) => entry.dateObj >= cutoff) : [...usage];
+        const aggregated = aggregateUsageByDay(filtered);
+        if (!aggregated.length) {
+            statsChartEmpty.hidden = false;
+            statsChartEmpty.textContent = 'Aucune donnée sur la période sélectionnée.';
             return;
         }
         statsChartEmpty.hidden = true;
-        const data = usage.map((entry) => ({
-            date: entry.dateObj,
+        statsChartEmpty.textContent = 'Aucune donnée enregistrée.';
+        const data = aggregated.map((entry) => ({
+            date: entry.date,
             value: entry.metrics[state.activeMetric] || 0
         }));
         const maxValue = Math.max(...data.map((item) => item.value), 0);
         const width = 320;
-        const height = 200;
-        const padding = 16;
-        const points = data.map((item, index) => {
-            const x = data.length === 1 ? width / 2 : (index / (data.length - 1)) * (width - padding * 2) + padding;
-            const ratio = maxValue > 0 ? item.value / maxValue : 0;
-            const y = height - padding - ratio * (height - padding * 2);
+        const height = 220;
+        const padding = { top: 16, right: 16, bottom: 36, left: 48 };
+        const innerWidth = Math.max(1, width - padding.left - padding.right);
+        const innerHeight = Math.max(1, height - padding.top - padding.bottom);
+        const firstDate = data[0].date;
+        const lastDate = data[data.length - 1].date;
+        const duration = Math.max(1, lastDate.getTime() - firstDate.getTime());
+        const points = data.map((item) => {
+            const ratioX = data.length === 1 ? 0.5 : (item.date.getTime() - firstDate.getTime()) / duration;
+            const x = padding.left + ratioX * innerWidth;
+            const ratioY = maxValue > 0 ? item.value / maxValue : 0;
+            const y = padding.top + (1 - ratioY) * innerHeight;
             return { x, y, value: item.value, date: item.date };
         });
         const pathData = points
@@ -327,14 +457,23 @@
         svg.setAttribute('role', 'presentation');
         svg.classList.add('stats-chart-svg');
 
-        const axis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        axis.setAttribute('x1', String(padding));
-        axis.setAttribute('y1', String(height - padding));
-        axis.setAttribute('x2', String(width - padding));
-        axis.setAttribute('y2', String(height - padding));
-        axis.setAttribute('stroke', '#d4d4d4');
-        axis.setAttribute('stroke-width', '2');
-        svg.appendChild(axis);
+        const axisX = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        axisX.setAttribute('x1', String(padding.left));
+        axisX.setAttribute('y1', String(height - padding.bottom));
+        axisX.setAttribute('x2', String(width - padding.right));
+        axisX.setAttribute('y2', String(height - padding.bottom));
+        axisX.setAttribute('stroke', '#d4d4d4');
+        axisX.setAttribute('stroke-width', '2');
+        svg.appendChild(axisX);
+
+        const axisY = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        axisY.setAttribute('x1', String(padding.left));
+        axisY.setAttribute('y1', String(padding.top));
+        axisY.setAttribute('x2', String(padding.left));
+        axisY.setAttribute('y2', String(height - padding.bottom));
+        axisY.setAttribute('stroke', '#d4d4d4');
+        axisY.setAttribute('stroke-width', '2');
+        svg.appendChild(axisY);
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', pathData);
@@ -344,6 +483,22 @@
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('stroke-linejoin', 'round');
         svg.appendChild(path);
+
+        const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        yLabel.textContent = metricDefinition.axisUnit;
+        yLabel.setAttribute('x', String(padding.left + 4));
+        yLabel.setAttribute('y', String(padding.top + 12));
+        yLabel.setAttribute('text-anchor', 'start');
+        yLabel.setAttribute('class', 'stats-axis-label stats-axis-label-y');
+        svg.appendChild(yLabel);
+
+        const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        xLabel.textContent = 'Jours';
+        xLabel.setAttribute('x', String(width - padding.right));
+        xLabel.setAttribute('y', String(height - 4));
+        xLabel.setAttribute('text-anchor', 'end');
+        xLabel.setAttribute('class', 'stats-axis-label stats-axis-label-x');
+        svg.appendChild(xLabel);
 
         points.forEach((point) => {
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -358,7 +513,7 @@
 
         statsChart.setAttribute(
             'aria-label',
-            `Évolution — ${METRIC_LABELS[state.activeMetric] || 'Statistique'} sur ${data.length} point${data.length > 1 ? 's' : ''}`
+            `Évolution — ${metricDefinition.label} sur ${rangeDefinition.label} (${data.length} point${data.length > 1 ? 's' : ''})`
         );
         statsChart.appendChild(svg);
     }
@@ -406,6 +561,44 @@
         return item;
     }
 
+    function aggregateUsageByDay(list) {
+        const grouped = new Map();
+        list.forEach((entry) => {
+            const key = entry?.date;
+            if (!key) {
+                return;
+            }
+            if (!grouped.has(key)) {
+                grouped.set(key, {
+                    date: entry.dateObj,
+                    metrics: {
+                        reps: 0,
+                        weight: 0,
+                        orm: 0,
+                        tenrm: 0
+                    }
+                });
+            }
+            const target = grouped.get(key);
+            const metrics = entry?.metrics || {};
+            target.metrics.reps += metrics.reps || 0;
+            target.metrics.weight = Math.max(target.metrics.weight, metrics.weight || 0);
+            target.metrics.orm = Math.max(target.metrics.orm, metrics.orm || 0);
+            target.metrics.tenrm = Math.max(target.metrics.tenrm, metrics.tenrm || 0);
+        });
+        return Array.from(grouped.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
+    }
+
+    function computeRangeCutoff(range) {
+        if (!range || !Number.isFinite(range.days)) {
+            return null;
+        }
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const cutoff = new Date(now.getTime() - (range.days - 1) * DAY_MS);
+        return cutoff;
+    }
+
     function renderGrip() {
         const wrapper = document.createElement('div');
         wrapper.className = 'session-card-handle';
@@ -425,6 +618,7 @@
         let totalReps = 0;
         let maxWeight = 0;
         let maxOrm = 0;
+        let maxTenRm = 0;
         let hasData = false;
         sets.forEach((set) => {
             const reps = parseNumber(set?.reps);
@@ -438,9 +632,13 @@
                 hasData = true;
             }
             if (Number.isFinite(weight) && weight > 0 && Number.isFinite(reps) && reps > 0) {
-                const estimated = weight * (1 + reps / 30);
-                if (estimated > maxOrm) {
-                    maxOrm = estimated;
+                const estimatedOrm = weight * (1 + reps / 30);
+                if (estimatedOrm > maxOrm) {
+                    maxOrm = estimatedOrm;
+                }
+                const estimatedTenRm = estimatedOrm / (1 + 10 / 30);
+                if (estimatedTenRm > maxTenRm) {
+                    maxTenRm = estimatedTenRm;
                 }
                 hasData = true;
             }
@@ -449,6 +647,7 @@
             reps: totalReps,
             weight: maxWeight,
             orm: maxOrm,
+            tenrm: maxTenRm,
             hasData
         };
     }
@@ -468,11 +667,23 @@
     }
 
     function formatMetricValue(value, metric) {
-        const rounded = metric === 'reps' ? Math.round(value) : Math.round(value * 10) / 10;
-        if (metric === 'reps') {
-            return `${rounded} répétition${rounded > 1 ? 's' : ''}`;
+        const definition = METRIC_MAP[metric] || METRIC_DEFINITIONS[0];
+        if (typeof definition.format === 'function') {
+            return definition.format(Number.isFinite(value) ? value : 0);
         }
+        return String(Number.isFinite(value) ? value : 0);
+    }
+
+    function formatKilograms(value) {
+        const normalized = Number.isFinite(value) ? value : 0;
+        const rounded = Math.round(normalized * 10) / 10;
         return `${rounded} kg`;
+    }
+
+    function formatRepetitions(value) {
+        const normalized = Number.isFinite(value) ? value : 0;
+        const rounded = Math.round(normalized);
+        return `${rounded} répétition${rounded > 1 ? 's' : ''}`;
     }
 
     function highlightStatsTab() {
