@@ -6,6 +6,7 @@
     const refs = {};
     let refsResolved = false;
     const state = { currentId: null, callerScreen: 'screenExercises' };
+    const tagGroups = { equipment: null, secondary: null };
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -25,6 +26,7 @@
         const { currentId = null, callerScreen = 'screenExercises' } = options;
         ensureRefs();
         assertRefs();
+        ensureTagGroups();
 
         state.currentId = currentId;
         state.callerScreen = callerScreen;
@@ -45,17 +47,15 @@
                 ? exercise.instructions.join('\n')
                 : '';
             updateGroupInfo();
-            unselectAllTags(refs.exEquip);
-            setSelectedTags(refs.exEquip, exercise.equipmentGroup2 || exercise.equipment);
-            unselectAllTags(refs.exSecMuscles);
-            setSelectedTags(refs.exSecMuscles, exercise.secondaryMuscles);
+            tagGroups.equipment?.setSelection(exercise.equipmentGroup2 || exercise.equipment);
+            tagGroups.secondary?.setSelection(exercise.secondaryMuscles);
         } else {
             refs.exName.value = '';
             refs.exTargetMuscle.value = '';
             refs.exImage.value = '';
             refs.exInstr.value = '';
-            unselectAllTags(refs.exEquip);
-            unselectAllTags(refs.exSecMuscles);
+            tagGroups.equipment?.clearSelection();
+            tagGroups.secondary?.clearSelection();
             refs.exGroupInfo.textContent = '';
         }
 
@@ -117,9 +117,10 @@
 
     function populateSelectors() {
         const muscleKeys = Object.keys(CFG.muscleTranscode).sort();
-        fillTags(refs.exEquip, CFG.equipment);
+        ensureTagGroups();
+        tagGroups.equipment.setItems(CFG.equipment);
         fillSelect(refs.exTargetMuscle, muscleKeys, 'Choisir…');
-        fillTags(refs.exSecMuscles, muscleKeys);
+        tagGroups.secondary.setItems(muscleKeys);
     }
 
     function wireForm() {
@@ -154,13 +155,13 @@
         assertRefs();
         const name = refs.exName.value.trim();
         const targetRaw = refs.exTargetMuscle.value;
-        const eqList = getSelectedTags(refs.exEquip);
+        const eqList = tagGroups.equipment ? tagGroups.equipment.getSelection() : [];
         if (!name || !targetRaw || eqList.length === 0) {
             alert('Les champs Nom, Muscle ciblé et Matériel sont requis.');
             return;
         }
 
-        const secondary = getSelectedTags(refs.exSecMuscles);
+        const secondary = tagGroups.secondary ? tagGroups.secondary.getSelection() : [];
         const instructions = (refs.exInstr.value || '')
             .split(/\r?\n/)
             .map((line) => line.trim())
@@ -213,39 +214,13 @@
         });
     }
 
-    function fillTags(container, items) {
-        container.innerHTML = '';
-        items.forEach((value) => {
-            const tag = document.createElement('span');
-            tag.className = 'tag';
-            tag.textContent = value;
-            tag.dataset.value = value;
-            tag.addEventListener('click', () => {
-                tag.classList.toggle('selected');
-            });
-            container.appendChild(tag);
-        });
-    }
-
-    function getSelectedTags(container) {
-        return Array.from(container.querySelectorAll('.tag.selected')).map((element) => element.dataset.value);
-    }
-
-    function unselectAllTags(container) {
-        container.querySelectorAll('.tag').forEach((element) => element.classList.remove('selected'));
-    }
-
-    function setSelectedTags(container, values) {
-        if (!values) {
-            return;
+    function ensureTagGroups() {
+        if (!tagGroups.equipment) {
+            tagGroups.equipment = new A.TagGroup(refs.exEquip, { mode: 'mono', columns: 2 });
         }
-        const arr = Array.isArray(values) ? values : [values];
-        const set = new Set(arr);
-        container.querySelectorAll('.tag').forEach((tag) => {
-            if (set.has(tag.dataset.value)) {
-                tag.classList.add('selected');
-            }
-        });
+        if (!tagGroups.secondary) {
+            tagGroups.secondary = new A.TagGroup(refs.exSecMuscles, { mode: 'multi', columns: 4 });
+        }
     }
 
     function switchScreen(target) {
