@@ -762,6 +762,11 @@ image_big{
   gap:8px;
 }
 
+.routine-set-actions .btn{
+  border-color: var(--black);
+  color: var(--black);
+}
+
 .routine-set-row-active{
   box-shadow: inset 0 -2px var(--emphase);
 }
@@ -777,6 +782,7 @@ image_big{
   font-size: var(--fs-base);
   color: var(--black);
   background: var(--whiteB);
+  border-color: var(--black);
 }
 
 .set-edit-button:hover,
@@ -813,6 +819,10 @@ image_big{
   align-items:center;
   justify-content:center;
   text-align:center;
+}
+
+.add-actions{
+  margin-top: var(--gap);
 }
 
 .set-editor-form{
