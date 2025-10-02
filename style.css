@@ -453,19 +453,36 @@ image_big{
    4) Tags (sélecteurs multi/single)
    ========================================================= */
 .tags{
+  --tag-gap: 1px;                              /* UN seul pixel d’écart */
+  --tag-columns: 1;
+  --tag-width: calc((100% - (var(--tag-columns, 1) - 1) * var(--tag-gap, 1px)) / var(--tag-columns, 1));
   display:flex; flex-wrap:wrap;
-  gap: 1px;                                    /* UN seul pixel d’écart */
+  gap: var(--tag-gap);
 }
 .tag{
   height: var(--control-h);
   display:inline-flex; align-items:center; justify-content:center;
+  flex: 0 0 var(--tag-width);
+  max-width: var(--tag-width);
   padding: 0 12px;
   border-radius: var(--radius);
   border: 1px solid var(--black);
   background: var(--white);
   color: var(--darkGrayB);                      /* 3.Texte gris pour “non sélectionné” */
+  font: inherit;
+  margin: 0;
   user-select:none;
   cursor:pointer;
+  box-sizing:border-box;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  min-width:0;
+  text-align:center;
+}
+.tag:focus-visible{
+  outline: 2px solid var(--emphase);
+  outline-offset: 2px;
 }
 .tag.selected{
   background: var(--darkGrayB);                  /* 6.Tag cliqué */
