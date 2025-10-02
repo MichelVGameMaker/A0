@@ -432,9 +432,11 @@
             value: entry.metrics[state.activeMetric] || 0
         }));
         const maxValue = Math.max(...data.map((item) => item.value), 0);
-        const width = 320;
-        const height = 220;
-        const padding = { top: 16, right: 16, bottom: 36, left: 48 };
+        const yTicks = computeYAxisTicks(maxValue);
+        const chartMax = yTicks[yTicks.length - 1] || maxValue || 1;
+        const width = Math.max(statsChart.clientWidth || 0, 640);
+        const height = 240;
+        const padding = { top: 16, right: 24, bottom: 48, left: 64 };
         const innerWidth = Math.max(1, width - padding.left - padding.right);
         const innerHeight = Math.max(1, height - padding.top - padding.bottom);
         const firstDate = data[0].date;
@@ -443,7 +445,7 @@
         const points = data.map((item) => {
             const ratioX = data.length === 1 ? 0.5 : (item.date.getTime() - firstDate.getTime()) / duration;
             const x = padding.left + ratioX * innerWidth;
-            const ratioY = maxValue > 0 ? item.value / maxValue : 0;
+            const ratioY = chartMax > 0 ? item.value / chartMax : 0;
             const y = padding.top + (1 - ratioY) * innerHeight;
             return { x, y, value: item.value, date: item.date };
         });
@@ -457,11 +459,40 @@
         svg.setAttribute('role', 'presentation');
         svg.classList.add('stats-chart-svg');
 
+        const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const yAxisLabelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const yAxisPosition = height - padding.bottom;
+
+        yTicks.forEach((tickValue) => {
+            const ratio = chartMax > 0 ? tickValue / chartMax : 0;
+            const y = padding.top + (1 - ratio) * innerHeight;
+            if (tickValue > 0) {
+                const gridLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                gridLine.setAttribute('x1', String(padding.left));
+                gridLine.setAttribute('x2', String(width - padding.right));
+                gridLine.setAttribute('y1', y.toFixed(2));
+                gridLine.setAttribute('y2', y.toFixed(2));
+                gridLine.setAttribute('class', 'stats-grid-line');
+                gridGroup.appendChild(gridLine);
+            }
+
+            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.textContent = formatYAxisTick(tickValue, state.activeMetric);
+            label.setAttribute('x', String(padding.left - 8));
+            label.setAttribute('y', y.toFixed(2));
+            label.setAttribute('text-anchor', 'end');
+            label.setAttribute('dominant-baseline', 'middle');
+            label.setAttribute('class', 'stats-axis-tick stats-axis-tick-y');
+            yAxisLabelsGroup.appendChild(label);
+        });
+
+        svg.appendChild(gridGroup);
+
         const axisX = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         axisX.setAttribute('x1', String(padding.left));
-        axisX.setAttribute('y1', String(height - padding.bottom));
+        axisX.setAttribute('y1', String(yAxisPosition));
         axisX.setAttribute('x2', String(width - padding.right));
-        axisX.setAttribute('y2', String(height - padding.bottom));
+        axisX.setAttribute('y2', String(yAxisPosition));
         axisX.setAttribute('stroke', '#d4d4d4');
         axisX.setAttribute('stroke-width', '2');
         svg.appendChild(axisX);
@@ -474,6 +505,31 @@
         axisY.setAttribute('stroke', '#d4d4d4');
         axisY.setAttribute('stroke-width', '2');
         svg.appendChild(axisY);
+
+        svg.appendChild(yAxisLabelsGroup);
+
+        const xTicks = computeXAxisTicks(points, rangeDefinition);
+        const xAxisLabelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+        xTicks.forEach((tick) => {
+            const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            tickLine.setAttribute('x1', tick.x.toFixed(2));
+            tickLine.setAttribute('x2', tick.x.toFixed(2));
+            tickLine.setAttribute('y1', yAxisPosition);
+            tickLine.setAttribute('y2', (yAxisPosition + 6).toFixed(2));
+            tickLine.setAttribute('class', 'stats-axis-tick-line');
+            svg.appendChild(tickLine);
+
+            const tickLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            tickLabel.textContent = formatXAxisTick(tick.date, rangeDefinition);
+            tickLabel.setAttribute('x', tick.x.toFixed(2));
+            tickLabel.setAttribute('y', (yAxisPosition + 20).toFixed(2));
+            tickLabel.setAttribute('text-anchor', 'middle');
+            tickLabel.setAttribute('class', 'stats-axis-tick stats-axis-tick-x');
+            xAxisLabelsGroup.appendChild(tickLabel);
+        });
+
+        svg.appendChild(xAxisLabelsGroup);
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', pathData);
@@ -513,9 +569,107 @@
 
         statsChart.setAttribute(
             'aria-label',
-            `Évolution — ${metricDefinition.label} sur ${rangeDefinition.label} (${data.length} point${data.length > 1 ? 's' : ''})`
+            `Évolution — ${metricDefinition.label} du ${A.fmtUI(firstDate)} au ${A.fmtUI(lastDate)} (${data.length} point${
+                data.length > 1 ? 's' : ''
+            })`
         );
         statsChart.appendChild(svg);
+    }
+
+    function computeYAxisTicks(maxValue) {
+        if (!Number.isFinite(maxValue) || maxValue <= 0) {
+            return [0];
+        }
+        const tickCount = 5;
+        const niceRange = niceNumber(maxValue, false);
+        const step = niceNumber(niceRange / (tickCount - 1), true);
+        const maxTick = Math.ceil(maxValue / step) * step;
+        const ticks = [];
+        for (let value = 0; value <= maxTick + step / 2; value += step) {
+            const normalized = Math.round(value * 1000) / 1000;
+            ticks.push(normalized);
+        }
+        if (!ticks.includes(maxTick)) {
+            ticks.push(Math.round(maxTick * 1000) / 1000);
+        }
+        if (!ticks.includes(0)) {
+            ticks.push(0);
+        }
+        return Array.from(new Set(ticks)).sort((a, b) => a - b);
+    }
+
+    function niceNumber(value, round) {
+        if (!Number.isFinite(value) || value <= 0) {
+            return 0;
+        }
+        const exponent = Math.floor(Math.log10(value));
+        const fraction = value / 10 ** exponent;
+        let niceFraction;
+        if (round) {
+            if (fraction < 1.5) {
+                niceFraction = 1;
+            } else if (fraction < 3) {
+                niceFraction = 2;
+            } else if (fraction < 7) {
+                niceFraction = 5;
+            } else {
+                niceFraction = 10;
+            }
+        } else if (fraction <= 1) {
+            niceFraction = 1;
+        } else if (fraction <= 2) {
+            niceFraction = 2;
+        } else if (fraction <= 5) {
+            niceFraction = 5;
+        } else {
+            niceFraction = 10;
+        }
+        return niceFraction * 10 ** exponent;
+    }
+
+    function formatYAxisTick(value, metric) {
+        const normalized = Number.isFinite(value) ? value : 0;
+        if (metric === 'reps') {
+            return String(Math.round(normalized));
+        }
+        if (Math.abs(normalized) >= 100) {
+            return String(Math.round(normalized));
+        }
+        const rounded = Math.round(normalized * 10) / 10;
+        return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+    }
+
+    function computeXAxisTicks(points, rangeDefinition) {
+        if (!Array.isArray(points) || !points.length) {
+            return [];
+        }
+        if (points.length === 1) {
+            return [points[0]];
+        }
+        const desired = Math.min(4, points.length);
+        const indices = new Set();
+        for (let step = 0; step < desired; step += 1) {
+            const ratio = desired === 1 ? 0 : step / (desired - 1);
+            const index = Math.round(ratio * (points.length - 1));
+            indices.add(index);
+        }
+        return Array.from(indices)
+            .sort((a, b) => a - b)
+            .map((index) => points[index]);
+    }
+
+    function formatXAxisTick(date, rangeDefinition) {
+        if (!(date instanceof Date)) {
+            return '';
+        }
+        const options = { day: 'numeric', month: 'short' };
+        if (rangeDefinition?.days && rangeDefinition.days > 200) {
+            options.year = '2-digit';
+        }
+        return date
+            .toLocaleDateString('fr-FR', options)
+            .replace(/\./g, '')
+            .replace(/\u00a0/g, ' ');
     }
 
     function renderTimeline() {

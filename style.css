@@ -229,18 +229,33 @@ textarea:focus{
 
 .stats-chart {
     width: 100%;
-    min-height: 220px;
+    min-height: 240px;
 }
 
 .stats-chart-svg {
     width: 100%;
-    height: 220px;
+    height: 240px;
     display: block;
 }
 
 .stats-chart-svg .stats-axis-label {
     font-size: 10px;
     fill: var(--darkGrayB);
+}
+
+.stats-chart-svg .stats-axis-tick {
+    font-size: 10px;
+    fill: var(--darkGrayB);
+}
+
+.stats-chart-svg .stats-grid-line {
+    stroke: var(--lightGray);
+    stroke-width: 1;
+}
+
+.stats-chart-svg .stats-axis-tick-line {
+    stroke: #d4d4d4;
+    stroke-width: 1.5;
 }
 
 .stats-chart-empty {
