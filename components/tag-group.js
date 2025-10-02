@@ -29,6 +29,18 @@
             }
         }
 
+        ensureSelection() {
+            if (this.mode !== 'multi') {
+                return;
+            }
+            if (this.selection.size === 0) {
+                const firstItem = this.items[0];
+                if (firstItem != null) {
+                    this.selection.add(firstItem);
+                }
+            }
+        }
+
         /**
          * Définit les éléments du groupe.
          * @param {Iterable<string>} items
@@ -55,6 +67,7 @@
         setSelection(values) {
             this.selection.clear();
             if (values == null) {
+                this.ensureSelection();
                 this.updateSelectionState();
                 return;
             }
@@ -72,11 +85,13 @@
                     this.selection.add(first);
                 }
             }
+            this.ensureSelection();
             this.updateSelectionState();
         }
 
         clearSelection() {
             this.selection.clear();
+            this.ensureSelection();
             this.updateSelectionState();
         }
 
@@ -95,6 +110,7 @@
                     this.selection.delete(value);
                 }
             });
+            this.ensureSelection();
             this.container.innerHTML = '';
             this.container.dataset.tagMode = this.mode;
             this.container.style.setProperty('--tag-columns', String(this.columns));
@@ -135,10 +151,13 @@
                     this.selection.add(value);
                 }
             } else if (this.selection.has(value)) {
-                this.selection.delete(value);
+                if (this.selection.size > 1) {
+                    this.selection.delete(value);
+                }
             } else {
                 this.selection.add(value);
             }
+            this.ensureSelection();
             this.updateSelectionState();
             if (this.onChange) {
                 this.onChange(this.getSelection());
