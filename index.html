@@ -205,7 +205,9 @@
         <div class="header-center">
             <div class="title" id="statsExerciseTitle">Exercice</div>
         </div>
-        <div class="header-right"></div>
+        <div class="header-right">
+            <button id="statsGoal" class="btn ghost" type="button" title="Objectif">objectif</button>
+        </div>
     </header>
 
     <main class="content">
@@ -213,18 +215,37 @@
             <div class="stats-subtitle" id="statsExerciseSubtitle"></div>
         </div>
 
+        <div class="bloque stats-tags-group">
+            <div
+                id="statsMetricTags"
+                class="tags mono"
+                role="group"
+                aria-label="Choisir la statistique"
+            >
+                <button type="button" class="tag" data-metric="orm">1RM</button>
+                <button type="button" class="tag" data-metric="tenrm">10RM</button>
+                <button type="button" class="tag" data-metric="reps">Répétitions</button>
+                <button type="button" class="tag" data-metric="weight">Charge max</button>
+            </div>
+        </div>
+
         <div class="stats-chart-card">
             <div id="statsChart" class="stats-chart" role="img" aria-label="Évolution dans le temps"></div>
             <div id="statsChartEmpty" class="stats-chart-empty" hidden>Aucune donnée enregistrée.</div>
         </div>
 
-        <div class="bloque">
-            <label class="sr-only" for="statsMetricSelector">Choisir la statistique</label>
-            <select id="statsMetricSelector" class="input full">
-                <option value="reps">Répétitions totales</option>
-                <option value="weight">Poids maximum</option>
-                <option value="orm">1RM estimé</option>
-            </select>
+        <div class="bloque stats-tags-group">
+            <div
+                id="statsRangeTags"
+                class="tags mono"
+                role="group"
+                aria-label="Choisir la période"
+            >
+                <button type="button" class="tag" data-range="1M">1M</button>
+                <button type="button" class="tag" data-range="3M">3M</button>
+                <button type="button" class="tag" data-range="6M">6M</button>
+                <button type="button" class="tag" data-range="12M">12M</button>
+            </div>
         </div>
 
         <section>

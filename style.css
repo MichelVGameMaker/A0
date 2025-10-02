@@ -218,6 +218,15 @@ textarea:focus{
     border-radius: var(--radius);
 }
 
+#statsMetricTags,
+#statsRangeTags {
+    --tag-columns: 4;
+}
+
+.stats-tags-group {
+    gap: 6px;
+}
+
 .stats-chart {
     width: 100%;
     min-height: 220px;
@@ -225,8 +234,13 @@ textarea:focus{
 
 .stats-chart-svg {
     width: 100%;
-    height: 200px;
+    height: 220px;
     display: block;
+}
+
+.stats-chart-svg .stats-axis-label {
+    font-size: 10px;
+    fill: var(--darkGrayB);
 }
 
 .stats-chart-empty {
@@ -458,6 +472,10 @@ image_big{
   --tag-width: calc((100% - (var(--tag-columns, 1) - 1) * var(--tag-gap, 1px)) / var(--tag-columns, 1));
   display:flex; flex-wrap:wrap;
   gap: var(--tag-gap);
+}
+.tags.mono .tag{
+  font-family: "SFMono-Regular","Roboto Mono","Menlo","Courier New",monospace;
+  font-weight: var(--fw-base);
 }
 .tag{
   height: var(--control-h);
