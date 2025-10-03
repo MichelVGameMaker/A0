@@ -443,13 +443,19 @@
                 });
         };
 
-        const createButton = (getText, focusField, extraClass = '') => {
+        const createButton = (getContent, focusField, extraClass = '', options = {}) => {
             const button = document.createElement('button');
             button.type = 'button';
             button.className = `btn ghost set-edit-button${extraClass ? ` ${extraClass}` : ''}`;
             button.addEventListener('click', () => openEditor(focusField));
+            const { html = false } = options;
             button._update = () => {
-                button.textContent = getText();
+                const content = getContent();
+                if (html) {
+                    button.innerHTML = content;
+                } else {
+                    button.textContent = content;
+                }
             };
             button._update();
             return button;
@@ -457,7 +463,7 @@
 
         const repsButton = createButton(() => formatRepsDisplay(value.reps), 'reps');
         const weightButton = createButton(() => formatWeightValue(value.weight), 'weight');
-        const rpeButton = createButton(() => formatRpeDisplay(value.rpe), 'rpe');
+        const rpeButton = createButton(() => rpeChip(value.rpe), 'rpe', '', { html: true });
         const restMinutesButton = createButton(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell');
         const restSecondsButton = createButton(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell');
 
@@ -533,11 +539,6 @@
             return '—';
         }
         return `${formatNumber(numeric)} kg`;
-    }
-
-    function formatRpeDisplay(value) {
-        const numeric = clampInt(value, 5, 10);
-        return numeric ? String(numeric) : '—';
     }
 
     function formatRestMinutes(value) {
