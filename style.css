@@ -663,6 +663,15 @@ image_big{
   max-width:420px; width:90vw;
 }
 .modal::backdrop{ background: rgba(0,0,0,.25); }
+
+#dlgCalendar.modal{
+  margin:0;
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0) + 12px);
+  width: min(420px, calc(100vw - 24px));
+}
 .modal-header{
   display:flex; justify-content:space-between; align-items:center;
   padding: var(--pad-y) var(--pad-x);
@@ -679,7 +688,13 @@ image_big{
 .day-cell:active{ transform: scale(.98); }
 .day-cell.planned{ background: var(--backGrayB); color:#333; border-color: var(--backGrayB); }
 .day-cell.has-session{ background: var(--black); color:#fff; border-color: var(--black); }
-.day-cell.selected{ background: var(--emphase); color:#fff; border-color: var(--emphase); }
+.day-cell.selected{ background: var(--black); color:#fff; border-color: var(--black); }
+.day-cell.placeholder{
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+  pointer-events: none;
+}
 
 /* =========================================================
    8) Séance du jour & séries
