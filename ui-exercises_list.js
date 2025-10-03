@@ -268,8 +268,6 @@
 
         const image = document.createElement('img');
         image.alt = exercise.name || 'exercice';
-        image.width = 40;
-        image.height = 40;
         image.className = 'exercise-card-thumb';
         image.loading = 'lazy';
         image.decoding = 'async';
