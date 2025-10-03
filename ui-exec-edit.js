@@ -111,6 +111,7 @@
         refs.timerToggle = document.getElementById('tmrToggle');
         refs.timerMinus = document.getElementById('tmrMinus');
         refs.timerPlus = document.getElementById('tmrPlus');
+        refs.timerClose = document.getElementById('tmrClose');
         refsResolved = true;
         return refs;
     }
@@ -130,7 +131,8 @@
             'timerDisplay',
             'timerToggle',
             'timerMinus',
-            'timerPlus'
+            'timerPlus',
+            'timerClose'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -160,7 +162,7 @@
     }
 
     function wireTimerControls() {
-        const { timerToggle, timerMinus, timerPlus } = assertRefs();
+        const { timerToggle, timerMinus, timerPlus, timerClose } = assertRefs();
         timerToggle.addEventListener('click', () => {
             const timer = ensureSharedTimer();
             if (timer.running) {
@@ -174,6 +176,9 @@
         });
         timerPlus.addEventListener('click', () => {
             void adjustTimer(10);
+        });
+        timerClose.addEventListener('click', () => {
+            resetTimerState();
         });
     }
 
@@ -593,9 +598,10 @@
     }
 
     function resetTimerState() {
-        stopTimer();
         const timer = ensureSharedTimer();
-        Object.assign(timer, defaultTimerState());
+        const currentExerciseKey = timer.exerciseKey;
+        stopTimer();
+        Object.assign(timer, defaultTimerState(), { exerciseKey: currentExerciseKey });
         updateTimerUI();
     }
 

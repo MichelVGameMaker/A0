@@ -428,13 +428,14 @@
 <!-- ✅ Barre de timer collante en bas -->
 <footer id="execTimerBar" class="exec-timer" hidden>
     <!-- pause/play -->
-    <button id="tmrToggle" class="btn ghost">⏸</button>
+    <button id="tmrToggle" class="btn ghost" aria-label="Mettre en pause ou reprendre le timer">⏸</button>
     <!-- timer avec - [temps] + -->
     <div class="tmr-center">
-        <button id="tmrMinus" class="btn ghost">−10s</button>
+        <button id="tmrMinus" class="btn ghost" aria-label="Retirer 10 secondes">−10s</button>
         <div id="tmrDisplay" class="tmr-display">0:00</div>
-        <button id="tmrPlus" class="btn ghost">+10s</button>
+        <button id="tmrPlus" class="btn ghost" aria-label="Ajouter 10 secondes">+10s</button>
     </div>
+    <button id="tmrClose" class="btn ghost tmr-close" aria-label="Fermer et réinitialiser le timer">✕</button>
 </footer>
  <!-- ==================== -->
  
