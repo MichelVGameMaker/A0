@@ -3,18 +3,24 @@
    ========================================================= */
 :root{
   /* --- Couleurs (tes variables) --- */
-  --white:     #ffffff;
-  --whiteB:    #f8f8f8;
-  --lightGray: #e8e8e8;
-  --lightGrayB:#e0e0e0;
-  --darkGray:  #d4d4d4;
-  --darkGrayB: #ccc;
-  --backGray:  #bfbfbf;
-  --backGrayB: #bbb;
-  --black:     #000000;
-  --emphase:   #0080FF;
-  --red:       #8b0000;
-  --green:     #06402b;
+  --panelBack:     #ffffff;
+  --panelBord:     #f8f8f8;
+  --blocBord:      #e0e0e0;
+  --labelColor:    #bbb;
+  --emptyColor:    #ccc;
+  --filledColor:   #000000;
+  --selectedColor: #000000;
+  --bodyBack:      #8b0000;
+  --selectedBack:  #d4d4d4;
+  --selectedBord:  #ccc;
+  --focusedBack:   #bfbfbf;
+  --focusedBord:   #0080FF;
+  --clickableBack: #e8e8e8;
+  --clickableBord: #e0e0e0;
+  --black:         #000000;
+  --emphase:       #0080FF;
+  --red:           #8b0000;
+  --green:         #06402b;
 
   /* --- Mesures unifiées --- */
   --control-h: 44px;       /* hauteur unique pour TOUT (inputs, selects, tags, boutons, etc.) */
@@ -28,6 +34,7 @@
   --fs-base:   16px;        /* base */
   --fs-small:  13px;        /* petits textes (ex: cellules série) */
   --fs-rpe:    13px;        /* taille spécifique RPE dans série */
+  --fw-light:   500;
   --fw-base:   600;
   --fw-strong: 700;
 
@@ -53,7 +60,7 @@ html {
 body{
     height:100%;
     margin:0;
-    background: var(--backGray);          /* 4.Fond app */
+    background: var(--bodyBack);          /* 4.Fond app */
     color: var(--black);
     font-family: var(--font);
     font-size: var(--fs-base);
@@ -65,11 +72,8 @@ body{
 .screen {
     display: flex;
     flex-direction: column;
-
 }
 .screen[hidden] { display: none !important; }
-/* Paneau de contenu */
-
 
 /* Grilles utilitaires */
 .row{ display:flex; align-items:center; gap:var(--gap); }
@@ -79,87 +83,97 @@ body{
 .full{ width:100%; }
 .flex-1{ flex:1; }
   
-/* Détails textes (gris) */
-.details{ color: var(--darkGrayB); }            /* 3.Texte détails */
+
 
 
 /* =========================================================
-   1) En-têtes & panneaux
+   1) Contenu
    ========================================================= */
-/* Header principal / Sous-header : fond blanc + bordure */
+ .content {
+    flex: 1;
+    background: var(--panelBord);                /* panneau blanc */
+    border-inline: 6px solid var(--blocBord);
+    padding:  12px;
+    min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
+}
+
+/* =========================================================
+   2) Header principal (haut)
+   ========================================================= */
 header{
     z-index:5;
     position: sticky; top: 0; left:0; right:0;
+    height: var(--tab-h);
     display:flex; align-items:center; justify-content:space-between;
     padding: var(--pad-y) var(--pad-x);
-    background: var(--white);                     /* 4.Header blanc */
-    border-bottom: 2px solid var(--whiteB);       /* 4.Bordure basse whiteB */
-
+    background: var(--panelBack);
+    border-bottom: 2px solid var(--panelBord);
+    user-select: none;
 }
 
 header .title{ font-weight: var(--fw-strong); }
 
 /* =========================================================
-   2) Contenu
-   ========================================================= */
- .content {
-    flex: 1;
-    background: var(--whiteB);                /* panneau blanc */
-    border-inline: 6px solid var(--lightGrayB);
-    padding:  12px;
-    min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
-}
-
-
-/* =========================================================
-   2) Tab bar (bas)
+   3) Tab bar (bas)
    ========================================================= */
 .tabbar{
     z-index:10;
     position: fixed; bottom:0; left:0; right:0; 
     height: var(--tab-h);
-    display:flex;
-    gap: 0;
-    padding: 0;
-    background: var(--white);                     /* 4.Tab bar fond blanc */
-    border-top: 2px solid var(--whiteB);          /* 4.Bordure haute whiteB */
+    display:flex; align-items:center; justify-content:space-between;
+    background: var(--panelBack);
+    border-top: 2px solid var(--panelBord);
+    user-select: none;
 }
 .tab{
     flex: 1 1 25%;
     height: 100%;
     box-sizing: border-box;
     font-size: 32px;
-    display:flex; align-items:center; justify-content:center;
     padding: 0 var(--pad-x);
     background: transparent;
     border:3px solid transparent;
     cursor:pointer;
-    user-select: none;
 }
 .tab.active{
-    border-top: 3px solid var(--black);         /* 4.Onglet actif bordure haute noir */
+    border-top: 3px solid var(--focusedBord);         /* 4.Onglet actif bordure haute noir */
 }
 
 /* =========================================================
-   4) Timer
+   4) Modale
+   ========================================================= */
+.modal{
+    border:none; 
+    border-radius: var(--radius);
+    padding:var(--gap);
+    max-width:520px;
+    width:92vw;
+}
+.modal::backdrop{ 
+    background: rgba(0,0,0,.25); 
+    }
+.modal-header{
+    display:flex;  align-items:center; justify-content:space-between;
+    padding: var(--pad-y) var(--pad-x);
+    border-bottom:1px solid var(--panelBord);
+}
+
+/* =========================================================
+   5) Timer
    ========================================================= */
 /* Timer bas */
 .exec-timer{
     z-index:20;
     position:sticky;
     bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0));
-
     display:grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items:center; gap:8px;
-    padding:10px 12px;
-    background: var(--white);
-    border-top:1px solid var(--whiteB);
+    align-items:center; gap:12px;
+    padding:12px 12px;
+    background: var(--panelBack);
+    border-top:1px solid var(--panelBord);
 }
-.exec-timer .tmr-center{ display:flex; align-items:center; justify-content:center; gap:10px; }
-.exec-timer #tmrToggle,
-.exec-timer #tmrClose{ width:100%; }
+.tmr-center{ display:flex; align-items:center; justify-content:center; gap:12px; }
 .tmr-display{ font-weight: var(--fw-strong); min-width:76px; text-align:center; }
-.exec-timer .btn.ghost{ border:1px solid var(--whiteB); }
 
 /* =========================================================
    4) Contrôles unifiés (inputs, selects, tags, listes)
@@ -167,40 +181,156 @@ header .title{ font-weight: var(--fw-strong); }
 /* États invisibles */
 .sr-only{ position:absolute; left:-9999px; }
 
+.is-clickable {
+    /* Cliquable */
+    border: 1px solid var(--clickableBord);
+    background: var(--clickableBack); 
+    cursor: pointer;
+    touch-action: manipulation;       /* coupe le geste double-tap=zoom */
+}
+.is-focused {
+    /* Focusé */
+    background: var(--focusedBack);
+    border-color: var(--focusedBord);
+    font-weight: var(--fw-strong);
+}
+
 /* Base champs & listes */
 .input, select, textarea{
-  height: var(--control-h);
-  width: 100%;
-  padding: 0 var(--pad-x);
-  border-radius: var(--radius);
-  border: 1px solid var(--black);
-  background: var(--white);
-  color: var(--darkGrayB);
-  font-size: var(--fs-base);
-  font-weight: var(--fw-base);
-  touch-action: manipulation;       /* coupe le geste double-tap=zoom */
-  -webkit-tap-highlight-color: transparent; 
+    /* Dimension pour tous les éléments */
+    height: var(--control-h);
+    width: 100%;
+    padding: 0 var(--pad-x);
+    border-radius: var(--radius);
+    /* Cliquable */
+    border: 1px solid var(--clickableBord);
+    background: var(--clickableBack); 
+    cursor: pointer;
+    touch-action: manipulation;       /* coupe le geste double-tap=zoom */
+    -webkit-tap-highlight-color: transparent; 
+    /* Texte vide */
+    color: var(--emptyColor);
+    font-weight: var(--fw-light);
 }
 textarea{
-  resize: vertical;
+    resize: vertical;
+}
+/* Valeur définie (non vide) — forcer style “défini” */
+.has-value{
+  color: var(--filledColor);
+  font-weight: var(--fw-strong);
 }
 
 /* Focus/actif -> fond gris + bordure strong */
 .input:focus,
 select:focus,
 textarea:focus{
-  background: var(--darkGray);
-  color: var(--black);
-  font-size: var(--fs-base);
-  font-weight: var(--fw-strong);
+    /* Focusé */
+    background: var(--focusedBack);
+    border-color: var(--focusedBord);
+    font-weight: var(--fw-strong);
 }
 
-/* Valeur définie (non vide) — forcer style “défini” */
-.has-value{
-  color: var(--black);
-  font-weight: var(--fw-strong);
+/* =========================================================
+   4) Tags (sélecteurs multi/single)
+   ========================================================= */
+.tags{
+  --tag-gap: 1px;                              /* UN seul pixel d’écart */
+  --tag-columns: 1;
+  --tag-width: calc((100% - (var(--tag-columns, 1) - 1) * var(--tag-gap, 1px)) / var(--tag-columns, 1));
+  display:flex; flex-wrap:wrap;
+  gap: var(--tag-gap);
+}
+.tags.mono .tag{
+  font-family: "SFMono-Regular","Roboto Mono","Menlo","Courier New",monospace;
+  font-weight: var(--fw-base);
+}
+.tag{
+    /* Dimension pour tous les éléments */
+    height: var(--control-h);
+    max-width: var(--tag-width);
+    min-width:0;
+    padding: 0 var(--pad-x);
+    border-radius: var(--radius);
+    /* Cliquable */
+    border: 1px solid var(--clickableBord);
+    background: var(--clickableBack); 
+    cursor: pointer;
+    touch-action: manipulation;       /* coupe le geste double-tap=zoom */
+  font: inherit;
+  display:inline-flex; align-items:center; justify-content:center;
+  flex: 0 0 var(--tag-width);
+  margin: 0;
+  user-select:none;
+  box-sizing:border-box;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-align:center;
+}
+.tag.selected{
+    background: var(--selectedBack);
+    border-color: var(--selectedBord);
+}
+.tag:focus{
+    outline: 2px solid var(--emphase);
+    outline-offset: 2px;
 }
 
+
+/* =========================================================
+   5) Boutons
+   ========================================================= */
+.btn{
+    /* Dimension pour tous les éléments */
+    min-height:var(--control-h);
+    min-width:var(--control-h);
+    padding: 0 var(--pad-x);
+    border-radius: var(--radius);  
+    /* Cliquable */
+    border: 1px solid var(--clickableBord);
+    background: var(--clickableBack); 
+    cursor: pointer;
+    touch-action: manipulation;       /* coupe le geste double-tap=zoom */
+     display:inline-flex; align-items:center; justify-content:center;   
+  color: var(--black);
+  font-weight: var(--fw-strong);
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active{ transform: scale(.9); }
+/* En-tête RETOUR */
+.btn.ghost{
+  border-color: var(--selectedBord);
+  color: var(--selectedBord);
+}
+
+/* En-tête OK */
+.btn.primary{
+  border-color: var(--emphase);
+  background: var(--emphase);
+}
+
+/* Supprimer */
+.btn.danger{
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* Image cliquable (ex: preview) */
+.btn.image{
+  border-color: var(--black);
+}
+
+/* Disabled */
+.btn[disabled]{ opacity:.5; cursor:not-allowed; }
+
+/* =========================================================
+   6) Textes
+   ========================================================= */
+.lbl{ color: var(--labelColor); font-weight: var(--fw-strong); }
+/* Détails textes (gris) */
+.details{ color: var(--labelColor); font-weight: var(--fw-light); }
 /* =========================================================
    Statistiques
    ========================================================= */
@@ -209,14 +339,13 @@ textarea:focus{
 }
 
 .stats-subtitle {
-    color: var(--darkGrayB);
+    color: var(--selectedBord);
 }
 
 .stats-chart-card {
     margin-bottom: 16px;
     padding: 0;
-    background: var(--white);
-    border: 1px solid var(--lightGrayB);
+    border: 1px solid var(--blocBord);
     border-radius: var(--radius);
 }
 
@@ -242,16 +371,16 @@ textarea:focus{
 
 .stats-chart-svg .stats-axis-label {
     font-size: 10px;
-    fill: var(--darkGrayB);
+    fill: var(--selectedBord);
 }
 
 .stats-chart-svg .stats-axis-tick {
     font-size: 12px;
-    fill: var(--darkGrayB);
+    fill: var(--selectedBord);
 }
 
 .stats-chart-svg .stats-grid-line {
-    stroke: var(--lightGray);
+    stroke: var(--black);
     stroke-width: 1;
 }
 
@@ -263,7 +392,7 @@ textarea:focus{
 .stats-chart-empty {
     padding: 24px 0;
     text-align: center;
-    color: var(--darkGrayB);
+    color: var(--selectedBord);
 }
 
 .stats-section-title {
@@ -285,8 +414,7 @@ textarea:focus{
     justify-content: space-between;
     align-items: baseline;
     padding: 12px 16px;
-    background: var(--white);
-    border: 1px solid var(--lightGrayB);
+    border: 1px solid var(--blocBord);
     border-radius: var(--radius);
 }
 
@@ -302,7 +430,7 @@ textarea:focus{
 .stats-timeline-empty {
     padding: 16px;
     text-align: center;
-    color: var(--darkGrayB);
+    color: var(--selectedBord);
     background: transparent;
 }
 
@@ -313,8 +441,7 @@ image_big{
 	 max-height:320px;
 	 object-fit:cover;
 	 border-radius:12px;
-	 border:1px solid var(--lightGrayB);
-	 background:var(--lightGray);
+	 border:1px solid var(--blocBord);
 
      touch-action: manipulation;      /* coupe le double-tap zoom sur iOS récents */
      -webkit-user-select: none;
@@ -325,8 +452,7 @@ image_big{
 
 /* Panneaux/cartes (listes, cartes) */
 .panel{
-  background: var(--white);                     /* 4.Panneaux blancs */
-  border: 1px solid var(--whiteB);              /* 4.Bordure whiteB */
+  border: 1px solid var(--panelBord);              /* 4.Bordure --panelBord */
   border-radius: var(--radius);
   padding: var(--pad-y) var(--pad-x);
 }
@@ -407,14 +533,14 @@ image_big{
   display:none;
 }
 .session-card-set{
-  display:inline-flex;
+  display:flex;
+  flex: 1 1 auto;
   align-items:center;
   justify-content:center;
   gap:4px;
   padding:4px 4px;
   border-radius:8px;
-  background:var(--lightGray);
-  border:1px solid var(--lightGrayB);
+  border:1px solid var(--blocBord);
   font-size:var(--fs-small);
   line-height:1.1;
   width:100%;
@@ -426,20 +552,20 @@ image_big{
 }
 .session-card-set sup{
   font-size:.7em;
-  color:var(--darkGrayB);
+  color:var(--selectedBord);
   font-weight:var(--fw-strong);
 }
 
 .session-card-set-rpe{
-  color:var(--darkGrayB);
+  color:var(--selectedBord);
 }
 
-.session-card-set-rpe[data-rpe="5"]{ color:#3a7; }
-.session-card-set-rpe[data-rpe="6"]{ color:#3c8; }
-.session-card-set-rpe[data-rpe="7"]{ color:#6c6; }
-.session-card-set-rpe[data-rpe="8"]{ color:#c93; }
-.session-card-set-rpe[data-rpe="9"]{ color:#d55; }
-.session-card-set-rpe[data-rpe="10"]{ color:#a00; }
+.rpe[data-rpe="5"]{ color:#3a7; }
+.rpe[data-rpe="6"]{ color:#3c8; }
+.rpe[data-rpe="7"]{ color:#6c6; }
+.rpe[data-rpe="8"]{ color:#c93; }
+.rpe[data-rpe="9"]{ color:#d55; }
+.rpe[data-rpe="10"]{ color:#a00; }
 .session-card-pencil{
   font-size:20px;
   line-height:1;
@@ -448,7 +574,7 @@ image_big{
   box-shadow:0 10px 24px rgba(0,0,0,.18);
 }
 .session-card-placeholder{
-  border:1px dashed var(--whiteB);
+  border:1px dashed var(--panelBord);
   border-radius:var(--radius);
 }
 .exercise-card-thumb{
@@ -457,23 +583,20 @@ image_big{
   width:auto;
   border-radius:8px;
   object-fit:cover;
-  background:var(--lightGray);
   flex-shrink:0;
-  border: 1px solid var(--lightGrayB);
+  border: 1px solid var(--blocBord);
   align-self:stretch;
 }
-.exercise-card.selected{
-  background: var(--darkGray);
-  color: var(--white);
+
+.selected {  
+    background: var(--selectedBack);
+    color: var(--selectedColor);
 }
 .exercise-card.clickable{ cursor:pointer; user-select:none; border: var(--black);}
-.exercise-card.selected .element,
-.exercise-card.selected .details{
-  color: var(--white);
-}
+
 .exercise-card-thumb.clickable{
   cursor: pointer;
-  border-color: var(--black);
+  border-color: var(--clickableBord);
 }
 .exercise-card-check{
   width:20px;
@@ -500,99 +623,12 @@ image_big{
   top:0;
   z-index:10;
   padding:8px 0;
-  background:var(--white);
+  background:var(--panelBack);
 }
 .exercise-selection-bar.hidden{ display:none; }
-.exercise-hero-placeholder{ object-fit:contain; background:var(--lightGray); }
+.exercise-hero-placeholder{ object-fit:contain; }
 
 
-/* =========================================================
-   4) Tags (sélecteurs multi/single)
-   ========================================================= */
-.tags{
-  --tag-gap: 1px;                              /* UN seul pixel d’écart */
-  --tag-columns: 1;
-  --tag-width: calc((100% - (var(--tag-columns, 1) - 1) * var(--tag-gap, 1px)) / var(--tag-columns, 1));
-  display:flex; flex-wrap:wrap;
-  gap: var(--tag-gap);
-}
-.tags.mono .tag{
-  font-family: "SFMono-Regular","Roboto Mono","Menlo","Courier New",monospace;
-  font-weight: var(--fw-base);
-}
-.tag{
-  height: var(--control-h);
-  display:inline-flex; align-items:center; justify-content:center;
-  flex: 0 0 var(--tag-width);
-  max-width: var(--tag-width);
-  padding: 0 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--black);
-  background: var(--white);
-  color: var(--darkGrayB);                      /* 3.Texte gris pour “non sélectionné” */
-  font: inherit;
-  margin: 0;
-  user-select:none;
-  cursor:pointer;
-  box-sizing:border-box;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  min-width:0;
-  text-align:center;
-}
-.tag:focus-visible{
-  outline: 2px solid var(--emphase);
-  outline-offset: 2px;
-}
-.tag.selected{
-  background: var(--darkGrayB);                  /* 6.Tag cliqué */
-  color: var(--white);
-}
-
-/* =========================================================
-   5) Boutons
-   ========================================================= */
-.btn{
-  height: var(--control-h);
-  display:inline-flex; align-items:center; justify-content:center;
-  padding: 0 var(--pad-x);
-  border-radius: var(--radius);
-  border: 1px solid var(--black);
-  background: transparent;
-  color: var(--black);
-  font-weight: var(--fw-strong);
-  cursor:pointer; user-select:none;
-  touch-action: manipulation;       /* coupe le geste double-tap=zoom */
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* En-tête RETOUR */
-.btn.ghost{
-  border-color: var(--darkGrayB);
-  color: var(--darkGrayB);
-}
-
-/* En-tête OK */
-.btn.primary{
-  border-color: var(--emphase);
-  background: var(--emphase);
-  color: var(--white);
-}
-
-/* Supprimer */
-.btn.danger{
-  border-color: var(--red);
-  color: var(--red);
-}
-
-/* Image cliquable (ex: preview) */
-.btn.image{
-  border-color: var(--black);
-}
-
-/* Disabled */
-.btn[disabled]{ opacity:.5; cursor:not-allowed; }
 
 /* =========================================================
    6) Listes / Filtres (écran Bibliothèque)
@@ -600,45 +636,39 @@ image_big{
 /*.list.cards{ display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }*/
 .bloque{    display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }
 /*.form{       display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }*/
-.lbl{ font-weight: var(--fw-strong); }
+
+
 .listing{ margin: 0; font-weight: var(--fw-strong); padding-left: 0; list-style-position: inside; }
-.hint{ margin-top:6px; color: var(--darkGrayB); font-size: var(--fs-small); }
+.hint{ margin-top:6px; color: var(--selectedBord); font-size: var(--fs-small); }
 /* Placeholders d’images */
 .exercise-row{
   display:grid; grid-template-columns: 64px 1fr auto;
   gap:10px; align-items:center;
-  padding:8px 0; border-bottom:1px solid var(--whiteB);
+  padding:8px 0; border-bottom:1px solid var(--panelBord);
 }
 .exercise-row img{
-  width:64px; height:64px; object-fit:cover; border-radius:8px; background: var(--lightGray);
+  width:64px; height:64px; object-fit:cover; border-radius:8px;
 }
 
 /* =========================================================
    7) Semaine & calendrier
    ========================================================= */
 .week-strip-wrapper{
-  display:flex; align-items:center; gap:var(--gap);
+  display:flex; 
+  align-items:center; 
+  gap:var(--gap);
   margin-bottom:12px;
 }
 .week-strip{
   display:flex; gap:var(--gap); overflow-x:auto;
   padding-bottom:8px; margin-bottom:0;
-  border-bottom:1px dashed var(--whiteB);
+  border-bottom:1px dashed var(--panelBord);
   -webkit-overflow-scrolling:touch;
   scrollbar-width:none;
 }
 .week-strip::-webkit-scrollbar{ display:none; }
-.week-strip-nav{
-  display:flex; align-items:center; justify-content:center;
-  width: var(--control-h); height: var(--control-h);
-  border-radius: var(--radius);
-  border:1px solid var(--whiteB);
-  background: var(--whiteB);
-  font-size:1.2rem;
-  cursor:pointer;
-  user-select:none;
-}
-.week-strip-nav:active{ transform: scale(.97); }
+
+
 .week-strip-wrapper .week-strip{ flex:1; }
 .week-strip .week-page{
   display:grid; grid-template-columns:repeat(7,minmax(0,1fr));
@@ -651,9 +681,9 @@ image_big{
   gap:4px;
   padding:6px 4px;
   text-align:center; white-space:normal; line-height:1.1;
-  border:1px solid var(--whiteB);
+  border:1px solid var(--panelBord);
   border-radius: var(--radius);
-  background: var(--whiteB);
+  background: var(--panelBord);
   font-weight: var(--fw-strong);
   user-select:none; cursor:pointer;
   transition: transform .06s ease;
@@ -673,44 +703,45 @@ image_big{
 .week-strip .day.selected{
   background: var(--emphase); color:#fff; border-color: var(--emphase);
 }
+/* =========================================================
+   7) calendrier
+   ========================================================= */
 
 /* Modale calendrier */
-.modal{
-  border:none; border-radius:14px; padding:var(--gap);
-  max-width:420px; width:90vw;
-}
-.modal::backdrop{ background: rgba(0,0,0,.25); }
-
 #dlgCalendar.modal{
-  margin:0;
-  position:fixed;
-  left:50%;
-  transform:translateX(-50%);
-  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0) + 12px);
-  width: min(420px, calc(100vw - 24px));
+    margin:0;
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0) + 12px);
 }
-.modal-header{
-  display:flex; justify-content:space-between; align-items:center;
-  padding: var(--pad-y) var(--pad-x);
-  border-bottom:1px solid var(--whiteB);
-}
-.big-calendar{ padding: var(--pad-y); }
+
 .month-grid{ display:grid; grid-template-columns: repeat(7,1fr); gap:6px; }
-.dow{ text-align:center; color: var(--darkGrayB); font-weight: var(--fw-strong); }
+.dow{ text-align:center; color: var(--selectedBord); font-weight: var(--fw-strong); }
+/* Day cell use Tag style */
+
+  
 .day-cell{
-  padding:8px 0; border:1px solid var(--whiteB); border-radius:8px;
-  background:#fafafa; cursor:pointer; user-select:none;
-  transition: transform .06s ease;
+    height: var(--control-h);
+    padding:8px 0;
+    border-radius: var(--radius);
+    border: 1px solid var(--black);
+    color: var(--selectedBord);
+    text-align:center;
+    background:var(--panelBord);
+    cursor:pointer;
+    user-select:none;
 }
-.day-cell:active{ transform: scale(.98); }
-.day-cell.planned{ background: var(--backGrayB); color:#333; border-color: var(--backGrayB); }
-.day-cell.has-session{ background: var(--black); color:#fff; border-color: var(--black); }
-.day-cell.selected{ background: var(--black); color:#fff; border-color: var(--black); }
+
+.day-cell.planned{     background: var(--selectedBack);  color:var(--panelBord); border-color: var(--backGrayB); }
+.day-cell.has-session{ background: var(--selectedBack);  color:var(--panelBord); border-color: var(--backGrayB); }
+.day-cell.selected{    background: var(--black);     color:var(--panelBord); border-color: var(--black); }
+
 .day-cell.placeholder{
-  background: transparent;
-  border-color: transparent;
-  cursor: default;
-  pointer-events: none;
+    background: transparent;
+    border-color: transparent;
+    cursor: default;
+    pointer-events: none;
 }
 
 /* =========================================================
@@ -725,19 +756,19 @@ image_big{
   gap: var(--gap); margin-top: var(--gap);
 }
 .set-cell{
-  border:1px solid var(--whiteB);
+  border:1px solid var(--panelBord);
   border-radius: var(--radius);
   padding: 8px 10px;
   text-align:center;
   font-size: var(--fs-small);                 /* 3.Texte plus petit */
 }
-.set-cell sup{ font-size:.7em; color: var(--darkGrayB); }
+.set-cell sup{ font-size:.7em; color: var(--selectedBord); }
 .set-cell .rpe{ font-size: var(--fs-rpe); }   /* 3.RPE a sa propre taille */
 
 /* État “vide” */
 .empty{
-  color: var(--darkGrayB);
-  border:1px dashed var(--whiteB);
+  color: var(--selectedBord);
+  border:1px dashed var(--panelBord);
   border-radius: var(--radius);
   padding: 12px; text-align:center;
 }
@@ -758,7 +789,7 @@ image_big{
 .exec-head > *{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
 .routine-set-head{
   font-size: var(--fs-small);
-  color: var(--darkGrayB);
+  color: var(--selectedBord);
 }
 .routine-set-head .set-editor-label{
   font-weight: var(--fw-strong);
@@ -800,7 +831,7 @@ image_big{
   font-weight: var(--fw-strong);
   font-size: var(--fs-base);
   color: var(--black);
-  background: var(--whiteB);
+  background: var(--panelBord);
   border-color: var(--black);
 }
 .routine-set-grid .set-edit-button{
@@ -821,27 +852,27 @@ image_big{
 }
 
 .exec-set-planned{
-  color: var(--lightGrayB);
+  color: var(--blocBord);
 }
 
 .exec-set-planned .set-edit-button{
-  border-color: var(--lightGrayB);
-  color: var(--lightGrayB);
+  border-color: var(--blocBord);
+  color: var(--blocBord);
 }
 
 .exec-set-planned .routine-set-order{
-  color: var(--lightGrayB);
+  color: var(--blocBord);
 }
 
 .exec-set-planned .routine-set-actions .btn{
-  border-color: var(--lightGrayB);
-  color: var(--lightGrayB);
+  border-color: var(--blocBord);
+  color: var(--blocBord);
 }
 
 .exec-set-planned .rpe-chip{
   background: transparent;
-  border: 1px solid var(--lightGrayB);
-  color: var(--lightGrayB);
+  border: 1px solid var(--blocBord);
+  color: var(--blocBord);
 }
 
 .rpe-chip-muted{
@@ -852,26 +883,22 @@ image_big{
 
 .set-edit-button:hover,
 .set-edit-button:focus{
-  background: var(--whiteA);
   outline:none;
 }
 
 .set-editor-highlight{
-  background: var(--lightGray);
   border-radius: var(--radius);
   outline: 2px solid var(--emphase);
   outline-offset: 0;
 }
 
 .set-editor-highlight .set-edit-button{
-  background: var(--lightGray);
   outline: 2px solid var(--emphase);
   outline-offset: 0;
 }
 
 .set-editor-highlight .set-edit-button:hover,
 .set-editor-highlight .set-edit-button:focus{
-  background: var(--lightGray);
 }
 
 .exec-rest-cell{
@@ -913,7 +940,7 @@ image_big{
   font-weight: var(--fw-strong);
   font-size: var(--fs-small);
   line-height:1.1;
-  color: var(--darkGrayB);
+  color: var(--selectedBord);
   text-align:center;
 }
 
@@ -989,8 +1016,8 @@ image_big{
 .set-editor-form.set-editor-tone-muted .set-editor-field .vstepper .input,
 .set-editor-form.set-editor-tone-muted .set-editor-field .vstepper .btn,
 .set-editor-form.set-editor-tone-muted .set-editor-actions .btn.ghost{
-  color: var(--darkGrayB);
-  border-color: var(--darkGrayB);
+  color: var(--selectedBord);
+  border-color: var(--selectedBord);
 }
 
 .set-editor-form.set-editor-tone-muted .set-editor-field .vstepper .input{
@@ -1014,8 +1041,8 @@ image_big{
 }
 
 .exec-row.is-selected{
-  background: var(--darkGray);
-  color: var(--white);
+  background: var(--selectedBack);
+  color: var(--selectedColor);
   box-shadow: 0 0 0 2px var(--emphase);
   border-radius: var(--radius);
 }
@@ -1025,17 +1052,17 @@ image_big{
 .exec-row.is-selected .input,
 .exec-row.is-selected select,
 .exec-row.is-selected .btn{
-  color: var(--white);
+  color: var(--selectedColor);
 }
 
 .exec-row.is-selected .input,
 .exec-row.is-selected select{
   background: transparent;
-  border-color: var(--white);
+  border-color: var(--selectedBord);
 }
 
 .exec-row.is-selected .btn{
-  border-color: var(--white);
+  border-color: var(--selectedBord);
 }
 
 /* Stepper vertical */

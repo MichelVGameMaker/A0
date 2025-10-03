@@ -45,9 +45,9 @@
   
         <!-- Calendrier 1 semaine défilable -->
         <div class="week-strip-wrapper">
-            <button id="weekPrev" class="week-strip-nav" type="button" title="Semaine précédente" aria-label="Afficher les jours précédents">◀︎</button>
-            <section class="week-strip" id="weekStrip" aria-label="Calendrier 1 semaine"></section>
-            <button id="weekNext" class="week-strip-nav" type="button" title="Semaine suivante" aria-label="Afficher les jours suivants">▶︎</button>
+            <button id="weekPrev"   class="btn" type="button" title="Semaine précédente" aria-label="Afficher les jours précédents">◀︎</button>
+            <section id="weekStrip" class="week-strip"  aria-label="Calendrier 1 semaine"></section>
+            <button id="weekNext"   class="btn" type="button" title="Semaine suivante" aria-label="Afficher les jours suivants">▶︎</button>
         </div>
   
         <!-- Liste des exercices de la séance -->
@@ -428,14 +428,15 @@
 <!-- ✅ Barre de timer collante en bas -->
 <footer id="execTimerBar" class="exec-timer" hidden>
     <!-- pause/play -->
-    <button id="tmrToggle" class="btn ghost" aria-label="Mettre en pause ou reprendre le timer">⏸</button>
+    <button id="tmrToggle" class="btn primary" aria-label="Mettre en pause ou reprendre le timer">⏸</button>
     <!-- timer avec - [temps] + -->
     <div class="tmr-center">
-        <button id="tmrMinus" class="btn ghost" aria-label="Retirer 10 secondes">−10s</button>
-        <div id="tmrDisplay" class="tmr-display">0:00</div>
-        <button id="tmrPlus" class="btn ghost" aria-label="Ajouter 10 secondes">+10s</button>
+        <button id="tmrMinus"   class="btn" aria-label="Retirer 10 secondes">−10s</button>
+        <div    id="tmrDisplay" class="tmr-display">0:00</div>
+        <button id="tmrPlus"    class="btn" aria-label="Ajouter 10 secondes">+10s</button>
     </div>
-    <button id="tmrClose" class="btn ghost tmr-close" aria-label="Fermer et réinitialiser le timer">✕</button>
+    <!-- close -->
+    <button id="tmrClose" class="btn danger" aria-label="Fermer et réinitialiser le timer">✕</button>
 </footer>
  <!-- ==================== -->
  
@@ -451,10 +452,10 @@
 <!-- ==========  Modale calendrier ========== -->
 <dialog id="dlgCalendar" class="modal">
     <div class="modal-header">
-        <button id="calPrev" class="btn ghost" aria-label="Mois précédent">◀︎</button>
-        <strong id="calTitle">Calendrier</strong>
+        <button id="calPrev" class="btn" aria-label="Mois précédent">◀︎</button>
+        <div id="calTitle" class = "lbl">Calendrier</div>
         <div style="display:flex; gap:8px;">
-            <button id="calNext" class="btn ghost" aria-label="Mois suivant">▶︎</button>
+            <button id="calNext"  class="btn" aria-label="Mois suivant">▶︎</button>
             <button id="dlgClose" class="btn ghost">Fermer</button>
         </div>
     </div>
