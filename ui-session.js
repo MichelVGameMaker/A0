@@ -13,6 +13,31 @@
         wireAddExercisesButton();
     });
 
+    function createRpeSup(value) {
+        const datasetValue = getRpeDatasetValue(value);
+        if (!datasetValue) {
+            return null;
+        }
+        const sup = document.createElement('sup');
+        sup.className = 'session-card-set-rpe';
+        sup.dataset.rpe = datasetValue;
+        sup.textContent = String(value);
+        return sup;
+    }
+
+    function getRpeDatasetValue(value) {
+        const numeric = Number.parseInt(value, 10);
+        if (!Number.isFinite(numeric)) {
+            return null;
+        }
+        if (numeric <= 5) return '5';
+        if (numeric === 6) return '6';
+        if (numeric === 7) return '7';
+        if (numeric === 8) return '8';
+        if (numeric === 9) return '9';
+        return '10';
+    }
+
     /* ACTIONS */
     /**
      * Retourne l'identifiant de la routine planifiée pour une date.
@@ -126,9 +151,12 @@
                     block.className = 'session-card-set';
                     const reps = set.reps ?? 0;
                     const weight = set.weight ?? 0;
-                    const rpeSmall = set.rpe ? `<sup>${set.rpe}</sup>` : '';
                     const details = `${reps}×${weight} kg`;
-                    block.innerHTML = rpeSmall ? `${details} ${rpeSmall}` : details;
+                    block.textContent = details;
+                    const rpeSup = createRpeSup(set.rpe);
+                    if (rpeSup) {
+                        block.append(' ', rpeSup);
+                    }
                     return block;
                 });
                 if (hasOverflow) {
