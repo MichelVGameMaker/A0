@@ -659,7 +659,7 @@ image_big{
 
 /* Modale calendrier */
 .modal{
-  border:none; border-radius:14px; padding:0;
+  border:none; border-radius:14px; padding:var(--gap);
   max-width:420px; width:90vw;
 }
 .modal::backdrop{ background: rgba(0,0,0,.25); }
@@ -900,18 +900,19 @@ image_big{
 }
 
 .set-editor-rest-grid .vstepper{
-  width:54px;
+  width:75%;
 }
 
 .set-editor-rest-grid .vstepper .btn{
-  height: calc(var(--control-h) * 0.75);
-  min-height: calc(var(--control-h) * 0.75);
+  height: var(--control-h);
+  min-height: var(--control-h);
   font-size: calc(var(--fs-base) * 0.75);
   padding-inline: 0;
 }
 
 .set-editor-rest-grid .vstepper .input{
-  height: calc(var(--control-h) * 0.75);
+  height: var(--control-h);
+  min-height: var(--control-h);
   text-align:center;
   font-size: calc(var(--fs-base) * 0.75);
 }
