@@ -46,7 +46,10 @@
         });
 
         for (let index = 0; index < startIndex; index += 1) {
-            grid.appendChild(document.createElement('div'));
+            const filler = document.createElement('div');
+            filler.className = 'day-cell placeholder';
+            filler.setAttribute('aria-hidden', 'true');
+            grid.appendChild(filler);
         }
 
         const lastDay = new Date(year, month + 1, 0).getDate();
@@ -81,6 +84,15 @@
             });
 
             grid.appendChild(cell);
+        }
+
+        const totalRendered = startIndex + lastDay;
+        const totalCells = 42;
+        for (let index = totalRendered; index < totalCells; index += 1) {
+            const filler = document.createElement('div');
+            filler.className = 'day-cell placeholder';
+            filler.setAttribute('aria-hidden', 'true');
+            grid.appendChild(filler);
         }
 
         bigCalendar.appendChild(grid);
