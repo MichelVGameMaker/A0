@@ -949,6 +949,15 @@ image_big{
   min-width:0;
 }
 
+.set-editor-actions-vertical{
+  flex-direction:column;
+}
+
+.set-editor-actions-vertical .btn{
+  flex:0 0 auto;
+  width:100%;
+}
+
 .set-editor-form.set-editor-tone-black .set-editor-field .vstepper .input,
 .set-editor-form.set-editor-tone-black .set-editor-field .vstepper .btn,
 .set-editor-form.set-editor-tone-black .set-editor-actions .btn.ghost{

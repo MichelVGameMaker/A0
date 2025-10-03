@@ -271,16 +271,31 @@
                     seconds
                 },
                 focus: focusField,
-                tone: set.done === true ? 'black' : 'muted',
+                tone: 'black',
+                actions: [
+                    {
+                        id: 'plan',
+                        label: 'Planifier',
+                        variant: 'ghost'
+                    },
+                    {
+                        id: 'save',
+                        label: 'Enregistrer',
+                        variant: 'primary'
+                    }
+                ],
                 onChange: updatePreview
             })
                 .then(async (result) => {
-                    if (!result) {
+                    if (!result || !result.values) {
                         return;
                     }
-                    const sanitized = sanitizeEditorResult(result, value.rest);
-                    await applySetEditorResult(index, sanitized);
-                    startTimer(sanitized.rest);
+                    const sanitized = sanitizeEditorResult(result.values, value.rest);
+                    const markDone = result.action === 'save';
+                    await applySetEditorResult(index, sanitized, { done: markDone });
+                    if (markDone) {
+                        startTimer(sanitized.rest);
+                    }
                 })
                 .finally(() => {
                     row.classList.remove('routine-set-row-active', 'set-editor-highlight');
@@ -368,7 +383,7 @@
         await persistSession();
     }
 
-    async function applySetEditorResult(index, values) {
+    async function applySetEditorResult(index, values, options = {}) {
         const exercise = getExercise();
         if (!exercise) {
             return;
@@ -377,6 +392,7 @@
         if (!sets[index]) {
             return;
         }
+        const nextDone = options.done ?? sets[index].done ?? false;
         sets[index] = {
             ...sets[index],
             pos: index + 1,
@@ -384,7 +400,7 @@
             weight: sanitizeWeight(values.weight),
             rpe: values.rpe != null && values.rpe !== '' ? clampInt(values.rpe, 5, 10) : null,
             rest: Math.max(0, safeInt(values.rest, getDefaultRest())),
-            done: true
+            done: nextDone
         };
         exercise.sets = sets;
         await persistSession();

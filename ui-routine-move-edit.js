@@ -184,19 +184,29 @@
                 },
                 focus: focusField,
                 tone: 'black',
+                actionsLayout: 'vertical',
+                actions: [
+                    {
+                        id: 'plan',
+                        label: 'Planifier',
+                        variant: 'ghost',
+                        full: true
+                    }
+                ],
                 onChange: (next) => {
                     updatePreview(next);
                 }
             })
                 .then((result) => {
-                    if (!result) {
+                    if (!result || result.action !== 'plan' || !result.values) {
                         return;
                     }
+                    const payload = result.values;
                     const nextValues = {
-                        reps: safePositiveInt(result.reps),
-                        weight: sanitizeWeight(result.weight),
-                        rpe: result.rpe != null ? clampRpe(result.rpe) : null,
-                        rest: Math.max(0, Math.round((result.minutes ?? 0) * 60 + (result.seconds ?? 0)))
+                        reps: safePositiveInt(payload.reps),
+                        weight: sanitizeWeight(payload.weight),
+                        rpe: payload.rpe != null ? clampRpe(payload.rpe) : null,
+                        rest: Math.max(0, Math.round((payload.minutes ?? 0) * 60 + (payload.seconds ?? 0)))
                     };
                     applySetEditorResult(index, nextValues);
                 })
