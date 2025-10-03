@@ -303,9 +303,11 @@
 
     function rowReadOnly(set) {
         const row = document.createElement('div');
-        row.className = 'exec-grid exec-row';
+        row.className = 'exec-grid exec-row routine-set-grid';
+        const order = set.pos != null ? set.pos : '—';
         const { minutes, seconds } = splitRest(set.rest);
         row.innerHTML = `
+            <div class="routine-set-order">${order}</div>
             <div class="details">${formatRepsDisplay(set.reps)}</div>
             <div class="details">${formatWeightWithUnit(set.weight)}</div>
             <div class="details">${rpeChip(clampInt(set.rpe, 5, 10))}</div>
@@ -323,7 +325,7 @@
         row.style.opacity = '0.7';
         row.style.fontStyle = 'italic';
         const hint = kind === 'planned' ? 'Prévue' : 'À faire';
-        const hintCell = row.children[5];
+        const hintCell = row.children[6];
         if (hintCell) {
             hintCell.textContent = hint;
             hintCell.className = 'details';
@@ -383,7 +385,7 @@
 
     function rowEditable(set, isNew) {
         const row = document.createElement('div');
-        row.className = 'exec-grid exec-row exec-edit-row';
+        row.className = 'exec-grid exec-row exec-edit-row routine-set-grid';
 
         const holder = document.createElement('div');
         holder.className = 'js-edit-holder';
@@ -400,6 +402,10 @@
         holder._value = value;
 
         const title = set.pos ? `Série ${set.pos}` : 'Nouvelle série';
+
+        const orderCell = document.createElement('div');
+        orderCell.className = 'routine-set-order';
+        orderCell.textContent = set.pos != null ? set.pos : '—';
 
         const openEditor = (focusField) => {
             const SetEditor = A.components?.SetEditor;
@@ -488,7 +494,7 @@
         holder.style.display = 'none';
         actionCell.appendChild(holder);
 
-        row.append(repsButton, weightButton, rpeButton, restMinutesButton, restSecondsButton, actionCell);
+        row.append(orderCell, repsButton, weightButton, rpeButton, restMinutesButton, restSecondsButton, actionCell);
         updateButtons();
         return row;
     }
