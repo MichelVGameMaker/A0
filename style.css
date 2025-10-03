@@ -758,37 +758,6 @@ image_big{
   font-size: var(--fs-base);
 }
 
-.exec-row.exec-executed{
-  color: var(--black);
-  font-weight: var(--fw-base);
-}
-
-.exec-row.exec-planned,
-.exec-row.exec-new{
-  color: var(--darkGrayB);
-  font-weight: var(--fw-base);
-}
-
-.exec-row.exec-executed .details,
-.exec-row.exec-planned .details,
-.exec-row.exec-new .details{
-  color: inherit;
-  font-size: var(--fs-base);
-  font-weight: inherit;
-}
-
-.exec-edit-row{
-  color: var(--black);
-  font-weight: var(--fw-strong);
-}
-
-.exec-edit-row .input,
-.exec-edit-row select{
-  color: var(--black);
-  font-size: var(--fs-base);
-  font-weight: var(--fw-strong);
-}
-
 .routine-set-actions{
   display:flex;
   justify-content:flex-end;
@@ -808,7 +777,7 @@ image_big{
   font-weight: var(--fw-strong);
 }
 
-.set-edit-button{ 
+.set-edit-button{
   width:100%;
   min-height: var(--control-h);
   font-weight: var(--fw-strong);
@@ -819,6 +788,49 @@ image_big{
 }
 .routine-set-grid .set-edit-button{
   color: var(--black);
+}
+
+.exec-set-row{
+  color: var(--black);
+}
+
+.exec-set-row .set-edit-button{
+  color: inherit;
+}
+
+.exec-set-row .set-edit-button:hover,
+.exec-set-row .set-edit-button:focus{
+  color: inherit;
+}
+
+.exec-set-planned{
+  color: var(--lightGrayB);
+}
+
+.exec-set-planned .set-edit-button{
+  border-color: var(--lightGrayB);
+  color: var(--lightGrayB);
+}
+
+.exec-set-planned .routine-set-order{
+  color: var(--lightGrayB);
+}
+
+.exec-set-planned .routine-set-actions .btn{
+  border-color: var(--lightGrayB);
+  color: var(--lightGrayB);
+}
+
+.exec-set-planned .rpe-chip{
+  background: transparent;
+  border: 1px solid var(--lightGrayB);
+  color: var(--lightGrayB);
+}
+
+.rpe-chip-muted{
+  background: transparent;
+  border: 1px solid currentColor;
+  color: inherit;
 }
 
 .set-edit-button:hover,
