@@ -739,6 +739,13 @@ image_big{
 .routine-set-grid > *{ min-width:0; }
 .exec-head{ font-weight: var(--fw-strong); }
 .exec-head > *{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+.routine-set-head{
+  font-size: var(--fs-small);
+  color: var(--darkGrayB);
+}
+.routine-set-head .set-editor-label{
+  font-weight: var(--fw-strong);
+}
 .exec-row .input{
   height: var(--control-h); width:100%;
   text-align:center; margin:0; padding:0 8px;
@@ -801,7 +808,7 @@ image_big{
   font-weight: var(--fw-strong);
 }
 
-.set-edit-button{
+.set-edit-button{ 
   width:100%;
   min-height: var(--control-h);
   font-weight: var(--fw-strong);
@@ -809,6 +816,9 @@ image_big{
   color: var(--black);
   background: var(--whiteB);
   border-color: var(--black);
+}
+.routine-set-grid .set-edit-button{
+  color: var(--black);
 }
 
 .set-edit-button:hover,
