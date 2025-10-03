@@ -12,7 +12,7 @@
                 SetEditor.close();
             }
             return new Promise((resolve) => {
-                SetEditor.#active = { resolve, options };
+                SetEditor.#active = { resolve, options, lastAction: null };
                 SetEditor.#applyOptions(options);
                 window.setTimeout(() => {
                     refs.dialog.showModal();
@@ -24,7 +24,7 @@
         static close() {
             const refs = SetEditor.#refs;
             if (refs?.dialog?.open) {
-                refs.dialog.close('close');
+                SetEditor.#closeWith('close');
             }
         }
 
@@ -44,6 +44,7 @@
             const minutesInput = dialog.querySelector('[data-role="minutes"]');
             const secondsInput = dialog.querySelector('[data-role="seconds"]');
             const closeButton = dialog.querySelector('[data-action="close"]');
+            const actionsContainer = dialog.querySelector('[data-role="set-editor-actions"]');
             const refs = {
                 dialog,
                 form,
@@ -53,7 +54,8 @@
                 rpeInput,
                 minutesInput,
                 secondsInput,
-                closeButton
+                closeButton,
+                actionsContainer
             };
             SetEditor.#refs = refs;
             SetEditor.#bindEvents();
@@ -67,15 +69,15 @@
             }
             refs.form?.addEventListener('submit', (event) => {
                 event.preventDefault();
-                refs.dialog.close('submit');
+                SetEditor.#closeWith('submit');
             });
             refs.closeButton?.addEventListener('click', (event) => {
                 event.preventDefault();
-                refs.dialog.close('close');
+                SetEditor.#closeWith('close');
             });
             refs.dialog.addEventListener('cancel', (event) => {
                 event.preventDefault();
-                refs.dialog.close('cancel');
+                SetEditor.#closeWith('cancel');
             });
             refs.dialog.addEventListener('close', () => {
                 SetEditor.#handleClose();
@@ -87,7 +89,7 @@
                 }
                 if (action === 'close') {
                     event.preventDefault();
-                    refs.dialog.close('close');
+                    SetEditor.#closeWith('close');
                     return;
                 }
                 if (SetEditor.#handleAction(action)) {
@@ -171,6 +173,17 @@
                 default:
                     return false;
             }
+        }
+
+        static #closeWith(action) {
+            const refs = SetEditor.#refs;
+            if (!refs?.dialog) {
+                return;
+            }
+            if (SetEditor.#active) {
+                SetEditor.#active.lastAction = action || '';
+            }
+            refs.dialog.close(action || '');
         }
 
         static #adjustReps(delta) {
@@ -326,6 +339,63 @@
             refs.minutesInput.value = String(Math.max(0, SetEditor.#parseInt(values.minutes, 0)));
             refs.secondsInput.value = String(Math.max(0, SetEditor.#parseInt(values.seconds, 0)));
             SetEditor.#sanitizeTimeInputs();
+            SetEditor.#configureActions(options);
+        }
+
+        static #configureActions(options) {
+            const refs = SetEditor.#refs;
+            if (!refs?.actionsContainer) {
+                return;
+            }
+            const container = refs.actionsContainer;
+            container.innerHTML = '';
+            const layout = String(options.actionsLayout || '').toLowerCase();
+            container.classList.toggle('set-editor-actions-vertical', layout === 'vertical');
+            const rawActions = Array.isArray(options.actions) ? options.actions : null;
+            const actions = rawActions && rawActions.length ? rawActions : SetEditor.#defaultActions();
+            actions.forEach((definition) => {
+                if (!definition) {
+                    return;
+                }
+                const id = definition.id || 'submit';
+                const label = definition.label ?? '';
+                const variant = definition.variant || 'primary';
+                const classes = ['btn'];
+                if (variant) {
+                    classes.push(variant);
+                }
+                if (definition.full) {
+                    classes.push('full');
+                }
+                if (definition.extraClass) {
+                    classes.push(definition.extraClass);
+                }
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = classes.join(' ');
+                button.textContent = label;
+                if (definition.title) {
+                    button.title = definition.title;
+                }
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    if (typeof definition.onClick === 'function') {
+                        definition.onClick(SetEditor.#getCurrentValues());
+                    }
+                    if (definition.preventClose) {
+                        return;
+                    }
+                    SetEditor.#closeWith(id);
+                });
+                container.appendChild(button);
+            });
+        }
+
+        static #defaultActions() {
+            return [
+                { id: 'close', label: 'Fermer', variant: 'ghost' },
+                { id: 'submit', label: 'Valider', variant: 'primary' }
+            ];
         }
 
         static #focusField(focusField) {
@@ -378,13 +448,23 @@
         }
 
         static #handleClose() {
-            if (!SetEditor.#active) {
+            const active = SetEditor.#active;
+            if (!active) {
                 return;
             }
-            const { resolve } = SetEditor.#active;
+            const { resolve } = active;
             SetEditor.#active = null;
+            if (typeof resolve !== 'function') {
+                return;
+            }
+            const refs = SetEditor.#refs;
+            const action = active.lastAction || refs?.dialog?.returnValue || '';
             const values = SetEditor.#collectValues();
-            resolve(values);
+            if (!action || action === 'cancel' || action === 'close') {
+                resolve(null);
+                return;
+            }
+            resolve({ action, values });
         }
     }
 
