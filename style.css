@@ -392,9 +392,14 @@ image_big{
 }
 .session-card-sets{
   display:flex;
-  flex-wrap:wrap;
+  flex-direction:column;
   gap:4px;
   margin-top:4px;
+}
+.session-card-sets-row{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:4px;
 }
 .session-card-sets:empty{
   display:none;
@@ -409,6 +414,10 @@ image_big{
   border:1px solid var(--lightGrayB);
   font-size:var(--fs-small);
   line-height:1.1;
+}
+.session-card-set--ellipsis{
+  justify-content:center;
+  font-weight:600;
 }
 .session-card-set sup{
   font-size:.7em;

@@ -286,9 +286,18 @@
         name.textContent = move.exerciseName || 'Exercice';
         const setsWrapper = document.createElement('div');
         setsWrapper.className = 'session-card-sets';
-        const sets = Array.isArray(move.sets) ? [...move.sets].sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0)) : [];
+        const sets = Array.isArray(move.sets)
+            ? [...move.sets].sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0))
+            : [];
+        const MAX_LINES = 2;
+        const BLOCKS_PER_LINE = 3;
+        const MAX_BLOCKS = MAX_LINES * BLOCKS_PER_LINE;
         if (sets.length) {
-            sets.forEach((set) => {
+            const hasOverflow = sets.length > MAX_BLOCKS;
+            const displayedSets = hasOverflow
+                ? sets.slice(0, MAX_BLOCKS - 1)
+                : sets.slice(0, MAX_BLOCKS);
+            const blocks = displayedSets.map((set) => {
                 const block = document.createElement('span');
                 block.className = 'session-card-set';
                 const reps = valueOrDash(set.reps);
@@ -298,13 +307,36 @@
                 const details = `${reps}×${weight}`;
                 const rpe = set.rpe != null && !Number.isNaN(set.rpe) ? `<sup>${set.rpe}</sup>` : '';
                 block.innerHTML = rpe ? `${details} ${rpe}` : details;
-                setsWrapper.appendChild(block);
+                return block;
             });
+            if (hasOverflow) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'session-card-set session-card-set--ellipsis';
+                ellipsis.textContent = '…';
+                ellipsis.setAttribute('title', 'Autres séries');
+                blocks.push(ellipsis);
+            }
+            for (let lineIndex = 0; lineIndex < MAX_LINES; lineIndex += 1) {
+                const start = lineIndex * BLOCKS_PER_LINE;
+                const lineBlocks = blocks.slice(start, start + BLOCKS_PER_LINE);
+                if (!lineBlocks.length) {
+                    break;
+                }
+                const line = document.createElement('div');
+                line.className = 'session-card-sets-row';
+                lineBlocks.forEach((block) => {
+                    line.appendChild(block);
+                });
+                setsWrapper.appendChild(line);
+            }
         } else {
+            const line = document.createElement('div');
+            line.className = 'session-card-sets-row';
             const emptyBlock = document.createElement('span');
             emptyBlock.className = 'session-card-set';
             emptyBlock.textContent = 'Ajouter des séries';
-            setsWrapper.appendChild(emptyBlock);
+            line.appendChild(emptyBlock);
+            setsWrapper.appendChild(line);
         }
         textWrapper.append(name, setsWrapper);
 
