@@ -205,13 +205,19 @@
                 });
         };
 
-        const createButton = (getText, focusField, extraClass = '') => {
+        const createButton = (getContent, focusField, extraClass = '', options = {}) => {
             const button = document.createElement('button');
             button.type = 'button';
             button.className = `btn ghost set-edit-button${extraClass ? ` ${extraClass}` : ''}`;
             button.addEventListener('click', () => openEditor(focusField));
+            const { html = false } = options;
             const update = () => {
-                button.textContent = getText();
+                const content = getContent();
+                if (html) {
+                    button.innerHTML = content;
+                } else {
+                    button.textContent = content;
+                }
             };
             button._update = update;
             update();
@@ -220,7 +226,7 @@
 
         const repsButton = createButton(() => formatRepsDisplay(value.reps), 'reps');
         const weightButton = createButton(() => formatWeightValue(value.weight), 'weight');
-        const rpeButton = createButton(() => formatRpeDisplay(value.rpe), 'rpe');
+        const rpeButton = createButton(() => rpeChip(value.rpe), 'rpe', '', { html: true });
         const restMinutesButton = createButton(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell');
         const restSecondsButton = createButton(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell');
         collectButtons(repsButton, weightButton, rpeButton, restMinutesButton, restSecondsButton);
@@ -501,10 +507,6 @@
         return formatNumber(value);
     }
 
-    function formatRpeDisplay(value) {
-        return value == null ? '—' : String(value);
-    }
-
     function formatRestMinutes(value) {
         const { minutes } = splitRest(value);
         return String(minutes);
@@ -527,6 +529,24 @@
             .toFixed(2)
             .replace(/\.0+$/, '')
             .replace(/(\.\d*?)0+$/, '$1');
+    }
+
+    function rpeChip(value) {
+        if (value == null || value === '') {
+            return '—';
+        }
+        const cssClass = getRpeClass(value);
+        return `<span class="rpe-chip ${cssClass}">${value}</span>`;
+    }
+
+    function getRpeClass(value) {
+        const numeric = Number.parseInt(value, 10);
+        if (numeric <= 5) return 'rpe-5';
+        if (numeric === 6) return 'rpe-6';
+        if (numeric === 7) return 'rpe-7';
+        if (numeric === 8) return 'rpe-8';
+        if (numeric === 9) return 'rpe-9';
+        return 'rpe-10';
     }
 
     function uid(prefix) {
