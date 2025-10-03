@@ -212,7 +212,7 @@ textarea:focus{
 
 .stats-chart-card {
     margin-bottom: 16px;
-    padding: 16px;
+    padding: 0;
     background: var(--white);
     border: 1px solid var(--lightGrayB);
     border-radius: var(--radius);
@@ -244,7 +244,7 @@ textarea:focus{
 }
 
 .stats-chart-svg .stats-axis-tick {
-    font-size: 10px;
+    font-size: 12px;
     fill: var(--darkGrayB);
 }
 
