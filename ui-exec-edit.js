@@ -408,6 +408,7 @@
             }
             const { minutes, seconds } = splitRest(value.rest);
             row.classList.add('set-editor-highlight');
+            const tone = set.done === true ? 'black' : 'muted';
             const promise = SetEditor.open({
                 title,
                 values: {
@@ -417,7 +418,8 @@
                     minutes,
                     seconds
                 },
-                focus: focusField
+                focus: focusField,
+                tone
             });
             if (!promise || typeof promise.then !== 'function') {
                 row.classList.remove('set-editor-highlight');

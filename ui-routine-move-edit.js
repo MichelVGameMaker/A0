@@ -183,6 +183,7 @@
                     seconds
                 },
                 focus: focusField,
+                tone: 'black',
                 onChange: (next) => {
                     updatePreview(next);
                 }

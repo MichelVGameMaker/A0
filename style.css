@@ -828,26 +828,8 @@ image_big{
 .set-editor-form{
   display:flex;
   flex-direction:column;
-  gap:16px;
+  gap:14px;
   min-width:280px;
-}
-
-.set-editor-header{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  flex-wrap:nowrap;
-}
-
-.set-editor-title{
-  font-weight: var(--fw-strong);
-  font-size: var(--fs-large);
-  flex:1;
-  min-width:0;
-  text-align:center;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 
 .set-editor-grid{
@@ -859,11 +841,14 @@ image_big{
 .set-editor-field{
   display:flex;
   flex-direction:column;
-  gap:6px;
+  gap:2px;
 }
 
 .set-editor-label{
   font-weight: var(--fw-strong);
+  font-size: var(--fs-small);
+  line-height:1.1;
+  color: var(--darkGrayB);
   text-align:center;
 }
 
@@ -889,20 +874,52 @@ image_big{
 }
 
 .set-editor-rest-grid .vstepper{
-  width:72px;
+  width:54px;
+}
+
+.set-editor-rest-grid .vstepper .btn{
+  height: calc(var(--control-h) * 0.75);
+  min-height: calc(var(--control-h) * 0.75);
+  font-size: calc(var(--fs-base) * 0.75);
+  padding-inline: 0;
 }
 
 .set-editor-rest-grid .vstepper .input{
+  height: calc(var(--control-h) * 0.75);
   text-align:center;
+  font-size: calc(var(--fs-base) * 0.75);
 }
 
 .set-editor-actions{
   display:flex;
-  justify-content:flex-end;
+  gap:8px;
 }
 
 .set-editor-actions .btn{
-  min-width:120px;
+  flex:1 1 0;
+  min-width:0;
+}
+
+.set-editor-form.set-editor-tone-black .set-editor-field .vstepper .input,
+.set-editor-form.set-editor-tone-black .set-editor-field .vstepper .btn,
+.set-editor-form.set-editor-tone-black .set-editor-actions .btn.ghost{
+  color: var(--black);
+  border-color: var(--black);
+}
+
+.set-editor-form.set-editor-tone-black .set-editor-field .vstepper .input{
+  font-weight: var(--fw-strong);
+}
+
+.set-editor-form.set-editor-tone-muted .set-editor-field .vstepper .input,
+.set-editor-form.set-editor-tone-muted .set-editor-field .vstepper .btn,
+.set-editor-form.set-editor-tone-muted .set-editor-actions .btn.ghost{
+  color: var(--darkGrayB);
+  border-color: var(--darkGrayB);
+}
+
+.set-editor-form.set-editor-tone-muted .set-editor-field .vstepper .input{
+  font-weight: var(--fw-base);
 }
 
 .set-editor-form .vstepper{

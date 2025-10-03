@@ -306,8 +306,16 @@
             if (!refs) {
                 return;
             }
-            const { title = 'Série', values = {} } = options;
-            refs.title.textContent = title;
+            const { title = 'Série', values = {}, tone = 'black' } = options;
+            if (refs.title) {
+                refs.title.textContent = title;
+                refs.title.hidden = !title;
+            }
+            if (refs.form) {
+                refs.form.classList.remove('set-editor-tone-black', 'set-editor-tone-muted');
+                const toneClass = tone === 'muted' ? 'set-editor-tone-muted' : 'set-editor-tone-black';
+                refs.form.classList.add(toneClass);
+            }
             const repsValue = SetEditor.#parseInt(values.reps, 0);
             refs.repsInput.value = String(Math.max(0, repsValue ?? 0));
             const hasWeight = values.weight != null && values.weight !== '';
