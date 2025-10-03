@@ -399,6 +399,18 @@
         element.textContent = `${count} ${sessionLabel} • Dernière : ${lastLabel} • ${definition.label} : ${metricText}`;
     }
 
+    function getCssVariable(name, fallback) {
+        if (!name) {
+            return fallback;
+        }
+        const root = document.documentElement;
+        if (!root || typeof window.getComputedStyle !== 'function') {
+            return fallback;
+        }
+        const value = window.getComputedStyle(root).getPropertyValue(name);
+        return value ? value.trim() : fallback;
+    }
+
     function renderChart() {
         const { statsChart, statsChartEmpty } = assertStatsRefs();
         statsChart.innerHTML = '';
@@ -436,7 +448,7 @@
         const chartMax = yTicks[yTicks.length - 1] || maxValue || 1;
         const width = Math.max(statsChart.clientWidth || 0, 640);
         const height = 240;
-        const padding = { top: 16, right: 24, bottom: 48, left: 64 };
+        const padding = { top: 16, right: 16, bottom: 40, left: 56 };
         const innerWidth = Math.max(1, width - padding.left - padding.right);
         const innerHeight = Math.max(1, height - padding.top - padding.bottom);
         const firstDate = data[0].date;
@@ -493,22 +505,13 @@
         axisX.setAttribute('y1', String(yAxisPosition));
         axisX.setAttribute('x2', String(width - padding.right));
         axisX.setAttribute('y2', String(yAxisPosition));
-        axisX.setAttribute('stroke', '#d4d4d4');
+        axisX.setAttribute('stroke', getCssVariable('--darkGrayB', '#ccc'));
         axisX.setAttribute('stroke-width', '2');
         svg.appendChild(axisX);
 
-        const axisY = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        axisY.setAttribute('x1', String(padding.left));
-        axisY.setAttribute('y1', String(padding.top));
-        axisY.setAttribute('x2', String(padding.left));
-        axisY.setAttribute('y2', String(height - padding.bottom));
-        axisY.setAttribute('stroke', '#d4d4d4');
-        axisY.setAttribute('stroke-width', '2');
-        svg.appendChild(axisY);
-
         svg.appendChild(yAxisLabelsGroup);
 
-        const xTicks = computeXAxisTicks(points, rangeDefinition);
+        const xTicks = computeXAxisTicks(firstDate, lastDate, padding, innerWidth);
         const xAxisLabelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
         xTicks.forEach((tick) => {
@@ -539,22 +542,6 @@
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('stroke-linejoin', 'round');
         svg.appendChild(path);
-
-        const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        yLabel.textContent = metricDefinition.axisUnit;
-        yLabel.setAttribute('x', String(padding.left + 4));
-        yLabel.setAttribute('y', String(padding.top + 12));
-        yLabel.setAttribute('text-anchor', 'start');
-        yLabel.setAttribute('class', 'stats-axis-label stats-axis-label-y');
-        svg.appendChild(yLabel);
-
-        const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        xLabel.textContent = 'Jours';
-        xLabel.setAttribute('x', String(width - padding.right));
-        xLabel.setAttribute('y', String(height - 4));
-        xLabel.setAttribute('text-anchor', 'end');
-        xLabel.setAttribute('class', 'stats-axis-label stats-axis-label-x');
-        svg.appendChild(xLabel);
 
         points.forEach((point) => {
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -639,23 +626,23 @@
         return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
     }
 
-    function computeXAxisTicks(points, rangeDefinition) {
-        if (!Array.isArray(points) || !points.length) {
+    function computeXAxisTicks(firstDate, lastDate, padding, innerWidth) {
+        if (!(firstDate instanceof Date) || !(lastDate instanceof Date)) {
             return [];
         }
-        if (points.length === 1) {
-            return [points[0]];
+        const tickCount = 4;
+        const firstTime = firstDate.getTime();
+        const lastTime = Math.max(firstTime, lastDate.getTime());
+        const duration = Math.max(0, lastTime - firstTime);
+        const ticks = [];
+        for (let index = 0; index < tickCount; index += 1) {
+            const ratio = tickCount === 1 ? 0 : index / (tickCount - 1);
+            const time = duration === 0 ? firstTime : firstTime + ratio * duration;
+            const date = new Date(time);
+            const x = padding.left + ratio * innerWidth;
+            ticks.push({ x, date });
         }
-        const desired = Math.min(4, points.length);
-        const indices = new Set();
-        for (let step = 0; step < desired; step += 1) {
-            const ratio = desired === 1 ? 0 : step / (desired - 1);
-            const index = Math.round(ratio * (points.length - 1));
-            indices.add(index);
-        }
-        return Array.from(indices)
-            .sort((a, b) => a - b)
-            .map((index) => points[index]);
+        return ticks;
     }
 
     function formatXAxisTick(date, rangeDefinition) {
