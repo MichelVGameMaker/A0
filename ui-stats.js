@@ -672,16 +672,24 @@
             statsTimeline.appendChild(buildTimelineEmpty());
             return;
         }
-        const ordered = [...usage].sort((a, b) => b.date.localeCompare(a.date));
+        const rangeDefinition = RANGE_MAP[state.activeRange] || RANGE_OPTIONS[0];
+        const cutoff = computeRangeCutoff(rangeDefinition);
+        const filtered = cutoff ? usage.filter((entry) => entry.dateObj >= cutoff) : [...usage];
+        if (!filtered.length) {
+            const message = usage.length ? 'Aucune séance sur la période sélectionnée.' : 'Aucune séance enregistrée.';
+            statsTimeline.appendChild(buildTimelineEmpty(message));
+            return;
+        }
+        const ordered = filtered.sort((a, b) => b.date.localeCompare(a.date));
         ordered.forEach((entry) => {
             statsTimeline.appendChild(renderTimelineItem(entry));
         });
     }
 
-    function buildTimelineEmpty() {
+    function buildTimelineEmpty(message = 'Aucune séance enregistrée.') {
         const empty = document.createElement('li');
         empty.className = 'stats-timeline-empty';
-        empty.textContent = 'Aucune séance enregistrée.';
+        empty.textContent = message;
         return empty;
     }
 
