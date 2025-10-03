@@ -162,7 +162,7 @@
     }
 
     function wireTimerControls() {
-        const { timerToggle, timerMinus, timerPlus, timerClose } = assertRefs();
+        const { execTimerBar, timerToggle, timerMinus, timerPlus, timerClose } = assertRefs();
         timerToggle.addEventListener('click', () => {
             const timer = ensureSharedTimer();
             if (timer.running) {
@@ -179,6 +179,9 @@
         });
         timerClose.addEventListener('click', () => {
             resetTimerState();
+            if (execTimerBar) {
+                execTimerBar.hidden = true;
+            }
         });
     }
 

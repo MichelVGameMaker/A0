@@ -144,19 +144,20 @@ header .title{ font-weight: var(--fw-strong); }
    4) Timer
    ========================================================= */
 /* Timer bas */
-.exec-timer{ 
+.exec-timer{
     z-index:20;
     position:sticky;
     bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0));
 
-    display:grid; grid-template-columns: 1fr 2fr 1fr;
+    display:grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items:center; gap:8px;
     padding:10px 12px;
     background: var(--white);
     border-top:1px solid var(--whiteB);
 }
 .exec-timer .tmr-center{ display:flex; align-items:center; justify-content:center; gap:10px; }
-.exec-timer .tmr-close{ justify-self:end; }
+.exec-timer #tmrToggle,
+.exec-timer #tmrClose{ width:100%; }
 .tmr-display{ font-weight: var(--fw-strong); min-width:76px; text-align:center; }
 .exec-timer .btn.ghost{ border:1px solid var(--whiteB); }
 
