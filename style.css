@@ -84,8 +84,6 @@ body{
 .flex-1{ flex:1; }
   
 
-
-
 /* =========================================================
    1) Contenu
    ========================================================= */
@@ -108,7 +106,9 @@ header{
     padding: var(--pad-y) var(--pad-x);
     background: var(--panelBack);
     border-bottom: 2px solid var(--panelBord);
-    user-select: none;
+    user-select:none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 header .title{ font-weight: var(--fw-strong); }
@@ -123,7 +123,9 @@ header .title{ font-weight: var(--fw-strong); }
     display:flex; align-items:center; justify-content:space-between;
     background: var(--panelBack);
     border-top: 2px solid var(--panelBord);
-    user-select: none;
+    user-select:none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 .tab{
     flex: 1 1 25%;
@@ -176,7 +178,7 @@ header .title{ font-weight: var(--fw-strong); }
 .tmr-display{ font-weight: var(--fw-strong); min-width:76px; text-align:center; }
 
 /* =========================================================
-   6) Textes 
+   6) Textes  & Images
    ========================================================= */
 /* Textes */
 .lbl{ color: var(--labelColor); font-weight: var(--fw-strong); }
@@ -185,18 +187,21 @@ header .title{ font-weight: var(--fw-strong); }
 
 /* Grosse image pour l'exécution */
 image_big{
-	 width:80%;
-	 height:auto;
-	 max-height:320px;
-	 object-fit:cover;
-	 border-radius:12px;
-	 border:1px solid var(--blocBord);
-
-     touch-action: manipulation;      /* coupe le double-tap zoom sur iOS récents */
-     -webkit-user-select: none;
-     user-select: none;
-     -webkit-user-drag: none;
-     user-drag: none;
+     /* Dimension */
+    height:auto;
+    width:80%;
+    object-fit:cover;
+    border-radius:var(--radius);
+    /* Pas cliquable */
+    border:1px solid var(--blocBord);
+    touch-action: manipulation;       /* coupe le geste double-tap=zoom */
+    /* Pas d'input */
+    user-select:none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    /* Pas de drag n drop*/
+    -webkit-user-drag: none;
+    user-drag: none;
 }
 /* =========================================================
    7) Contrôles unifiés (inputs, selects, tags, listes)
@@ -216,6 +221,13 @@ image_big{
     background: var(--focusedBack);
     border-color: var(--focusedBord);
     font-weight: var(--fw-strong);
+    outline: 2px solid var(--emphase);
+    outline-offset: 2px;
+}
+.has-value{
+   /* Rempli */
+   color: var(--filledColor);
+   font-weight: var(--fw-strong);
 }
 
 /* Base champs & listes */
@@ -238,11 +250,7 @@ image_big{
 textarea{
     resize: vertical;
 }
-/* Valeur définie (non vide) — forcer style “défini” */
-.has-value{
-  color: var(--filledColor);
-  font-weight: var(--fw-strong);
-}
+
 
 /* Focus/actif -> fond gris + bordure strong */
 .input:focus,
@@ -252,6 +260,8 @@ textarea:focus{
     background: var(--focusedBack);
     border-color: var(--focusedBord);
     font-weight: var(--fw-strong);
+    outline: 2px solid var(--emphase);
+    outline-offset: 2px;
 }
 
 /* Tags */
@@ -278,11 +288,15 @@ textarea:focus{
     background: var(--clickableBack); 
     cursor: pointer;
     touch-action: manipulation;       /* coupe le geste double-tap=zoom */
+    /* Pas d'input*/
+    user-select:none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    
   font: inherit;
   display:inline-flex; align-items:center; justify-content:center;
   flex: 0 0 var(--tag-width);
   margin: 0;
-  user-select:none;
   box-sizing:border-box;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -294,10 +308,13 @@ textarea:focus{
     border-color: var(--selectedBord);
 }
 .tag:focus{
+    /* Focusé */
+    background: var(--focusedBack);
+    border-color: var(--focusedBord);
+    font-weight: var(--fw-strong);
     outline: 2px solid var(--emphase);
     outline-offset: 2px;
 }
-
 
 /* =========================================================
    8) Boutons
@@ -313,11 +330,14 @@ textarea:focus{
     background: var(--clickableBack); 
     cursor: pointer;
     touch-action: manipulation;       /* coupe le geste double-tap=zoom */
-     display:inline-flex; align-items:center; justify-content:center;   
+     
+  display:inline-flex; align-items:center; justify-content:center;   
   color: var(--black);
   font-weight: var(--fw-strong);
-  user-select:none;
-  -webkit-tap-highlight-color: transparent;
+    /* Pas d'input*/
+    user-select:none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 .btn:active{ transform: scale(.9); }
 /* En-tête RETOUR */
@@ -328,8 +348,8 @@ textarea:focus{
 
 /* En-tête OK */
 .btn.primary{
-  border-color: var(--emphase);
-  background: var(--emphase);
+   border-color: var(--emphase);
+   color: var(--emphase);
 }
 
 /* Supprimer */
@@ -353,12 +373,11 @@ textarea:focus{
 .btn[disabled]{ opacity:.5; cursor:not-allowed; }
 
 
+/* =========================================================
+   8) Boutons
+   ========================================================= */
 /* Panneaux/cartes (listes, cartes) */
-.panel{
-  border: 1px solid var(--panelBord);              /* 4.Bordure --panelBord */
-  border-radius: var(--radius);
-  padding: var(--pad-y) var(--pad-x);
-}
+
 .exercise-card{
   background: var(--white);
   border: 1px solid var(--black);
@@ -397,8 +416,9 @@ textarea:focus{
 .session-card-text *,
 .session-card-pencil,
 .session-card-pencil *{
-  -webkit-user-select: none;
-  user-select: none;
+    user-select:none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 .session-card-handle:focus-visible{
   outline:2px solid var(--black);
@@ -548,7 +568,12 @@ textarea:focus{
    6) Listes / Filtres (écran Bibliothèque)
    ========================================================= */
 .bloque{    display:flex; flex-direction:column; gap:var(--gap); margin-top:var(--gap); }
-.hint{ margin-top:6px; color: var(--selectedBord); font-size: var(--fs-small); }
+.panel{
+  border: 1px solid var(--panelBord);
+  border-radius: var(--radius);
+  padding: var(--pad-y) var(--pad-x);
+}
+
 /* Placeholders d’images */
 .exercise-row{
   display:grid; grid-template-columns: 64px 1fr auto;
@@ -560,99 +585,131 @@ textarea:focus{
 }
 
 /* =========================================================
-   7) Semaine & calendrier
+   7) Calendriers
    ========================================================= */
-.week-strip-wrapper{
-  display:flex; 
-  align-items:center; 
-  gap:var(--gap);
-  margin-bottom:12px;
-}
-.week-strip{
-  display:flex; gap:var(--gap); overflow-x:auto;
-  padding-bottom:8px; margin-bottom:0;
-  border-bottom:1px dashed var(--panelBord);
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-}
-.week-strip::-webkit-scrollbar{ display:none; }
-
-
-.week-strip-wrapper .week-strip{ flex:1; }
-.week-strip .week-page{
-  display:grid; grid-template-columns:repeat(7,minmax(0,1fr));
-  gap:var(--gap);
-  flex:0 0 100%; width:100%;
-}
-.week-strip .day{
-  height: var(--control-h);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:4px;
-  padding:6px 4px;
-  text-align:center; white-space:normal; line-height:1.1;
-  border:1px solid var(--panelBord);
-  border-radius: var(--radius);
-  background: var(--panelBord);
-  font-weight: var(--fw-strong);
-  user-select:none; cursor:pointer;
-  transition: transform .06s ease;
-}
-.week-strip .day span{ display:block; }
-.week-strip .day-weekday{ font-size: var(--fs-small); text-transform:capitalize; }
-.week-strip .day-number{ font-size:1.1em; }
-.week-strip .day:active{ transform: scale(.98); }
-
-/* Règles de priorité: selected > has-session > planned */
-.week-strip .day.planned{
-  background: var(--backGrayB); color: #333; border-color: var(--backGrayB);
-}
-.week-strip .day.has-session{
-  background: var(--black); color:#fff; border-color: var(--black);
-}
-.week-strip .day.selected{
-  background: var(--emphase); color:#fff; border-color: var(--emphase);
-}
-/* =========================================================
-   7) calendrier
-   ========================================================= */
-
-/* Modale calendrier */
-#dlgCalendar.modal{
-    margin:0;
-    position:fixed;
-    left:50%;
-    transform:translateX(-50%);
-    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0) + 12px);
-}
-
-.month-grid{ display:grid; grid-template-columns: repeat(7,1fr); gap:6px; }
-.dow{ text-align:center; color: var(--selectedBord); font-weight: var(--fw-strong); }
-/* Day cell use Tag style */
-
-  
-.day-cell{
-    height: var(--control-h);
-    padding:8px 0;
-    border-radius: var(--radius);
-    border: 1px solid var(--black);
-    color: var(--selectedBord);
-    text-align:center;
-    background:var(--panelBord);
-    cursor:pointer;
-    user-select:none;
-}
-
-.day-cell.planned{     background: var(--selectedBack);  color:var(--panelBord); border-color: var(--backGrayB); }
-.day-cell.has-session{ background: var(--selectedBack);  color:var(--panelBord); border-color: var(--backGrayB); }
-.day-cell.selected{    background: var(--black);     color:var(--panelBord); border-color: var(--black); }
-
-.day-cell.placeholder{
-    background: transparent;
-    border-color: transparent;
-    cursor: default;
-    pointer-events: none;
-}
-
+   
+/* ========= Selecteur Semaine ========= */
+    .week-strip-wrapper{
+      display:flex; 
+      align-items:center; 
+      gap:var(--gap);
+      margin-bottom:12px;
+    }
+    .week-strip{
+      display:flex; gap:var(--gap); overflow-x:auto;
+      padding-bottom:8px; margin-bottom:0;
+      border-bottom:1px dashed var(--panelBord);
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
+    }
+    .week-strip::-webkit-scrollbar{ display:none; }
+    
+    .week-strip-wrapper .week-strip{ flex:1; }
+    .week-strip .week-page{
+      display:grid; grid-template-columns:repeat(7,minmax(0,1fr));
+      gap:var(--gap);
+      flex:0 0 100%; width:100%;
+    }
+    .week-strip .day{
+      height: var(--control-h);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:4px;
+      padding:6px 4px;
+      text-align:center; white-space:normal; line-height:1.1;
+      border:1px solid var(--panelBord);
+      border-radius: var(--radius);
+      background: var(--panelBord);
+      font-weight: var(--fw-strong);
+        user-select:none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      cursor:pointer;
+      transition: transform .06s ease;
+    }
+    .week-strip .day span{ display:block; }
+    .week-strip .day-weekday{ font-size: var(--fs-small); text-transform:capitalize; }
+    .week-strip .day-number{ font-size:1.1em; }
+    .week-strip .day:active{ transform: scale(.98); }
+    }
+    
+/* ========= Modale Mois ========= */
+    #dlgCalendar.modal{
+        margin:0;
+        position:fixed;
+        left:50%;
+        transform:translateX(-50%);
+        bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0) + 12px);
+    }
+    
+/* ========= Selecteur Mois ========= */
+    .month-grid{ display:grid; grid-template-columns: repeat(7,1fr); gap:6px; }
+    .dow{ text-align:center; color: var(--selectedBord); font-weight: var(--fw-strong); }
+    
+    /* Day cell use Tag style */
+    .day-cell{
+        /* Dimension pour tous les éléments */
+        height: var(--control-h);  
+        padding: var(--pad-Y) var(--pad-x);
+        border-radius: var(--radius);
+        /* Cliquable */
+        border: 1px solid var(--clickableBord);
+        background: var(--clickableBack); 
+        cursor: pointer;
+        touch-action: manipulation;       /* coupe le geste double-tap=zoom */    
+        /* Pas d'input*/
+        user-select:none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        /* Contenu */
+        color: var(--selectedBord);
+        text-align:center;
+    }
+    
+    .day-cell.placeholder{
+        background: transparent;
+        border-color: transparent;
+        cursor: default;
+        pointer-events: none;
+    }
+    
+/* ========= Etats ========= */
+    .week-strip .day.planned{
+        background: var(--selectedBack);
+        color:var(--panelBord);
+        border-color: var(--backGrayB);
+    }
+    .week-strip .day.has-session{
+        background: var(--black);
+        color:#fff;
+        border-color: var(--black);
+    }
+    .week-strip .day.selected{
+        /* Focusé */
+        background: var(--focusedBack);
+        border-color: var(--focusedBord);
+        font-weight: var(--fw-strong);
+        outline: 2px solid var(--emphase);
+        outline-offset: 2px;
+    }
+    
+     .day-cell.planned{     
+        background: var(--selectedBack);
+        color:var(--panelBord);
+        border-color: var(--backGrayB);
+    }
+    .day-cell.has-session{ 
+        background: var(--selectedBack);
+        color:var(--panelBord);
+        border-color: var(--backGrayB);
+    }
+    .day-cell.selected{
+        /* Focusé */
+        background: var(--focusedBack);
+        border-color: var(--focusedBord);
+        font-weight: var(--fw-strong);
+        outline: 2px solid var(--emphase);
+        outline-offset: 2px;
+        
 /* =========================================================
    8) Liste de série (séance & routine)
    ========================================================= */
