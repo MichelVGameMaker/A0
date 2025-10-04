@@ -113,8 +113,10 @@
         }
         container.innerHTML = '';
 
+        const normalizedStart = A.startOfWeek(startDate);
+
         for (let index = 0; index < DAYS_PER_PAGE; index += 1) {
-            const date = A.addDays(startDate, index);
+            const date = A.addDays(normalizedStart, index);
             const key = A.ymd(date);
             const isSelected = A.activeDate && A.ymd(date) === A.ymd(A.activeDate);
             const hasSession = virtualState.sessionDates.has(key);
@@ -184,21 +186,22 @@
         const baseAnchor = A.startOfWeek(
             A.currentAnchor || virtualState.centerStart || virtualState.today || A.today()
         );
+        virtualState.centerStart = A.startOfWeek(virtualState.centerStart || baseAnchor);
 
         if (direction > 0) {
             const [prev, center, next] = virtualState.pages;
             weekStrip.appendChild(prev);
             virtualState.pages = [center, next, prev];
-            const nextStart = A.addDays(virtualState.centerStart || baseAnchor, DAYS_PER_PAGE);
-            virtualState.centerStart = nextStart;
-            A.currentAnchor = nextStart;
+            const nextStart = A.addDays(virtualState.centerStart, DAYS_PER_PAGE);
+            virtualState.centerStart = A.startOfWeek(nextStart);
+            A.currentAnchor = virtualState.centerStart;
         } else {
             const [prev, center, next] = virtualState.pages;
             weekStrip.insertBefore(next, prev);
             virtualState.pages = [next, prev, center];
-            const prevStart = A.addDays(virtualState.centerStart || baseAnchor, -DAYS_PER_PAGE);
-            virtualState.centerStart = prevStart;
-            A.currentAnchor = prevStart;
+            const prevStart = A.addDays(virtualState.centerStart, -DAYS_PER_PAGE);
+            virtualState.centerStart = A.startOfWeek(prevStart);
+            A.currentAnchor = virtualState.centerStart;
         }
 
         renderPage(virtualState.pages[0], A.addDays(virtualState.centerStart, -DAYS_PER_PAGE));
