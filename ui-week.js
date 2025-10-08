@@ -127,7 +127,7 @@
 
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'day';
+            button.className = 'day-cell';
             button.innerHTML = `<span class="day-weekday">${weekdayLabel}</span><span class="day-number">${dayLabel}</span>`;
 
             if (hasSession) {
