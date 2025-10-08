@@ -2,7 +2,11 @@
    0) Variables & fondations
    ========================================================= */
 :root{
-  /* --- Couleurs (tes variables) --- */
+  /* --- Couleurs --- */
+  --emphase:       #0080FF;
+  --red:           #8b0000;
+  --green:         #06402b;
+  /* --- Styles --- */
   --panelBack:     #ffffff;
   --panelBord:     #f8f8f8;
   --blocBord:      #e0e0e0;
@@ -12,15 +16,15 @@
   --selectedColor: #000000;
   --bodyBack:      #8b0000;
   --selectedBack:  #d4d4d4;
-  --selectedBord:  #ccc;
-  --focusedBack:   #bfbfbf;
-  --focusedBord:   #0080FF;
+  --selectedBord:  var(--emphase);
+  --focusedBack:   var(--emphase);
+  --focusedColor:  #ffffff;
+  --focusedBord:   var(--emphase);
   --clickableBack: #e8e8e8;
-  --clickableBord: #e0e0e0;
+  --clickableBord: #f8f8f8;
+  --nonClickableBord: var(--emphase);
   --black:         #000000;
-  --emphase:       #0080FF;
-  --red:           #8b0000;
-  --green:         #06402b;
+
 
   /* --- Mesures unifiées --- */
   --control-h: 44px;       /* hauteur unique pour TOUT (inputs, selects, tags, boutons, etc.) */
@@ -152,6 +156,8 @@ header .title{ font-weight: var(--fw-strong); }
     padding:var(--gap);
     max-width:520px;
     width:92vw;
+            position:fixed;
+        bottom: 0;
 }
 .modal::backdrop{ 
     background: rgba(0,0,0,.25); 
@@ -161,7 +167,6 @@ header .title{ font-weight: var(--fw-strong); }
     padding: var(--pad-y) var(--pad-x);
     border-bottom:1px solid var(--panelBord);
 }
-
 /* =========================================================
    5) Timer
    ========================================================= */
@@ -183,8 +188,10 @@ header .title{ font-weight: var(--fw-strong); }
    6) Textes  & Images
    ========================================================= */
 /* Textes */
-.lbl{ color: var(--labelColor); font-weight: var(--fw-strong); }
+.lbl{     color: var(--labelColor); font-weight: var(--fw-strong); }
+.element{ font-weight: var(--fw-strong); }
 .details{ color: var(--labelColor); font-weight: var(--fw-light); }
+.centered{ text-align:center; }
 .listing{ margin: 0; font-weight: var(--fw-strong); padding-left: 0; list-style-position: inside; }
 
 /* Grosse image pour l'exécution */
@@ -248,6 +255,7 @@ image_big{
     /* Texte vide */
     color: var(--emptyColor);
     font-weight: var(--fw-light);
+    font-size: var(--fs-base);
 }
 textarea{
     resize: vertical;
@@ -344,13 +352,11 @@ textarea:focus{
 .btn:active{ transform: scale(.9); }
 /* En-tête RETOUR */
 .btn.ghost{
-  border-color: var(--selectedBord);
-  color: var(--selectedBord);
+    border-color: var(--black);
 }
 
 /* CTA */
 .btn.primary{
-   border-color: var(--emphase);
    color: var(--emphase);
 }
 
@@ -576,7 +582,6 @@ textarea:focus{
 .exercise-hero-placeholder{ object-fit:contain; }
 
 
-
 /* =========================================================
    6) Listes / Filtres (écran Bibliothèque)
    ========================================================= */
@@ -609,9 +614,12 @@ textarea:focus{
       margin-bottom:12px;
     }
     .week-strip{
-      display:flex 1;
-	  gap:var(--gap); overflow-x:auto;
-      padding-bottom:8px; margin-bottom:0;
+      display:flex;
+      flex:      1;
+	   gap:var(--gap); 
+      overflow-x:auto;
+      padding-bottom:8px; 
+      margin-bottom:0;
       border-bottom:1px dashed var(--panelBord);
       -webkit-overflow-scrolling:touch;
       scrollbar-width:none;
@@ -623,14 +631,6 @@ textarea:focus{
       gap:var(--gap);
       flex:0 0 100%; width:100%;
     }   
-/* ========= Modale Mois ========= */
-    #dlgCalendar.modal{
-        margin:0;
-        position:fixed;
-        left:50%;
-        transform:translateX(-50%);
-        bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0) + 12px);
-    }
     
 /* ========= Selecteur Mois - Contenant ========= */
     .month-grid{ 
@@ -639,10 +639,8 @@ textarea:focus{
 	}
 
 /* ========= Celulles - Contenu ========= */
-    .dow{ text-align:center; color: var(--selectedBord); font-weight: var(--fw-strong); }
     .week-strip .day span{ display:block; }
     .week-strip .day-weekday{ font-size: var(--fs-small); text-transform:capitalize; }
-    }
     /* Day cell use Tag style */
     .day-cell{
         /* Dimension pour tous les éléments */
@@ -659,7 +657,6 @@ textarea:focus{
         -webkit-user-select: none;
         -webkit-tap-highlight-color: transparent;
         /* Contenu */
-        color: var(--selectedBord);
         text-align:center;
     }
     .day-cell.placeholder{
@@ -670,24 +667,25 @@ textarea:focus{
     }
     
 /* ========= Etats ========= */
-     .day-cell.planned{     
-        background: var(--selectedBack);
-        color:var(--selectedColor);
-        border-color: var(--backGrayB);
+    .day-cell.planned{
+        background:   var(--selectedBack);
+        color:        var(--selectedColor);
+        border-color: var(--selectedBord);
     }
-    .day-cell.has-session{ 
-        background: var(--selectedBack);
-        color:var(--selectedColor);
-        border-color: var(--selectedBack);
+    .day-cell.has-session{
+        background:   var(--selectedBack);
+        color:        var(--selectedColor);
+        border-color: var(--selectedBord);
     }
     .day-cell.selected{
         /* Focusé */
-        background: var(--focusedBack);
+        background:   var(--focusedBack);
         border-color: var(--focusedBord);
-        font-weight: var(--fw-strong);
-        outline: 2px solid var(--emphase);
+        font-weight:  var(--fw-strong);
+        outline: 2px solid var(--selectedBord);
         outline-offset: 2px;
-        
+    }
+
 /* =========================================================
    8) Liste de série (séance & routine)
    ========================================================= */
@@ -697,7 +695,7 @@ textarea:focus{
     gap:12px;
     margin:16px 0; 
 }
-.element{ font-weight: var(--fw-strong); }
+
 
 /* Grille des séries (3 par ligne) */
 .set-grid{

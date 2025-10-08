@@ -40,7 +40,7 @@
 
         ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach((label) => {
             const header = document.createElement('div');
-            header.className = 'dow';
+            header.className   = 'details centered';
             header.textContent = label;
             grid.appendChild(header);
         });
