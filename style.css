@@ -27,6 +27,7 @@
   --radius:    12px;       /* border-radius unique */
   --pad-x:     12px;       /* padding horizontal par défaut */
   --pad-y:     10px;       /* padding vertical par défaut */
+  --pad-tight: 4px;        /* padding pour les éléments denses */
   --gap:       6px;        /* marge/gap par défaut entre éléments */
 
   /* --- Typo unifiée --- */
@@ -611,20 +612,26 @@ textarea:focus{
       flex:0 0 100%; width:100%;
     }
     .week-strip .day{
-      height: var(--control-h);
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      gap:4px;
-      padding:6px 4px;
-      text-align:center; white-space:normal; line-height:1.1;
-      border:1px solid var(--panelBord);
-      border-radius: var(--radius);
-      background: var(--panelBord);
-      font-weight: var(--fw-strong);
+        /* Dimension pour tous les éléments */
+        height: var(--control-h);  
+        padding: var(--pad-tight);
+        border-radius: var(--radius);	
+        /* Cliquable */
+        border: 1px solid var(--clickableBord);
+        background: var(--clickableBack); 
+        cursor: pointer;
+        touch-action: manipulation;       /* coupe le geste double-tap=zoom */  
+        /* Pas d'input*/
         user-select:none;
         -webkit-user-select: none;
         -webkit-tap-highlight-color: transparent;
-      cursor:pointer;
-      transition: transform .06s ease;
+        /* Contenu */
+        color: var(--selectedBord);
+        text-align:center;
+		
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:4px;
+     white-space:normal; line-height:1.1;
     }
     .week-strip .day span{ display:block; }
     .week-strip .day-weekday{ font-size: var(--fs-small); text-transform:capitalize; }
@@ -649,7 +656,7 @@ textarea:focus{
     .day-cell{
         /* Dimension pour tous les éléments */
         height: var(--control-h);  
-        padding: var(--pad-Y) var(--pad-x);
+        padding: var(--pad-tight);
         border-radius: var(--radius);
         /* Cliquable */
         border: 1px solid var(--clickableBord);
