@@ -601,7 +601,7 @@ textarea:focus{
    7) Calendriers
    ========================================================= */
    
-/* ========= Selecteur Semaine ========= */
+/* ========= Selecteur Semaine - Contenant ========= */
     .week-strip-wrapper{
       display:flex; 
       align-items:center; 
@@ -609,7 +609,8 @@ textarea:focus{
       margin-bottom:12px;
     }
     .week-strip{
-      display:flex; gap:var(--gap); overflow-x:auto;
+      display:flex 1;
+	  gap:var(--gap); overflow-x:auto;
       padding-bottom:8px; margin-bottom:0;
       border-bottom:1px dashed var(--panelBord);
       -webkit-overflow-scrolling:touch;
@@ -617,40 +618,11 @@ textarea:focus{
     }
     .week-strip::-webkit-scrollbar{ display:none; }
     
-    .week-strip-wrapper .week-strip{ flex:1; }
     .week-strip .week-page{
       display:grid; grid-template-columns:repeat(7,minmax(0,1fr));
       gap:var(--gap);
       flex:0 0 100%; width:100%;
-    }
-    .week-strip .day{
-        /* Dimension pour tous les éléments */
-        height: var(--control-h);  
-        padding: var(--pad-tight);
-        border-radius: var(--radius);	
-        /* Cliquable */
-        border: 1px solid var(--clickableBord);
-        background: var(--clickableBack); 
-        cursor: pointer;
-        touch-action: manipulation;       /* coupe le geste double-tap=zoom */  
-        /* Pas d'input*/
-        user-select:none;
-        -webkit-user-select: none;
-        -webkit-tap-highlight-color: transparent;
-        /* Contenu */
-        color: var(--selectedBord);
-        text-align:center;
-		
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      gap:4px;
-     white-space:normal; line-height:1.1;
-    }
-    .week-strip .day span{ display:block; }
-    .week-strip .day-weekday{ font-size: var(--fs-small); text-transform:capitalize; }
-    .week-strip .day-number{ font-size:1.1em; }
-    .week-strip .day:active{ transform: scale(.98); }
-    }
-    
+    }   
 /* ========= Modale Mois ========= */
     #dlgCalendar.modal{
         margin:0;
@@ -660,10 +632,17 @@ textarea:focus{
         bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0) + 12px);
     }
     
-/* ========= Selecteur Mois ========= */
-    .month-grid{ display:grid; grid-template-columns: repeat(7,1fr); gap:6px; }
+/* ========= Selecteur Mois - Contenant ========= */
+    .month-grid{ 
+		display:grid; grid-template-columns: repeat(7,1fr); 
+		gap:var(--gap); 
+	}
+
+/* ========= Celulles - Contenu ========= */
     .dow{ text-align:center; color: var(--selectedBord); font-weight: var(--fw-strong); }
-    
+    .week-strip .day span{ display:block; }
+    .week-strip .day-weekday{ font-size: var(--fs-small); text-transform:capitalize; }
+    }
     /* Day cell use Tag style */
     .day-cell{
         /* Dimension pour tous les éléments */
@@ -683,7 +662,6 @@ textarea:focus{
         color: var(--selectedBord);
         text-align:center;
     }
-    
     .day-cell.placeholder{
         background: transparent;
         border-color: transparent;
@@ -692,34 +670,15 @@ textarea:focus{
     }
     
 /* ========= Etats ========= */
-    .week-strip .day.planned{
-        background: var(--selectedBack);
-        color:var(--panelBord);
-        border-color: var(--backGrayB);
-    }
-    .week-strip .day.has-session{
-        background: var(--black);
-        color:#fff;
-        border-color: var(--black);
-    }
-    .week-strip .day.selected{
-        /* Focusé */
-        background: var(--focusedBack);
-        border-color: var(--focusedBord);
-        font-weight: var(--fw-strong);
-        outline: 2px solid var(--emphase);
-        outline-offset: 2px;
-    }
-    
      .day-cell.planned{     
         background: var(--selectedBack);
-        color:var(--panelBord);
+        color:var(--selectedColor);
         border-color: var(--backGrayB);
     }
     .day-cell.has-session{ 
         background: var(--selectedBack);
-        color:var(--panelBord);
-        border-color: var(--backGrayB);
+        color:var(--selectedColor);
+        border-color: var(--selectedBack);
     }
     .day-cell.selected{
         /* Focusé */
