@@ -1,6 +1,10 @@
 // ui-routine-edit.js — édition d'une routine (liste + méta)
 (() => {
     const A = window.App;
+    const listCard = A?.components?.listCard;
+    if (!listCard) {
+        throw new Error('ui-routine-edit: composant listCard manquant.');
+    }
 
     /* STATE */
     const ICONS = ['🏋️', '💪', '🤸', '🏃', '🧘', '🚴', '🥊', '🏊', '🧗', '⚽'];
@@ -256,31 +260,16 @@
     }
 
     function renderMoveCard(move) {
-        const card = document.createElement('article');
-        card.className = 'exercise-card clickable';
+        const structure = listCard.createStructure({ clickable: true, role: 'button' });
+        const { card, start, body, end } = structure;
         card.dataset.moveId = move.id;
 
-        const row = document.createElement('div');
-        row.className = 'exercise-card-row';
+        const handle = listCard.createHandle({
+            interactive: true,
+            ariaLabel: "Réordonner l'exercice"
+        });
+        start.insertBefore(handle, body);
 
-        const left = document.createElement('div');
-        left.className = 'exercise-card-left';
-
-        const handle = document.createElement('button');
-        handle.type = 'button';
-        handle.className = 'session-card-handle';
-        handle.setAttribute('aria-label', 'Réordonner l\'exercice');
-        const grip = document.createElement('span');
-        grip.className = 'session-card-grip';
-        for (let index = 0; index < 3; index += 1) {
-            const dot = document.createElement('span');
-            dot.className = 'session-card-grip-dot';
-            grip.appendChild(dot);
-        }
-        handle.appendChild(grip);
-
-        const textWrapper = document.createElement('div');
-        textWrapper.className = 'exercise-card-text';
         const name = document.createElement('div');
         name.className = 'element';
         name.textContent = move.exerciseName || 'Exercice';
@@ -341,22 +330,11 @@
             line.appendChild(emptyBlock);
             setsWrapper.appendChild(line);
         }
-        textWrapper.append(name, setsWrapper);
+        body.append(name, setsWrapper);
 
-        left.append(handle, textWrapper);
+        const pencil = listCard.createIcon('✏️');
+        end.appendChild(pencil);
 
-        const right = document.createElement('div');
-        right.className = 'exercise-card-right';
-        const pencil = document.createElement('span');
-        pencil.className = 'session-card-pencil';
-        pencil.setAttribute('aria-hidden', 'true');
-        pencil.textContent = '✏️';
-        right.appendChild(pencil);
-
-        row.append(left, right);
-        card.appendChild(row);
-
-        card.setAttribute('role', 'button');
         card.setAttribute('aria-label', `${move.exerciseName || 'Exercice'} — éditer`);
         card.addEventListener('click', () => {
             A.openRoutineMoveEdit({

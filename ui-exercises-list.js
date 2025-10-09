@@ -1,6 +1,10 @@
 // ui-exercises-list.js — 3.1.1 Bibliothèque d’exercices (liste + filtres + lazy images)
 (() => {
     const A = window.App;
+    const listCard = A?.components?.listCard;
+    if (!listCard) {
+        throw new Error('ui-exercises-list: composant listCard manquant.');
+    }
 
     /* STATE */
     const refs = {};
@@ -254,17 +258,9 @@
     }
 
     function renderItem(exercise) {
-        const card = document.createElement('article');
-        card.className = 'exercise-card';
+        const structure = listCard.createStructure();
+        const { card, start, body, end } = structure;
         card.setAttribute('role', 'button');
-
-        const row = document.createElement('div');
-        row.className = 'exercise-card-row';
-
-        const left = document.createElement('div');
-        left.className = 'exercise-card-left';
-        const right = document.createElement('div');
-        right.className = 'exercise-card-right';
 
         const image = document.createElement('img');
         image.alt = exercise.name || 'exercice';
@@ -279,8 +275,6 @@
             image.classList.add('exercise-thumb-placeholder');
         }
 
-        const textWrapper = document.createElement('div');
-        textWrapper.className = 'exercise-card-text';
         const name = document.createElement('div');
         name.className = 'element';
         name.textContent = exercise.name || '—';
@@ -293,9 +287,9 @@
             : [];
         const muscles = [target, ...secondary].filter(Boolean);
         details.textContent = `${equipmentDetails} • ${muscles.join(', ')}`;
-        textWrapper.append(name, details);
 
-        left.append(image, textWrapper);
+        start.insertBefore(image, body);
+        body.append(name, details);
 
         if (state.listMode === 'add') {
             let checkbox = null;
@@ -339,7 +333,7 @@
                     syncSelection(checkbox.checked);
                 }
             });
-            right.appendChild(checkbox);
+            end.appendChild(checkbox);
 
             image.classList.add('clickable');
             image.addEventListener('click', (event) => {
@@ -361,11 +355,9 @@
                 event.stopPropagation();
                 A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
             });
-            right.appendChild(eyeButton);
+            end.appendChild(eyeButton);
         }
 
-        row.append(left, right);
-        card.appendChild(row);
         return card;
     }
 
