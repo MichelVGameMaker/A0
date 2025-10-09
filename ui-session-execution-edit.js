@@ -1,4 +1,4 @@
-// ui-exec-edit.js — édition d'une exécution de séance (séries + timer)
+// ui-session-execution-edit.js — édition d'une exécution de séance (séries + timer)
 (() => {
     const A = window.App;
 
@@ -136,7 +136,7 @@
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
-            throw new Error(`ui-exec-edit.js: références manquantes (${missing.join(', ')})`);
+            throw new Error(`ui-session-execution-edit.js: références manquantes (${missing.join(', ')})`);
         }
         return refs;
     }
@@ -457,14 +457,14 @@
                 await A.renderWeek();
             }
         } catch (error) {
-            console.warn('ui-exec-edit.js: renderWeek a échoué', error);
+            console.warn('ui-session-execution-edit.js: renderWeek a échoué', error);
         }
         try {
             if (typeof A.renderSession === 'function') {
                 await A.renderSession();
             }
         } catch (error) {
-            console.warn('ui-exec-edit.js: renderSession a échoué', error);
+            console.warn('ui-session-execution-edit.js: renderSession a échoué', error);
         }
     }
 

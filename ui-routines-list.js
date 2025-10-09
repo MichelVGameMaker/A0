@@ -1,4 +1,4 @@
-// ui-routine-list.js — liste des routines
+// ui-routines-list.js — liste des routines
 (() => {
     const A = window.App;
 
@@ -61,7 +61,7 @@
         const required = ['screenRoutineList', 'routineCatalog'];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
-            throw new Error(`ui-routine-list.js: références manquantes (${missing.join(', ')})`);
+            throw new Error(`ui-routines-list.js: références manquantes (${missing.join(', ')})`);
         }
         return refs;
     }

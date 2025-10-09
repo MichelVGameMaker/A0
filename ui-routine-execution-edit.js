@@ -1,4 +1,4 @@
-// ui-routine-move-edit.js — édition des séries prévues d'un exercice de routine
+// ui-routine-execution-edit.js — édition des séries prévues d'un exercice de routine
 (() => {
     const A = window.App;
 
@@ -81,7 +81,7 @@
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
-            throw new Error(`ui-routine-move-edit.js: références manquantes (${missing.join(', ')})`);
+            throw new Error(`ui-routine-execution-edit.js: références manquantes (${missing.join(', ')})`);
         }
         return refs;
     }

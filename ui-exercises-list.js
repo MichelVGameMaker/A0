@@ -1,4 +1,4 @@
-// ui-exercices_list.js — 3.1.1 Bibliothèque d’exercices (liste + filtres + lazy images)
+// ui-exercises-list.js — 3.1.1 Bibliothèque d’exercices (liste + filtres + lazy images)
 (() => {
     const A = window.App;
 
@@ -163,7 +163,7 @@
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
-            throw new Error(`ui-exercises_list.js: références manquantes (${missing.join(', ')})`);
+            throw new Error(`ui-exercises-list.js: références manquantes (${missing.join(', ')})`);
         }
         return refs;
     }
