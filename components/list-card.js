@@ -80,7 +80,7 @@
     function createHandle(options = {}) {
         const { interactive = false, ariaLabel, className } = options;
         const element = document.createElement(interactive ? 'button' : 'div');
-        element.className = 'session-card-handle ' + CLASS_HANDLE;
+        element.className = CLASS_HANDLE;
         applyClassList(element, className);
         if (interactive) {
             element.type = 'button';
@@ -92,10 +92,10 @@
         }
 
         const grip = document.createElement('span');
-        grip.className = 'session-card-grip ' + CLASS_GRIP;
+        grip.className = CLASS_GRIP;
         for (let index = 0; index < 3; index += 1) {
             const dot = document.createElement('span');
-            dot.className = 'session-card-grip-dot ' + CLASS_GRIP_DOT;
+            dot.className = CLASS_GRIP_DOT;
             grip.appendChild(dot);
         }
         element.appendChild(grip);
@@ -105,7 +105,7 @@
     function createIcon(symbol, options = {}) {
         const { ariaHidden = true, className } = options;
         const icon = document.createElement('span');
-        icon.className = 'session-card-pencil ' + CLASS_ICON;
+        icon.className = CLASS_ICON;
         applyClassList(icon, className);
         if (ariaHidden) {
             icon.setAttribute('aria-hidden', 'true');
