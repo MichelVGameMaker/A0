@@ -545,18 +545,11 @@
         if (value == null || value === '') {
             return '—';
         }
-        const cssClass = getRpeClass(value);
-        return `<span class="rpe-chip ${cssClass}">${value}</span>`;
-    }
-
-    function getRpeClass(value) {
-        const numeric = Number.parseInt(value, 10);
-        if (numeric <= 5) return 'rpe-5';
-        if (numeric === 6) return 'rpe-6';
-        if (numeric === 7) return 'rpe-7';
-        if (numeric === 8) return 'rpe-8';
-        if (numeric === 9) return 'rpe-9';
-        return 'rpe-10';
+        const numeric = clampRpe(value);
+        if (numeric == null) {
+            return '—';
+        }
+        return `<span class="rpe rpe-chip" data-rpe="${numeric}">${value}</span>`;
     }
 
     function uid(prefix) {
