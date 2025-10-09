@@ -57,7 +57,12 @@
 
 
 /* Reset simple */
-*{ box-sizing:border-box; }
+*{
+  box-sizing:border-box;
+  user-select:none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
 html {
    height:100%;
     font-size: var(--fs-base);
@@ -112,9 +117,6 @@ header{
     padding: var(--pad-y) var(--pad-x);
     background: var(--panelBack);
     border-bottom: 2px solid var(--panelBord);
-    user-select:none;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
 }
 
 header .title{ font-weight: var(--fw-strong); }
@@ -129,9 +131,6 @@ header .title{ font-weight: var(--fw-strong); }
     display:flex; align-items:center; justify-content:space-between;
     background: var(--panelBack);
     border-top: 2px solid var(--panelBord);
-    user-select:none;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
 }
 .tab{
     flex: 1 1 25%;
@@ -204,10 +203,6 @@ image_big{
     /* Pas cliquable */
     border:1px solid var(--blocBord);
     touch-action: manipulation;       /* coupe le geste double-tap=zoom */
-    /* Pas d'input */
-    user-select:none;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
     /* Pas de drag n drop*/
     -webkit-user-drag: none;
     user-drag: none;
@@ -251,7 +246,8 @@ image_big{
     background: var(--clickableBack); 
     cursor: pointer;
     touch-action: manipulation;       /* coupe le geste double-tap=zoom */
-    -webkit-tap-highlight-color: transparent; 
+    user-select:none;
+    -webkit-user-select: none;
     /* Texte vide */
     color: var(--emptyColor);
     font-weight: var(--fw-light);
@@ -298,11 +294,6 @@ textarea:focus{
     background: var(--clickableBack); 
     cursor: pointer;
     touch-action: manipulation;       /* coupe le geste double-tap=zoom */
-    /* Pas d'input*/
-    user-select:none;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    
   font: inherit;
   display:inline-flex; align-items:center; justify-content:center;
   flex: 0 0 var(--tag-width);
@@ -344,10 +335,6 @@ textarea:focus{
   display:inline-flex; align-items:center; justify-content:center;   
   color: var(--black);
   font-weight: var(--fw-strong);
-    /* Pas d'input*/
-    user-select:none;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
 }
 .btn:active{ transform: scale(.9); }
 /* En-tête RETOUR */
@@ -379,12 +366,11 @@ textarea:focus{
 }
 
 /* Stepper vertical */
-.vstepper{ 
-	display:flex; 
-	flex-direction:column; 
-	gap:4px;
-	touch-action: manipulation;       /* coupe le geste double-tap=zoom */
-    -webkit-tap-highlight-color: transparent; 
+.vstepper{
+        display:flex;
+        flex-direction:column;
+        gap:4px;
+        touch-action: manipulation;       /* coupe le geste double-tap=zoom */
 }
 .vstepper .btn{ min-height:32px; line-height:1; }
 
@@ -431,18 +417,6 @@ textarea:focus{
   display:flex;
   align-items:center;
   justify-content:center;
-}
-.list-card__handle,
-.list-card__handle *,
-.list-card__grip,
-.list-card__grip *,
-.session-card-sets,
-.session-card-sets *,
-.list-card__icon,
-.list-card__icon *{
-    user-select:none;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
 }
 .list-card__handle:focus-visible{
   outline:2px solid var(--black);
@@ -550,7 +524,7 @@ textarea:focus{
     background: var(--selectedBack);
     color: var(--selectedColor);
 }
-.exercise-card.clickable{ cursor:pointer; user-select:none; border: var(--black);}
+.exercise-card.clickable{ cursor:pointer; border: var(--black);}
 
 .exercise-card-thumb.clickable{
   cursor: pointer;
@@ -647,10 +621,6 @@ textarea:focus{
         background: var(--clickableBack); 
         cursor: pointer;
         touch-action: manipulation;       /* coupe le geste double-tap=zoom */    
-        /* Pas d'input*/
-        user-select:none;
-        -webkit-user-select: none;
-        -webkit-tap-highlight-color: transparent;
         /* Contenu */
         text-align:center;
     }
