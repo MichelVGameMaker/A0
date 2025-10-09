@@ -420,7 +420,6 @@ textarea:focus{
   text-overflow:ellipsis;
   white-space:nowrap;
 }
-.session-card-handle,
 .list-card__handle{
   border:none;
   background:none;
@@ -433,32 +432,25 @@ textarea:focus{
   align-items:center;
   justify-content:center;
 }
-.session-card-handle,
-.session-card-handle *,
 .list-card__handle,
 .list-card__handle *,
-.session-card-grip,
-.session-card-grip *,
 .list-card__grip,
 .list-card__grip *,
 .session-card-sets,
 .session-card-sets *,
-.session-card-pencil,
-.session-card-pencil *{
+.list-card__icon,
+.list-card__icon *{
     user-select:none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
 }
-.session-card-handle:focus-visible,
 .list-card__handle:focus-visible{
   outline:2px solid var(--black);
   outline-offset:2px;
 }
-.session-card-handle:active,
 .list-card__handle:active{
   cursor:grabbing;
 }
-.session-card-grip,
 .list-card__grip{
   display:flex;
   flex-direction:column;
@@ -466,7 +458,6 @@ textarea:focus{
   align-items:center;
   justify-content:center;
 }
-.session-card-grip-dot,
 .list-card__grip-dot{
   width:4px;
   height:4px;
@@ -533,7 +524,7 @@ textarea:focus{
 .rpe-9{ background:#d55; }
 .rpe-10{ background:#a00; }
 
-.session-card-pencil{
+.list-card__icon{
   font-size:20px;
   line-height:1;
 }
