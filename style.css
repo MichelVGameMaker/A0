@@ -246,8 +246,8 @@ image_big{
     background: var(--clickableBack); 
     cursor: pointer;
     touch-action: manipulation;       /* coupe le geste double-tap=zoom */
-    user-select:none;
-    -webkit-user-select: none;
+    user-select: text;
+    -webkit-user-select: text;
     /* Texte vide */
     color: var(--emptyColor);
     font-weight: var(--fw-light);
