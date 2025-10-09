@@ -443,8 +443,6 @@ textarea:focus{
 .list-card__grip *,
 .session-card-sets,
 .session-card-sets *,
-.session-card-text,
-.session-card-text *,
 .session-card-pencil,
 .session-card-pencil *{
     user-select:none;
@@ -608,16 +606,6 @@ textarea:focus{
   padding: var(--pad-y) var(--pad-x);
 }
 
-/* Placeholders d’images */
-.exercise-row{
-  display:grid; grid-template-columns: 64px 1fr auto;
-  gap:10px; align-items:center;
-  padding:8px 0; border-bottom:1px solid var(--panelBord);
-}
-.exercise-row img{
-  width:64px; height:64px; object-fit:cover; border-radius:8px;
-}
-
 /* =========================================================
    7) Calendriers
    ========================================================= */
@@ -718,15 +706,6 @@ textarea:focus{
     display:grid; grid-template-columns: repeat(3,1fr);
     gap: var(--gap); margin-top: var(--gap);
 }
-.set-cell{
-    border:1px solid var(--panelBord);
-    border-radius: var(--radius);
-    padding: 8px 10px;
-    text-align:center;
-    font-size: var(--fs-small);
-}
-.set-cell sup{ font-size:.7em; color: var(--selectedBord); }
-.set-cell .rpe{ font-size: var(--fs-rpe); }   /* 3.RPE a sa propre taille */
 
 /* État “vide” */
 .empty{
@@ -1021,11 +1000,6 @@ input[type="number"]{ -moz-appearance:textfield; }
     width: 100%;
     height: 240px;
     display: block;
-}
-
-.stats-chart-svg .stats-axis-label {
-    font-size: 10px;
-    fill: var(--selectedBord);
 }
 
 .stats-chart-svg .stats-axis-tick {
