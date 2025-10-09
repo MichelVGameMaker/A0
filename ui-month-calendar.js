@@ -1,4 +1,4 @@
-// ui-calendar.js — modale "Calendrier" (navigation mois + swipe)
+// ui-month-calendar.js — modale "Calendrier" (navigation mois + swipe)
 (() => {
     const A = window.App;
 
@@ -133,7 +133,7 @@
         const required = ['dlgCalendar', 'bigCalendar'];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
-            throw new Error(`ui-calendar.js: références manquantes (${missing.join(', ')})`);
+            throw new Error(`ui-month-calendar.js: références manquantes (${missing.join(', ')})`);
         }
         return refs;
     }

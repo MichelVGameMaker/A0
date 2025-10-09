@@ -1,4 +1,4 @@
-// ui-week.js — barre semaine (7 jours)
+// ui-week-strip.js — barre semaine (7 jours)
 (() => {
     const A = window.App;
 
@@ -77,7 +77,7 @@
     function assertRefs() {
         ensureRefs();
         if (!refs.weekStrip) {
-            throw new Error('ui-week.js: référence weekStrip manquante');
+            throw new Error('ui-week-strip.js: référence weekStrip manquante');
         }
         return refs;
     }
