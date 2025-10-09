@@ -1,6 +1,10 @@
 // ui-stats.js — écrans de statistiques des exercices
 (() => {
     const A = window.App;
+    const listCard = A?.components?.listCard;
+    if (!listCard) {
+        throw new Error('ui-stats: composant listCard manquant.');
+    }
 
     /* STATE */
     const refs = {};
@@ -274,20 +278,12 @@
     }
 
     function renderExerciseCard(exercise) {
-        const card = document.createElement('article');
-        card.className = 'exercise-card clickable';
-        card.setAttribute('role', 'button');
+        const structure = listCard.createStructure({ clickable: true, role: 'button' });
+        const { card, start, body, end } = structure;
         card.setAttribute('aria-label', `${exercise?.name || 'Exercice'} — voir les statistiques`);
 
-        const row = document.createElement('div');
-        row.className = 'exercise-card-row';
-
-        const left = document.createElement('div');
-        left.className = 'exercise-card-left';
-        left.appendChild(renderGrip());
-
-        const textWrapper = document.createElement('div');
-        textWrapper.className = 'exercise-card-text';
+        const handle = listCard.createHandle();
+        start.insertBefore(handle, body);
 
         const title = document.createElement('div');
         title.className = 'element';
@@ -297,19 +293,10 @@
         details.className = 'details';
         details.textContent = buildExerciseDetails(exercise);
 
-        textWrapper.append(title, details);
-        left.appendChild(textWrapper);
+        body.append(title, details);
 
-        const right = document.createElement('div');
-        right.className = 'exercise-card-right';
-        const chevron = document.createElement('span');
-        chevron.className = 'session-card-pencil';
-        chevron.setAttribute('aria-hidden', 'true');
-        chevron.textContent = '▶︎';
-        right.appendChild(chevron);
-
-        row.append(left, right);
-        card.appendChild(row);
+        const chevron = listCard.createIcon('▶︎');
+        end.appendChild(chevron);
 
         card.addEventListener('click', () => {
             A.openExerciseStats(exercise?.id);
@@ -746,21 +733,6 @@
         now.setHours(0, 0, 0, 0);
         const cutoff = new Date(now.getTime() - (range.days - 1) * DAY_MS);
         return cutoff;
-    }
-
-    function renderGrip() {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'session-card-handle';
-        wrapper.setAttribute('aria-hidden', 'true');
-        const grip = document.createElement('span');
-        grip.className = 'session-card-grip';
-        for (let index = 0; index < 3; index += 1) {
-            const dot = document.createElement('span');
-            dot.className = 'session-card-grip-dot';
-            grip.appendChild(dot);
-        }
-        wrapper.appendChild(grip);
-        return wrapper;
     }
 
     function computeMetrics(sets) {

@@ -1,6 +1,10 @@
 // ui-routines-list.js — liste des routines
 (() => {
     const A = window.App;
+    const listCard = A?.components?.listCard;
+    if (!listCard) {
+        throw new Error('ui-routines-list: composant listCard manquant.');
+    }
 
     /* STATE */
     const refs = {};
@@ -108,20 +112,13 @@
     }
 
     function renderRoutineCard(routine) {
-        const card = document.createElement('article');
-        card.className = 'exercise-card clickable';
-        card.setAttribute('role', 'button');
+        const structure = listCard.createStructure({ clickable: true, role: 'button' });
+        const { card, start, body, end } = structure;
         card.setAttribute('aria-label', `${routine?.name || 'Routine'} — éditer`);
 
-        const row = document.createElement('div');
-        row.className = 'exercise-card-row';
+        const handle = listCard.createHandle();
+        start.insertBefore(handle, body);
 
-        const left = document.createElement('div');
-        left.className = 'exercise-card-left';
-        left.appendChild(renderGrip());
-
-        const textWrapper = document.createElement('div');
-        textWrapper.className = 'exercise-card-text';
         const title = document.createElement('div');
         title.className = 'element';
         title.textContent = routine?.name || 'Routine';
@@ -130,19 +127,10 @@
         details.className = 'details';
         details.textContent = buildDetails(routine);
 
-        textWrapper.append(title, details);
-        left.appendChild(textWrapper);
+        body.append(title, details);
 
-        const right = document.createElement('div');
-        right.className = 'exercise-card-right';
-        const pencil = document.createElement('span');
-        pencil.className = 'session-card-pencil';
-        pencil.setAttribute('aria-hidden', 'true');
-        pencil.textContent = '✏️';
-        right.appendChild(pencil);
-
-        row.append(left, right);
-        card.appendChild(row);
+        const pencil = listCard.createIcon('✏️');
+        end.appendChild(pencil);
 
         card.addEventListener('click', () => {
             highlightSettingsTab();
@@ -150,21 +138,6 @@
         });
 
         return card;
-    }
-
-    function renderGrip() {
-        const gripWrapper = document.createElement('div');
-        gripWrapper.className = 'session-card-handle';
-        gripWrapper.setAttribute('aria-hidden', 'true');
-        const grip = document.createElement('span');
-        grip.className = 'session-card-grip';
-        for (let index = 0; index < 3; index += 1) {
-            const dot = document.createElement('span');
-            dot.className = 'session-card-grip-dot';
-            grip.appendChild(dot);
-        }
-        gripWrapper.appendChild(grip);
-        return gripWrapper;
     }
 
     function buildDetails(routine) {

@@ -397,23 +397,31 @@ textarea:focus{
    ========================================================= */
 /* Panneaux/cartes (listes, cartes) */
 
-.exercise-card{
+.exercise-card,
+.list-card{
   background: var(--white);
   border: 1px solid var(--black);
   border-radius: var(--radius);
   padding: var(--pad-y) var(--pad-x);
 }
-.exercise-card-row{ display:flex; align-items:stretch; justify-content:space-between; gap:var(--gap); min-height:68px; }
-.exercise-card-left{ display:flex; align-items:stretch; gap:10px; flex:1; min-width:0; }
-.exercise-card-right{ display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-shrink:0; min-width:40px; }
-.exercise-card-text{ display:flex; flex-direction:column; gap:2px; min-width:0; justify-content:center; }
+.exercise-card-row,
+.list-card__row{ display:flex; align-items:stretch; justify-content:space-between; gap:var(--gap); min-height:68px; }
+.exercise-card-left,
+.list-card__start{ display:flex; align-items:stretch; gap:10px; flex:1; min-width:0; }
+.exercise-card-right,
+.list-card__end{ display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-shrink:0; min-width:40px; }
+.exercise-card-text,
+.list-card__body{ display:flex; flex-direction:column; gap:2px; min-width:0; justify-content:center; }
 .exercise-card-text .element,
-.exercise-card-text .details{
+.list-card__body .element,
+.exercise-card-text .details,
+.list-card__body .details{
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
 }
-.session-card-handle{
+.session-card-handle,
+.list-card__handle{
   border:none;
   background:none;
   color:inherit;
@@ -427,8 +435,12 @@ textarea:focus{
 }
 .session-card-handle,
 .session-card-handle *,
+.list-card__handle,
+.list-card__handle *,
 .session-card-grip,
 .session-card-grip *,
+.list-card__grip,
+.list-card__grip *,
 .session-card-sets,
 .session-card-sets *,
 .session-card-text,
@@ -439,21 +451,25 @@ textarea:focus{
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
 }
-.session-card-handle:focus-visible{
+.session-card-handle:focus-visible,
+.list-card__handle:focus-visible{
   outline:2px solid var(--black);
   outline-offset:2px;
 }
-.session-card-handle:active{
+.session-card-handle:active,
+.list-card__handle:active{
   cursor:grabbing;
 }
-.session-card-grip{
+.session-card-grip,
+.list-card__grip{
   display:flex;
   flex-direction:column;
   gap:2px;
   align-items:center;
   justify-content:center;
 }
-.session-card-grip-dot{
+.session-card-grip-dot,
+.list-card__grip-dot{
   width:4px;
   height:4px;
   border-radius:50%;
