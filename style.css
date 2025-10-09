@@ -491,12 +491,12 @@ textarea:focus{
 
 /* RPE chips (couleurs existantes) */
 .rpe-chip{ display:inline-block; padding:4px 8px; border-radius:999px; color:#fff; font-weight: var(--fw-strong); font-size:.9em; }
-.rpe-5{ background:#3a7; }
-.rpe-6{ background:#3c8; }
-.rpe-7{ background:#6c6; }
-.rpe-8{ background:#c93; }
-.rpe-9{ background:#d55; }
-.rpe-10{ background:#a00; }
+.rpe-chip[data-rpe="5"] { background:#3a7; }
+.rpe-chip[data-rpe="6"] { background:#3c8; }
+.rpe-chip[data-rpe="7"] { background:#6c6; }
+.rpe-chip[data-rpe="8"] { background:#c93; }
+.rpe-chip[data-rpe="9"] { background:#d55; }
+.rpe-chip[data-rpe="10"]{ background:#a00; }
 
 .list-card__icon{
   font-size:20px;

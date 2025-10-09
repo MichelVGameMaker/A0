@@ -520,9 +520,12 @@
         if (value == null || value === '') {
             return '—';
         }
-        const cssClass = getRpeClass(value);
+        const numeric = clampRpe(value);
+        if (numeric == null) {
+            return '—';
+        }
         const extra = muted ? ' rpe-chip-muted' : '';
-        return `<span class="rpe-chip ${cssClass}${extra}">${value}</span>`;
+        return `<span class="rpe rpe-chip${extra}" data-rpe="${numeric}">${value}</span>`;
     }
 
     function formatRepsDisplay(value) {
@@ -570,16 +573,6 @@
         const fallback = Math.max(0, safeInt(fallbackRest, getDefaultRest()));
         const rest = computed > 0 ? computed : fallback;
         return { reps, weight, rpe, rest };
-    }
-
-    function getRpeClass(value) {
-        const numeric = safeInt(value, 0);
-        if (numeric <= 5) return 'rpe-5';
-        if (numeric === 6) return 'rpe-6';
-        if (numeric === 7) return 'rpe-7';
-        if (numeric === 8) return 'rpe-8';
-        if (numeric === 9) return 'rpe-9';
-        return 'rpe-10';
     }
 
     function splitRest(value) {
@@ -711,6 +704,20 @@
         }
         if (numeric > max) {
             return max;
+        }
+        return numeric;
+    }
+
+    function clampRpe(value) {
+        const numeric = Number.parseInt(value, 10);
+        if (!Number.isFinite(numeric)) {
+            return null;
+        }
+        if (numeric < 5) {
+            return 5;
+        }
+        if (numeric > 10) {
+            return 10;
         }
         return numeric;
     }
