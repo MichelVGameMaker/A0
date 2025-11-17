@@ -845,6 +845,10 @@ textarea:focus{
   justify-content:center;
 }
 
+.set-editor-order-label{
+  margin-bottom: -2px;
+}
+
 .set-editor-order-number{
   font-weight: var(--fw-strong);
   font-size: 1.2em;
