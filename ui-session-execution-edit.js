@@ -219,11 +219,11 @@
             return;
         }
         sets.forEach((set, index) => {
-            execSets.appendChild(renderSetRow(set, index));
+            execSets.appendChild(renderSetRow(set, index, sets.length));
         });
     }
 
-    function renderSetRow(set, index) {
+    function renderSetRow(set, index, totalSets) {
         const row = document.createElement('div');
         row.className = 'exec-grid exec-row routine-set-grid exec-set-row';
         row.classList.add(set.done === true ? 'exec-set-executed' : 'exec-set-planned');
@@ -232,6 +232,8 @@
         const order = document.createElement('div');
         order.className = 'routine-set-order';
         order.textContent = set.pos ?? index + 1;
+
+        let currentIndex = index;
 
         const value = {
             reps: safePositiveInt(set.reps),
@@ -280,19 +282,37 @@
                 },
                 focus: focusField,
                 tone: 'black',
-                actionsLayout: 'vertical',
+                order: { position: set.pos ?? currentIndex + 1, total: totalSets },
+                onMove: async (direction) => {
+                    const delta = direction === 'up' ? -1 : 1;
+                    const nextIndex = await moveSet(currentIndex, delta);
+                    if (nextIndex === null || nextIndex === undefined) {
+                        return null;
+                    }
+                    currentIndex = nextIndex;
+                    const exercise = getExercise();
+                    const total = Array.isArray(exercise?.sets) ? exercise.sets.length : totalSets;
+                    return { position: currentIndex + 1, total, title: `Série ${currentIndex + 1}` };
+                },
                 actions: [
                     {
                         id: 'plan',
                         label: 'Planifier',
-                        variant: 'ghost',
-                        full: true
+                        variant: 'ghost'
                     },
                     {
                         id: 'save',
                         label: 'Enregistrer',
-                        variant: 'primary',
-                        full: true
+                        variant: 'primary'
+                    }
+                ],
+                secondaryActions: [
+                    {
+                        id: 'delete',
+                        label: 'Supprimer',
+                        variant: 'danger',
+                        full: true,
+                        onClick: () => removeSet(currentIndex)
                     }
                 ],
                 onChange: updatePreview
@@ -301,9 +321,12 @@
                     if (!result || !result.values) {
                         return;
                     }
+                    if (result.action === 'delete') {
+                        return;
+                    }
                     const sanitized = sanitizeEditorResult(result.values, value.rest);
                     const markDone = result.action === 'save';
-                    await applySetEditorResult(index, sanitized, { done: markDone });
+                    await applySetEditorResult(currentIndex, sanitized, { done: markDone });
                     if (markDone) {
                         startTimer(sanitized.rest);
                     }
@@ -392,6 +415,26 @@
         });
         exercise.sets = sets;
         await persistSession();
+    }
+
+    async function moveSet(index, delta) {
+        const exercise = getExercise();
+        if (!exercise) {
+            return null;
+        }
+        const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+        const target = index + delta;
+        if (target < 0 || target >= sets.length) {
+            return index;
+        }
+        const [item] = sets.splice(index, 1);
+        sets.splice(target, 0, item);
+        sets.forEach((set, idx) => {
+            set.pos = idx + 1;
+        });
+        exercise.sets = sets;
+        await persistSession();
+        return target;
     }
 
     async function applySetEditorResult(index, values, options = {}) {

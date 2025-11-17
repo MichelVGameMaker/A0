@@ -813,7 +813,7 @@ textarea:focus{
 .set-editor-grid{
   display:grid;
   gap:8px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: minmax(70px, 0.9fr) repeat(5, minmax(0, 1fr));
 }
 
 .set-editor-field{
@@ -835,6 +835,23 @@ textarea:focus{
   display:flex;
   flex-direction:column;
   align-items:center;
+}
+
+.set-editor-order{
+  align-items:center;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  justify-content:center;
+}
+
+.set-editor-order-number{
+  font-weight: var(--fw-strong);
+  font-size: 1.2em;
+}
+
+.set-editor-move{
+  width: 100%;
 }
 
 .set-editor-rest-grid{
@@ -867,6 +884,9 @@ textarea:focus{
 }
 .set-editor-actions-vertical{
   flex-direction:column;
+}
+.set-editor-actions-secondary{
+  margin-top: -4px;
 }
 
 .set-editor-form.set-editor-tone-black .set-editor-field .vstepper .input{
