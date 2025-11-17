@@ -294,16 +294,19 @@
                     const total = Array.isArray(exercise?.sets) ? exercise.sets.length : totalSets;
                     return { position: currentIndex + 1, total, title: `Série ${currentIndex + 1}` };
                 },
+                actionsLayout: 'vertical',
                 actions: [
                     {
                         id: 'plan',
                         label: 'Planifier',
-                        variant: 'ghost'
+                        variant: 'ghost',
+                        full: true
                     },
                     {
                         id: 'save',
                         label: 'Enregistrer',
-                        variant: 'primary'
+                        variant: 'primary',
+                        full: true
                     }
                 ],
                 secondaryActions: [
