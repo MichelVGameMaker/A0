@@ -467,6 +467,11 @@
 <dialog id="dlgSetEditor" class="modal">
     <form method="dialog" class="set-editor-form" data-role="set-editor-form">
         <div class="set-editor-grid">
+            <div class="set-editor-field set-editor-order" data-role="set-editor-order">
+                <button type="button" class="btn ghost set-editor-move" data-action="move-up" aria-label="Monter la série">▲</button>
+                <div class="set-editor-order-number" data-role="set-editor-order-number">1</div>
+                <button type="button" class="btn ghost set-editor-move" data-action="move-down" aria-label="Descendre la série">▼</button>
+            </div>
             <label class="set-editor-field">
                 <span class="set-editor-label">Reps</span>
                 <div class="vstepper">
@@ -512,6 +517,7 @@
             </div>
         </div>
         <div class="set-editor-actions" data-role="set-editor-actions"></div>
+        <div class="set-editor-actions set-editor-actions-secondary" data-role="set-editor-actions-secondary"></div>
     </form>
 </dialog>
 <!-- ==================== -->

@@ -45,6 +45,9 @@
             const secondsInput = dialog.querySelector('[data-role="seconds"]');
             const closeButton = dialog.querySelector('[data-action="close"]');
             const actionsContainer = dialog.querySelector('[data-role="set-editor-actions"]');
+            const secondaryActionsContainer = dialog.querySelector('[data-role="set-editor-actions-secondary"]');
+            const orderContainer = dialog.querySelector('[data-role="set-editor-order"]');
+            const orderNumber = dialog.querySelector('[data-role="set-editor-order-number"]');
             const refs = {
                 dialog,
                 form,
@@ -55,7 +58,10 @@
                 minutesInput,
                 secondsInput,
                 closeButton,
-                actionsContainer
+                actionsContainer,
+                secondaryActionsContainer,
+                orderContainer,
+                orderNumber
             };
             SetEditor.#refs = refs;
             SetEditor.#bindEvents();
@@ -170,9 +176,31 @@
                 case 'seconds-minus':
                     SetEditor.#adjustSeconds(-10);
                     return true;
+                case 'move-up':
+                    SetEditor.#handleMove('up');
+                    return true;
+                case 'move-down':
+                    SetEditor.#handleMove('down');
+                    return true;
                 default:
                     return false;
             }
+        }
+
+        static #handleMove(direction) {
+            const active = SetEditor.#active;
+            const onMove = active?.options?.onMove;
+            if (typeof onMove !== 'function') {
+                return;
+            }
+            const result = onMove(direction);
+            if (result && typeof result.then === 'function') {
+                result.then((next) => {
+                    SetEditor.#applyOrderUpdate(next);
+                });
+                return;
+            }
+            SetEditor.#applyOrderUpdate(result);
         }
 
         static #closeWith(action) {
@@ -314,6 +342,49 @@
                 .replace(/(\.\d*?)0+$/, '$1');
         }
 
+        static #normalizeOrder(order) {
+            const position = Math.max(1, SetEditor.#parseInt(order?.position, 1));
+            const total = Math.max(position, SetEditor.#parseInt(order?.total, position));
+            return { position, total };
+        }
+
+        static #updateOrderControls() {
+            const refs = SetEditor.#refs;
+            const active = SetEditor.#active;
+            if (!refs || !active) {
+                return;
+            }
+            const order = active.options?.order;
+            const moveHandler = typeof active.options?.onMove === 'function';
+            const position = order?.position ?? 1;
+            const total = order?.total ?? 1;
+            if (refs.orderNumber) {
+                refs.orderNumber.textContent = String(position);
+            }
+            const moveUp = refs.orderContainer?.querySelector('[data-action="move-up"]');
+            const moveDown = refs.orderContainer?.querySelector('[data-action="move-down"]');
+            if (moveUp) {
+                moveUp.disabled = !moveHandler || position <= 1;
+            }
+            if (moveDown) {
+                moveDown.disabled = !moveHandler || position >= total;
+            }
+        }
+
+        static #applyOrderUpdate(nextOrder) {
+            if (!SetEditor.#active?.options) {
+                return;
+            }
+            if (nextOrder && typeof nextOrder === 'object') {
+                const merged = { ...SetEditor.#active.options.order, ...nextOrder };
+                SetEditor.#active.options.order = SetEditor.#normalizeOrder(merged);
+                if (nextOrder.title && SetEditor.#refs?.title) {
+                    SetEditor.#refs.title.textContent = nextOrder.title;
+                }
+            }
+            SetEditor.#updateOrderControls();
+        }
+
         static #applyOptions(options) {
             const refs = SetEditor.#refs;
             if (!refs) {
@@ -339,6 +410,8 @@
             refs.minutesInput.value = String(Math.max(0, SetEditor.#parseInt(values.minutes, 0)));
             refs.secondsInput.value = String(Math.max(0, SetEditor.#parseInt(values.seconds, 0)));
             SetEditor.#sanitizeTimeInputs();
+            SetEditor.#active.options.order = SetEditor.#normalizeOrder(options.order || { position: 1, total: 1 });
+            SetEditor.#updateOrderControls();
             SetEditor.#configureActions(options);
         }
 
@@ -347,13 +420,21 @@
             if (!refs?.actionsContainer) {
                 return;
             }
-            const container = refs.actionsContainer;
-            container.innerHTML = '';
             const layout = String(options.actionsLayout || '').toLowerCase();
-            container.classList.toggle('set-editor-actions-vertical', layout === 'vertical');
-            const rawActions = Array.isArray(options.actions) ? options.actions : null;
-            const actions = rawActions && rawActions.length ? rawActions : SetEditor.#defaultActions();
-            actions.forEach((definition) => {
+            const mainActions = Array.isArray(options.actions) && options.actions.length ? options.actions : SetEditor.#defaultActions();
+            const secondary = Array.isArray(options.secondaryActions) ? options.secondaryActions : [];
+            SetEditor.#buildActions(refs.actionsContainer, mainActions, layout === 'vertical');
+            SetEditor.#buildActions(refs.secondaryActionsContainer, secondary, layout === 'vertical');
+        }
+
+        static #buildActions(container, definitions, vertical) {
+            if (!container) {
+                return;
+            }
+            container.innerHTML = '';
+            container.classList.toggle('set-editor-actions-vertical', Boolean(vertical));
+            container.hidden = !definitions?.length;
+            (definitions || []).forEach((definition) => {
                 if (!definition) {
                     return;
                 }

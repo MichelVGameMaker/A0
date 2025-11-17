@@ -122,11 +122,11 @@
             return;
         }
         sets.forEach((set, index) => {
-            routineMoveSets.appendChild(renderSetRow(set, index));
+            routineMoveSets.appendChild(renderSetRow(set, index, sets.length));
         });
     }
 
-    function renderSetRow(set, index) {
+    function renderSetRow(set, index, totalSets) {
         const row = document.createElement('div');
         row.className = 'exec-grid exec-row routine-set-row routine-set-grid';
         row.dataset.idx = String(index);
@@ -134,6 +134,8 @@
         const order = document.createElement('div');
         order.className = 'routine-set-order';
         order.textContent = index + 1;
+
+        let currentIndex = index;
 
         const value = {
             reps: safePositiveInt(set.reps),
@@ -184,13 +186,33 @@
                 },
                 focus: focusField,
                 tone: 'black',
-                actionsLayout: 'vertical',
+                order: { position: set.pos ?? currentIndex + 1, total: totalSets },
+                onMove: (direction) => {
+                    const delta = direction === 'up' ? -1 : 1;
+                    const nextIndex = moveSet(currentIndex, delta);
+                    if (nextIndex === null || nextIndex === undefined) {
+                        return null;
+                    }
+                    currentIndex = nextIndex;
+                    const move = findMove();
+                    const total = Array.isArray(move?.sets) ? move.sets.length : totalSets;
+                    return { position: currentIndex + 1, total, title: `Série ${currentIndex + 1}` };
+                },
                 actions: [
                     {
                         id: 'plan',
                         label: 'Planifier',
-                        variant: 'ghost',
+                        variant: 'primary',
                         full: true
+                    }
+                ],
+                secondaryActions: [
+                    {
+                        id: 'delete',
+                        label: 'Supprimer',
+                        variant: 'danger',
+                        full: true,
+                        onClick: () => removeSet(currentIndex)
                     }
                 ],
                 onChange: (next) => {
@@ -198,7 +220,13 @@
                 }
             })
                 .then((result) => {
-                    if (!result || result.action !== 'plan' || !result.values) {
+                    if (!result || !result.values) {
+                        return;
+                    }
+                    if (result.action === 'delete') {
+                        return;
+                    }
+                    if (result.action !== 'plan') {
                         return;
                     }
                     const payload = result.values;
@@ -208,7 +236,7 @@
                         rpe: payload.rpe != null ? clampRpe(payload.rpe) : null,
                         rest: Math.max(0, Math.round((payload.minutes ?? 0) * 60 + (payload.seconds ?? 0)))
                     };
-                    applySetEditorResult(index, nextValues);
+                    applySetEditorResult(currentIndex, nextValues);
                 })
                 .finally(() => {
                     row.classList.remove('routine-set-row-active', 'set-editor-highlight');
@@ -325,6 +353,27 @@
         });
         scheduleSave();
         renderSets();
+    }
+
+    function moveSet(index, delta) {
+        const move = findMove();
+        if (!move) {
+            return null;
+        }
+        const sets = Array.isArray(move.sets) ? move.sets : [];
+        const target = index + delta;
+        if (target < 0 || target >= sets.length) {
+            return index;
+        }
+        const [item] = sets.splice(index, 1);
+        sets.splice(target, 0, item);
+        sets.forEach((set, idx) => {
+            set.pos = idx + 1;
+        });
+        move.sets = sets;
+        scheduleSave();
+        renderSets();
+        return target;
     }
 
     async function removeMove() {
