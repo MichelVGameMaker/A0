@@ -365,11 +365,7 @@
         const restSecondsButton = createButton(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell');
         collectButtons(repsButton, weightButton, rpeButton, restMinutesButton, restSecondsButton);
 
-        const actions = document.createElement('div');
-        actions.className = 'routine-set-actions';
-        actions.appendChild(createActionButton('🗑️', 'Supprimer', () => void removeSet(index)));
-
-        row.append(order, repsButton, weightButton, rpeButton, restMinutesButton, restSecondsButton, actions);
+        row.append(order, repsButton, weightButton, rpeButton, restMinutesButton, restSecondsButton);
         return row;
     }
 
@@ -547,19 +543,6 @@
                 element.hidden = key !== target;
             }
         });
-    }
-
-    function createActionButton(symbol, title, handler) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'btn ghost btn-icon';
-        button.title = title;
-        button.textContent = symbol;
-        button.addEventListener('click', (event) => {
-            event.preventDefault();
-            handler();
-        });
-        return button;
     }
 
     function renderRpeChip(value, muted = false) {
