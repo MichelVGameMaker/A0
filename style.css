@@ -150,13 +150,15 @@ header .title{ font-weight: var(--fw-strong); }
    4) Modale
    ========================================================= */
 .modal{
-    border:none; 
+    border:none;
     border-radius: var(--radius);
     padding:var(--gap);
     max-width:520px;
     width:92vw;
-            position:fixed;
-        bottom: 0;
+    position:fixed;
+    top: env(safe-area-inset-top, 0);
+    left:50%;
+    transform: translateX(-50%);
 }
 .modal::backdrop{ 
     background: rgba(0,0,0,.25); 
