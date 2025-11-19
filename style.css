@@ -806,10 +806,6 @@ textarea:focus{
   min-width:280px;
 }
 
-.set-editor-grid{
-  gap:8px;
-}
-
 .set-editor-field{
   display:flex;
   flex-direction:column;
