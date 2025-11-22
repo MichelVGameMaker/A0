@@ -5,6 +5,7 @@
     class SetEditor {
         static #refs = null;
         static #active = null;
+        static #outsideHandler = null;
 
         static open(options = {}) {
             const refs = SetEditor.#ensureRefs();
@@ -15,7 +16,8 @@
                 SetEditor.#active = { resolve, options, lastAction: null };
                 SetEditor.#applyOptions(options);
                 window.setTimeout(() => {
-                    refs.dialog.showModal();
+                    refs.dialog.show();
+                    SetEditor.#bindOutsideInteractions();
                     SetEditor.#focusField(options.focus);
                 }, 0);
             });
@@ -87,6 +89,12 @@
             });
             refs.dialog.addEventListener('close', () => {
                 SetEditor.#handleClose();
+            });
+            refs.dialog.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    SetEditor.#closeWith('cancel');
+                }
             });
             refs.form?.addEventListener('click', (event) => {
                 const action = event.target?.dataset?.action;
@@ -212,6 +220,33 @@
                 SetEditor.#active.lastAction = action || '';
             }
             refs.dialog.close(action || '');
+        }
+
+        static #bindOutsideInteractions() {
+            const refs = SetEditor.#refs;
+            if (!refs?.dialog) {
+                return;
+            }
+            const handler = (event) => {
+                if (!refs.dialog?.open) {
+                    return;
+                }
+                const target = event.target;
+                if (refs.dialog.contains(target)) {
+                    return;
+                }
+                SetEditor.#closeWith('cancel');
+            };
+            SetEditor.#unbindOutsideInteractions();
+            document.addEventListener('pointerdown', handler);
+            SetEditor.#outsideHandler = handler;
+        }
+
+        static #unbindOutsideInteractions() {
+            if (SetEditor.#outsideHandler) {
+                document.removeEventListener('pointerdown', SetEditor.#outsideHandler);
+                SetEditor.#outsideHandler = null;
+            }
         }
 
         static #adjustReps(delta) {
@@ -529,6 +564,7 @@
         }
 
         static #handleClose() {
+            SetEditor.#unbindOutsideInteractions();
             const active = SetEditor.#active;
             if (!active) {
                 return;
