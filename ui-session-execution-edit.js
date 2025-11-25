@@ -11,6 +11,7 @@
         callerScreen: 'screenSessions',
         session: null
     };
+    let inlineEditor = null;
 
     const defaultTimerState = () => ({
         running: false,
@@ -116,6 +117,14 @@
         return refs;
     }
 
+    function ensureInlineEditor() {
+        if (!inlineEditor) {
+            const { execSets } = assertRefs();
+            inlineEditor = A.components?.createInlineSetEditor?.(execSets) || null;
+        }
+        return inlineEditor;
+    }
+
     function assertRefs() {
         ensureRefs();
         const required = [
@@ -206,6 +215,7 @@
     function renderSets() {
         const exercise = getExercise();
         const { execSets } = assertRefs();
+        ensureInlineEditor()?.close();
         execSets.innerHTML = '';
         if (!exercise) {
             return;
@@ -258,28 +268,24 @@
             value.reps = safePositiveInt(source.reps);
             value.weight = sanitizeWeight(source.weight);
             value.rpe = source.rpe != null && source.rpe !== '' ? clampInt(source.rpe, 5, 10) : null;
-            const minutes = safeInt(source.minutes, 0);
-            const seconds = safeInt(source.seconds, 0);
-            value.rest = Math.max(0, minutes * 60 + seconds);
+            if (source.rest != null) {
+                value.rest = Math.max(0, safeInt(source.rest, value.rest));
+            } else {
+                const minutes = safeInt(source.minutes, 0);
+                const seconds = safeInt(source.seconds, 0);
+                value.rest = Math.max(0, minutes * 60 + seconds);
+            }
             buttons.forEach((button) => button?._update?.());
         };
 
         const openEditor = (focusField) => {
-            const SetEditor = A.components?.SetEditor;
-            if (!SetEditor?.open) {
+            const editor = ensureInlineEditor();
+            if (!editor) {
                 return;
             }
             const { minutes, seconds } = splitRest(value.rest);
-            row.classList.add('routine-set-row-active', 'set-editor-highlight');
-            SetEditor.open({
-                title: `Série ${set.pos ?? index + 1}`,
-                values: {
-                    reps: value.reps,
-                    weight: value.weight,
-                    rpe: value.rpe,
-                    minutes,
-                    seconds
-                },
+            editor.open(row, {
+                values: { reps: value.reps, weight: value.weight, rpe: value.rpe, minutes, seconds },
                 focus: focusField,
                 tone: 'black',
                 order: { position: set.pos ?? currentIndex + 1, total: totalSets },
@@ -290,53 +296,30 @@
                         return null;
                     }
                     currentIndex = nextIndex;
-                    const exercise = getExercise();
-                    const total = Array.isArray(exercise?.sets) ? exercise.sets.length : totalSets;
-                    return { position: currentIndex + 1, total, title: `Série ${currentIndex + 1}` };
+                    return null;
                 },
-                actionsLayout: 'vertical',
                 actions: [
-                    {
-                        id: 'plan',
-                        label: 'Planifier',
-                        variant: 'ghost',
-                        full: true
-                    },
-                    {
-                        id: 'save',
-                        label: 'Enregistrer',
-                        variant: 'primary',
-                        full: true
-                    }
+                    { id: 'plan', label: 'Planifier', variant: 'ghost', full: true },
+                    { id: 'save', label: 'Enregistrer', variant: 'primary', full: true },
+                    { id: 'delete', label: 'Supprimer', variant: 'danger', full: true }
                 ],
-                secondaryActions: [
-                    {
-                        id: 'delete',
-                        label: 'Supprimer',
-                        variant: 'danger',
-                        full: true,
-                        onClick: () => removeSet(currentIndex)
-                    }
-                ],
-                onChange: updatePreview
-            })
-                .then(async (result) => {
-                    if (!result || !result.values) {
+                onApply: async (actionId, payload) => {
+                    if (actionId === 'delete') {
+                        await removeSet(currentIndex);
                         return;
                     }
-                    if (result.action === 'delete') {
-                        return;
-                    }
-                    const sanitized = sanitizeEditorResult(result.values, value.rest);
-                    const markDone = result.action === 'save';
+                    const sanitized = sanitizeEditorResult(payload, value.rest);
+                    const markDone = actionId === 'save';
                     await applySetEditorResult(currentIndex, sanitized, { done: markDone });
                     if (markDone) {
                         startTimer(sanitized.rest);
                     }
-                })
-                .finally(() => {
-                    row.classList.remove('routine-set-row-active', 'set-editor-highlight');
-                });
+                },
+                onDelete: () => removeSet(currentIndex),
+                onChange: updatePreview,
+                onClose: () => row.classList.remove('routine-set-row-active', 'set-editor-highlight'),
+                onOpen: () => row.classList.add('routine-set-row-active', 'set-editor-highlight')
+            });
         };
 
         const createButton = (getContent, focusField, extraClass = '', options = {}) => {
