@@ -721,7 +721,19 @@ textarea:focus{
   background: var(--panelBord);
   border-color: var(--black);
 }
+.set-edit-input{
+  width:100%;
+  min-height: var(--control-h);
+  text-align:center;
+  font-weight: var(--fw-strong);
+  color: var(--black);
+  background: var(--panelBord);
+  border-color: var(--black);
+}
 .routine-set-grid .set-edit-button{
+  color: var(--black);
+}
+.routine-set-grid .set-edit-input{
   color: var(--black);
 }
 
@@ -730,6 +742,9 @@ textarea:focus{
 }
 
 .exec-set-row .set-edit-button{
+  color: inherit;
+}
+.exec-set-row .set-edit-input{
   color: inherit;
 }
 
@@ -743,6 +758,10 @@ textarea:focus{
 }
 
 .exec-set-planned .set-edit-button{
+  border-color: var(--blocBord);
+  color: var(--blocBord);
+}
+.exec-set-planned .set-edit-input{
   border-color: var(--blocBord);
   color: var(--blocBord);
 }
@@ -775,6 +794,10 @@ textarea:focus{
 }
 
 .set-editor-highlight .set-edit-button{
+  outline: 2px solid var(--emphase);
+  outline-offset: 0;
+}
+.set-editor-highlight .set-edit-input{
   outline: 2px solid var(--emphase);
   outline-offset: 0;
 }

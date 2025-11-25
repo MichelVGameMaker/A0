@@ -154,11 +154,11 @@
             rest: Math.max(0, safeInt(set.rest, 0))
         };
 
-        const buttons = [];
-        const collectButtons = (...items) => {
-            items.forEach((btn) => {
-                if (btn) {
-                    buttons.push(btn);
+        const inputs = [];
+        const collectInputs = (...items) => {
+            items.forEach((input) => {
+                if (input) {
+                    inputs.push(input);
                 }
             });
         };
@@ -177,7 +177,7 @@
                 const seconds = Math.max(0, safeInt(source.seconds, 0));
                 value.rest = Math.max(0, minutes * 60 + seconds);
             }
-            buttons.forEach((button) => button?._update?.());
+            inputs.forEach((input) => input?._update?.());
         };
 
         const openEditor = (focusField) => {
@@ -223,33 +223,73 @@
             });
         };
 
-        const createButton = (getContent, focusField, extraClass = '', options = {}) => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = `btn ghost set-edit-button${extraClass ? ` ${extraClass}` : ''}`;
-            button.addEventListener('click', () => openEditor(focusField));
-            const { html = false } = options;
-            const update = () => {
-                const content = getContent();
-                if (html) {
-                    button.innerHTML = content;
-                } else {
-                    button.textContent = content;
+        const applyDirectChange = (field, rawValue) => {
+            const next = { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest };
+            switch (field) {
+                case 'reps':
+                    next.reps = safePositiveInt(rawValue);
+                    break;
+                case 'weight':
+                    next.weight = sanitizeWeight(rawValue);
+                    break;
+                case 'rpe':
+                    next.rpe = rawValue === '' ? null : clampRpe(rawValue);
+                    break;
+                case 'minutes': {
+                    const { seconds } = splitRest(value.rest);
+                    next.rest = Math.max(0, safeInt(rawValue, 0) * 60 + seconds);
+                    break;
                 }
-            };
-            button._update = update;
-            update();
-            return button;
+                case 'seconds': {
+                    const { minutes } = splitRest(value.rest);
+                    next.rest = Math.max(0, minutes * 60 + safeInt(rawValue, 0));
+                    break;
+                }
+                default:
+                    return;
+            }
+            applySetEditorResult(currentIndex, next);
         };
 
-        const repsButton = createButton(() => formatRepsDisplay(value.reps), 'reps');
-        const weightButton = createButton(() => formatWeightValue(value.weight), 'weight');
-        const rpeButton = createButton(() => rpeChip(value.rpe), 'rpe', '', { html: true });
-        const restMinutesButton = createButton(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell');
-        const restSecondsButton = createButton(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell');
-        collectButtons(repsButton, weightButton, rpeButton, restMinutesButton, restSecondsButton);
+        const createInput = (getValue, field, extraClass = '', options = {}) => {
+            const input = document.createElement('input');
+            const { inputMode = 'numeric', type = 'text' } = options;
+            input.type = type;
+            input.inputMode = inputMode;
+            input.className = `input set-edit-input${extraClass ? ` ${extraClass}` : ''}`;
+            const update = () => {
+                input.value = String(getValue());
+            };
+            input._update = update;
+            update();
+            input.addEventListener('focus', () => {
+                input.select();
+            });
+            const commit = () => applyDirectChange(field, input.value);
+            input.addEventListener('change', commit);
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    commit();
+                }
+            });
+            input.addEventListener('click', () => openEditor(field));
+            return input;
+        };
 
-        row.append(order, repsButton, weightButton, rpeButton, restMinutesButton, restSecondsButton);
+        const repsInput = createInput(() => formatRepsDisplay(value.reps), 'reps');
+        const weightInput = createInput(
+            () => (value.weight == null ? '' : formatNumber(value.weight)),
+            'weight',
+            '',
+            { inputMode: 'decimal', type: 'text' }
+        );
+        const rpeInput = createInput(() => (value.rpe == null ? '' : String(value.rpe)), 'rpe');
+        const restMinutesInput = createInput(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell');
+        const restSecondsInput = createInput(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell');
+        collectInputs(repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
+
+        row.append(order, repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
         return row;
     }
 
