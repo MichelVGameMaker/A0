@@ -800,7 +800,7 @@ textarea:focus{
 }
 
 .inline-set-editor-minus .inline-set-editor-button{
-  background: var(--panelBord);
+  background: var(--selectedBack);
   color: var(--black);
 }
 
