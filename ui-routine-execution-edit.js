@@ -12,6 +12,7 @@
         routine: null,
         pendingSave: null
     };
+    let inlineEditor = null;
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -68,6 +69,14 @@
         return refs;
     }
 
+    function ensureInlineEditor() {
+        if (!inlineEditor) {
+            const { routineMoveSets } = assertRefs();
+            inlineEditor = A.components?.createInlineSetEditor?.(routineMoveSets) || null;
+        }
+        return inlineEditor;
+    }
+
     function assertRefs() {
         ensureRefs();
         const required = [
@@ -109,6 +118,7 @@
     function renderSets() {
         const move = findMove();
         const { routineMoveSets } = assertRefs();
+        ensureInlineEditor()?.close();
         routineMoveSets.innerHTML = '';
         if (!move) {
             return;
@@ -144,8 +154,6 @@
             rest: Math.max(0, safeInt(set.rest, 0))
         };
 
-        const title = `Série ${index + 1}`;
-
         const buttons = [];
         const collectButtons = (...items) => {
             items.forEach((btn) => {
@@ -162,28 +170,24 @@
             value.reps = safePositiveInt(source.reps);
             value.weight = sanitizeWeight(source.weight);
             value.rpe = source.rpe != null ? clampRpe(source.rpe) : null;
-            const minutes = Math.max(0, safeInt(source.minutes, 0));
-            const seconds = Math.max(0, safeInt(source.seconds, 0));
-            value.rest = Math.max(0, minutes * 60 + seconds);
+            if (source.rest != null) {
+                value.rest = Math.max(0, safeInt(source.rest, value.rest));
+            } else {
+                const minutes = Math.max(0, safeInt(source.minutes, 0));
+                const seconds = Math.max(0, safeInt(source.seconds, 0));
+                value.rest = Math.max(0, minutes * 60 + seconds);
+            }
             buttons.forEach((button) => button?._update?.());
         };
 
         const openEditor = (focusField) => {
-            const SetEditor = A.components?.SetEditor;
-            if (!SetEditor?.open) {
+            const editor = ensureInlineEditor();
+            if (!editor) {
                 return;
             }
             const { minutes, seconds } = splitRest(value.rest);
-            row.classList.add('routine-set-row-active', 'set-editor-highlight');
-            SetEditor.open({
-                title,
-                values: {
-                    reps: value.reps,
-                    weight: value.weight,
-                    rpe: value.rpe,
-                    minutes,
-                    seconds
-                },
+            editor.open(row, {
+                values: { reps: value.reps, weight: value.weight, rpe: value.rpe, minutes, seconds },
                 focus: focusField,
                 tone: 'black',
                 order: { position: set.pos ?? currentIndex + 1, total: totalSets },
@@ -194,53 +198,29 @@
                         return null;
                     }
                     currentIndex = nextIndex;
-                    const move = findMove();
-                    const total = Array.isArray(move?.sets) ? move.sets.length : totalSets;
-                    return { position: currentIndex + 1, total, title: `Série ${currentIndex + 1}` };
+                    return null;
                 },
                 actions: [
-                    {
-                        id: 'plan',
-                        label: 'Planifier',
-                        variant: 'primary',
-                        full: true
-                    }
+                    { id: 'plan', label: 'Planifier', variant: 'primary', full: true },
+                    { id: 'delete', label: 'Supprimer', variant: 'danger', full: true }
                 ],
-                secondaryActions: [
-                    {
-                        id: 'delete',
-                        label: 'Supprimer',
-                        variant: 'danger',
-                        full: true,
-                        onClick: () => removeSet(currentIndex)
-                    }
-                ],
-                onChange: (next) => {
-                    updatePreview(next);
-                }
-            })
-                .then((result) => {
-                    if (!result || !result.values) {
+                onApply: (actionId, payload) => {
+                    if (actionId !== 'plan') {
                         return;
                     }
-                    if (result.action === 'delete') {
-                        return;
-                    }
-                    if (result.action !== 'plan') {
-                        return;
-                    }
-                    const payload = result.values;
                     const nextValues = {
                         reps: safePositiveInt(payload.reps),
                         weight: sanitizeWeight(payload.weight),
                         rpe: payload.rpe != null ? clampRpe(payload.rpe) : null,
-                        rest: Math.max(0, Math.round((payload.minutes ?? 0) * 60 + (payload.seconds ?? 0)))
+                        rest: Math.max(0, Math.round(payload.rest ?? 0))
                     };
                     applySetEditorResult(currentIndex, nextValues);
-                })
-                .finally(() => {
-                    row.classList.remove('routine-set-row-active', 'set-editor-highlight');
-                });
+                },
+                onDelete: () => removeSet(currentIndex),
+                onChange: updatePreview,
+                onClose: () => row.classList.remove('routine-set-row-active', 'set-editor-highlight'),
+                onOpen: () => row.classList.add('routine-set-row-active', 'set-editor-highlight')
+            });
         };
 
         const createButton = (getContent, focusField, extraClass = '', options = {}) => {

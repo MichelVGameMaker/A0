@@ -783,6 +783,31 @@ textarea:focus{
 .set-editor-highlight .set-edit-button:focus{
 }
 
+.inline-set-editor-row{
+  margin-top: 4px;
+}
+
+.inline-set-editor-button{
+  width: 100%;
+  min-height: var(--control-h);
+  font-weight: var(--fw-strong);
+  border-color: var(--blocBord);
+}
+
+.inline-set-editor-plus .inline-set-editor-button{
+  background: var(--selectedBack);
+  color: var(--black);
+}
+
+.inline-set-editor-minus .inline-set-editor-button{
+  background: var(--panelBord);
+  color: var(--black);
+}
+
+.inline-set-editor-actions{
+  margin-top: 4px;
+}
+
 .exec-rest-cell{
   font-variant-numeric: tabular-nums;
 }

@@ -586,4 +586,311 @@
     }
 
     components.SetEditor = SetEditor;
+
+    /**
+     * Fabrique un éditeur en ligne (insère des steppers autour d'une ligne de série).
+     * @param {HTMLElement} container
+     * @returns {{ open(row:HTMLElement, options?:object):void, close():void, isOpen():boolean }}
+     */
+    components.createInlineSetEditor = function createInlineSetEditor(container) {
+        if (!container) {
+            return null;
+        }
+
+        let active = null;
+
+        const parseIntSafe = (value, fallback) => {
+            const numeric = Number.parseInt(value, 10);
+            return Number.isFinite(numeric) ? numeric : fallback;
+        };
+
+        const parseFloatSafe = (value, fallback) => {
+            if (value == null || value === '') {
+                return fallback;
+            }
+            const numeric = Number.parseFloat(String(value).replace(',', '.'));
+            return Number.isFinite(numeric) ? numeric : fallback;
+        };
+
+        const clampRpe = (value) => {
+            const numeric = Number.parseInt(value, 10);
+            if (!Number.isFinite(numeric)) {
+                return null;
+            }
+            return Math.max(5, Math.min(10, numeric));
+        };
+
+        const normalizeTime = (minutes, seconds) => {
+            let min = Math.max(0, parseIntSafe(minutes, 0));
+            let sec = Math.max(0, parseIntSafe(seconds, 0));
+            if (sec >= 60) {
+                min += Math.floor(sec / 60);
+                sec %= 60;
+            }
+            return { minutes: min, seconds: sec };
+        };
+
+        const normalizeValues = (values = {}) => {
+            const reps = Math.max(0, parseIntSafe(values.reps, 0));
+            const hasWeight = values.weight != null && values.weight !== '';
+            const weight = hasWeight ? Math.max(0, parseFloatSafe(values.weight, 0)) : null;
+            const rpe = values.rpe != null && values.rpe !== '' ? clampRpe(values.rpe) : null;
+            if (values.rest != null) {
+                const total = Math.max(0, parseIntSafe(values.rest, 0));
+                return { reps, weight, rpe, minutes: Math.floor(total / 60), seconds: total % 60 };
+            }
+            const { minutes, seconds } = normalizeTime(values.minutes, values.seconds);
+            return { reps, weight, rpe, minutes, seconds };
+        };
+
+        const normalizeOrder = (order = {}) => {
+            const position = Math.max(1, parseIntSafe(order.position, 1));
+            const total = Math.max(position, parseIntSafe(order.total, position));
+            return { position, total };
+        };
+
+        const buildPayload = (state) => {
+            const minutes = Math.max(0, parseIntSafe(state.minutes, 0));
+            const seconds = Math.max(0, parseIntSafe(state.seconds, 0));
+            const rest = Math.max(0, minutes * 60 + seconds);
+            return {
+                reps: Math.max(0, parseIntSafe(state.reps, 0)),
+                weight: state.weight == null ? null : Math.max(0, parseFloatSafe(state.weight, 0)),
+                rpe: state.rpe != null && state.rpe !== '' ? clampRpe(state.rpe) : null,
+                minutes,
+                seconds,
+                rest
+            };
+        };
+
+        const emitChange = (config, state) => {
+            if (typeof config.onChange === 'function') {
+                config.onChange(buildPayload(state));
+            }
+        };
+
+        const close = () => {
+            if (!active) {
+                return;
+            }
+            const { row, nodes, config } = active;
+            if (Array.isArray(nodes)) {
+                nodes.forEach((node) => node?.remove?.());
+            }
+            if (row) {
+                row.classList.remove('routine-set-row-active', 'set-editor-highlight');
+            }
+            document.removeEventListener('pointerdown', handleOutside);
+            config?.onClose?.();
+            active = null;
+        };
+
+        const handleOutside = (event) => {
+            if (!active) {
+                return;
+            }
+            if (!container.contains(event.target)) {
+                close();
+            }
+        };
+
+        const applyMove = (direction) => {
+            const onMove = active?.config?.onMove;
+            const result = typeof onMove === 'function' ? onMove(direction) : null;
+            if (result && typeof result.then === 'function') {
+                result.finally(() => close());
+                return;
+            }
+            close();
+        };
+
+        const adjustState = (state, field, delta, config) => {
+            switch (field) {
+                case 'reps': {
+                    const current = Math.max(0, parseIntSafe(state.reps, 0));
+                    state.reps = Math.max(0, current + delta);
+                    break;
+                }
+                case 'weight': {
+                    const current = Math.max(0, parseFloatSafe(state.weight, 0));
+                    let next = current + delta;
+                    if (next < 0) {
+                        next = 0;
+                    }
+                    state.weight = Math.round(next * 100) / 100;
+                    break;
+                }
+                case 'rpe': {
+                    const base = state.rpe != null ? parseIntSafe(state.rpe, null) : null;
+                    let next = base;
+                    if (!Number.isFinite(next)) {
+                        next = delta > 0 ? 5 : 10;
+                    } else {
+                        next += delta;
+                    }
+                    state.rpe = clampRpe(next);
+                    break;
+                }
+                case 'minutes': {
+                    const current = Math.max(0, parseIntSafe(state.minutes, 0));
+                    state.minutes = Math.max(0, current + delta);
+                    break;
+                }
+                case 'seconds': {
+                    const currentMinutes = Math.max(0, parseIntSafe(state.minutes, 0));
+                    const currentSeconds = Math.max(0, parseIntSafe(state.seconds, 0));
+                    let total = currentMinutes * 60 + currentSeconds + delta;
+                    if (total < 0) {
+                        total = 0;
+                    }
+                    state.minutes = Math.floor(total / 60);
+                    state.seconds = total % 60;
+                    break;
+                }
+                default:
+                    break;
+            }
+            emitChange(config, state);
+        };
+
+        const createStepperButton = (label, onClick, disabled = false, aria) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn ghost inline-set-editor-button';
+            button.textContent = label;
+            if (aria) {
+                button.setAttribute('aria-label', aria);
+            }
+            button.disabled = Boolean(disabled);
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                onClick?.();
+            });
+            return button;
+        };
+
+        const buildStepperRow = (type, state, config, order) => {
+            const row = document.createElement('div');
+            row.className = `exec-grid routine-set-grid inline-set-editor-row inline-set-editor-${type}`;
+
+            const moveButton = createStepperButton(
+                type === 'plus' ? '▲' : '▼',
+                () => applyMove(type === 'plus' ? 'up' : 'down'),
+                type === 'plus' ? order.position <= 1 : order.position >= order.total,
+                type === 'plus' ? 'Monter la série' : 'Descendre la série'
+            );
+            row.appendChild(moveButton);
+
+            const delta = type === 'plus' ? 1 : -1;
+            const secondsDelta = type === 'plus' ? 10 : -10;
+
+            const repsBtn = createStepperButton(type === 'plus' ? '+' : '−', () => adjustState(state, 'reps', delta, config), false, `${type === 'plus' ? 'Augmenter' : 'Diminuer'} les répétitions`);
+            const weightBtn = createStepperButton(type === 'plus' ? '+' : '−', () => adjustState(state, 'weight', delta, config), false, `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le poids`);
+            const rpeBtn = createStepperButton(type === 'plus' ? '+' : '−', () => adjustState(state, 'rpe', delta, config), false, `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le RPE`);
+            const minutesBtn = createStepperButton(type === 'plus' ? '+' : '−', () => adjustState(state, 'minutes', delta, config), false, `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le repos (minutes)`);
+            const secondsBtn = createStepperButton(
+                type === 'plus' ? '+10s' : '−10s',
+                () => adjustState(state, 'seconds', secondsDelta, config),
+                false,
+                `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le repos (secondes)`
+            );
+
+            row.append(repsBtn, weightBtn, rpeBtn, minutesBtn, secondsBtn);
+            return row;
+        };
+
+        const buildActionsRow = (state, config) => {
+            const actions = Array.isArray(config.actions) ? config.actions : [];
+            if (!actions.length && typeof config.onDelete !== 'function' && typeof config.onApply !== 'function') {
+                return null;
+            }
+            const row = document.createElement('div');
+            row.className = 'inline-set-editor-actions set-editor-actions set-editor-actions-vertical';
+
+            const payload = () => buildPayload(state);
+
+            actions.forEach((action) => {
+                if (!action) {
+                    return;
+                }
+                const button = document.createElement('button');
+                button.type = 'button';
+                const classes = ['btn'];
+                if (action.variant) {
+                    classes.push(action.variant);
+                }
+                if (action.full) {
+                    classes.push('full');
+                }
+                button.className = classes.join(' ');
+                button.textContent = action.label ?? action.id ?? 'Action';
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const id = action.id || 'apply';
+                    if (id === 'delete' && typeof config.onDelete === 'function') {
+                        config.onDelete();
+                        close();
+                        return;
+                    }
+                    if (typeof config.onApply === 'function') {
+                        config.onApply(id, payload());
+                    }
+                    close();
+                });
+                row.appendChild(button);
+            });
+
+            if (!actions.length && typeof config.onDelete === 'function') {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn danger full';
+                button.textContent = 'Supprimer';
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    config.onDelete();
+                    close();
+                });
+                row.appendChild(button);
+            }
+
+            return row;
+        };
+
+        const open = (row, options = {}) => {
+            if (!row) {
+                return;
+            }
+            close();
+            const config = { ...options };
+            const state = normalizeValues(config.values || {});
+            const order = normalizeOrder(config.order || { position: 1, total: 1 });
+            active = { row, config, state, order, nodes: [] };
+            row.classList.add('routine-set-row-active', 'set-editor-highlight');
+            config.onOpen?.();
+
+            const plusRow = buildStepperRow('plus', state, config, order);
+            const minusRow = buildStepperRow('minus', state, config, order);
+            const actionsRow = buildActionsRow(state, config);
+
+            container.insertBefore(plusRow, row);
+            if (row.nextSibling) {
+                container.insertBefore(minusRow, row.nextSibling);
+            } else {
+                container.appendChild(minusRow);
+            }
+            if (actionsRow) {
+                if (minusRow.nextSibling) {
+                    container.insertBefore(actionsRow, minusRow.nextSibling);
+                } else {
+                    container.appendChild(actionsRow);
+                }
+            }
+
+            active.nodes = [plusRow, minusRow, actionsRow].filter(Boolean);
+            emitChange(config, state);
+            document.addEventListener('pointerdown', handleOutside);
+        };
+
+        return { open, close, isOpen: () => Boolean(active) };
+    };
 })();
