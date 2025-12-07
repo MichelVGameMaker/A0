@@ -800,58 +800,22 @@
         };
 
         const buildActionsRow = (state, config) => {
-            const actions = Array.isArray(config.actions) ? config.actions : [];
-            if (!actions.length && typeof config.onDelete !== 'function' && typeof config.onApply !== 'function') {
+            if (typeof config.onDelete !== 'function') {
                 return null;
             }
             const row = document.createElement('div');
             row.className = 'inline-set-editor-actions set-editor-actions set-editor-actions-vertical';
 
-            const payload = () => buildPayload(state);
-
-            actions.forEach((action) => {
-                if (!action) {
-                    return;
-                }
-                const button = document.createElement('button');
-                button.type = 'button';
-                const classes = ['btn'];
-                if (action.variant) {
-                    classes.push(action.variant);
-                }
-                if (action.full) {
-                    classes.push('full');
-                }
-                button.className = classes.join(' ');
-                button.textContent = action.label ?? action.id ?? 'Action';
-                button.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    const id = action.id || 'apply';
-                    if (id === 'delete' && typeof config.onDelete === 'function') {
-                        config.onDelete();
-                        close();
-                        return;
-                    }
-                    if (typeof config.onApply === 'function') {
-                        config.onApply(id, payload());
-                    }
-                    close();
-                });
-                row.appendChild(button);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn danger full';
+            button.textContent = 'Supprimer';
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                config.onDelete();
+                close();
             });
-
-            if (!actions.length && typeof config.onDelete === 'function') {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'btn danger full';
-                button.textContent = 'Supprimer';
-                button.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    config.onDelete();
-                    close();
-                });
-                row.appendChild(button);
-            }
+            row.appendChild(button);
 
             return row;
         };
