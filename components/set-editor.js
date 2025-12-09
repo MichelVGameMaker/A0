@@ -696,10 +696,15 @@
 
         const applyMove = (direction) => {
             const onMove = active?.config?.onMove;
-            const result = typeof onMove === 'function' ? onMove(direction) : null;
-            if (result && typeof result.then === 'function') {
-                result.finally(() => close());
-                return;
+            try {
+                const result = typeof onMove === 'function' ? onMove(direction) : null;
+                if (result && typeof result.then === 'function') {
+                    result.finally(() => close());
+                    return;
+                }
+            } catch (error) {
+                close();
+                throw error;
             }
             close();
         };
