@@ -12,6 +12,10 @@
         session: null
     };
     let inlineEditor = null;
+    const inlineKeyboard = A.components?.inlineKeyboard || A.components?.createInlineKeyboard?.();
+    if (inlineKeyboard && !A.components.inlineKeyboard) {
+        A.components.inlineKeyboard = inlineKeyboard;
+    }
 
     const defaultTimerState = () => ({
         running: false,
@@ -216,6 +220,7 @@
         const exercise = getExercise();
         const { execSets } = assertRefs();
         ensureInlineEditor()?.close();
+        inlineKeyboard?.detach?.();
         execSets.innerHTML = '';
         if (!exercise) {
             return;
@@ -352,9 +357,10 @@
 
         const createInput = (getValue, field, extraClass = '', options = {}) => {
             const input = document.createElement('input');
-            const { inputMode = 'numeric', type = 'text', html = false } = options;
+            const { inputMode = inlineKeyboard ? 'none' : 'numeric', type = 'text', html = false } = options;
             input.type = type;
             input.inputMode = inputMode;
+            input.readOnly = Boolean(inlineKeyboard);
             input.className = `input set-edit-input${extraClass ? ` ${extraClass}` : ''}`;
             const update = () => {
                 const content = getValue();
@@ -373,7 +379,17 @@
                     commit();
                 }
             });
-            input.addEventListener('click', () => openEditor(field));
+            input.addEventListener('click', () => {
+                openEditor(field);
+                inlineKeyboard?.attach?.(input, {
+                    getValue: () => input.value,
+                    onChange: (next) => {
+                        input.value = next;
+                        void applyDirectChange(field, input.value);
+                    },
+                    onClose: () => input.blur()
+                });
+            });
             return input;
         };
 

@@ -13,6 +13,10 @@
         pendingSave: null
     };
     let inlineEditor = null;
+    const inlineKeyboard = A.components?.inlineKeyboard || A.components?.createInlineKeyboard?.();
+    if (inlineKeyboard && !A.components.inlineKeyboard) {
+        A.components.inlineKeyboard = inlineKeyboard;
+    }
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -119,6 +123,7 @@
         const move = findMove();
         const { routineMoveSets } = assertRefs();
         ensureInlineEditor()?.close();
+        inlineKeyboard?.detach?.();
         routineMoveSets.innerHTML = '';
         if (!move) {
             return;
@@ -253,9 +258,10 @@
 
         const createInput = (getValue, field, extraClass = '', options = {}) => {
             const input = document.createElement('input');
-            const { inputMode = 'numeric', type = 'text' } = options;
+            const { inputMode = inlineKeyboard ? 'none' : 'numeric', type = 'text' } = options;
             input.type = type;
             input.inputMode = inputMode;
+            input.readOnly = Boolean(inlineKeyboard);
             input.className = `input set-edit-input${extraClass ? ` ${extraClass}` : ''}`;
             const update = () => {
                 input.value = String(getValue());
@@ -273,7 +279,17 @@
                     commit();
                 }
             });
-            input.addEventListener('click', () => openEditor(field));
+            input.addEventListener('click', () => {
+                openEditor(field);
+                inlineKeyboard?.attach?.(input, {
+                    getValue: () => input.value,
+                    onChange: (next) => {
+                        input.value = next;
+                        applyDirectChange(field, input.value);
+                    },
+                    onClose: () => input.blur()
+                });
+            });
             return input;
         };
 
