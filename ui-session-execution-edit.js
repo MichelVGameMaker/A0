@@ -291,12 +291,12 @@
                 order: { position: set.pos ?? currentIndex + 1, total: totalSets },
                 onMove: async (direction) => {
                     const delta = direction === 'up' ? -1 : 1;
-                    const nextIndex = await moveSet(currentIndex, delta);
+                    const nextIndex = await moveSet(currentIndex, delta, row);
                     if (nextIndex === null || nextIndex === undefined) {
                         return null;
                     }
                     currentIndex = nextIndex;
-                    return null;
+                    return { order: { position: currentIndex + 1 } };
                 },
                 actions: [
                     { id: 'plan', label: 'Planifier', variant: 'ghost', full: true },
@@ -440,7 +440,20 @@
         await persistSession();
     }
 
-    async function moveSet(index, delta) {
+    function refreshExecSetOrderUI(container) {
+        if (!container) {
+            return;
+        }
+        Array.from(container.querySelectorAll('.exec-set-row')).forEach((node, idx) => {
+            node.dataset.index = String(idx);
+            const order = node.querySelector('.routine-set-order');
+            if (order) {
+                order.textContent = String(idx + 1);
+            }
+        });
+    }
+
+    async function moveSet(index, delta, row) {
         const exercise = getExercise();
         if (!exercise) {
             return null;
@@ -456,7 +469,19 @@
             set.pos = idx + 1;
         });
         exercise.sets = sets;
-        await persistSession();
+        const { execSets } = assertRefs();
+        if (row && execSets?.contains(row)) {
+            const sibling = delta < 0 ? row.previousElementSibling : row.nextElementSibling;
+            if (sibling) {
+                if (delta < 0) {
+                    execSets.insertBefore(row, sibling);
+                } else {
+                    execSets.insertBefore(sibling, row);
+                }
+            }
+        }
+        refreshExecSetOrderUI(execSets);
+        await persistSession(false);
         return target;
     }
 
