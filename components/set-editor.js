@@ -696,17 +696,15 @@
 
         const applyMove = (direction) => {
             const onMove = active?.config?.onMove;
+            let result = null;
             try {
-                const result = typeof onMove === 'function' ? onMove(direction) : null;
-                if (result && typeof result.then === 'function') {
-                    result.finally(() => close());
-                    return;
-                }
+                result = typeof onMove === 'function' ? onMove(direction) : null;
             } catch (error) {
                 close();
                 throw error;
             }
             close();
+            return result;
         };
 
         const adjustState = (state, field, delta, config) => {
