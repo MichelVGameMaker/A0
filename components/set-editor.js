@@ -602,7 +602,7 @@
         grid.className = 'inline-keyboard-grid';
         keyboard.appendChild(grid);
 
-        const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0'];
+        const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'];
 
         const handleClose = () => {
             keyboard.hidden = true;
@@ -616,7 +616,8 @@
             if (!active) {
                 return;
             }
-            if (keyboard.contains(event.target) || active.target?.contains?.(event.target)) {
+            const path = event.composedPath?.() || [];
+            if (path.includes(keyboard) || path.includes(active.target)) {
                 return;
             }
             handleClose();
@@ -630,6 +631,8 @@
             let next = current;
             if (key === 'del') {
                 next = current.slice(0, -1);
+            } else if (key === '.') {
+                next = current.includes('.') ? current : `${current || '0'}.`;
             } else {
                 next = current === '0' ? key : `${current}${key}`;
             }
@@ -641,9 +644,6 @@
             button.type = 'button';
             button.className = 'inline-keyboard-key';
             button.textContent = key === 'del' ? '⌫' : key;
-            if (key === '0') {
-                button.dataset.wide = 'true';
-            }
             button.addEventListener('click', (event) => {
                 event.preventDefault();
                 handleInput(key);
