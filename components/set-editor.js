@@ -587,6 +587,84 @@
 
     components.SetEditor = SetEditor;
 
+    components.createInlineKeyboard = function createInlineKeyboard() {
+        if (components.inlineKeyboard) {
+            return components.inlineKeyboard;
+        }
+
+        let active = null;
+
+        const keyboard = document.createElement('div');
+        keyboard.className = 'inline-keyboard';
+        keyboard.hidden = true;
+
+        const grid = document.createElement('div');
+        grid.className = 'inline-keyboard-grid';
+        keyboard.appendChild(grid);
+
+        const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0'];
+
+        const handleClose = () => {
+            keyboard.hidden = true;
+            keyboard.removeAttribute('data-visible');
+            document.removeEventListener('pointerdown', handleOutside, true);
+            active?.onClose?.();
+            active = null;
+        };
+
+        const handleOutside = (event) => {
+            if (!active) {
+                return;
+            }
+            if (keyboard.contains(event.target) || active.target?.contains?.(event.target)) {
+                return;
+            }
+            handleClose();
+        };
+
+        const handleInput = (key) => {
+            if (!active) {
+                return;
+            }
+            const current = String(active.getValue?.() ?? '');
+            let next = current;
+            if (key === 'del') {
+                next = current.slice(0, -1);
+            } else {
+                next = current === '0' ? key : `${current}${key}`;
+            }
+            active.onChange?.(next);
+        };
+
+        keys.forEach((key) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'inline-keyboard-key';
+            button.textContent = key === 'del' ? '⌫' : key;
+            if (key === '0') {
+                button.dataset.wide = 'true';
+            }
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                handleInput(key);
+            });
+            grid.appendChild(button);
+        });
+
+        document.body.appendChild(keyboard);
+
+        const attach = (target, handlers = {}) => {
+            active = { target, ...handlers };
+            keyboard.hidden = false;
+            keyboard.setAttribute('data-visible', 'true');
+            document.addEventListener('pointerdown', handleOutside, true);
+        };
+
+        const api = { attach, detach: handleClose, isOpen: () => Boolean(active) };
+        components.inlineKeyboard = api;
+        return api;
+    };
+
     /**
      * Fabrique un éditeur en ligne (insère des steppers autour d'une ligne de série).
      * @param {HTMLElement} container
