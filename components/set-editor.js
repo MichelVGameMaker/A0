@@ -669,6 +669,8 @@
             }
         };
 
+        const ACTIVE_CLASSES = ['routine-set-row-active', 'set-editor-highlight'];
+
         const close = () => {
             if (!active) {
                 return;
@@ -678,7 +680,7 @@
                 nodes.forEach((node) => node?.remove?.());
             }
             if (row) {
-                row.classList.remove('routine-set-row-active', 'set-editor-highlight');
+                row.classList.remove(...ACTIVE_CLASSES);
             }
             document.removeEventListener('pointerdown', handleOutside);
             config?.onClose?.();
@@ -694,19 +696,105 @@
             }
         };
 
-        const applyMove = (direction) => {
+        const updateMoveButtons = () => {
+            if (!active?.moveButtons) {
+                return;
+            }
+            const { position, total } = active.order || { position: 1, total: 1 };
+            active.moveButtons.forEach((button) => {
+                if (button.dataset?.inlineMove === 'plus') {
+                    button.disabled = position <= 1;
+                }
+                if (button.dataset?.inlineMove === 'minus') {
+                    button.disabled = position >= total;
+                }
+            });
+        };
+
+        const detachNodes = () => {
+            if (!active?.nodes) {
+                return;
+            }
+            active.nodes.forEach((node) => node?.remove?.());
+        };
+
+        const attachNodes = () => {
+            if (!active?.row || !active?.nodes || !container?.contains(active.row)) {
+                return;
+            }
+            const [plusRow, minusRow, actionsRow] = active.nodes;
+            if (plusRow) {
+                container.insertBefore(plusRow, active.row);
+            }
+            if (minusRow) {
+                if (active.row.nextSibling) {
+                    container.insertBefore(minusRow, active.row.nextSibling);
+                } else {
+                    container.appendChild(minusRow);
+                }
+            }
+            if (actionsRow) {
+                const anchor = minusRow?.nextSibling ?? active.row.nextSibling;
+                if (anchor) {
+                    container.insertBefore(actionsRow, anchor);
+                } else {
+                    container.appendChild(actionsRow);
+                }
+            }
+        };
+
+        const updateActiveRow = (nextRow) => {
+            if (!nextRow || nextRow === active?.row) {
+                attachNodes();
+                return;
+            }
+            if (active?.row) {
+                active.row.classList.remove(...ACTIVE_CLASSES);
+            }
+            active.row = nextRow;
+            active.row.classList.add(...ACTIVE_CLASSES);
+            attachNodes();
+        };
+
+        const handleMoveResult = (result, direction) => {
+            if (!active) {
+                return;
+            }
+            if (result?.row instanceof HTMLElement) {
+                updateActiveRow(result.row);
+            } else {
+                attachNodes();
+            }
+            const baseOrder = active.order || { position: 1, total: 1 };
+            const nextOrder = result?.order
+                ? normalizeOrder({ ...baseOrder, ...result.order })
+                : normalizeOrder({ ...baseOrder, position: baseOrder.position + (direction === 'up' ? -1 : 1) });
+            active.order = nextOrder;
+            updateMoveButtons();
+        };
+
+        const applyMove = async (direction) => {
             const onMove = active?.config?.onMove;
+            if (typeof onMove !== 'function') {
+                return;
+            }
+            detachNodes();
             try {
-                const result = typeof onMove === 'function' ? onMove(direction) : null;
+                const result = onMove(direction);
                 if (result && typeof result.then === 'function') {
-                    result.finally(() => close());
+                    result
+                        .then((payload) => handleMoveResult(payload, direction))
+                        .catch((error) => {
+                            close();
+                            throw error;
+                        });
                     return;
                 }
+                handleMoveResult(result, direction);
             } catch (error) {
                 close();
                 throw error;
             }
-            close();
         };
 
         const adjustState = (state, field, delta, config) => {
@@ -774,7 +862,7 @@
             return button;
         };
 
-        const buildStepperRow = (type, state, config, order) => {
+        const buildStepperRow = (type, state, config, order, moveButtons) => {
             const row = document.createElement('div');
             row.className = `exec-grid routine-set-grid inline-set-editor-row inline-set-editor-${type}`;
 
@@ -784,6 +872,8 @@
                 type === 'plus' ? order.position <= 1 : order.position >= order.total,
                 type === 'plus' ? 'Monter la série' : 'Descendre la série'
             );
+            moveButton.dataset.inlineMove = type;
+            moveButtons?.push(moveButton);
             row.appendChild(moveButton);
 
             const delta = type === 'plus' ? 1 : -1;
@@ -833,29 +923,17 @@
             const config = { ...options };
             const state = normalizeValues(config.values || {});
             const order = normalizeOrder(config.order || { position: 1, total: 1 });
-            active = { row, config, state, order, nodes: [] };
-            row.classList.add('routine-set-row-active', 'set-editor-highlight');
+            active = { row, config, state, order, nodes: [], moveButtons: [] };
+            row.classList.add(...ACTIVE_CLASSES);
             config.onOpen?.();
 
-            const plusRow = buildStepperRow('plus', state, config, order);
-            const minusRow = buildStepperRow('minus', state, config, order);
+            const plusRow = buildStepperRow('plus', state, config, order, active.moveButtons);
+            const minusRow = buildStepperRow('minus', state, config, order, active.moveButtons);
             const actionsRow = buildActionsRow(state, config);
 
-            container.insertBefore(plusRow, row);
-            if (row.nextSibling) {
-                container.insertBefore(minusRow, row.nextSibling);
-            } else {
-                container.appendChild(minusRow);
-            }
-            if (actionsRow) {
-                if (minusRow.nextSibling) {
-                    container.insertBefore(actionsRow, minusRow.nextSibling);
-                } else {
-                    container.appendChild(actionsRow);
-                }
-            }
-
             active.nodes = [plusRow, minusRow, actionsRow].filter(Boolean);
+            attachNodes();
+            updateMoveButtons();
             emitChange(config, state);
             document.addEventListener('pointerdown', handleOutside);
         };

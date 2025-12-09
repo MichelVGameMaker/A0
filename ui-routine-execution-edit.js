@@ -193,12 +193,12 @@
                 order: { position: set.pos ?? currentIndex + 1, total: totalSets },
                 onMove: (direction) => {
                     const delta = direction === 'up' ? -1 : 1;
-                    const nextIndex = moveSet(currentIndex, delta);
+                    const nextIndex = moveSet(currentIndex, delta, row);
                     if (nextIndex === null || nextIndex === undefined) {
                         return null;
                     }
                     currentIndex = nextIndex;
-                    return null;
+                    return { order: { position: currentIndex + 1 } };
                 },
                 actions: [
                     { id: 'plan', label: 'Planifier', variant: 'primary', full: true },
@@ -358,7 +358,20 @@
         renderSets();
     }
 
-    function moveSet(index, delta) {
+    function refreshRoutineSetOrderUI(container) {
+        if (!container) {
+            return;
+        }
+        Array.from(container.querySelectorAll('.routine-set-row')).forEach((node, idx) => {
+            node.dataset.idx = String(idx);
+            const order = node.querySelector('.routine-set-order');
+            if (order) {
+                order.textContent = String(idx + 1);
+            }
+        });
+    }
+
+    function moveSet(index, delta, row) {
         const move = findMove();
         if (!move) {
             return null;
@@ -374,8 +387,19 @@
             set.pos = idx + 1;
         });
         move.sets = sets;
+        const { routineMoveSets } = assertRefs();
+        if (row && routineMoveSets?.contains(row)) {
+            const sibling = delta < 0 ? row.previousElementSibling : row.nextElementSibling;
+            if (sibling) {
+                if (delta < 0) {
+                    routineMoveSets.insertBefore(row, sibling);
+                } else {
+                    routineMoveSets.insertBefore(sibling, row);
+                }
+            }
+        }
+        refreshRoutineSetOrderUI(routineMoveSets);
         scheduleSave();
-        renderSets();
         return target;
     }
 
