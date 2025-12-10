@@ -1102,6 +1102,12 @@ input[type="number"]{ -moz-appearance:textfield; }
     padding: 12px 16px;
     border: 1px solid var(--blocBord);
     border-radius: var(--radius);
+    cursor: pointer;
+}
+
+.stats-timeline-item:focus-visible {
+    outline: 2px solid var(--focusedBord);
+    outline-offset: 2px;
 }
 
 .stats-timeline-date {
