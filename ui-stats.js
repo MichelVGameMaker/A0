@@ -20,15 +20,29 @@
     const METRIC_DEFINITIONS = [
         {
             key: 'orm',
-            tagLabel: '1RM',
+            tagLabel: '1RM est',
             label: '1RM estimé',
             axisUnit: 'kg',
             format: formatKilograms
         },
         {
             key: 'tenrm',
-            tagLabel: '10RM',
+            tagLabel: '10RM est',
             label: '10RM estimé',
+            axisUnit: 'kg',
+            format: formatKilograms
+        },
+        {
+            key: 'avgRpe',
+            tagLabel: 'RPE moyen',
+            label: 'RPE moyen sur la séance',
+            axisUnit: 'RPE',
+            format: formatRpe
+        },
+        {
+            key: 'tenrmReal',
+            tagLabel: '10RM réel',
+            label: '10RM réel (charge sur 10 répétitions)',
             axisUnit: 'kg',
             format: formatKilograms
         },
@@ -45,6 +59,13 @@
             label: 'Charge maximale du jour',
             axisUnit: 'kg',
             format: formatKilograms
+        },
+        {
+            key: 'setsWeek',
+            tagLabel: 'Séries/sem.',
+            label: 'Nombre de séries sur la semaine',
+            axisUnit: 'séries',
+            format: formatSeries
         }
     ];
 
@@ -124,6 +145,7 @@
         refs.statsBack = document.getElementById('statsBack');
         refs.statsGoal = document.getElementById('statsGoal');
         refs.tabStats = document.getElementById('tabStats');
+        refs.tabSessions = document.getElementById('tabSessions');
         refsResolved = true;
         return refs;
     }
@@ -377,8 +399,9 @@
             return;
         }
         const last = usage[usage.length - 1];
+        const weeklySets = state.activeMetric === 'setsWeek' ? computeWeeklySetCounts(usage) : null;
         const definition = METRIC_MAP[state.activeMetric] || METRIC_DEFINITIONS[0];
-        const metricValue = last?.metrics ? last.metrics[state.activeMetric] || 0 : 0;
+        const metricValue = getMetricValue(last, state.activeMetric, weeklySets);
         const metricText = formatMetricValue(metricValue, state.activeMetric);
         const count = usage.length;
         const sessionLabel = count > 1 ? 'séances' : 'séance';
@@ -418,7 +441,8 @@
         const rangeDefinition = RANGE_MAP[state.activeRange] || RANGE_OPTIONS[0];
         const cutoff = computeRangeCutoff(rangeDefinition);
         const filtered = cutoff ? usage.filter((entry) => entry.dateObj >= cutoff) : [...usage];
-        const aggregated = aggregateUsageByDay(filtered);
+        const aggregated =
+            state.activeMetric === 'setsWeek' ? aggregateUsageByWeek(filtered) : aggregateUsageByDay(filtered);
         if (!aggregated.length) {
             statsChartEmpty.hidden = false;
             statsChartEmpty.textContent = 'Aucune donnée sur la période sélectionnée.';
@@ -668,8 +692,9 @@
             return;
         }
         const ordered = filtered.sort((a, b) => b.date.localeCompare(a.date));
+        const weeklySets = state.activeMetric === 'setsWeek' ? computeWeeklySetCounts(filtered) : null;
         ordered.forEach((entry) => {
-            statsTimeline.appendChild(renderTimelineItem(entry));
+            statsTimeline.appendChild(renderTimelineItem(entry, weeklySets));
         });
     }
 
@@ -680,7 +705,7 @@
         return empty;
     }
 
-    function renderTimelineItem(entry) {
+    function renderTimelineItem(entry, weeklySets) {
         const item = document.createElement('li');
         item.className = 'stats-timeline-item';
 
@@ -690,8 +715,22 @@
 
         const value = document.createElement('span');
         value.className = 'stats-timeline-value';
-        const metricValue = entry?.metrics ? entry.metrics[state.activeMetric] || 0 : 0;
+        const metricValue = getMetricValue(entry, state.activeMetric, weeklySets);
         value.textContent = formatMetricValue(metricValue, state.activeMetric);
+
+        const goToSession = () => {
+            void openSessionFromEntry(entry);
+        };
+
+        item.setAttribute('role', 'button');
+        item.tabIndex = 0;
+        item.addEventListener('click', goToSession);
+        item.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                goToSession();
+            }
+        });
 
         item.append(date, value);
         return item;
@@ -711,7 +750,12 @@
                         reps: 0,
                         weight: 0,
                         orm: 0,
-                        tenrm: 0
+                        tenrm: 0,
+                        tenrmReal: 0,
+                        setCount: 0,
+                        avgRpe: 0,
+                        rpeSum: 0,
+                        rpeCount: 0
                     }
                 });
             }
@@ -721,8 +765,118 @@
             target.metrics.weight = Math.max(target.metrics.weight, metrics.weight || 0);
             target.metrics.orm = Math.max(target.metrics.orm, metrics.orm || 0);
             target.metrics.tenrm = Math.max(target.metrics.tenrm, metrics.tenrm || 0);
+            target.metrics.tenrmReal = Math.max(target.metrics.tenrmReal, metrics.tenrmReal || 0);
+            target.metrics.setCount += metrics.setCount || 0;
+            target.metrics.rpeSum += metrics.rpeSum || 0;
+            target.metrics.rpeCount += metrics.rpeCount || 0;
         });
-        return Array.from(grouped.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
+        return Array.from(grouped.values())
+            .map((item) => ({
+                ...item,
+                metrics: {
+                    ...item.metrics,
+                    avgRpe: item.metrics.rpeCount ? item.metrics.rpeSum / item.metrics.rpeCount : 0,
+                    setsWeek: item.metrics.setCount
+                }
+            }))
+            .sort((a, b) => a.date.getTime() - b.date.getTime());
+    }
+
+    function aggregateUsageByWeek(list) {
+        const grouped = new Map();
+        list.forEach((entry) => {
+            const dateObj = entry?.dateObj;
+            const key = getWeekKey(dateObj);
+            if (!key) {
+                return;
+            }
+            if (!grouped.has(key)) {
+                grouped.set(key, {
+                    date: getWeekStartDate(dateObj),
+                    metrics: {
+                        reps: 0,
+                        weight: 0,
+                        orm: 0,
+                        tenrm: 0,
+                        tenrmReal: 0,
+                        setCount: 0,
+                        avgRpe: 0,
+                        rpeSum: 0,
+                        rpeCount: 0
+                    }
+                });
+            }
+            const target = grouped.get(key);
+            const metrics = entry?.metrics || {};
+            target.metrics.reps += metrics.reps || 0;
+            target.metrics.weight = Math.max(target.metrics.weight, metrics.weight || 0);
+            target.metrics.orm = Math.max(target.metrics.orm, metrics.orm || 0);
+            target.metrics.tenrm = Math.max(target.metrics.tenrm, metrics.tenrm || 0);
+            target.metrics.tenrmReal = Math.max(target.metrics.tenrmReal, metrics.tenrmReal || 0);
+            target.metrics.setCount += metrics.setCount || 0;
+            target.metrics.rpeSum += metrics.rpeSum || 0;
+            target.metrics.rpeCount += metrics.rpeCount || 0;
+        });
+        return Array.from(grouped.values())
+            .map((item) => ({
+                ...item,
+                metrics: {
+                    ...item.metrics,
+                    avgRpe: item.metrics.rpeCount ? item.metrics.rpeSum / item.metrics.rpeCount : 0,
+                    setsWeek: item.metrics.setCount
+                }
+            }))
+            .sort((a, b) => a.date.getTime() - b.date.getTime());
+    }
+
+    function computeWeeklySetCounts(list) {
+        const grouped = new Map();
+        list.forEach((entry) => {
+            const key = getWeekKey(entry?.dateObj);
+            if (!key) {
+                return;
+            }
+            const current = grouped.get(key) || 0;
+            grouped.set(key, current + (entry?.metrics?.setCount || 0));
+        });
+        return grouped;
+    }
+
+    function getMetricValue(entry, metricKey, weeklySets) {
+        if (!entry) {
+            return 0;
+        }
+        if (metricKey === 'setsWeek') {
+            const key = getWeekKey(entry.dateObj);
+            return weeklySets?.get(key) || 0;
+        }
+        const metrics = entry?.metrics || {};
+        return metrics[metricKey] || 0;
+    }
+
+    async function openSessionFromEntry(entry) {
+        const date = entry?.dateObj || (entry?.date ? parseDate(entry.date) : null);
+        if (!(date instanceof Date)) {
+            return;
+        }
+        A.activeDate = date;
+        if (typeof A.startOfWeek === 'function') {
+            A.currentAnchor = A.startOfWeek(date);
+        }
+        if (typeof A.populateRoutineSelect === 'function') {
+            await A.populateRoutineSelect();
+        }
+        if (typeof A.renderWeek === 'function') {
+            await A.renderWeek();
+        }
+        if (typeof A.renderSession === 'function') {
+            await A.renderSession();
+        }
+        document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
+        if (refs.tabSessions) {
+            refs.tabSessions.classList.add('active');
+        }
+        switchScreen('screenSessions');
     }
 
     function computeRangeCutoff(range) {
@@ -740,16 +894,33 @@
         let maxWeight = 0;
         let maxOrm = 0;
         let maxTenRm = 0;
+        let maxTenRmReal = 0;
+        let setCount = 0;
+        let rpeSum = 0;
+        let rpeCount = 0;
         let hasData = false;
         sets.forEach((set) => {
             const reps = parseNumber(set?.reps);
             const weight = parseNumber(set?.weight);
+            const rpe = parseNumber(set?.rpe);
+            if (Number.isFinite(reps) || Number.isFinite(weight) || Number.isFinite(rpe)) {
+                setCount += 1;
+            }
             if (Number.isFinite(reps) && reps > 0) {
                 totalReps += reps;
                 hasData = true;
             }
             if (Number.isFinite(weight) && weight > maxWeight) {
                 maxWeight = weight;
+                hasData = true;
+            }
+            if (Number.isFinite(rpe) && rpe >= 5 && rpe <= 10) {
+                rpeSum += rpe;
+                rpeCount += 1;
+                hasData = true;
+            }
+            if (Number.isFinite(weight) && weight > 0 && Number.isFinite(reps) && reps === 10) {
+                maxTenRmReal = Math.max(maxTenRmReal, weight);
                 hasData = true;
             }
             if (Number.isFinite(weight) && weight > 0 && Number.isFinite(reps) && reps > 0) {
@@ -769,6 +940,11 @@
             weight: maxWeight,
             orm: maxOrm,
             tenrm: maxTenRm,
+            tenrmReal: maxTenRmReal,
+            setCount,
+            avgRpe: rpeCount ? rpeSum / rpeCount : 0,
+            rpeSum,
+            rpeCount,
             hasData
         };
     }
@@ -785,6 +961,21 @@
             return new Date();
         }
         return parsed;
+    }
+
+    function getWeekKey(dateObj) {
+        if (!(dateObj instanceof Date) || typeof A.startOfWeek !== 'function' || typeof A.ymd !== 'function') {
+            return null;
+        }
+        const start = A.startOfWeek(dateObj);
+        return A.ymd(start);
+    }
+
+    function getWeekStartDate(dateObj) {
+        if (!(dateObj instanceof Date) || typeof A.startOfWeek !== 'function') {
+            return dateObj;
+        }
+        return A.startOfWeek(dateObj);
     }
 
     function formatMetricValue(value, metric) {
@@ -805,6 +996,18 @@
         const normalized = Number.isFinite(value) ? value : 0;
         const rounded = Math.round(normalized);
         return `${rounded} répétition${rounded > 1 ? 's' : ''}`;
+    }
+
+    function formatSeries(value) {
+        const normalized = Number.isFinite(value) ? value : 0;
+        const rounded = Math.round(normalized);
+        return `${rounded} série${rounded > 1 ? 's' : ''}`;
+    }
+
+    function formatRpe(value) {
+        const normalized = Number.isFinite(value) ? value : 0;
+        const rounded = Math.round(normalized * 10) / 10;
+        return `RPE ${rounded}`;
     }
 
     function highlightStatsTab() {
