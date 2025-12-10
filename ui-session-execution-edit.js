@@ -352,7 +352,7 @@
                 default:
                     return;
             }
-            await applySetEditorResult(currentIndex, next, { done: set.done });
+            await applySetEditorResult(currentIndex, next, { done: set.done, render: false });
         };
 
         const createInput = (getValue, field, extraClass = '', options = {}) => {
@@ -510,6 +510,7 @@
         if (!sets[index]) {
             return;
         }
+        const shouldRender = options.render !== false;
         const nextDone = options.done ?? sets[index].done ?? false;
         sets[index] = {
             ...sets[index],
@@ -521,7 +522,7 @@
             done: nextDone
         };
         exercise.sets = sets;
-        await persistSession();
+        await persistSession(shouldRender);
     }
 
     async function persistSession(shouldRender = true) {
