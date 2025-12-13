@@ -617,7 +617,10 @@
                 return;
             }
             const path = event.composedPath?.() || [];
-            if (path.includes(keyboard) || path.includes(active.target)) {
+            const target = event.target;
+            const isInsideKeyboard = path.includes(keyboard) || keyboard.contains(target);
+            const isInsideTarget = path.includes(active.target) || active.target?.contains?.(target);
+            if (isInsideKeyboard || isInsideTarget) {
                 return;
             }
             handleClose();
