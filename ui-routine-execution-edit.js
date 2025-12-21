@@ -253,7 +253,7 @@
                 default:
                     return;
             }
-            applySetEditorResult(currentIndex, next);
+            applySetEditorResult(currentIndex, next, { render: false });
         };
 
         const createInput = (getValue, field, extraClass = '', options = {}) => {
@@ -309,7 +309,7 @@
         return row;
     }
 
-    function applySetEditorResult(index, values) {
+    function applySetEditorResult(index, values, options = {}) {
         const move = findMove();
         if (!move) {
             return;
@@ -317,6 +317,7 @@
         if (!Array.isArray(move.sets) || !move.sets[index]) {
             return;
         }
+        const shouldRender = options.render !== false;
         move.sets[index] = {
             ...move.sets[index],
             reps: values.reps ?? null,
@@ -326,7 +327,9 @@
             pos: index + 1
         };
         scheduleSave();
-        renderSets();
+        if (shouldRender) {
+            renderSets();
+        }
     }
 
     function addSet() {
