@@ -656,6 +656,17 @@
 
         document.body.appendChild(keyboard);
 
+        const contains = (target, path) => {
+            if (!target) {
+                return false;
+            }
+            const composed = Array.isArray(path) ? path : target.composedPath?.();
+            if (Array.isArray(composed) && composed.includes(keyboard)) {
+                return true;
+            }
+            return keyboard.contains(target);
+        };
+
         const attach = (target, handlers = {}) => {
             active = { target, ...handlers };
             keyboard.hidden = false;
@@ -663,7 +674,7 @@
             document.addEventListener('pointerdown', handleOutside, true);
         };
 
-        const api = { attach, detach: handleClose, isOpen: () => Boolean(active) };
+        const api = { attach, detach: handleClose, isOpen: () => Boolean(active), contains };
         components.inlineKeyboard = api;
         return api;
     };
@@ -768,11 +779,15 @@
             active = null;
         };
 
+        const inlineKeyboard = components.inlineKeyboard || components.createInlineKeyboard?.();
+
         const handleOutside = (event) => {
             if (!active) {
                 return;
             }
-            if (!container.contains(event.target)) {
+            const target = event.target;
+            const insideKeyboard = inlineKeyboard?.contains?.(target, event.composedPath?.());
+            if (!container.contains(target) && !insideKeyboard) {
                 close();
             }
         };
