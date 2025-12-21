@@ -205,7 +205,7 @@
             pos: safeInt(set.pos, index + 1),
             reps: safePositiveInt(set.reps),
             weight: sanitizeWeight(set.weight),
-            rpe: set.rpe != null && set.rpe !== '' ? clampInt(set.rpe, 5, 10) : null,
+            rpe: set.rpe != null && set.rpe !== '' ? clampRpe(set.rpe) : null,
             rest: Math.max(0, safeInt(set.rest, defaultRest)),
             done: set.done === true
         }));
@@ -253,7 +253,7 @@
         const value = {
             reps: safePositiveInt(set.reps),
             weight: sanitizeWeight(set.weight),
-            rpe: set.rpe != null && set.rpe !== '' ? clampInt(set.rpe, 5, 10) : null,
+            rpe: set.rpe != null && set.rpe !== '' ? clampRpe(set.rpe) : null,
             rest: Math.max(0, safeInt(set.rest, getDefaultRest()))
         };
 
@@ -272,7 +272,7 @@
             }
             value.reps = safePositiveInt(source.reps);
             value.weight = sanitizeWeight(source.weight);
-            value.rpe = source.rpe != null && source.rpe !== '' ? clampInt(source.rpe, 5, 10) : null;
+            value.rpe = source.rpe != null && source.rpe !== '' ? clampRpe(source.rpe) : null;
             if (source.rest != null) {
                 value.rest = Math.max(0, safeInt(source.rest, value.rest));
             } else {
@@ -337,7 +337,7 @@
                     next.weight = sanitizeWeight(rawValue);
                     break;
                 case 'rpe':
-                    next.rpe = rawValue === '' ? null : clampInt(rawValue, 5, 10);
+                    next.rpe = rawValue === '' ? null : clampRpe(rawValue);
                     break;
                 case 'minutes': {
                     const { seconds } = splitRest(value.rest);
@@ -353,6 +353,7 @@
                     return;
             }
             await applySetEditorResult(currentIndex, next, { done: set.done, render: false });
+            updatePreview(next);
         };
 
         const createInput = (getValue, field, extraClass = '', options = {}) => {
@@ -382,6 +383,7 @@
             input.addEventListener('click', () => {
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
+                    layout: field === 'rpe' ? 'rpe' : 'default',
                     getValue: () => input.value,
                     onChange: (next) => {
                         input.value = next;
@@ -422,7 +424,7 @@
                   pos: sets.length + 1,
                   reps: safePositiveInt(previous.reps),
                   weight: sanitizeWeight(previous.weight),
-                  rpe: previous.rpe != null && previous.rpe !== '' ? clampInt(previous.rpe, 5, 10) : null,
+                  rpe: previous.rpe != null && previous.rpe !== '' ? clampRpe(previous.rpe) : null,
                   rest: Math.max(0, safeInt(previous.rest, defaultRest)),
                   done: false
               }
@@ -517,7 +519,7 @@
             pos: index + 1,
             reps: safePositiveInt(values.reps),
             weight: sanitizeWeight(values.weight),
-            rpe: values.rpe != null && values.rpe !== '' ? clampInt(values.rpe, 5, 10) : null,
+            rpe: values.rpe != null && values.rpe !== '' ? clampRpe(values.rpe) : null,
             rest: Math.max(0, safeInt(values.rest, getDefaultRest())),
             done: nextDone
         };
@@ -620,7 +622,8 @@
             return '—';
         }
         const extra = muted ? ' rpe-chip-muted' : '';
-        return `<span class="rpe rpe-chip${extra}" data-rpe="${numeric}">${value}</span>`;
+        const colorValue = Math.round(numeric);
+        return `<span class="rpe rpe-chip${extra}" data-rpe="${colorValue}">${value}</span>`;
     }
 
     function formatRepsDisplay(value) {
@@ -661,7 +664,7 @@
     function sanitizeEditorResult(result, fallbackRest) {
         const reps = safePositiveInt(result.reps);
         const weight = sanitizeWeight(result.weight);
-        const rpe = result.rpe != null && result.rpe !== '' ? clampInt(result.rpe, 5, 10) : null;
+        const rpe = result.rpe != null && result.rpe !== '' ? clampRpe(result.rpe) : null;
         const minutes = safeInt(result.minutes, 0);
         const seconds = safeInt(result.seconds, 0);
         const computed = Math.max(0, minutes * 60 + seconds);
@@ -792,29 +795,13 @@
         return numeric > 0 ? numeric : 0;
     }
 
-    function clampInt(value, min, max) {
-        const numeric = safeInt(value, min);
-        if (numeric < min) {
-            return min;
-        }
-        if (numeric > max) {
-            return max;
-        }
-        return numeric;
-    }
-
     function clampRpe(value) {
-        const numeric = Number.parseInt(value, 10);
+        const numeric = Number.parseFloat(value);
         if (!Number.isFinite(numeric)) {
             return null;
         }
-        if (numeric < 5) {
-            return 5;
-        }
-        if (numeric > 10) {
-            return 10;
-        }
-        return numeric;
+        const bounded = Math.min(10, Math.max(5, numeric));
+        return Math.round(bounded * 2) / 2;
     }
 
     function sanitizeWeight(value) {

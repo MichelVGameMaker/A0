@@ -279,15 +279,18 @@
             if (!input) {
                 return;
             }
-            const current = SetEditor.#parseInt(input.value, null);
+            const current = SetEditor.#parseFloat(input.value, null);
             let base = current;
             if (!Number.isFinite(base)) {
                 base = delta > 0 ? 5 : 10;
             } else {
-                base += delta;
+                base += delta * 0.5;
             }
-            const next = Math.max(5, Math.min(10, base));
-            input.value = String(next);
+            const next = SetEditor.#clampRpe(base);
+            if (next == null) {
+                return;
+            }
+            input.value = SetEditor.#formatDecimal(next);
             SetEditor.#notifyChange();
         }
 
@@ -361,6 +364,15 @@
             const normalized = typeof value === 'string' ? value.replace(',', '.') : value;
             const numeric = Number.parseFloat(normalized);
             return Number.isFinite(numeric) ? numeric : fallback;
+        }
+
+        static #clampRpe(value) {
+            const numeric = Number.parseFloat(value);
+            if (!Number.isFinite(numeric)) {
+                return null;
+            }
+            const bounded = Math.min(10, Math.max(5, numeric));
+            return Math.round(bounded * 2) / 2;
         }
 
         static #formatDecimal(value) {
@@ -440,8 +452,8 @@
             const hasWeight = values.weight != null && values.weight !== '';
             const weightValue = hasWeight ? Math.max(0, SetEditor.#parseFloat(values.weight, 0)) : null;
             refs.weightInput.value = weightValue == null ? '' : SetEditor.#formatDecimal(weightValue);
-            const rpeValue = SetEditor.#parseInt(values.rpe, null);
-            refs.rpeInput.value = Number.isFinite(rpeValue) ? String(Math.max(5, Math.min(10, rpeValue))) : '';
+            const rpeValue = SetEditor.#clampRpe(values.rpe);
+            refs.rpeInput.value = Number.isFinite(rpeValue) ? SetEditor.#formatDecimal(rpeValue) : '';
             refs.minutesInput.value = String(Math.max(0, SetEditor.#parseInt(values.minutes, 0)));
             refs.secondsInput.value = String(Math.max(0, SetEditor.#parseInt(values.seconds, 0)));
             SetEditor.#sanitizeTimeInputs();
@@ -547,7 +559,7 @@
             const hasWeight = String(weightRaw).trim() !== '';
             const weight = hasWeight ? Math.max(0, SetEditor.#parseFloat(weightRaw, 0)) : null;
             const rpeRaw = refs.rpeInput?.value ?? '';
-            const rpeValue = String(rpeRaw).trim() === '' ? null : SetEditor.#parseInt(rpeRaw, null);
+            const rpeValue = String(rpeRaw).trim() === '' ? null : SetEditor.#clampRpe(rpeRaw);
             const rpe = Number.isFinite(rpeValue) && rpeValue >= 5 && rpeValue <= 10 ? rpeValue : null;
             const minutes = Math.max(0, SetEditor.#parseInt(refs.minutesInput?.value, 0));
             const seconds = Math.max(0, SetEditor.#parseInt(refs.secondsInput?.value, 0));
@@ -593,6 +605,7 @@
         }
 
         let active = null;
+        let currentLayout = 'default';
 
         const keyboard = document.createElement('div');
         keyboard.className = 'inline-keyboard';
@@ -602,7 +615,29 @@
         grid.className = 'inline-keyboard-grid';
         keyboard.appendChild(grid);
 
-        const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'];
+        const layouts = {
+            default: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'],
+            rpe: ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', 'del']
+        };
+
+        const renderKeys = (layout) => {
+            grid.innerHTML = '';
+            const keys = layouts[layout] || layouts.default;
+            keys.forEach((key) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'inline-keyboard-key';
+                button.textContent = key === 'del' ? '⌫' : key;
+                button.dataset.key = key;
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    handleInput(key);
+                });
+                grid.appendChild(button);
+            });
+        };
+
+        renderKeys(currentLayout);
 
         const handleClose = () => {
             keyboard.hidden = true;
@@ -632,8 +667,11 @@
             }
             const current = String(active.getValue?.() ?? '');
             let next = current;
+            const layout = active.layout || 'default';
             if (key === 'del') {
                 next = current.slice(0, -1);
+            } else if (layout === 'rpe') {
+                next = key;
             } else if (key === '.') {
                 next = current.includes('.') ? current : `${current || '0'}.`;
             } else {
@@ -641,18 +679,6 @@
             }
             active.onChange?.(next);
         };
-
-        keys.forEach((key) => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'inline-keyboard-key';
-            button.textContent = key === 'del' ? '⌫' : key;
-            button.addEventListener('click', (event) => {
-                event.preventDefault();
-                handleInput(key);
-            });
-            grid.appendChild(button);
-        });
 
         document.body.appendChild(keyboard);
 
@@ -668,7 +694,12 @@
         };
 
         const attach = (target, handlers = {}) => {
-            active = { target, ...handlers };
+            const layout = handlers.layout || 'default';
+            if (layout !== currentLayout) {
+                currentLayout = layout;
+                renderKeys(currentLayout);
+            }
+            active = { target, ...handlers, layout };
             keyboard.hidden = false;
             keyboard.setAttribute('data-visible', 'true');
             document.addEventListener('pointerdown', handleOutside, true);
@@ -705,11 +736,12 @@
         };
 
         const clampRpe = (value) => {
-            const numeric = Number.parseInt(value, 10);
+            const numeric = Number.parseFloat(value);
             if (!Number.isFinite(numeric)) {
                 return null;
             }
-            return Math.max(5, Math.min(10, numeric));
+            const bounded = Math.min(10, Math.max(5, numeric));
+            return Math.round(bounded * 2) / 2;
         };
 
         const normalizeTime = (minutes, seconds) => {
@@ -910,12 +942,13 @@
                     break;
                 }
                 case 'rpe': {
-                    const base = state.rpe != null ? parseIntSafe(state.rpe, null) : null;
+                    const base = state.rpe != null ? parseFloatSafe(state.rpe, null) : null;
+                    const step = 0.5;
                     let next = base;
                     if (!Number.isFinite(next)) {
                         next = delta > 0 ? 5 : 10;
                     } else {
-                        next += delta;
+                        next += delta * step;
                     }
                     state.rpe = clampRpe(next);
                     break;
