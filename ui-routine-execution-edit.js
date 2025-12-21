@@ -254,6 +254,7 @@
                     return;
             }
             applySetEditorResult(currentIndex, next, { render: false });
+            updatePreview(next);
         };
 
         const createInput = (getValue, field, extraClass = '', options = {}) => {
@@ -282,6 +283,7 @@
             input.addEventListener('click', () => {
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
+                    layout: field === 'rpe' ? 'rpe' : 'default',
                     getValue: () => input.value,
                     onChange: (next) => {
                         input.value = next;
@@ -587,11 +589,12 @@
     }
 
     function clampRpe(value) {
-        const numeric = Number.parseInt(value, 10);
+        const numeric = Number.parseFloat(value);
         if (!Number.isFinite(numeric)) {
             return null;
         }
-        return Math.max(5, Math.min(10, numeric));
+        const bounded = Math.min(10, Math.max(5, numeric));
+        return Math.round(bounded * 2) / 2;
     }
 
     function splitRest(value) {
@@ -644,7 +647,8 @@
         if (numeric == null) {
             return '—';
         }
-        return `<span class="rpe rpe-chip" data-rpe="${numeric}">${value}</span>`;
+        const colorValue = Math.round(numeric);
+        return `<span class="rpe rpe-chip" data-rpe="${colorValue}">${value}</span>`;
     }
 
     function uid(prefix) {
