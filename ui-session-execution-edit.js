@@ -373,6 +373,11 @@
             input._update = update;
             update();
             input.addEventListener('focus', () => {
+                if (inlineKeyboard) {
+                    const position = input.value.length;
+                    input.setSelectionRange?.(position, position);
+                    return;
+                }
                 input.select();
             });
             const commit = () => {
