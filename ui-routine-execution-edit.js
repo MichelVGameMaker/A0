@@ -303,6 +303,7 @@
                     },
                     onClose: () => input.blur()
                 });
+                inlineKeyboard?.selectTarget?.(input);
             });
             return input;
         };
