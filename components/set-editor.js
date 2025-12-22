@@ -664,22 +664,51 @@
             handleClose();
         };
 
+        const hasFullSelection = (value) => {
+            if (!active?.target) {
+                return false;
+            }
+            const target = active.target;
+            const length = value?.length ?? 0;
+            if (!length) {
+                return false;
+            }
+            if (typeof target.selectionStart === 'number' && typeof target.selectionEnd === 'number') {
+                return target.selectionStart === 0 && target.selectionEnd === length;
+            }
+            return false;
+        };
+
+        const selectTarget = (target = active?.target) => {
+            if (!target || target !== active?.target) {
+                return;
+            }
+            if (typeof target.focus === 'function') {
+                target.focus({ preventScroll: true });
+            }
+            target.select?.();
+            active.replaceOnInput = true;
+        };
+
         const handleInput = (key) => {
             if (!active) {
                 return;
             }
             const current = String(active.getValue?.() ?? '');
-            let next = current;
             const layout = active.layout || 'default';
+            const shouldReplace = active.replaceOnInput || hasFullSelection(current);
+            const base = shouldReplace ? '' : current;
+            let next = base;
             if (key === 'del') {
-                next = current.slice(0, -1);
+                next = shouldReplace ? '' : current.slice(0, -1);
             } else if (layout === 'rpe') {
                 next = key;
             } else if (key === '.') {
-                next = current.includes('.') ? current : `${current || '0'}.`;
+                next = base.includes('.') ? base : `${base || '0'}.`;
             } else {
-                next = current === '0' ? key : `${current}${key}`;
+                next = base === '' || base === '0' ? key : `${base}${key}`;
             }
+            active.replaceOnInput = false;
             active.onChange?.(next);
         };
 
@@ -706,9 +735,10 @@
             keyboard.hidden = false;
             keyboard.setAttribute('data-visible', 'true');
             document.addEventListener('pointerdown', handleOutside, true);
+            selectTarget(target);
         };
 
-        const api = { attach, detach: handleClose, isOpen: () => Boolean(active), contains };
+        const api = { attach, detach: handleClose, isOpen: () => Boolean(active), contains, selectTarget };
         components.inlineKeyboard = api;
         return api;
     };
@@ -929,6 +959,7 @@
         };
 
         const adjustState = (state, field, delta, config) => {
+            inlineKeyboard?.selectTarget?.();
             switch (field) {
                 case 'reps': {
                     const current = Math.max(0, parseIntSafe(state.reps, 0));
