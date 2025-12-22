@@ -4,6 +4,13 @@ const db = (() => {
     const DB_NAME = 'A0-db';
     const DB_VER = 1;
     let handle;
+    let memoryMode = false;
+    const memoryStores = {
+        exercises: new Map(),
+        routines: new Map(),
+        plans: new Map(),
+        sessions: new Map()
+    };
 
     /* WIRE */
 
@@ -13,7 +20,14 @@ const db = (() => {
      * @returns {Promise<void>} Promesse résolue lorsque la connexion est prête.
      */
     async function init() {
-        handle = await open();
+        try {
+            handle = await open();
+            memoryMode = false;
+        } catch (error) {
+            console.warn('IndexedDB indisponible, bascule en mémoire.', error);
+            handle = null;
+            memoryMode = true;
+        }
     }
 
     /**
@@ -23,6 +37,9 @@ const db = (() => {
      * @returns {Promise<unknown>} Valeur trouvée ou `null`.
      */
     async function get(store, key) {
+        if (memoryMode) {
+            return memoryGet(store, key);
+        }
         return new Promise((resolve, reject) => {
             const request = transaction(store).get(key);
             request.onsuccess = () => resolve(request.result || null);
@@ -37,6 +54,9 @@ const db = (() => {
      * @returns {Promise<boolean>} `true` une fois l'opération terminée.
      */
     async function put(store, value) {
+        if (memoryMode) {
+            return memoryPut(store, value);
+        }
         return new Promise((resolve, reject) => {
             const request = transaction(store, 'readwrite').put(value);
             request.onsuccess = () => resolve(true);
@@ -50,6 +70,9 @@ const db = (() => {
      * @returns {Promise<unknown[]>} Valeurs présentes.
      */
     async function getAll(store) {
+        if (memoryMode) {
+            return memoryGetAll(store);
+        }
         return new Promise((resolve, reject) => {
             const request = transaction(store).getAll();
             request.onsuccess = () => resolve(request.result || []);
@@ -63,6 +86,9 @@ const db = (() => {
      * @returns {Promise<number>} Nombre d'entrées.
      */
     async function count(store) {
+        if (memoryMode) {
+            return memoryCount(store);
+        }
         return new Promise((resolve, reject) => {
             const request = transaction(store).count();
             request.onsuccess = () => resolve(request.result || 0);
@@ -77,6 +103,9 @@ const db = (() => {
      * @returns {Promise<boolean>} `true` une fois l'opération réalisée.
      */
     async function del(store, key) {
+        if (memoryMode) {
+            return memoryDelete(store, key);
+        }
         return new Promise((resolve, reject) => {
             const request = transaction(store, 'readwrite').delete(key);
             request.onsuccess = () => resolve(true);
@@ -160,11 +189,18 @@ const db = (() => {
 
     /* UTILS */
     function transaction(store, mode = 'readonly') {
+        if (!handle) {
+            throw new Error('IndexedDB non initialisé.');
+        }
         return handle.transaction(store, mode).objectStore(store);
     }
 
     function open() {
         return new Promise((resolve, reject) => {
+            if (!('indexedDB' in window)) {
+                reject(new Error('IndexedDB non disponible dans ce contexte.'));
+                return;
+            }
             const request = indexedDB.open(DB_NAME, DB_VER);
             request.onupgradeneeded = (event) => {
                 const database = event.target.result;
@@ -246,6 +282,50 @@ const db = (() => {
 
     async function countStore(store) {
         return count(store);
+    }
+
+    function memoryStore(store) {
+        const map = memoryStores[store];
+        if (!map) {
+            throw new Error(`Store mémoire inconnu: ${store}`);
+        }
+        return map;
+    }
+
+    function memoryGet(store, key) {
+        const map = memoryStore(store);
+        return Promise.resolve(map.get(key) || null);
+    }
+
+    function memoryPut(store, value) {
+        const map = memoryStore(store);
+        const key =
+            store === 'sessions'
+                ? value?.date
+                : store === 'plans' || store === 'routines' || store === 'exercises'
+                    ? value?.id
+                    : null;
+        if (!key) {
+            console.warn(`Impossible d'insérer dans ${store}: clé manquante.`);
+            return Promise.resolve(false);
+        }
+        map.set(key, value);
+        return Promise.resolve(true);
+    }
+
+    function memoryGetAll(store) {
+        const map = memoryStore(store);
+        return Promise.resolve(Array.from(map.values()));
+    }
+
+    function memoryCount(store) {
+        const map = memoryStore(store);
+        return Promise.resolve(map.size);
+    }
+
+    function memoryDelete(store, key) {
+        const map = memoryStore(store);
+        return Promise.resolve(map.delete(key));
     }
 
     return {
