@@ -46,7 +46,7 @@
   --pad-y:     10px;       /* padding vertical par défaut */
   --pad-tight: 4px;        /* padding pour les éléments denses */
   --gap:       6px;        /* marge/gap par défaut entre éléments */
-  --set-synopsis-width: calc(8ch + 8px); /* largeur fixe des tags de série (888*888k) */
+  --set-synopsis-width: calc(10ch + 8px); /* largeur fixe des tags de série (888x 888kg) */
   --set-synopsis-gap: 4px; /* espacement horizontal entre tags de série */
 
   /* --- Typo unifiée --- */
@@ -467,6 +467,7 @@ textarea:focus{
   grid-template-columns:repeat(3, var(--set-synopsis-width));
   gap:var(--set-synopsis-gap);
   justify-content:start;
+  width:max-content;
 }
 .session-card-sets:empty{
   display:none;
@@ -486,7 +487,7 @@ textarea:focus{
 }
 .session-card-set--empty{
   grid-column:1 / -1;
-  width:100%;
+  width:calc(var(--set-synopsis-width) * 3 + var(--set-synopsis-gap) * 2);
   justify-content:flex-end;
   text-align:right;
 }

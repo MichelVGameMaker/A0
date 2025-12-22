@@ -30,7 +30,7 @@
     function formatSetSynopsis(reps, weight) {
         const repsDisplay = formatSynopsisReps(reps);
         const weightDisplay = formatSynopsisWeight(weight);
-        return `${repsDisplay}•${weightDisplay}`;
+        return `${repsDisplay}x ${weightDisplay}`;
     }
 
     function formatSynopsisReps(value) {
@@ -41,9 +41,9 @@
     function formatSynopsisWeight(value) {
         const numeric = Number.parseFloat(value);
         if (!Number.isFinite(numeric)) {
-            return '—';
+            return '—kg';
         }
-        return `${formatSynopsisNumber(numeric)}k`;
+        return `${formatSynopsisNumber(numeric)}kg`;
     }
 
     function formatSynopsisNumber(value) {
