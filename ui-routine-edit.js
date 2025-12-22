@@ -320,7 +320,7 @@
             const line = document.createElement('div');
             line.className = 'session-card-sets-row';
             const emptyBlock = document.createElement('span');
-            emptyBlock.className = 'session-card-set';
+            emptyBlock.className = 'session-card-set session-card-set--empty';
             emptyBlock.textContent = 'Ajouter des séries';
             line.appendChild(emptyBlock);
             setsWrapper.appendChild(line);
