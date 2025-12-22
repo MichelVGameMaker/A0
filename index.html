@@ -443,11 +443,86 @@
  
 <!-- Barre d’onglets fixe (icônes) -->
 <nav class="tabbar safe-bottom" aria-label="Navigation principale">
-    <button id="tabSessions"  class="tab active" title="Séances" aria-label="Séances">🏋️</button>
-    <button id="tabLibraries" class="tab" title="Bibliothèques" aria-label="Bibliothèques">📚</button>
-    <button id="tabStats"     class="tab" title="Statistiques" aria-label="Statistiques">📈</button>
-    <button id="tabSettings"  class="tab" title="Réglages" aria-label="Réglages">⚙️</button>
+    <button id="tabSessions" class="tab active" title="Séances" aria-label="Séances">🏋️</button>
+    <button id="tabStats"    class="tab" title="Statistiques" aria-label="Statistiques">📈</button>
+    <button id="tabSettings" class="tab" title="Réglages" aria-label="Réglages">⚙️</button>
+    <button id="tabTimer"    class="tab" title="Afficher ou masquer le chronomètre" aria-label="Afficher ou masquer le chronomètre">⏱️</button>
 </nav>
+<!-- ==================== -->
+ 
+<!-- ========== Réglages ========== -->
+<section id="screenSettings" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left"></div>
+        <div class="header-center">
+            <div class="title">Réglages</div>
+        </div>
+        <div class="header-right"></div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <div class="row">
+                <button id="btnSettingsExercises" class="btn full">📚 Exercices</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsRoutines" class="btn full">📓 Routines</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsPreferences" class="btn full">⚙️ Préférences</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsData" class="btn full">💾 Données</button>
+            </div>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Préférences ========== -->
+<section id="screenPreferences" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnPreferencesBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Préférences</div>
+        </div>
+        <div class="header-right"></div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <p class="details">Personnalisez votre expérience : choix des durées par défaut, unités et options d’affichage (à venir).</p>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Données ========== -->
+<section id="screenData" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnDataBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Données</div>
+        </div>
+        <div class="header-right"></div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <p class="details">Importez, exportez ou sauvegardez vos séances et progressions (fonctionnalités à venir).</p>
+        </div>
+    </main>
+
+</section>
 <!-- ==================== -->
   
 <!-- ==========  Modale calendrier ========== -->
@@ -543,6 +618,7 @@
 <script src="ui-routines-list.js"></script>
 <script src="ui-routine-edit.js"></script>
 <script src="ui-routine-execution-edit.js"></script>
+<script src="ui-settings.js"></script>
 <script src="ui-stats.js"></script>
 <script src="ui-session-execution-edit.js"></script>
 <script src="init.js"></script>

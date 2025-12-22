@@ -39,10 +39,10 @@
 
     function wireNavigation() {
         const {
-            tabLibraries,
             tabSessions,
             tabSettings,
             tabStats,
+            tabTimer,
             screenSessions,
             screenExercises,
             screenExerciseEdit,
@@ -50,14 +50,11 @@
             screenRoutineMoveEdit,
             screenRoutineList,
             screenStatsList,
-            screenStatsDetail
+            screenStatsDetail,
+            screenSettings,
+            screenPreferences,
+            screenData
         } = refs;
-
-        tabLibraries?.addEventListener('click', async () => {
-            setActiveTab('tabLibraries');
-            showOnly('exercises');
-            await A.openExercises({ callerScreen: 'screenSessions' });
-        });
 
         tabSessions?.addEventListener('click', async () => {
             setActiveTab('tabSessions');
@@ -74,7 +71,11 @@
 
         tabSettings?.addEventListener('click', async () => {
             setActiveTab('tabSettings');
-            await A.openRoutineList();
+            await A.openSettings();
+        });
+
+        tabTimer?.addEventListener('click', () => {
+            A.toggleTimerVisibility?.();
         });
 
         screenSessions?.setAttribute('data-screen', 'sessions');
@@ -85,6 +86,9 @@
         screenRoutineList?.setAttribute('data-screen', 'routineList');
         screenStatsList?.setAttribute('data-screen', 'statsList');
         screenStatsDetail?.setAttribute('data-screen', 'statsDetail');
+        screenSettings?.setAttribute('data-screen', 'settings');
+        screenPreferences?.setAttribute('data-screen', 'preferences');
+        screenData?.setAttribute('data-screen', 'data');
     }
 
     function wireCalendar() {
@@ -131,10 +135,10 @@
         refs.dlgClose = document.getElementById('dlgClose');
         refs.calPrev = document.getElementById('calPrev');
         refs.calNext = document.getElementById('calNext');
-        refs.tabLibraries = document.getElementById('tabLibraries');
         refs.tabSessions = document.getElementById('tabSessions');
         refs.tabStats = document.getElementById('tabStats');
         refs.tabSettings = document.getElementById('tabSettings');
+        refs.tabTimer = document.getElementById('tabTimer');
         refs.screenSessions = document.getElementById('screenSessions');
         refs.screenExercises = document.getElementById('screenExercises');
         refs.screenExerciseEdit = document.getElementById('screenExerciseEdit');
@@ -144,6 +148,9 @@
         refs.screenExecEdit = document.getElementById('screenExecEdit');
         refs.screenStatsList = document.getElementById('screenStatsList');
         refs.screenStatsDetail = document.getElementById('screenStatsDetail');
+        refs.screenSettings = document.getElementById('screenSettings');
+        refs.screenPreferences = document.getElementById('screenPreferences');
+        refs.screenData = document.getElementById('screenData');
         refsResolved = true;
         return refs;
     }
@@ -157,7 +164,6 @@
             'btnAddRoutine',
             'dlgCalendar',
             'bigCalendar',
-            'tabLibraries',
             'tabSessions',
             'tabStats',
             'tabSettings'
@@ -187,7 +193,10 @@
             screenExecEdit,
             screenRoutineList,
             screenStatsList,
-            screenStatsDetail
+            screenStatsDetail,
+            screenSettings,
+            screenPreferences,
+            screenData
         } = refs;
         if (screenSessions) {
             screenSessions.hidden = which !== 'sessions';
@@ -215,6 +224,15 @@
         }
         if (screenStatsDetail) {
             screenStatsDetail.hidden = which !== 'statsDetail';
+        }
+        if (screenSettings) {
+            screenSettings.hidden = which !== 'settings';
+        }
+        if (screenPreferences) {
+            screenPreferences.hidden = which !== 'preferences';
+        }
+        if (screenData) {
+            screenData.hidden = which !== 'data';
         }
     }
 
