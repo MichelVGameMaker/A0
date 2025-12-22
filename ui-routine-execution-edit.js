@@ -265,14 +265,23 @@
             input.readOnly = Boolean(inlineKeyboard);
             input.className = `input set-edit-input${extraClass ? ` ${extraClass}` : ''}`;
             const update = () => {
-                input.value = String(getValue());
+                const valueToSet = getValue();
+                input.value = String(valueToSet);
+                if (field === 'rpe') {
+                    applyRpeTone(input, valueToSet);
+                }
             };
             input._update = update;
             update();
             input.addEventListener('focus', () => {
                 input.select();
             });
-            const commit = () => applyDirectChange(field, input.value);
+            const commit = () => {
+                if (field === 'rpe') {
+                    applyRpeTone(input, input.value);
+                }
+                applyDirectChange(field, input.value);
+            };
             input.addEventListener('change', commit);
             input.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
@@ -287,6 +296,9 @@
                     getValue: () => input.value,
                     onChange: (next) => {
                         input.value = next;
+                        if (field === 'rpe') {
+                            applyRpeTone(input, next);
+                        }
                         applyDirectChange(field, input.value);
                     },
                     onClose: () => input.blur()
@@ -597,6 +609,26 @@
         return Math.round(bounded * 2) / 2;
     }
 
+    function getRpeColorKey(value) {
+        const normalized = clampRpe(value);
+        if (!Number.isFinite(normalized)) {
+            return null;
+        }
+        return String(normalized).replace(/\.0$/, '');
+    }
+
+    function applyRpeTone(element, value) {
+        if (!element) {
+            return;
+        }
+        const colorKey = getRpeColorKey(value);
+        if (colorKey) {
+            element.dataset.rpe = colorKey;
+        } else {
+            element.removeAttribute('data-rpe');
+        }
+    }
+
     function splitRest(value) {
         const total = Math.max(0, safeInt(value, 0));
         const minutes = Math.floor(total / 60);
@@ -643,12 +675,15 @@
         if (value == null || value === '') {
             return '—';
         }
-        const numeric = clampRpe(value);
-        if (numeric == null) {
+        const normalized = clampRpe(value);
+        if (normalized == null) {
             return '—';
         }
-        const colorValue = Math.round(numeric);
-        return `<span class="rpe rpe-chip" data-rpe="${colorValue}">${value}</span>`;
+        const colorValue = getRpeColorKey(normalized);
+        if (!colorValue) {
+            return '—';
+        }
+        return `<span class="rpe rpe-chip" data-rpe="${colorValue}">${String(normalized)}</span>`;
     }
 
     function uid(prefix) {

@@ -289,6 +289,10 @@
             const blocks = displayedSets.map((set) => {
                 const block = document.createElement('span');
                 block.className = 'session-card-set';
+                const rpeDatasetValue = getRpeDatasetValue(set.rpe);
+                if (rpeDatasetValue) {
+                    block.dataset.rpe = rpeDatasetValue;
+                }
                 const reps = valueOrDash(set.reps);
                 const weight = set.weight != null && !Number.isNaN(set.weight)
                     ? `${set.weight} kg`
@@ -562,21 +566,18 @@
         const sup = document.createElement('sup');
         sup.className = 'session-card-set-rpe';
         sup.dataset.rpe = datasetValue;
-        sup.textContent = String(value);
+        sup.textContent = datasetValue;
         return sup;
     }
 
     function getRpeDatasetValue(value) {
-        const numeric = Number.parseInt(value, 10);
+        const numeric = Number.parseFloat(value);
         if (!Number.isFinite(numeric)) {
             return null;
         }
-        if (numeric <= 5) return '5';
-        if (numeric === 6) return '6';
-        if (numeric === 7) return '7';
-        if (numeric === 8) return '8';
-        if (numeric === 9) return '9';
-        return '10';
+        const bounded = Math.min(10, Math.max(5, numeric));
+        const rounded = Math.round(bounded * 2) / 2;
+        return String(rounded).replace(/\.0$/, '');
     }
 
     function valueOrDash(value) {
