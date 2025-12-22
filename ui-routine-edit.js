@@ -293,16 +293,7 @@
                 if (rpeDatasetValue) {
                     block.dataset.rpe = rpeDatasetValue;
                 }
-                const reps = valueOrDash(set.reps);
-                const weight = set.weight != null && !Number.isNaN(set.weight)
-                    ? `${set.weight} kg`
-                    : '—';
-                const details = `${reps}×${weight}`;
-                block.textContent = details;
-                const rpeSup = createRpeSup(set.rpe);
-                if (rpeSup) {
-                    block.append(' ', rpeSup);
-                }
+                block.textContent = formatSetSynopsis(set.reps, set.weight);
                 return block;
             });
             if (hasOverflow) {
@@ -558,18 +549,6 @@
         });
     }
 
-    function createRpeSup(value) {
-        const datasetValue = getRpeDatasetValue(value);
-        if (!datasetValue) {
-            return null;
-        }
-        const sup = document.createElement('sup');
-        sup.className = 'session-card-set-rpe';
-        sup.dataset.rpe = datasetValue;
-        sup.textContent = datasetValue;
-        return sup;
-    }
-
     function getRpeDatasetValue(value) {
         const numeric = Number.parseFloat(value);
         if (!Number.isFinite(numeric)) {
@@ -580,11 +559,33 @@
         return String(rounded).replace(/\.0$/, '');
     }
 
-    function valueOrDash(value) {
-        if (value == null || Number.isNaN(value)) {
+    function formatSetSynopsis(reps, weight) {
+        const repsDisplay = formatSynopsisReps(reps);
+        const weightDisplay = formatSynopsisWeight(weight);
+        return `${repsDisplay}•${weightDisplay}`;
+    }
+
+    function formatSynopsisReps(value) {
+        const numeric = Number.parseInt(value, 10);
+        return Number.isFinite(numeric) ? String(numeric) : '—';
+    }
+
+    function formatSynopsisWeight(value) {
+        const numeric = Number.parseFloat(value);
+        if (!Number.isFinite(numeric)) {
             return '—';
         }
-        return value;
+        return `${formatSynopsisNumber(numeric)}k`;
+    }
+
+    function formatSynopsisNumber(value) {
+        if (Number.isInteger(value)) {
+            return String(value);
+        }
+        return value
+            .toFixed(2)
+            .replace(/\.0+$/, '')
+            .replace(/(\.\d*?)0+$/, '$1');
     }
 
     function safeInt(value, fallback = null) {
