@@ -366,13 +366,21 @@
             const update = () => {
                 const content = getValue();
                 input.value = html ? content.replace(/<[^>]+>/g, '') : String(content);
+                if (field === 'rpe') {
+                    applyRpeTone(input, content);
+                }
             };
             input._update = update;
             update();
             input.addEventListener('focus', () => {
                 input.select();
             });
-            const commit = () => void applyDirectChange(field, input.value);
+            const commit = () => {
+                if (field === 'rpe') {
+                    applyRpeTone(input, input.value);
+                }
+                void applyDirectChange(field, input.value);
+            };
             input.addEventListener('change', commit);
             input.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
@@ -387,6 +395,9 @@
                     getValue: () => input.value,
                     onChange: (next) => {
                         input.value = next;
+                        if (field === 'rpe') {
+                            applyRpeTone(input, next);
+                        }
                         void applyDirectChange(field, input.value);
                     },
                     onClose: () => input.blur()
@@ -617,13 +628,16 @@
         if (value == null || value === '') {
             return '—';
         }
-        const numeric = clampRpe(value);
-        if (numeric == null) {
+        const normalized = clampRpe(value);
+        if (normalized == null) {
             return '—';
         }
         const extra = muted ? ' rpe-chip-muted' : '';
-        const colorValue = Math.round(numeric);
-        return `<span class="rpe rpe-chip${extra}" data-rpe="${colorValue}">${value}</span>`;
+        const colorValue = getRpeColorKey(normalized);
+        if (!colorValue) {
+            return '—';
+        }
+        return `<span class="rpe rpe-chip${extra}" data-rpe="${colorValue}">${String(normalized)}</span>`;
     }
 
     function formatRepsDisplay(value) {
@@ -802,6 +816,26 @@
         }
         const bounded = Math.min(10, Math.max(5, numeric));
         return Math.round(bounded * 2) / 2;
+    }
+
+    function getRpeColorKey(value) {
+        const normalized = clampRpe(value);
+        if (!Number.isFinite(normalized)) {
+            return null;
+        }
+        return String(normalized).replace(/\.0$/, '');
+    }
+
+    function applyRpeTone(element, value) {
+        if (!element) {
+            return;
+        }
+        const colorKey = getRpeColorKey(value);
+        if (colorKey) {
+            element.dataset.rpe = colorKey;
+        } else {
+            element.removeAttribute('data-rpe');
+        }
     }
 
     function sanitizeWeight(value) {

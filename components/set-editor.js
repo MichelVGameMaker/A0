@@ -629,6 +629,9 @@
                 button.className = 'inline-keyboard-key';
                 button.textContent = key === 'del' ? '⌫' : key;
                 button.dataset.key = key;
+                if (layout === 'rpe' && key !== 'del') {
+                    button.dataset.rpe = key;
+                }
                 button.addEventListener('click', (event) => {
                     event.preventDefault();
                     handleInput(key);
