@@ -53,6 +53,9 @@
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
         refs.screenStatsList = document.getElementById('screenStatsList');
         refs.screenStatsDetail = document.getElementById('screenStatsDetail');
+        refs.screenSettings = document.getElementById('screenSettings');
+        refs.screenPreferences = document.getElementById('screenPreferences');
+        refs.screenData = document.getElementById('screenData');
         refs.routineCatalog = document.getElementById('routineCatalog');
         refs.btnRoutineCreate = document.getElementById('btnRoutineCreate');
         refs.tabSettings = document.getElementById('tabSettings');
@@ -178,7 +181,10 @@
             screenExecEdit,
             screenRoutineList,
             screenRoutineEdit,
-            screenRoutineMoveEdit
+            screenRoutineMoveEdit,
+            screenSettings,
+            screenPreferences,
+            screenData
         } = assertRefs();
         const { screenStatsList, screenStatsDetail } = refs;
         const map = {
@@ -191,7 +197,10 @@
             screenRoutineEdit,
             screenRoutineMoveEdit,
             screenStatsList,
-            screenStatsDetail
+            screenStatsDetail,
+            screenSettings,
+            screenPreferences,
+            screenData
         };
         Object.entries(map).forEach(([key, element]) => {
             if (element) {

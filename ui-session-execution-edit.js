@@ -22,7 +22,8 @@
         startSec: 0,
         remainSec: 0,
         intervalId: null,
-        exerciseKey: null
+        exerciseKey: null,
+        collapsed: false
     });
 
     let execTimer = A.execTimer;
@@ -34,6 +35,7 @@
         execTimer.remainSec = safeInt(execTimer.remainSec, 0);
         execTimer.intervalId = execTimer.intervalId ?? null;
         execTimer.exerciseKey = execTimer.exerciseKey ?? null;
+        execTimer.collapsed = Boolean(execTimer.collapsed);
     }
     A.execTimer = execTimer;
 
@@ -90,6 +92,17 @@
         switchScreen('screenExecEdit');
     };
 
+    A.toggleTimerVisibility = function toggleTimerVisibility() {
+        ensureRefs();
+        const timer = ensureSharedTimer();
+        const baseHidden = !timer.intervalId && !timer.running && timer.startSec === 0;
+        if (baseHidden) {
+            return;
+        }
+        timer.collapsed = !timer.collapsed;
+        updateTimerUI();
+    };
+
     /* UTILS */
     function ensureRefs() {
         if (refsResolved) {
@@ -104,6 +117,9 @@
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
         refs.screenStatsList = document.getElementById('screenStatsList');
         refs.screenStatsDetail = document.getElementById('screenStatsDetail');
+        refs.screenSettings = document.getElementById('screenSettings');
+        refs.screenPreferences = document.getElementById('screenPreferences');
+        refs.screenData = document.getElementById('screenData');
         refs.execBack = document.getElementById('execBack');
         refs.execOk = document.getElementById('execOk');
         refs.execTitle = document.getElementById('execTitle');
@@ -605,7 +621,10 @@
             screenRoutineEdit,
             screenRoutineMoveEdit,
             screenStatsList,
-            screenStatsDetail
+            screenStatsDetail,
+            screenSettings,
+            screenPreferences,
+            screenData
         } = assertRefs();
         const map = {
             screenSessions,
@@ -616,7 +635,10 @@
             screenRoutineEdit,
             screenRoutineMoveEdit,
             screenStatsList,
-            screenStatsDetail
+            screenStatsDetail,
+            screenSettings,
+            screenPreferences,
+            screenData
         };
         Object.entries(map).forEach(([key, element]) => {
             if (element) {
@@ -720,6 +742,7 @@
         if (timer.intervalId) {
             clearInterval(timer.intervalId);
         }
+        timer.collapsed = false;
         timer.startSec = seconds;
         timer.remainSec = seconds;
         timer.running = true;
@@ -786,7 +809,8 @@
         if (!execTimerBar) {
             return;
         }
-        const shouldHide = !timer.intervalId && !timer.running && timer.startSec === 0;
+        const baseHidden = !timer.intervalId && !timer.running && timer.startSec === 0;
+        const shouldHide = baseHidden || timer.collapsed;
         execTimerBar.hidden = shouldHide;
         if (shouldHide) {
             return;
