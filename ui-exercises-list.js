@@ -12,6 +12,7 @@
     const state = {
         listMode: 'view',
         callerScreen: 'screenExercises',
+        fromSettings: false,
         onAddCallback: null,
         filtersInited: false,
         filters: {
@@ -93,8 +94,13 @@
         assertRefs();
 
         const preserveContext = callerScreen === 'screenExerciseEdit' || callerScreen === 'screenExerciseRead';
+        const explicitFromSettings = options.fromSettings;
         const modeProvided = Object.prototype.hasOwnProperty.call(options, 'mode');
         const onAddProvided = Object.prototype.hasOwnProperty.call(options, 'onAdd');
+        const derivedFromSettings =
+            typeof explicitFromSettings === 'boolean'
+                ? explicitFromSettings
+                : isSettingsScreen(callerScreen) || (preserveContext && state.fromSettings);
 
         const shouldKeepCaller = preserveContext && state.listMode === 'add' && Boolean(state.onAddCallback);
         if (!shouldKeepCaller) {
@@ -102,7 +108,8 @@
         } else if (!state.callerScreen) {
             state.callerScreen = callerScreen;
         }
-        applyTimerVisibilityForCaller(state.callerScreen);
+        state.fromSettings = derivedFromSettings;
+        applyTimerVisibilityForCaller(state.callerScreen, state.fromSettings);
 
         if (modeProvided) {
             state.listMode = mode === 'add' ? 'add' : 'view';
@@ -158,8 +165,8 @@
         return refs;
     }
 
-    function applyTimerVisibilityForCaller(callerScreen) {
-        const hideForSettings = isSettingsScreen(callerScreen);
+    function applyTimerVisibilityForCaller(callerScreen, fromSettings) {
+        const hideForSettings = fromSettings || isSettingsScreen(callerScreen);
         if (typeof A.setTimerVisibility === 'function') {
             A.setTimerVisibility({ forcedHidden: hideForSettings, reason: hideForSettings ? 'settings' : null });
         }
