@@ -17,7 +17,7 @@
   --bodyBack:      #8b0000;
   --selectedBack:  #d4d4d4;
   --selectedBord:  var(--emphase);
-  --focusedBack:   var(--emphase);
+  --focusedBack:   #d4d4d4;
   --focusedColor:  #ffffff;
   --focusedBord:   var(--emphase);
   --clickableBack: #e8e8e8;
@@ -259,9 +259,8 @@ image_big{
 .is-focused {
     /* Focusé */
     background: var(--focusedBack);
-    border-color: var(--focusedBord);
     font-weight: var(--fw-strong);
-    outline: 2px solid var(--emphase);
+    outline: 2px solid var(--focusedBord);
     outline-offset: 2px;
 }
 .has-value{
@@ -300,9 +299,8 @@ select:focus,
 textarea:focus{
     /* Focusé */
     background: var(--focusedBack);
-    border-color: var(--focusedBord);
     font-weight: var(--fw-strong);
-    outline: 2px solid var(--emphase);
+    outline: 2px solid var(--focusedBord);
     outline-offset: 2px;
 }
 
@@ -347,9 +345,8 @@ textarea:focus{
 .tag:focus{
     /* Focusé */
     background: var(--focusedBack);
-    border-color: var(--focusedBord);
     font-weight: var(--fw-strong);
-    outline: 2px solid var(--emphase);
+    outline: 2px solid var(--focusedBord);
     outline-offset: 2px;
 }
 
@@ -613,10 +610,10 @@ textarea:focus{
   border-radius:var(--radius);
 }
 .exercise-card-thumb{
-  height:100%;
-  aspect-ratio:1 / 1;
-  width:auto;
-  border-radius:8px;
+  height:64px;
+  width:64px;
+  align-self:center;
+
   object-fit:cover;
   flex-shrink:0;
   border: 1px solid var(--blocBord);
@@ -756,7 +753,6 @@ textarea:focus{
     .day-cell.selected{
         /* Focusé */
         background:   var(--focusedBack);
-        border-color: var(--focusedBord);
         font-weight:  var(--fw-strong);
         outline: 2px solid var(--selectedBord);
         outline-offset: 2px;
