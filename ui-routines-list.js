@@ -11,7 +11,8 @@
     let refsResolved = false;
     const state = {
         routines: [],
-        active: false
+        active: false,
+        callerScreen: 'screenSettings'
     };
 
     /* WIRE */
@@ -21,9 +22,12 @@
     });
 
     /* ACTIONS */
-    A.openRoutineList = async function openRoutineList() {
+    A.openRoutineList = async function openRoutineList(options = {}) {
+        const { callerScreen = 'screenSettings' } = options;
         ensureRefs();
         highlightSettingsTab();
+        state.callerScreen = callerScreen;
+        applyTimerVisibilityForCaller(callerScreen);
         await loadRoutines(true);
         renderList();
         switchScreen('screenRoutineList');
@@ -63,6 +67,17 @@
         return refs;
     }
 
+    function applyTimerVisibilityForCaller(callerScreen) {
+        const hideForSettings = isSettingsScreen(callerScreen);
+        if (typeof A.setTimerVisibility === 'function') {
+            A.setTimerVisibility({ forcedHidden: hideForSettings, reason: hideForSettings ? 'settings' : null });
+        }
+    }
+
+    function isSettingsScreen(name) {
+        return name === 'screenSettings' || name === 'screenPreferences' || name === 'screenData';
+    }
+
     function assertRefs() {
         ensureRefs();
         const required = ['screenRoutineList', 'routineCatalog'];
@@ -81,7 +96,7 @@
         btnRoutineCreate.addEventListener('click', () => {
             const id = createRoutineId();
             highlightSettingsTab();
-            A.openRoutineEdit({ routineId: id });
+            A.openRoutineEdit({ routineId: id, callerScreen: state.callerScreen });
         });
     }
 
@@ -137,7 +152,7 @@
 
         card.addEventListener('click', () => {
             highlightSettingsTab();
-            A.openRoutineEdit({ routineId: routine?.id });
+            A.openRoutineEdit({ routineId: routine?.id, callerScreen: state.callerScreen });
         });
 
         return card;

@@ -12,6 +12,7 @@
     let refsResolved = false;
     const state = {
         routineId: 'routine-test',
+        callerScreen: 'screenSettings',
         routine: null,
         active: false,
         pendingSave: null
@@ -36,9 +37,11 @@
 
     /* ACTIONS */
     A.openRoutineEdit = async function openRoutineEdit(options = {}) {
-        const { routineId = 'routine-test' } = options;
+        const { routineId = 'routine-test', callerScreen = 'screenSettings' } = options;
         state.routineId = routineId;
+        state.callerScreen = callerScreen;
         state.active = true;
+        applyTimerVisibilityForCaller(callerScreen);
         await loadRoutine(true);
         renderRoutine();
         switchScreen('screenRoutineEdit');
@@ -85,6 +88,17 @@
         return refs;
     }
 
+    function applyTimerVisibilityForCaller(callerScreen) {
+        const hideForSettings = isSettingsScreen(callerScreen);
+        if (typeof A.setTimerVisibility === 'function') {
+            A.setTimerVisibility({ forcedHidden: hideForSettings, reason: hideForSettings ? 'settings' : null });
+        }
+    }
+
+    function isSettingsScreen(name) {
+        return name === 'screenSettings' || name === 'screenPreferences' || name === 'screenData';
+    }
+
     function assertRefs() {
         ensureRefs();
         const required = [
@@ -107,10 +121,10 @@
     function wireHeaderButtons() {
         const { routineEditBack, routineEditOk } = assertRefs();
         routineEditBack.addEventListener('click', () => {
-            void A.openRoutineList();
+            void A.openRoutineList({ callerScreen: state.callerScreen });
         });
         routineEditOk.addEventListener('click', () => {
-            void A.openRoutineList();
+            void A.openRoutineList({ callerScreen: state.callerScreen });
         });
     }
 
