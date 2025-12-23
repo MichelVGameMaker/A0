@@ -79,11 +79,14 @@
         refs.screenData = document.getElementById('screenData');
         refs.routineName = document.getElementById('routineName');
         refs.routineIcon = document.getElementById('routineIcon');
+        refs.routineDetails = document.getElementById('routineDetails');
+        refs.dlgRoutineEditor = document.getElementById('dlgRoutineEditor');
+        refs.routineEditorClose = document.getElementById('routineEditorClose');
         refs.routineList = document.getElementById('routineList');
         refs.routineEditTitle = document.getElementById('routineEditTitle');
         refs.btnRoutineAddExercises = document.getElementById('btnRoutineAddExercises');
         refs.routineEditBack = document.getElementById('routineEditBack');
-        refs.routineEditOk = document.getElementById('routineEditOk');
+        refs.routineEditEdit = document.getElementById('routineEditEdit');
         refsResolved = true;
         return refs;
     }
@@ -105,11 +108,14 @@
             'screenRoutineEdit',
             'routineName',
             'routineIcon',
+            'routineDetails',
             'routineList',
             'routineEditTitle',
             'btnRoutineAddExercises',
             'routineEditBack',
-            'routineEditOk'
+            'routineEditEdit',
+            'dlgRoutineEditor',
+            'routineEditorClose'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -119,12 +125,12 @@
     }
 
     function wireHeaderButtons() {
-        const { routineEditBack, routineEditOk } = assertRefs();
+        const { routineEditBack, routineEditEdit, dlgRoutineEditor } = assertRefs();
         routineEditBack.addEventListener('click', () => {
             void A.openRoutineList({ callerScreen: state.callerScreen });
         });
-        routineEditOk.addEventListener('click', () => {
-            void A.openRoutineList({ callerScreen: state.callerScreen });
+        routineEditEdit.addEventListener('click', () => {
+            dlgRoutineEditor?.showModal();
         });
     }
 
@@ -138,7 +144,7 @@
     }
 
     function createEmptyRoutine(id) {
-        return { id, name: 'Routine', icon: ICONS[0], moves: [] };
+        return { id, name: 'Routine', icon: ICONS[0], details: '', moves: [] };
     }
 
     function normalizeRoutine(routine) {
@@ -149,6 +155,7 @@
             id: routine.id || state.routineId,
             name: routine.name || 'Routine',
             icon: routine.icon || ICONS[0],
+            details: routine.details || '',
             moves: Array.isArray(routine.moves) ? [...routine.moves] : []
         };
         normalized.moves = normalized.moves.map((move, index) => ({
@@ -171,13 +178,16 @@
     }
 
     function wireInputs() {
-        const { routineName, routineIcon } = assertRefs();
+        const { routineName, routineIcon, routineDetails, dlgRoutineEditor, routineEditorClose } = assertRefs();
         routineName.addEventListener('input', () => {
             if (!state.routine) {
                 return;
             }
             state.routine.name = routineName.value.trim() || 'Routine';
             scheduleSave();
+            if (refs.routineEditTitle) {
+                refs.routineEditTitle.textContent = state.routine.name || 'Routine';
+            }
         });
         routineIcon.addEventListener('change', () => {
             if (!state.routine) {
@@ -186,6 +196,16 @@
             state.routine.icon = routineIcon.value || ICONS[0];
             scheduleSave();
             renderIconPreview();
+        });
+        routineDetails.addEventListener('input', () => {
+            if (!state.routine) {
+                return;
+            }
+            state.routine.details = routineDetails.value;
+            scheduleSave();
+        });
+        routineEditorClose?.addEventListener('click', () => {
+            dlgRoutineEditor?.close();
         });
     }
 
@@ -235,9 +255,10 @@
         }
         populateIconSelect();
         renderIconPreview();
-        const { routineName, routineIcon, routineEditTitle } = assertRefs();
+        const { routineName, routineIcon, routineDetails, routineEditTitle } = assertRefs();
         routineName.value = state.routine.name || '';
         routineIcon.value = state.routine.icon || ICONS[0];
+        routineDetails.value = state.routine.details || '';
         if (routineEditTitle) {
             routineEditTitle.textContent = state.routine.name || 'Routine';
         }
@@ -544,6 +565,7 @@
             id: routine.id,
             name: routine.name,
             icon: routine.icon,
+            details: routine.details || '',
             moves: routine.moves.map((move, index) => ({
                 id: move.id,
                 pos: safeInt(move.pos, index + 1),

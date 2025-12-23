@@ -486,6 +486,7 @@
             id: routine.id,
             name: routine.name || 'Routine',
             icon: routine.icon || '🏋️',
+            details: routine.details || '',
             moves: Array.isArray(routine.moves)
                 ? routine.moves.map((move, index) => ({
                     id: move.id || uid('move'),
@@ -511,6 +512,7 @@
             id: routine.id,
             name: routine.name,
             icon: routine.icon,
+            details: routine.details || '',
             moves: Array.isArray(routine.moves)
                 ? routine.moves.map((move, index) => ({
                     id: move.id || uid('move'),

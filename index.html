@@ -107,18 +107,11 @@
             <div class="title" id="routineEditTitle">Routine</div>
         </div>
         <div class="header-right">
-            <button id="routineEditOk" class="btn primary" title="Valider">OK</button>
+            <button id="routineEditEdit" class="btn primary" title="Éditer">✏️ Éditer</button>
         </div>
     </header>
 
     <main class="content">
-        <div class="bloque">
-            <div class="row">
-                <input id="routineName" class="input flex-1" placeholder="Nom de la routine" />
-                <select id="routineIcon" class="input" aria-label="Icône de routine"></select>
-            </div>
-        </div>
-
         <section id="routineList" class="session-list" aria-label="Exercices de la routine"></section>
 
         <div class="sticky-actions safe-bottom">
@@ -131,6 +124,38 @@
     </main>
 
 </section>
+<!-- ==================== -->
+
+<!-- ========== Routine : modale méta ========== -->
+<dialog id="dlgRoutineEditor" class="modal">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title">Modifier</div>
+            <button id="routineEditorClose" class="btn primary" value="close">OK</button>
+        </div>
+
+        <div class="bloque">
+            <div class="vstack">
+                <label class="lbl" for="routineName">Nom</label>
+                <input id="routineName" class="input" placeholder="Nom de la routine" />
+            </div>
+        </div>
+
+        <div class="bloque">
+            <div class="vstack">
+                <label class="lbl" for="routineIcon">Icône</label>
+                <select id="routineIcon" class="input" aria-label="Icône de routine"></select>
+            </div>
+        </div>
+
+        <div class="bloque">
+            <div class="vstack">
+                <label class="lbl" for="routineDetails">Détails</label>
+                <textarea id="routineDetails" class="input" rows="3" placeholder="Ajouter des détails sur la routine"></textarea>
+            </div>
+        </div>
+    </form>
+</dialog>
 <!-- ==================== -->
 
 <!-- ========== Routine : édition des séries prévues ========== -->
