@@ -255,6 +255,8 @@
                 pos: (session.exercises?.length || 0) + 1,
                 exerciseId: exercise.id,
                 exerciseName: exercise.name || 'Exercice',
+                routineInstructions: '',
+                note: '',
                 sets: [{ pos: 1, reps: null, weight: null, rpe: null, rest: null, done: false }]
             });
         }
@@ -294,6 +296,8 @@
                     pos: session.exercises.length + 1,
                     exerciseId: move.exerciseId,
                     exerciseName: move.exerciseName,
+                    routineInstructions: typeof move.instructions === 'string' ? move.instructions : '',
+                    note: '',
                     sets: move.sets.map((set) => ({
                         pos: set.pos,
                         reps: set.reps ?? null,
