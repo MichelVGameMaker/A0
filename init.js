@@ -12,7 +12,6 @@
         assertRefs();
         wireNavigation();
         wireCalendar();
-        wireRoutineSelection();
         void bootstrap();
     });
 
@@ -33,7 +32,6 @@
         setActiveTab('tabSessions');
         showOnly('sessions');
         A.setTimerVisibility?.({ forcedHidden: false, reason: null });
-        await A.populateRoutineSelect();
         await A.renderWeek();
         await A.renderSession();
     }
@@ -60,7 +58,6 @@
             setActiveTab('tabSessions');
             A.setTimerVisibility?.({ forcedHidden: false, reason: null });
             showOnly('sessions');
-            await A.populateRoutineSelect();
             await A.renderWeek();
             await A.renderSession();
         });
@@ -105,16 +102,6 @@
         });
     }
 
-    function wireRoutineSelection() {
-        const { btnAddRoutine, selectRoutine } = refs;
-        btnAddRoutine?.addEventListener('click', async () => {
-            const id = selectRoutine?.value;
-            if (id) {
-                await A.addRoutineToSession(id);
-            }
-        });
-    }
-
     /* UTILS */
     function ensureRefs() {
         if (refsResolved) {
@@ -124,9 +111,8 @@
         refs.todayLabel = document.getElementById('todayLabel');
         refs.weekStrip = document.getElementById('weekStrip');
         refs.sessionList = document.getElementById('sessionList');
-        refs.selectRoutine = document.getElementById('selectRoutine');
-        refs.btnAddRoutine = document.getElementById('btnAddRoutine');
         refs.btnAddExercises = document.getElementById('btnAddExercises');
+        refs.btnAddRoutines = document.getElementById('btnAddRoutines');
         refs.dlgCalendar = document.getElementById('dlgCalendar');
         refs.bigCalendar = document.getElementById('bigCalendar');
         refs.btnQuickNav = document.getElementById('btnQuickNav');
@@ -157,8 +143,6 @@
             'todayLabel',
             'weekStrip',
             'sessionList',
-            'selectRoutine',
-            'btnAddRoutine',
             'dlgCalendar',
             'bigCalendar',
             'tabSessions',
