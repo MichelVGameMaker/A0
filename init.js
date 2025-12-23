@@ -42,7 +42,6 @@
             tabSessions,
             tabSettings,
             tabStats,
-            tabTimer,
             screenSessions,
             screenExercises,
             screenExerciseEdit,
@@ -72,10 +71,6 @@
         tabSettings?.addEventListener('click', async () => {
             setActiveTab('tabSettings');
             await A.openSettings();
-        });
-
-        tabTimer?.addEventListener('click', () => {
-            A.toggleTimerVisibility?.();
         });
 
         screenSessions?.setAttribute('data-screen', 'sessions');
@@ -138,7 +133,6 @@
         refs.tabSessions = document.getElementById('tabSessions');
         refs.tabStats = document.getElementById('tabStats');
         refs.tabSettings = document.getElementById('tabSettings');
-        refs.tabTimer = document.getElementById('tabTimer');
         refs.screenSessions = document.getElementById('screenSessions');
         refs.screenExercises = document.getElementById('screenExercises');
         refs.screenExerciseEdit = document.getElementById('screenExerciseEdit');

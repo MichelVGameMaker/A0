@@ -77,6 +77,7 @@
         refs.routineName = document.getElementById('routineName');
         refs.routineIcon = document.getElementById('routineIcon');
         refs.routineList = document.getElementById('routineList');
+        refs.routineEditTitle = document.getElementById('routineEditTitle');
         refs.btnRoutineAddExercises = document.getElementById('btnRoutineAddExercises');
         refs.routineEditBack = document.getElementById('routineEditBack');
         refs.routineEditOk = document.getElementById('routineEditOk');
@@ -91,6 +92,7 @@
             'routineName',
             'routineIcon',
             'routineList',
+            'routineEditTitle',
             'btnRoutineAddExercises',
             'routineEditBack',
             'routineEditOk'
@@ -218,9 +220,12 @@
         }
         populateIconSelect();
         renderIconPreview();
-        const { routineName, routineIcon } = assertRefs();
+        const { routineName, routineIcon, routineEditTitle } = assertRefs();
         routineName.value = state.routine.name || '';
         routineIcon.value = state.routine.icon || ICONS[0];
+        if (routineEditTitle) {
+            routineEditTitle.textContent = state.routine.name || 'Routine';
+        }
         renderRoutineList();
     }
 
