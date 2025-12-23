@@ -29,6 +29,7 @@
         ensureRefs();
         assertRefs();
         wireFilters();
+        wireValueStates();
     });
 
     /* ACTIONS */
@@ -210,6 +211,11 @@
         });
     }
 
+    function wireValueStates() {
+        const { exSearch, exFilterGroup, exFilterEquip } = assertRefs();
+        A.watchValueState?.([exSearch, exFilterGroup, exFilterEquip]);
+    }
+
     function initializeFilters() {
         if (state.filtersInited) {
             return;
@@ -225,12 +231,19 @@
         exFilterGroup.value = state.filters.group || '';
         exFilterEquip.value = state.filters.equip || '';
         exSearch.value = state.filters.search || '';
+        refreshValueStates();
     }
 
     function clearFilterState() {
         state.filters.search = '';
         state.filters.group = '';
         state.filters.equip = '';
+    }
+
+    function refreshValueStates() {
+        A.updateValueState?.(refs.exSearch);
+        A.updateValueState?.(refs.exFilterGroup);
+        A.updateValueState?.(refs.exFilterEquip);
     }
 
     function ensureSelectionBar() {

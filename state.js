@@ -67,5 +67,79 @@
         return new Date(base.toDateString());
     };
 
+    const VALUE_STATE_TAGS = new Set(['INPUT', 'SELECT', 'TEXTAREA']);
+
+    function resolveDefaultValue(element) {
+        if (!element) {
+            return '';
+        }
+        if (element.dataset.defaultValue !== undefined) {
+            return element.dataset.defaultValue;
+        }
+        if (element instanceof HTMLSelectElement) {
+            const explicitDefault = Array.from(element.options).find((option) => option.defaultSelected);
+            if (explicitDefault) {
+                return explicitDefault.value;
+            }
+        }
+        if ('defaultValue' in element) {
+            return element.defaultValue ?? '';
+        }
+        return '';
+    }
+
+    function normalizeValue(value) {
+        if (value == null) {
+            return '';
+        }
+        return String(value);
+    }
+
+    /**
+     * Met à jour les classes .has-value / .is-default d'un champ.
+     * @param {HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement|null} element Champ cible.
+     * @returns {void}
+     */
+    existing.updateValueState = function updateValueState(element) {
+        if (!element || !VALUE_STATE_TAGS.has(element.tagName)) {
+            return;
+        }
+        const defaultValue = normalizeValue(resolveDefaultValue(element));
+        element.dataset.defaultValue = defaultValue;
+        const currentValue = normalizeValue(element.value);
+        const hasUserValue = currentValue.trim().length > 0 && currentValue !== defaultValue;
+        const isDefault = !hasUserValue;
+
+        element.classList.toggle('has-value', hasUserValue);
+        element.classList.toggle('is-default', isDefault);
+    };
+
+    /**
+     * Ajoute les écouteurs pour suivre le contenu d'un ou plusieurs champs et ajuster les classes.
+     * @param {HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement|Array<HTMLElement|null>} targets Champs à suivre.
+     * @param {{defaultValue?: string}} [options] Options (valeur par défaut explicite).
+     * @returns {void}
+     */
+    existing.watchValueState = function watchValueState(targets, options = {}) {
+        const elements = Array.isArray(targets) ? targets : [targets];
+        elements.forEach((element) => {
+            if (!element || !VALUE_STATE_TAGS.has(element.tagName)) {
+                return;
+            }
+            const defaultValue =
+                options.defaultValue !== undefined
+                    ? normalizeValue(options.defaultValue)
+                    : normalizeValue(resolveDefaultValue(element));
+            element.dataset.defaultValue = defaultValue;
+            const handler = () => existing.updateValueState(element);
+            const eventName = element instanceof HTMLSelectElement ? 'change' : 'input';
+            if (!element.dataset.valueStateWired) {
+                element.addEventListener(eventName, handler);
+                element.dataset.valueStateWired = '1';
+            }
+            handler();
+        });
+    };
+
     window.App = existing;
 })();
