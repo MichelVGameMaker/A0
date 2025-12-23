@@ -195,6 +195,7 @@
             A.openExercises({
                 mode: 'add',
                 callerScreen: 'screenRoutineEdit',
+                fromSettings: isSettingsScreen(state.callerScreen),
                 onAdd: (ids) => {
                     void addExercises(ids);
                 }
