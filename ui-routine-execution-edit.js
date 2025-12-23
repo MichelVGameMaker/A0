@@ -91,7 +91,6 @@
             'routineMoveTitle',
             'routineMoveSets',
             'routineMoveBack',
-            'routineMoveDone',
             'routineMoveAddSet',
             'routineMoveDelete'
         ];
@@ -107,7 +106,7 @@
         routineMoveBack.addEventListener('click', () => {
             returnToCaller();
         });
-        routineMoveDone.addEventListener('click', () => {
+        routineMoveDone?.addEventListener('click', () => {
             returnToCaller();
         });
     }
