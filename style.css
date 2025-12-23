@@ -978,14 +978,7 @@ textarea:focus{
   font-variant-numeric: tabular-nums;
 }
 
-.set-editor-label{
-  font-weight: var(--fw-strong);
-  font-size: var(--fs-small);
-  color: var(--labelColor);
-  text-align:center;
-}
-
-.routine-set-head-rest{
+.span-two{
   grid-column: span 2;
   display:flex;
   align-items:center;

@@ -159,11 +159,11 @@
     <main class="content">
 
         <div class="exec-grid exec-head routine-set-grid routine-set-head">
-            <div class="set-editor-label">#</div>
-            <div class="set-editor-label">Reps</div>
-            <div class="set-editor-label">Poids</div>
-            <div class="set-editor-label">RPE</div>
-            <div class="routine-set-head-rest set-editor-label">Repos</div>
+            <div class="lbl">#</div>
+            <div class="lbl">Reps</div>
+            <div class="lbl">Poids</div>
+            <div class="lbl">RPE</div>
+            <div class="span-two lbl">Repos</div>
         </div>
 
         <div id="routineMoveSets"></div>
@@ -287,11 +287,11 @@
         </div>
 
         <div class="exec-grid exec-head routine-set-grid routine-set-head">
-            <div class="set-editor-label">#</div>
-            <div class="set-editor-label">Reps</div>
-            <div class="set-editor-label">Poids</div>
-            <div class="set-editor-label">RPE</div>
-            <div class="routine-set-head-rest set-editor-label">Repos</div>
+            <div class="lbl">#</div>
+            <div class="lbl">Reps</div>
+            <div class="lbl">Poids</div>
+            <div class="lbl">RPE</div>
+            <div class="span-two lbl">Repos</div>
         </div>
 
         <div id="execSets"></div>
@@ -546,7 +546,7 @@
     <form method="dialog" class="set-editor-form" data-role="set-editor-form">
         <div class="exec-grid routine-set-grid">
             <label class="set-editor-field">
-                <span class="set-editor-label">#</span>
+                <span class="lbl">#</span>
                 <div class="vstepper">
                     <button type="button" class="btn" data-action="move-up" aria-label="Monter la série">▲</button>
                     <input id="setEditorReps" class="input" data-role="set-editor-order-number" type="number" min="0" inputmode="numeric" />
@@ -554,7 +554,7 @@
                 </div>
             </label>
             <label class="set-editor-field">
-                <span class="set-editor-label">Reps</span>
+                <span class="lbl">Reps</span>
                 <div class="vstepper">
                     <button type="button" class="btn" data-action="reps-plus">+</button>
                     <input id="setEditorReps" class="input" type="number" min="0" inputmode="numeric" data-role="reps" />
@@ -562,7 +562,7 @@
                 </div>
             </label>
             <label class="set-editor-field">
-                <span class="set-editor-label">Poids</span>
+                <span class="lbl">Poids</span>
                 <div class="vstepper">
                     <button type="button" class="btn" data-action="weight-plus">+</button>
                     <input id="setEditorWeight" class="input" type="number" min="0" step="0.5" inputmode="decimal" data-role="weight" />
@@ -570,7 +570,7 @@
                 </div>
             </label>
             <label class="set-editor-field">
-                <span class="set-editor-label">RPE</span>
+                <span class="lbl">RPE</span>
                 <div class="vstepper">
                     <button type="button" class="btn" data-action="rpe-plus">+</button>
                     <input id="setEditorRpe" class="input" type="number" min="5" max="10" inputmode="numeric" data-role="rpe" />
@@ -578,7 +578,7 @@
                 </div>
             </label>
             <div class="set-editor-field set-editor-rest">
-                <span class="set-editor-label">Repos</span>
+                <span class="lbl">Repos</span>
                 <div class="set-editor-rest-grid">
                     <label class="set-editor-subfield">
                         <div class="vstepper">
