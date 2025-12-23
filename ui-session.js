@@ -15,6 +15,7 @@
         ensureRefs();
         assertRefs();
         wireAddExercisesButton();
+        wireAddRoutinesButton();
     });
 
     function getRpeDatasetValue(value) {
@@ -76,11 +77,14 @@
      * @returns {Promise<void>} Promesse résolue après rendu.
      */
     A.populateRoutineSelect = async function populateRoutineSelect() {
-        const { selectRoutine } = assertRefs();
+        ensureRefs();
+        if (!refs.selectRoutine) {
+            return;
+        }
         const all = await db.getAll('routines');
         const plannedId = await A.getPlannedRoutineId(A.activeDate);
 
-        selectRoutine.innerHTML = '<option value="">Ajouter une routine…</option>';
+        refs.selectRoutine.innerHTML = '<option value="">Ajouter une routine…</option>';
 
         const ordered = [];
         if (plannedId) {
@@ -99,10 +103,10 @@
             const option = document.createElement('option');
             option.value = routine.id;
             option.textContent = routine.name;
-            selectRoutine.appendChild(option);
+            refs.selectRoutine.appendChild(option);
         });
 
-        selectRoutine.value = plannedId || '';
+        refs.selectRoutine.value = plannedId || '';
     };
 
     /**
@@ -265,35 +269,44 @@
      * @param {string} routineId Identifiant de routine.
      * @returns {Promise<void>} Promesse résolue après sauvegarde.
      */
-    A.addRoutineToSession = async function addRoutineToSession(routineId) {
-        const routine = await db.get('routines', routineId);
-        if (!routine) {
+    A.addRoutineToSession = async function addRoutineToSession(routineIds) {
+        const ids = Array.isArray(routineIds) ? routineIds : [routineIds];
+        const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+        if (!uniqueIds.length) {
             return;
         }
+
         const key = A.ymd(A.activeDate);
         const session = (await db.getSession(key)) || { date: key, exercises: [] };
+        const existingIds = new Set((session.exercises || []).map((exercise) => exercise.exerciseId));
 
-        routine.moves.forEach((move) => {
-            if (session.exercises.some((exercise) => exercise.exerciseId === move.exerciseId)) {
-                return;
+        for (const routineId of uniqueIds) {
+            const routine = await db.get('routines', routineId);
+            if (!routine) {
+                continue;
             }
-            session.exercises.push({
-                pos: session.exercises.length + 1,
-                exerciseId: move.exerciseId,
-                exerciseName: move.exerciseName,
-                sets: move.sets.map((set) => ({
-                    pos: set.pos,
-                    reps: set.reps ?? null,
-                    weight: null,
-                    rpe: null,
-                    rest: set.rest ?? null,
-                    done: false
-                }))
+            routine.moves.forEach((move) => {
+                if (existingIds.has(move.exerciseId)) {
+                    return;
+                }
+                existingIds.add(move.exerciseId);
+                session.exercises.push({
+                    pos: session.exercises.length + 1,
+                    exerciseId: move.exerciseId,
+                    exerciseName: move.exerciseName,
+                    sets: move.sets.map((set) => ({
+                        pos: set.pos,
+                        reps: set.reps ?? null,
+                        weight: null,
+                        rpe: null,
+                        rest: set.rest ?? null,
+                        done: false
+                    }))
+                });
             });
-        });
+        }
 
         await db.saveSession(session);
-        await A.populateRoutineSelect();
         await A.renderWeek();
         await A.renderSession();
     };
@@ -480,6 +493,7 @@
             return refs;
         }
         refs.btnAddExercises = document.getElementById('btnAddExercises');
+        refs.btnAddRoutines = document.getElementById('btnAddRoutines');
         refs.selectRoutine = document.getElementById('selectRoutine');
         refs.todayLabel = document.getElementById('todayLabel');
         refs.sessionList = document.getElementById('sessionList');
@@ -489,7 +503,7 @@
 
     function assertRefs() {
         ensureRefs();
-        const required = ['selectRoutine', 'todayLabel', 'sessionList'];
+        const required = ['todayLabel', 'sessionList'];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
             throw new Error(`ui-session.js: références manquantes (${missing.join(', ')})`);
@@ -505,6 +519,19 @@
                 callerScreen: 'screenSessions',
                 onAdd: async (ids) => {
                     await A.addExercisesToCurrentSession(ids);
+                }
+            });
+        });
+    }
+
+    function wireAddRoutinesButton() {
+        const { btnAddRoutines } = refs;
+        btnAddRoutines?.addEventListener('click', () => {
+            A.openRoutineList({
+                mode: 'add',
+                callerScreen: 'screenSessions',
+                onAdd: async (ids) => {
+                    await A.addRoutineToSession(ids);
                 }
             });
         });

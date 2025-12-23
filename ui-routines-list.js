@@ -12,7 +12,10 @@
     const state = {
         routines: [],
         active: false,
-        callerScreen: 'screenSettings'
+        callerScreen: 'screenSettings',
+        listMode: 'view',
+        selection: new Set(),
+        onAddCallback: null
     };
 
     /* WIRE */
@@ -24,13 +27,18 @@
 
     /* ACTIONS */
     A.openRoutineList = async function openRoutineList(options = {}) {
-        const { callerScreen = 'screenSettings' } = options;
+        const { callerScreen = 'screenSettings', mode = 'view', onAdd = null } = options;
         ensureRefs();
-        highlightSettingsTab();
+        state.listMode = mode === 'add' ? 'add' : 'view';
+        state.onAddCallback = typeof onAdd === 'function' ? onAdd : null;
+        state.selection.clear();
         state.callerScreen = callerScreen;
+        highlightCallerTab(callerScreen);
         applyTimerVisibilityForCaller(callerScreen);
         await loadRoutines(true);
         renderList();
+        ensureSelectionBar();
+        updateSelectionBar();
         switchScreen('screenRoutineList');
     };
 
@@ -65,6 +73,7 @@
         refs.btnRoutineCreate = document.getElementById('btnRoutineCreate');
         refs.tabSettings = document.getElementById('tabSettings');
         refs.routineListBack = document.getElementById('routineListBack');
+        refs.content = document.querySelector('#screenRoutineList .content');
         refsResolved = true;
         return refs;
     }
@@ -97,7 +106,7 @@
         }
         btnRoutineCreate.addEventListener('click', () => {
             const id = createRoutineId();
-            highlightSettingsTab();
+            highlightCallerTab(state.callerScreen);
             A.openRoutineEdit({ routineId: id, callerScreen: state.callerScreen });
         });
     }
@@ -105,12 +114,7 @@
     function wireBackButton() {
         const { routineListBack } = assertRefs();
         routineListBack.addEventListener('click', () => {
-            const target = state.callerScreen || 'screenSettings';
-            if (isSettingsScreen(target)) {
-                highlightSettingsTab();
-            }
-            applyTimerVisibilityForCaller(target);
-            switchScreen(target);
+            returnToCaller();
         });
     }
 
@@ -141,19 +145,19 @@
         sorted.forEach((routine) => {
             routineCatalog.appendChild(renderRoutineCard(routine));
         });
+        updateSelectionBar();
     }
 
     function renderRoutineCard(routine) {
+        const selectable = state.listMode === 'add';
         const structure = listCard.createStructure({ clickable: true, role: 'button' });
         const { card, start, body, end } = structure;
-        card.setAttribute('aria-label', `${routine?.name || 'Routine'} — éditer`);
-
-        const handle = listCard.createHandle();
-        start.insertBefore(handle, body);
+        const routineName = routine?.name || 'Routine';
+        card.setAttribute('aria-label', `${routineName} — ${selectable ? 'sélectionner' : 'éditer'}`);
 
         const title = document.createElement('div');
         title.className = 'element';
-        title.textContent = routine?.name || 'Routine';
+        title.textContent = routineName;
 
         const details = document.createElement('div');
         details.className = 'details';
@@ -161,13 +165,62 @@
 
         body.append(title, details);
 
-        const pencil = listCard.createIcon('✏️');
-        end.appendChild(pencil);
+        if (selectable) {
+            const isSelected = state.selection.has(routine?.id);
+            if (isSelected) {
+                card.classList.add('selected');
+            }
 
-        card.addEventListener('click', () => {
-            highlightSettingsTab();
-            A.openRoutineEdit({ routineId: routine?.id, callerScreen: state.callerScreen });
-        });
+            const syncSelection = (selected) => {
+                const routineId = routine?.id;
+                if (!routineId) {
+                    return;
+                }
+                if (selected) {
+                    state.selection.add(routineId);
+                } else {
+                    state.selection.delete(routineId);
+                }
+                const finalState = state.selection.has(routineId);
+                card.classList.toggle('selected', finalState);
+                checkbox.checked = finalState;
+                updateSelectionBar();
+            };
+
+            card.addEventListener('click', () => {
+                const routineId = routine?.id;
+                if (!routineId) {
+                    return;
+                }
+                syncSelection(!state.selection.has(routineId));
+            });
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'exercise-card-check';
+            checkbox.checked = isSelected;
+            checkbox.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+            checkbox.addEventListener('change', (event) => {
+                event.stopPropagation();
+                const target = event.currentTarget;
+                if (target instanceof HTMLInputElement) {
+                    syncSelection(target.checked);
+                } else {
+                    syncSelection(checkbox.checked);
+                }
+            });
+            end.appendChild(checkbox);
+        } else {
+            const pencil = listCard.createIcon('✏️');
+            end.appendChild(pencil);
+
+            card.addEventListener('click', () => {
+                highlightCallerTab(state.callerScreen);
+                A.openRoutineEdit({ routineId: routine?.id, callerScreen: state.callerScreen });
+            });
+        }
 
         return card;
     }
@@ -194,11 +247,73 @@
         return `routine-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
     }
 
-    function highlightSettingsTab() {
+    function highlightCallerTab(callerScreen) {
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
-        if (refs.tabSettings) {
-            refs.tabSettings.classList.add('active');
+        const map = {
+            screenSessions: 'tabSessions',
+            screenStatsList: 'tabStats',
+            screenSettings: 'tabSettings',
+            screenPreferences: 'tabSettings',
+            screenData: 'tabSettings'
+        };
+        const tabId = map[callerScreen];
+        if (tabId) {
+            document.getElementById(tabId)?.classList.add('active');
         }
+    }
+
+    function ensureSelectionBar() {
+        const { content, routineCatalog } = refs;
+        if (refs.routineSelectBar || !content || !routineCatalog) {
+            return;
+        }
+        const bar = document.createElement('div');
+        bar.id = 'routineSelectBar';
+        bar.className = 'exercise-selection-bar hidden';
+
+        const button = document.createElement('button');
+        button.id = 'btnAddSelectedRoutines';
+        button.className = 'btn full';
+        button.type = 'button';
+        button.disabled = true;
+        button.textContent = 'Ajouter 0 routine(s)';
+        button.addEventListener('click', async () => {
+            if (!state.selection.size) {
+                return;
+            }
+            const ids = Array.from(state.selection);
+            if (state.onAddCallback) {
+                await state.onAddCallback(ids);
+            }
+            returnToCaller();
+        });
+
+        bar.appendChild(button);
+        content.insertBefore(bar, routineCatalog);
+        refs.routineSelectBar = bar;
+        refs.btnAddSelectedRoutines = button;
+    }
+
+    function updateSelectionBar() {
+        if (!refs.routineSelectBar || !refs.btnAddSelectedRoutines) {
+            return;
+        }
+        const isAddMode = state.listMode === 'add';
+        refs.routineSelectBar.classList.toggle('hidden', !isAddMode);
+        if (!isAddMode) {
+            return;
+        }
+        const count = state.selection.size;
+        refs.btnAddSelectedRoutines.disabled = count === 0;
+        refs.btnAddSelectedRoutines.classList.toggle('primary', count > 0);
+        refs.btnAddSelectedRoutines.textContent = `Ajouter ${count} routine(s)`;
+    }
+
+    function returnToCaller() {
+        const target = state.callerScreen || 'screenSettings';
+        applyTimerVisibilityForCaller(target);
+        highlightCallerTab(target);
+        switchScreen(target);
     }
 
     function switchScreen(target) {
