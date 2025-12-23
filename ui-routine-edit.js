@@ -33,6 +33,7 @@
         wireInputs();
         wireAddExercisesButton();
         wireHeaderButtons();
+        wireDeletion();
     });
 
     /* ACTIONS */
@@ -82,6 +83,7 @@
         refs.routineDetails = document.getElementById('routineDetails');
         refs.dlgRoutineEditor = document.getElementById('dlgRoutineEditor');
         refs.routineEditorClose = document.getElementById('routineEditorClose');
+        refs.routineDelete = document.getElementById('routineDelete');
         refs.routineList = document.getElementById('routineList');
         refs.routineEditTitle = document.getElementById('routineEditTitle');
         refs.btnRoutineAddExercises = document.getElementById('btnRoutineAddExercises');
@@ -115,7 +117,8 @@
             'routineEditBack',
             'routineEditEdit',
             'dlgRoutineEditor',
-            'routineEditorClose'
+            'routineEditorClose',
+            'routineDelete'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -132,6 +135,33 @@
         routineEditEdit.addEventListener('click', () => {
             dlgRoutineEditor?.showModal();
         });
+    }
+
+    function wireDeletion() {
+        const { routineDelete } = assertRefs();
+        routineDelete.addEventListener('click', () => {
+            void deleteRoutine();
+        });
+    }
+
+    async function deleteRoutine() {
+        if (!state.routineId) {
+            return;
+        }
+        if (!confirm('Supprimer cette routine de la liste des routines ?')) {
+            return;
+        }
+        await db.del('routines', state.routineId);
+        state.routine = null;
+        const { dlgRoutineEditor } = assertRefs();
+        dlgRoutineEditor?.close();
+        if (typeof A.refreshRoutineList === 'function') {
+            await A.refreshRoutineList();
+        }
+        if (typeof A.populateRoutineSelect === 'function') {
+            await A.populateRoutineSelect();
+        }
+        void A.openRoutineList({ callerScreen: state.callerScreen });
     }
 
     async function loadRoutine(force = false) {
@@ -163,6 +193,7 @@
             pos: safeInt(move.pos, index + 1),
             exerciseId: move.exerciseId,
             exerciseName: move.exerciseName || 'Exercice',
+            instructions: typeof move.instructions === 'string' ? move.instructions : '',
             sets: Array.isArray(move.sets)
                 ? move.sets.map((set, idx) => ({
                     pos: safeInt(set.pos, idx + 1),
@@ -241,6 +272,7 @@
                 pos: state.routine.moves.length + 1,
                 exerciseId: exercise.id,
                 exerciseName: exercise.name || 'Exercice',
+                instructions: '',
                 sets: []
             });
             existingIds.add(exercise.id);
@@ -571,6 +603,7 @@
                 pos: safeInt(move.pos, index + 1),
                 exerciseId: move.exerciseId,
                 exerciseName: move.exerciseName,
+                instructions: typeof move.instructions === 'string' ? move.instructions : '',
                 sets: Array.isArray(move.sets)
                     ? move.sets.map((set, idx) => ({
                         pos: safeInt(set.pos, idx + 1),

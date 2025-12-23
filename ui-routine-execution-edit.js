@@ -23,6 +23,7 @@
         ensureRefs();
         wireNavigation();
         wireActions();
+        wireMetaDialog();
     });
 
     /* ACTIONS */
@@ -43,8 +44,11 @@
             return;
         }
 
-        const { routineMoveTitle } = assertRefs();
+        const { routineMoveTitle, routineMoveInstructions } = assertRefs();
         routineMoveTitle.textContent = move.exerciseName || 'Exercice';
+        if (routineMoveInstructions) {
+            routineMoveInstructions.value = move.instructions || '';
+        }
         renderSets();
         switchScreen('screenRoutineMoveEdit');
     };
@@ -72,6 +76,10 @@
         refs.routineMoveDone = document.getElementById('routineMoveDone');
         refs.routineMoveAddSet = document.getElementById('routineMoveAddSet');
         refs.routineMoveDelete = document.getElementById('routineMoveDelete');
+        refs.routineMoveEditMeta = document.getElementById('routineMoveEditMeta');
+        refs.dlgRoutineMoveEditor = document.getElementById('dlgRoutineMoveEditor');
+        refs.routineMoveInstructions = document.getElementById('routineMoveInstructions');
+        refs.routineMoveEditorClose = document.getElementById('routineMoveEditorClose');
         refsResolved = true;
         return refs;
     }
@@ -92,7 +100,11 @@
             'routineMoveSets',
             'routineMoveBack',
             'routineMoveAddSet',
-            'routineMoveDelete'
+            'routineMoveDelete',
+            'routineMoveEditMeta',
+            'dlgRoutineMoveEditor',
+            'routineMoveInstructions',
+            'routineMoveEditorClose'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -118,6 +130,25 @@
         });
         routineMoveDelete.addEventListener('click', () => {
             removeMove();
+        });
+    }
+
+    function wireMetaDialog() {
+        const { routineMoveEditMeta, dlgRoutineMoveEditor, routineMoveEditorClose, routineMoveInstructions } =
+            assertRefs();
+        routineMoveEditMeta.addEventListener('click', () => {
+            dlgRoutineMoveEditor?.showModal();
+        });
+        routineMoveEditorClose.addEventListener('click', () => {
+            dlgRoutineMoveEditor?.close();
+        });
+        routineMoveInstructions.addEventListener('input', () => {
+            const move = findMove();
+            if (!move) {
+                return;
+            }
+            move.instructions = routineMoveInstructions.value;
+            scheduleSave();
         });
     }
 
@@ -457,6 +488,7 @@
         });
         state.routine.moves = moves;
         await persistRoutine();
+        refs.dlgRoutineMoveEditor?.close();
         returnToCaller();
     }
 
@@ -493,6 +525,7 @@
                     pos: safeInt(move.pos, index + 1),
                     exerciseId: move.exerciseId,
                     exerciseName: move.exerciseName || 'Exercice',
+                    instructions: typeof move.instructions === 'string' ? move.instructions : '',
                     sets: Array.isArray(move.sets)
                         ? move.sets.map((set, idx) => ({
                             pos: safeInt(set.pos, idx + 1),
@@ -519,6 +552,7 @@
                     pos: safeInt(move.pos, index + 1),
                     exerciseId: move.exerciseId,
                     exerciseName: move.exerciseName,
+                    instructions: typeof move.instructions === 'string' ? move.instructions : '',
                     sets: Array.isArray(move.sets)
                         ? move.sets.map((set, idx) => ({
                             pos: safeInt(set.pos, idx + 1),
@@ -541,6 +575,7 @@
     }
 
     function returnToCaller() {
+        refs.dlgRoutineMoveEditor?.close();
         switchScreen(state.callerScreen || 'screenRoutineEdit');
         void A.refreshRoutineEdit();
     }

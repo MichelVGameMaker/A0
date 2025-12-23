@@ -154,6 +154,10 @@
                 <textarea id="routineDetails" class="input" rows="3" placeholder="Ajouter des détails sur la routine"></textarea>
             </div>
         </div>
+
+        <div class="bloque">
+            <button id="routineDelete" class="btn danger full" type="button">🗑️ Supprimer de la liste des routines</button>
+        </div>
     </form>
 </dialog>
 <!-- ==================== -->
@@ -171,7 +175,7 @@
         </div>
 
         <div class="header-right">
-            
+            <button id="routineMoveEditMeta" class="btn ghost" title="Éditer">✏️ Éditer</button>
         </div>
     </header>
 
@@ -190,12 +194,31 @@
         <div class="add-actions">
             <button id="routineMoveAddSet" class="btn primary full">Ajouter une série</button>
         </div>
-		<div class="bloque">
-            <button id="routineMoveDelete" class="btn danger full">🗑️ Retirer de la routine</button>
-        </div>
     </main>
 
 </section>
+<!-- ==================== -->
+
+<!-- ========== Routine : méta d'un exercice ========== -->
+<dialog id="dlgRoutineMoveEditor" class="modal">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title">Modifier</div>
+            <button id="routineMoveEditorClose" class="btn primary" value="close">OK</button>
+        </div>
+
+        <div class="bloque">
+            <div class="vstack">
+                <label class="lbl" for="routineMoveInstructions">Instructions</label>
+                <textarea id="routineMoveInstructions" class="input" rows="3" placeholder="Ajouter des commentaires pour cette routine"></textarea>
+            </div>
+        </div>
+
+        <div class="bloque">
+            <button id="routineMoveDelete" class="btn danger full" type="button">🗑️ Supprimer de la routine</button>
+        </div>
+    </form>
+</dialog>
 <!-- ==================== -->
 
 <!-- ========== Statistiques : liste ========== -->
@@ -294,16 +317,13 @@
         </div>
 
         <div class="header-right">
+            <button id="execEditMeta" class="btn ghost" title="Éditer">✏️ Éditer</button>
             <button id="execOk" class="btn primary" title="Terminer">OK</button>
         </div>
     </header>
 
     <main class="content">
         <div class="details" id="execDate">—</div>
-
-        <div class="bloque">
-            <button id="execDelete" class="btn danger full">🗑️ Retirer de la séance</button>
-        </div>
 
         <div class="exec-grid exec-head routine-set-grid routine-set-head">
             <div class="lbl">#</div>
@@ -321,6 +341,35 @@
     </main>
 
 </section>
+<!-- ==================== -->
+
+<!-- ========== Séance : méta d'un exercice ========== -->
+<dialog id="dlgExecMoveEditor" class="modal">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title">Modifier</div>
+            <button id="execMoveEditorClose" class="btn primary" value="close">OK</button>
+        </div>
+
+        <div class="bloque">
+            <div class="vstack">
+                <label class="lbl" for="execRoutineInstructions">Instructions</label>
+                <textarea id="execRoutineInstructions" class="input" rows="3" readonly placeholder="Commentaire de la routine (lecture seule)"></textarea>
+            </div>
+        </div>
+
+        <div class="bloque">
+            <div class="vstack">
+                <label class="lbl" for="execMoveNote">Note</label>
+                <textarea id="execMoveNote" class="input" rows="3" placeholder="Ajouter une note pour cette séance"></textarea>
+            </div>
+        </div>
+
+        <div class="bloque">
+            <button id="execDelete" class="btn danger full" type="button">🗑️ Supprimer de la séance</button>
+        </div>
+    </form>
+</dialog>
 <!-- ==================== -->
  
 <!-- ========== 3.1.1 Bibliothèque d’exercices (liste) ========== -->

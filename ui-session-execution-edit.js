@@ -55,6 +55,7 @@
         ensureRefs();
         wireNavigation();
         wireActions();
+        wireMetaDialog();
         wireTimerControls();
     });
 
@@ -88,9 +89,15 @@
         state.session = session;
         setTimerVisibility({ forcedHidden: false, reason: null });
 
-        const { execTitle, execDate } = assertRefs();
+        const { execTitle, execDate, execRoutineInstructions, execMoveNote } = assertRefs();
         execTitle.textContent = exercise.exerciseName || 'Exercice';
         execDate.textContent = A.fmtUI(date);
+        if (execRoutineInstructions) {
+            execRoutineInstructions.value = exercise.routineInstructions || '';
+        }
+        if (execMoveNote) {
+            execMoveNote.value = exercise.note || '';
+        }
 
         const timerKey = `${dateKey}::${currentId}`;
         const timer = ensureSharedTimer();
@@ -123,6 +130,7 @@
         refs.screenData = document.getElementById('screenData');
         refs.execBack = document.getElementById('execBack');
         refs.execOk = document.getElementById('execOk');
+        refs.execEditMeta = document.getElementById('execEditMeta');
         refs.execTitle = document.getElementById('execTitle');
         refs.execDate = document.getElementById('execDate');
         refs.execDelete = document.getElementById('execDelete');
@@ -134,6 +142,10 @@
         refs.timerMinus = document.getElementById('tmrMinus');
         refs.timerPlus = document.getElementById('tmrPlus');
         refs.timerClose = document.getElementById('tmrClose');
+        refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
+        refs.execRoutineInstructions = document.getElementById('execRoutineInstructions');
+        refs.execMoveNote = document.getElementById('execMoveNote');
+        refs.execMoveEditorClose = document.getElementById('execMoveEditorClose');
         refsResolved = true;
         return refs;
     }
@@ -152,6 +164,7 @@
             'screenExecEdit',
             'execBack',
             'execOk',
+            'execEditMeta',
             'execTitle',
             'execDate',
             'execDelete',
@@ -162,7 +175,11 @@
             'timerToggle',
             'timerMinus',
             'timerPlus',
-            'timerClose'
+            'timerClose',
+            'dlgExecMoveEditor',
+            'execRoutineInstructions',
+            'execMoveNote',
+            'execMoveEditorClose'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -191,6 +208,24 @@
         });
     }
 
+    function wireMetaDialog() {
+        const { execEditMeta, dlgExecMoveEditor, execMoveEditorClose, execMoveNote } = assertRefs();
+        execEditMeta.addEventListener('click', () => {
+            dlgExecMoveEditor?.showModal();
+        });
+        execMoveEditorClose.addEventListener('click', () => {
+            dlgExecMoveEditor?.close();
+        });
+        execMoveNote.addEventListener('input', () => {
+            const exercise = getExercise();
+            if (!exercise) {
+                return;
+            }
+            exercise.note = execMoveNote.value;
+            void persistSession(false);
+        });
+    }
+
     function wireTimerControls() {
         const { execTimerBar, timerToggle, timerMinus, timerPlus, timerClose } = assertRefs();
         timerToggle.addEventListener('click', () => {
@@ -216,6 +251,8 @@
     }
 
     function normalizeExerciseSets(exercise) {
+        exercise.note = typeof exercise.note === 'string' ? exercise.note : '';
+        exercise.routineInstructions = typeof exercise.routineInstructions === 'string' ? exercise.routineInstructions : '';
         const defaultRest = getDefaultRest();
         const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
         const normalized = sets.map((set, index) => ({
@@ -580,6 +617,7 @@
         state.session.exercises.splice(index, 1);
         await db.saveSession(state.session);
         await refreshSessionViews();
+        refs.dlgExecMoveEditor?.close();
         backToCaller();
     }
 
@@ -608,6 +646,7 @@
     }
 
     function backToCaller() {
+        refs.dlgExecMoveEditor?.close();
         switchScreen(state.callerScreen || 'screenSessions');
         void refreshSessionViews();
     }
