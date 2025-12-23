@@ -25,6 +25,11 @@
         exerciseKey: null
     });
 
+    const defaultTimerVisibility = () => ({
+        forcedHidden: false,
+        reason: null
+    });
+
     let execTimer = A.execTimer;
     if (!execTimer) {
         execTimer = defaultTimerState();
@@ -36,6 +41,14 @@
         execTimer.exerciseKey = execTimer.exerciseKey ?? null;
     }
     A.execTimer = execTimer;
+    let timerVisibility = A.timerVisibility;
+    if (!timerVisibility) {
+        timerVisibility = defaultTimerVisibility();
+    } else {
+        timerVisibility.forcedHidden = Boolean(timerVisibility.forcedHidden);
+        timerVisibility.reason = timerVisibility.reason || null;
+    }
+    A.timerVisibility = timerVisibility;
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -73,6 +86,7 @@
         state.exerciseId = currentId;
         state.callerScreen = callerScreen;
         state.session = session;
+        setTimerVisibility({ forcedHidden: false, reason: null });
 
         const { execTitle, execDate } = assertRefs();
         execTitle.textContent = exercise.exerciseName || 'Exercice';
@@ -716,6 +730,21 @@
         return A.execTimer;
     }
 
+    function setTimerVisibility(options = {}) {
+        if (!timerVisibility) {
+            return;
+        }
+        const forcedHidden = Boolean(options?.forcedHidden);
+        timerVisibility.forcedHidden = forcedHidden;
+        timerVisibility.reason = forcedHidden ? options.reason || null : null;
+        updateTimerUI();
+    }
+    A.setTimerVisibility = setTimerVisibility;
+
+    function isTimerForcedHidden() {
+        return Boolean(timerVisibility?.forcedHidden);
+    }
+
     function resetTimerState() {
         const timer = ensureSharedTimer();
         const currentExerciseKey = timer.exerciseKey;
@@ -792,13 +821,12 @@
 
     function updateTimerUI() {
         const timer = ensureSharedTimer();
-        const { execTimerBar, timerDisplay, timerToggle, screenExecEdit } = assertRefs();
+        const { execTimerBar, timerDisplay, timerToggle } = assertRefs();
         if (!execTimerBar) {
             return;
         }
         const baseHidden = !timer.intervalId && !timer.running && timer.startSec === 0;
-        const isScreenInactive = screenExecEdit?.hidden;
-        const shouldHide = baseHidden || isScreenInactive;
+        const shouldHide = baseHidden || isTimerForcedHidden();
         execTimerBar.hidden = shouldHide;
         if (shouldHide) {
             return;

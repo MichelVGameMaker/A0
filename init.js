@@ -32,6 +32,7 @@
 
         setActiveTab('tabSessions');
         showOnly('sessions');
+        A.setTimerVisibility?.({ forcedHidden: false, reason: null });
         await A.populateRoutineSelect();
         await A.renderWeek();
         await A.renderSession();
@@ -57,6 +58,7 @@
 
         tabSessions?.addEventListener('click', async () => {
             setActiveTab('tabSessions');
+            A.setTimerVisibility?.({ forcedHidden: false, reason: null });
             showOnly('sessions');
             await A.populateRoutineSelect();
             await A.renderWeek();
@@ -65,6 +67,7 @@
 
         tabStats?.addEventListener('click', async () => {
             setActiveTab('tabStats');
+            A.setTimerVisibility?.({ forcedHidden: false, reason: null });
             await A.openStatsList();
         });
 

@@ -16,18 +16,21 @@
     A.openSettings = async function openSettings() {
         ensureRefs();
         highlightSettingsTab();
+        hideTimerForSettings();
         switchScreen('screenSettings');
     };
 
     A.openPreferences = function openPreferences() {
         ensureRefs();
         highlightSettingsTab();
+        hideTimerForSettings();
         switchScreen('screenPreferences');
     };
 
     A.openData = function openData() {
         ensureRefs();
         highlightSettingsTab();
+        hideTimerForSettings();
         switchScreen('screenData');
     };
 
@@ -72,10 +75,12 @@
 
         btnSettingsExercises?.addEventListener('click', () => {
             highlightSettingsTab();
+            hideTimerForSettings();
             void A.openExercises({ callerScreen: 'screenSettings' });
         });
         btnSettingsRoutines?.addEventListener('click', () => {
             highlightSettingsTab();
+            hideTimerForSettings();
             void A.openRoutineList();
         });
         btnSettingsPreferences?.addEventListener('click', () => {
@@ -96,6 +101,12 @@
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
         if (refs.tabSettings) {
             refs.tabSettings.classList.add('active');
+        }
+    }
+
+    function hideTimerForSettings() {
+        if (typeof A.setTimerVisibility === 'function') {
+            A.setTimerVisibility({ forcedHidden: true, reason: 'settings' });
         }
     }
 
