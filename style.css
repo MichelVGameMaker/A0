@@ -978,6 +978,13 @@ textarea:focus{
   font-variant-numeric: tabular-nums;
 }
 
+.set-editor-label{
+  font-weight: var(--fw-strong);
+  font-size: var(--fs-small);
+  color: var(--labelColor);
+  text-align:center;
+}
+
 .routine-set-head-rest{
   grid-column: span 2;
   display:flex;
@@ -1003,13 +1010,6 @@ textarea:focus{
   gap:2px;
 }
 
-.set-editor-label{
-  font-weight: var(--fw-strong);
-  font-size: var(--fs-small);
-  line-height:1.1;
-  color: var(--selectedBord);
-  text-align:center;
-}
 
 .set-editor-rest{
   grid-column: span 2;
