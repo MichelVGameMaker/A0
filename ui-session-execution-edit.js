@@ -57,6 +57,7 @@
         wireActions();
         wireMetaDialog();
         wireTimerControls();
+        wireValueStates();
     });
 
     /* ACTIONS */
@@ -98,6 +99,7 @@
         if (execMoveNote) {
             execMoveNote.value = exercise.note || '';
         }
+        refreshValueStates();
 
         const timerKey = `${dateKey}::${currentId}`;
         const timer = ensureSharedTimer();
@@ -224,6 +226,11 @@
             exercise.note = execMoveNote.value;
             void persistSession(false);
         });
+    }
+
+    function wireValueStates() {
+        const { execRoutineInstructions, execMoveNote } = assertRefs();
+        A.watchValueState?.([execRoutineInstructions, execMoveNote]);
     }
 
     function wireTimerControls() {
@@ -601,6 +608,11 @@
         if (shouldRender) {
             renderSets();
         }
+    }
+
+    function refreshValueStates() {
+        A.updateValueState?.(refs.execRoutineInstructions);
+        A.updateValueState?.(refs.execMoveNote);
     }
 
     async function removeExercise() {

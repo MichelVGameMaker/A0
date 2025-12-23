@@ -14,6 +14,7 @@
         assertRefs();
         populateSelectors();
         wireForm();
+        wireValueStates();
     });
 
     /* ACTIONS */
@@ -59,6 +60,7 @@
             refs.exGroupInfo.textContent = '';
         }
 
+        refreshValueStates();
         switchScreen('screenExerciseEdit');
     };
 
@@ -141,6 +143,11 @@
         refs.exEditDelete?.addEventListener('click', () => {
             void removeExercise();
         });
+    }
+
+    function wireValueStates() {
+        const { exName, exTargetMuscle, exImage, exInstr } = assertRefs();
+        A.watchValueState?.([exName, exTargetMuscle, exImage, exInstr]);
     }
 
     async function removeExercise() {
@@ -247,5 +254,12 @@
                 element.hidden = key !== target;
             }
         });
+    }
+
+    function refreshValueStates() {
+        A.updateValueState?.(refs.exName);
+        A.updateValueState?.(refs.exTargetMuscle);
+        A.updateValueState?.(refs.exImage);
+        A.updateValueState?.(refs.exInstr);
     }
 })();

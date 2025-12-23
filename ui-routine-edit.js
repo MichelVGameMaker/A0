@@ -34,6 +34,7 @@
         wireAddExercisesButton();
         wireHeaderButtons();
         wireDeletion();
+        wireValueStates();
     });
 
     /* ACTIONS */
@@ -240,6 +241,11 @@
         });
     }
 
+    function wireValueStates() {
+        const { routineName, routineIcon, routineDetails } = assertRefs();
+        A.watchValueState?.([routineName, routineIcon, routineDetails]);
+    }
+
     function wireAddExercisesButton() {
         const { btnRoutineAddExercises } = assertRefs();
         btnRoutineAddExercises.addEventListener('click', () => {
@@ -294,6 +300,7 @@
         if (routineEditTitle) {
             routineEditTitle.textContent = state.routine.name || 'Routine';
         }
+        refreshValueStates();
         renderRoutineList();
     }
 
@@ -683,6 +690,12 @@
 
     function uid(prefix) {
         return `${prefix}-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
+    }
+
+    function refreshValueStates() {
+        A.updateValueState?.(refs.routineName);
+        A.updateValueState?.(refs.routineIcon);
+        A.updateValueState?.(refs.routineDetails);
     }
 
     function switchScreen(target) {

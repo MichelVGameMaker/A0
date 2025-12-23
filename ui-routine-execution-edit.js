@@ -24,6 +24,7 @@
         wireNavigation();
         wireActions();
         wireMetaDialog();
+        wireValueStates();
     });
 
     /* ACTIONS */
@@ -49,6 +50,7 @@
         if (routineMoveInstructions) {
             routineMoveInstructions.value = move.instructions || '';
         }
+        refreshValueStates();
         renderSets();
         switchScreen('screenRoutineMoveEdit');
     };
@@ -150,6 +152,11 @@
             move.instructions = routineMoveInstructions.value;
             scheduleSave();
         });
+    }
+
+    function wireValueStates() {
+        const { routineMoveInstructions } = assertRefs();
+        A.watchValueState?.(routineMoveInstructions);
     }
 
     function renderSets() {
@@ -508,6 +515,10 @@
         }
         await db.put('routines', serializeRoutine(state.routine));
         await A.refreshRoutineEdit();
+    }
+
+    function refreshValueStates() {
+        A.updateValueState?.(refs.routineMoveInstructions);
     }
 
     function normalizeRoutine(routine) {
