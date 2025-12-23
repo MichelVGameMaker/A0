@@ -22,8 +22,7 @@
         startSec: 0,
         remainSec: 0,
         intervalId: null,
-        exerciseKey: null,
-        collapsed: false
+        exerciseKey: null
     });
 
     let execTimer = A.execTimer;
@@ -35,7 +34,6 @@
         execTimer.remainSec = safeInt(execTimer.remainSec, 0);
         execTimer.intervalId = execTimer.intervalId ?? null;
         execTimer.exerciseKey = execTimer.exerciseKey ?? null;
-        execTimer.collapsed = Boolean(execTimer.collapsed);
     }
     A.execTimer = execTimer;
 
@@ -90,17 +88,6 @@
 
         renderSets();
         switchScreen('screenExecEdit');
-    };
-
-    A.toggleTimerVisibility = function toggleTimerVisibility() {
-        ensureRefs();
-        const timer = ensureSharedTimer();
-        const baseHidden = !timer.intervalId && !timer.running && timer.startSec === 0;
-        if (baseHidden) {
-            return;
-        }
-        timer.collapsed = !timer.collapsed;
-        updateTimerUI();
     };
 
     /* UTILS */
@@ -645,6 +632,7 @@
                 element.hidden = key !== target;
             }
         });
+        updateTimerUI();
     }
 
     function renderRpeChip(value, muted = false) {
@@ -742,7 +730,6 @@
         if (timer.intervalId) {
             clearInterval(timer.intervalId);
         }
-        timer.collapsed = false;
         timer.startSec = seconds;
         timer.remainSec = seconds;
         timer.running = true;
@@ -805,12 +792,13 @@
 
     function updateTimerUI() {
         const timer = ensureSharedTimer();
-        const { execTimerBar, timerDisplay, timerToggle } = assertRefs();
+        const { execTimerBar, timerDisplay, timerToggle, screenExecEdit } = assertRefs();
         if (!execTimerBar) {
             return;
         }
         const baseHidden = !timer.intervalId && !timer.running && timer.startSec === 0;
-        const shouldHide = baseHidden || timer.collapsed;
+        const isScreenInactive = screenExecEdit?.hidden;
+        const shouldHide = baseHidden || isScreenInactive;
         execTimerBar.hidden = shouldHide;
         if (shouldHide) {
             return;

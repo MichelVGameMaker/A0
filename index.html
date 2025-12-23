@@ -91,9 +91,11 @@
     <main class="content">
         <section id="routineCatalog" class="session-list" aria-label="Routines enregistrées"></section>
 
-        <div class="bloque">
-            <div class="row">
-                <button id="btnRoutineCreate" class="btn full">Créer une nouvelle routine</button>
+        <div class="sticky-actions safe-bottom">
+            <div class="bloque">
+                <div class="row">
+                    <button id="btnRoutineCreate" class="btn full">Créer une nouvelle routine</button>
+                </div>
             </div>
         </div>
     </main>
@@ -109,7 +111,7 @@
             <button id="routineEditBack" class="btn ghost" title="Retour">◀︎</button>
         </div>
         <div class="header-center">
-            <div class="title">Routine</div>
+            <div class="title" id="routineEditTitle">Routine</div>
         </div>
         <div class="header-right">
             <button id="routineEditOk" class="btn primary" title="Valider">OK</button>
@@ -126,9 +128,11 @@
 
         <section id="routineList" class="session-list" aria-label="Exercices de la routine"></section>
 
-        <div class="bloque">
-            <div class="row">
-                <button id="btnRoutineAddExercises" class="btn full">Ajouter exercice/s</button>
+        <div class="sticky-actions safe-bottom">
+            <div class="bloque">
+                <div class="row">
+                    <button id="btnRoutineAddExercises" class="btn full">Ajouter exercice/s</button>
+                </div>
             </div>
         </div>
     </main>
@@ -446,7 +450,6 @@
     <button id="tabSessions" class="tab active" title="Séances" aria-label="Séances">🏋️</button>
     <button id="tabStats"    class="tab" title="Statistiques" aria-label="Statistiques">📈</button>
     <button id="tabSettings" class="tab" title="Réglages" aria-label="Réglages">⚙️</button>
-    <button id="tabTimer"    class="tab" title="Afficher ou masquer le chronomètre" aria-label="Afficher ou masquer le chronomètre">⏱️</button>
 </nav>
 <!-- ==================== -->
  

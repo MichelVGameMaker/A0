@@ -134,7 +134,26 @@ header{
     border-bottom: 2px solid var(--panelBord);
 }
 
-header .title{ font-weight: var(--fw-strong); }
+.header-left,
+.header-right{
+    display:flex;
+    align-items:center;
+    gap: var(--gap);
+}
+.header-center{
+    flex:1;
+    display:flex;
+    justify-content:center;
+}
+header .title{
+    flex:1;
+    font-weight: var(--fw-strong);
+    text-align:center;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    max-width: min(260px, 72vw);
+}
 
 /* =========================================================
    3) Tab bar (bas)
@@ -653,6 +672,14 @@ textarea:focus{
   border: 1px solid var(--panelBord);
   border-radius: var(--radius);
   padding: var(--pad-y) var(--pad-x);
+}
+.sticky-actions{
+  position: sticky;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0));
+  background: var(--panelBord);
+  padding-top: var(--gap);
+  margin-top: var(--gap);
+  z-index: 5;
 }
 
 /* =========================================================
