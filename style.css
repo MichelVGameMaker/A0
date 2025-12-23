@@ -9,7 +9,6 @@
   /* --- Styles --- */
   --panelBack:     #ffffff;
   --panelBord:     #f8f8f8;
-  --blocBord:      #e0e0e0;
   --labelColor:    #bbb;
   --emptyColor:    #ccc;
   --filledColor:   #000000;
@@ -116,7 +115,7 @@ body{
  .content {
     flex: 1;
     background: var(--panelBord);                /* panneau blanc */
-    border-inline: 6px solid var(--blocBord);
+    border-inline: 6px solid var(--panelBord);
     padding:  12px;
     min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
 }
@@ -237,7 +236,7 @@ image_big{
     object-fit:cover;
     border-radius:var(--radius);
     /* Pas cliquable */
-    border:1px solid var(--blocBord);
+    border:1px solid var(--panelBord);
     touch-action: manipulation;       /* coupe le geste double-tap=zoom */
     /* Pas de drag n drop*/
     -webkit-user-drag: none;
@@ -506,7 +505,7 @@ textarea:focus{
   gap:3px;
   padding:3px 4px;
   border-radius:8px;
-  border:1px solid var(--blocBord);
+  border:1px solid var(--panelBord);
   font-size:var(--fs-small);
   line-height:1.1;
   width:var(--set-synopsis-width);
@@ -551,12 +550,12 @@ textarea:focus{
   font-size:.9em;
   color: var(--rpe-ink);
   background: var(--panelBack);
-  border:1px solid var(--blocBord);
+  border:1px solid var(--panelBord);
 }
 
 .rpe{
   --rpe-bg: var(--panelBack);
-  --rpe-border: var(--blocBord);
+  --rpe-border: var(--panelBord);
   color: var(--rpe-ink);
 }
 
@@ -566,7 +565,7 @@ textarea:focus{
 .set-edit-button[data-rpe],
 .inline-keyboard-key[data-rpe]{
   background: var(--rpe-bg, var(--panelBack));
-  border-color: var(--rpe-border, var(--blocBord));
+  border-color: var(--rpe-border, var(--panelBord));
   color: var(--rpe-ink);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
@@ -619,7 +618,7 @@ textarea:focus{
 
   object-fit:cover;
   flex-shrink:0;
-  border: 1px solid var(--blocBord);
+  border: 1px solid var(--panelBord);
   align-self:stretch;
 }
 
@@ -862,26 +861,26 @@ textarea:focus{
 }
 
 .exec-set-planned{
-  color: var(--blocBord);
+  color: var(--panelBord);
 }
 
 .exec-set-planned .set-edit-button{
-  border-color: var(--blocBord);
-  color: var(--blocBord);
+  border-color: var(--panelBord);
+  color: var(--panelBord);
 }
 .exec-set-planned .set-edit-input{
-  border-color: var(--blocBord);
-  color: var(--blocBord);
+  border-color: var(--panelBord);
+  color: var(--panelBord);
 }
 
 .exec-set-planned .routine-set-order{
-  color: var(--blocBord);
+  color: var(--panelBord);
 }
 
 .exec-set-planned .rpe-chip{
   background: transparent;
-  border: 1px solid var(--blocBord);
-  color: var(--blocBord);
+  border: 1px solid var(--panelBord);
+  color: var(--panelBord);
 }
 
 .rpe-chip-muted{
@@ -915,7 +914,7 @@ textarea:focus{
   width: 100%;
   min-height: var(--control-h);
   font-weight: var(--fw-strong);
-  border-color: var(--blocBord);
+  border-color: var(--panelBord);
 }
 
 .inline-set-editor-plus .inline-set-editor-button{
@@ -951,7 +950,7 @@ textarea:focus{
 
 .inline-keyboard-key{
   height: 45px;
-  border: 1px solid var(--blocBord);
+  border: 1px solid var(--panelBord);
   border-radius: 14px;
   background: #fff;
   font-size: 20px;
@@ -1136,7 +1135,7 @@ input[type="number"]{ -moz-appearance:textfield; }
 .stats-chart-card {
     margin-bottom: 16px;
     padding: 0;
-    border: 1px solid var(--blocBord);
+    border: 1px solid var(--panelBord);
     border-radius: var(--radius);
 }
 
@@ -1200,7 +1199,7 @@ input[type="number"]{ -moz-appearance:textfield; }
     justify-content: space-between;
     align-items: baseline;
     padding: 12px 16px;
-    border: 1px solid var(--blocBord);
+    border: 1px solid var(--panelBord);
     border-radius: var(--radius);
     cursor: pointer;
 }
