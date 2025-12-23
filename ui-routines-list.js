@@ -19,6 +19,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
         wireCreateButton();
+        wireBackButton();
     });
 
     /* ACTIONS */
@@ -63,6 +64,7 @@
         refs.routineCatalog = document.getElementById('routineCatalog');
         refs.btnRoutineCreate = document.getElementById('btnRoutineCreate');
         refs.tabSettings = document.getElementById('tabSettings');
+        refs.routineListBack = document.getElementById('routineListBack');
         refsResolved = true;
         return refs;
     }
@@ -80,7 +82,7 @@
 
     function assertRefs() {
         ensureRefs();
-        const required = ['screenRoutineList', 'routineCatalog'];
+        const required = ['screenRoutineList', 'routineCatalog', 'routineListBack'];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
             throw new Error(`ui-routines-list.js: références manquantes (${missing.join(', ')})`);
@@ -97,6 +99,18 @@
             const id = createRoutineId();
             highlightSettingsTab();
             A.openRoutineEdit({ routineId: id, callerScreen: state.callerScreen });
+        });
+    }
+
+    function wireBackButton() {
+        const { routineListBack } = assertRefs();
+        routineListBack.addEventListener('click', () => {
+            const target = state.callerScreen || 'screenSettings';
+            if (isSettingsScreen(target)) {
+                highlightSettingsTab();
+            }
+            applyTimerVisibilityForCaller(target);
+            switchScreen(target);
         });
     }
 
