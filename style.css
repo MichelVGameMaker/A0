@@ -264,9 +264,14 @@ image_big{
     outline-offset: 2px;
 }
 .has-value{
-   /* Rempli */
+   /* Texte rempli */
    color: var(--filledColor);
    font-weight: var(--fw-strong);
+}
+.is-default{
+    /* Texte vide */
+    color: var(--emptyColor);
+    font-weight: var(--fw-light);
 }
 
 /* Base champs & listes */
@@ -283,27 +288,14 @@ image_big{
     touch-action: manipulation;       /* coupe le geste double-tap=zoom */
     user-select: text;
     -webkit-user-select: text;
-    /* Texte vide */
-    color: var(--emptyColor);
-    font-weight: var(--fw-light);
+    /* Texte rempli */
+    color: var(--filledColor);
+    font-weight: var(--fw-strong);
     font-size: var(--fs-base);
 }
 textarea{
     resize: vertical;
 }
-
-
-/* Focus/actif -> fond gris + bordure strong */
-.input:focus,
-select:focus,
-textarea:focus{
-    /* Focusé */
-    background: var(--focusedBack);
-    font-weight: var(--fw-strong);
-    outline: 2px solid var(--focusedBord);
-    outline-offset: 2px;
-}
-
 /* Tags */
 .tags{
   --tag-gap: 1px;                              /* UN seul pixel d’écart */
@@ -338,9 +330,15 @@ textarea:focus{
   white-space:nowrap;
   text-align:center;
 }
-.tag.selected{
-    background: var(--selectedBack);
-    border-color: var(--selectedBord);
+/* Focus/actif -> fond gris + bordure strong */
+.input:focus,
+select:focus,
+textarea:focus{
+    /* Focusé */
+    background: var(--focusedBack);
+    font-weight: var(--fw-strong);
+    outline: 2px solid var(--focusedBord);
+    outline-offset: 2px;
 }
 .tag:focus{
     /* Focusé */
@@ -348,6 +346,11 @@ textarea:focus{
     font-weight: var(--fw-strong);
     outline: 2px solid var(--focusedBord);
     outline-offset: 2px;
+}
+
+.tag.selected{
+    background: var(--selectedBack);
+    border-color: var(--selectedBord);
 }
 
 /* =========================================================
