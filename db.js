@@ -153,9 +153,10 @@ const db = (() => {
      * Importe les exercices externes la première fois.
      * @returns {Promise<void>} Promesse résolue une fois l'import terminé ou ignoré.
      */
-    async function importExternalExercisesIfNeeded() {
+    async function importExternalExercisesIfNeeded(options = {}) {
+        const { force = false } = options;
         const currentCount = await countStore('exercises');
-        if (currentCount > 0) {
+        if (!force && currentCount > 0) {
             return;
         }
 
