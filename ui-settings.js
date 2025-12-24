@@ -34,6 +34,14 @@
         switchScreen('screenData');
     };
 
+    A.openVolume = function openVolume() {
+        ensureRefs();
+        highlightSettingsTab();
+        hideTimerForSettings();
+        A.renderVolumeScreen?.();
+        switchScreen('screenVolume');
+    };
+
     /* UTILS */
     function ensureRefs() {
         if (refsResolved) {
@@ -50,12 +58,14 @@
         refs.screenStatsList = document.getElementById('screenStatsList');
         refs.screenStatsDetail = document.getElementById('screenStatsDetail');
         refs.screenSettings = document.getElementById('screenSettings');
+        refs.screenVolume = document.getElementById('screenVolume');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.tabSettings = document.getElementById('tabSettings');
         refs.btnSettingsExercises = document.getElementById('btnSettingsExercises');
         refs.btnSettingsRoutines = document.getElementById('btnSettingsRoutines');
         refs.btnSettingsPreferences = document.getElementById('btnSettingsPreferences');
+        refs.btnSettingsVolume = document.getElementById('btnSettingsVolume');
         refs.btnSettingsData = document.getElementById('btnSettingsData');
         refs.btnSettingsUpdate = document.getElementById('btnSettingsUpdate');
         refs.btnPreferencesBack = document.getElementById('btnPreferencesBack');
@@ -69,6 +79,7 @@
             btnSettingsExercises,
             btnSettingsRoutines,
             btnSettingsPreferences,
+            btnSettingsVolume,
             btnSettingsData,
             btnSettingsUpdate,
             btnPreferencesBack,
@@ -87,6 +98,9 @@
         });
         btnSettingsPreferences?.addEventListener('click', () => {
             A.openPreferences();
+        });
+        btnSettingsVolume?.addEventListener('click', () => {
+            A.openVolume();
         });
         btnSettingsData?.addEventListener('click', () => {
             A.openData();
@@ -169,6 +183,7 @@
             screenStatsList,
             screenStatsDetail,
             screenSettings,
+            screenVolume,
             screenPreferences,
             screenData
         } = ensureRefs();
@@ -184,6 +199,7 @@
             screenStatsList,
             screenStatsDetail,
             screenSettings,
+            screenVolume,
             screenPreferences,
             screenData
         };

@@ -1225,6 +1225,94 @@ input[type="number"]{ -moz-appearance:textfield; }
     background: transparent;
 }
 
+.volume-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.volume-table th,
+.volume-table td {
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.volume-table th {
+    color: var(--labelColor);
+    font-size: var(--fs-small);
+}
+
+.volume-table tbody tr + tr td {
+    border-top: 1px solid var(--panelBord);
+}
+
+.volume-gauge {
+    position: relative;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--clickableBack);
+    overflow: hidden;
+    min-width: 120px;
+}
+
+.volume-gauge-fill {
+    position: absolute;
+    inset: 0;
+    width: 0;
+    background: var(--emphase);
+    opacity: 0.35;
+}
+
+.volume-gauge-label {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: var(--fs-small);
+    font-weight: var(--fw-base);
+}
+
+.volume-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--labelColor);
+}
+
+.volume-edit-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 110px 110px;
+    gap: 8px;
+    color: var(--labelColor);
+    font-size: var(--fs-small);
+    margin-bottom: 8px;
+}
+
+.volume-edit-list {
+    display: grid;
+    gap: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.volume-edit-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 110px 110px;
+    gap: 8px;
+    align-items: center;
+}
+
+.volume-edit-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.volume-edit-input {
+    width: 100%;
+}
+
 
 
 /* Champs spécifiques */
