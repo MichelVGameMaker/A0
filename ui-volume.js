@@ -4,11 +4,22 @@
     const CFG = window.CFG || {};
 
     const STORAGE_KEY = 'volumeSettings';
+    const RANGE_OPTIONS = [
+        { label: 'sem', type: 'week' },
+        { label: '7 j', days: 7 },
+        { label: '1 m.', days: 28 },
+        { label: '3 m.', days: 91 },
+        { label: '6 m.', days: 182 },
+        { label: '1 an', days: 365 }
+    ];
+    const RANGE_BY_LABEL = new Map(RANGE_OPTIONS.map((option) => [option.label, option]));
+    const DEFAULT_RANGE_LABEL = 'sem';
 
     /* STATE */
     const refs = {};
     let refsResolved = false;
     let allVolumeItems = null;
+    let rangeTagGroup = null;
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -18,9 +29,10 @@
     });
 
     /* ACTIONS */
-    A.renderVolumeScreen = function renderVolumeScreen() {
+    A.renderVolumeScreen = async function renderVolumeScreen() {
         ensureRefs();
-        renderVolumeTable();
+        ensureRangeTags();
+        await renderVolumeTable();
     };
 
     /* UTILS */
@@ -31,6 +43,7 @@
         refs.screenVolume = document.getElementById('screenVolume');
         refs.btnVolumeBack = document.getElementById('btnVolumeBack');
         refs.btnVolumeEdit = document.getElementById('btnVolumeEdit');
+        refs.volumeRangeTags = document.getElementById('volumeRangeTags');
         refs.volumeTable = document.getElementById('volumeTable');
         refs.volumeTableBody = document.getElementById('volumeTableBody');
         refs.volumeEmpty = document.getElementById('volumeEmpty');
@@ -55,6 +68,28 @@
         volumeEditSave?.addEventListener('click', () => {
             saveEditDialog();
         });
+    }
+
+    function ensureRangeTags() {
+        const { volumeRangeTags } = ensureRefs();
+        if (!volumeRangeTags || !A.TagGroup) {
+            return null;
+        }
+        if (!rangeTagGroup) {
+            rangeTagGroup = new A.TagGroup(volumeRangeTags, {
+                mode: 'mono',
+                columns: 3,
+                onChange: (values) => {
+                    const nextLabel = values?.[0] || DEFAULT_RANGE_LABEL;
+                    const settings = loadSettings();
+                    settings.range = getRangeLabel(nextLabel);
+                    saveSettings(settings);
+                    void renderVolumeTable();
+                }
+            });
+            rangeTagGroup.setItems(RANGE_OPTIONS.map((option) => option.label));
+        }
+        return rangeTagGroup;
     }
 
     function getAllVolumeItems() {
@@ -83,29 +118,37 @@
     function loadSettings() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) {
-            return { items: {} };
+            return { items: {}, range: DEFAULT_RANGE_LABEL };
         }
         try {
             const parsed = JSON.parse(raw);
             if (parsed && typeof parsed === 'object' && parsed.items && typeof parsed.items === 'object') {
-                return parsed;
+                return {
+                    ...parsed,
+                    range: getRangeLabel(parsed.range)
+                };
             }
         } catch (error) {
             console.warn('Volume: données locales invalides.', error);
         }
-        return { items: {} };
+        return { items: {}, range: DEFAULT_RANGE_LABEL };
     }
 
     function saveSettings(settings) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     }
 
-    function renderVolumeTable() {
+    async function renderVolumeTable() {
         const { volumeTableBody, volumeEmpty, volumeTable } = ensureRefs();
         if (!volumeTableBody || !volumeEmpty || !volumeTable) {
             return;
         }
         const settings = loadSettings();
+        const selectedRange = getRangeLabel(settings.range);
+        const tagGroup = ensureRangeTags();
+        if (tagGroup) {
+            tagGroup.setSelection(selectedRange);
+        }
         const tracked = Object.entries(settings.items || {})
             .filter(([, item]) => item && item.selected)
             .map(([key, item]) => ({
@@ -124,13 +167,25 @@
         volumeEmpty.hidden = true;
         volumeTable.hidden = false;
 
+        const statsByKey = await computeVolumeStats(tracked, selectedRange);
+        const rangeDays = getRangeDays(selectedRange);
+        const targetScale = rangeDays / 7;
+
         tracked.forEach((entry) => {
+            const normalizedKey = normalizeKey(entry.key);
+            const stats = statsByKey.get(normalizedKey) || { sessions: 0, sets: 0 };
+            const scaledTargetSessions = entry.targetSessions > 0
+                ? Math.round(entry.targetSessions * targetScale)
+                : 0;
+            const scaledTargetSets = entry.targetSets > 0
+                ? Math.round(entry.targetSets * targetScale)
+                : 0;
             const row = document.createElement('tr');
             const muscleCell = document.createElement('td');
             muscleCell.textContent = formatLabel(entry.key);
             row.appendChild(muscleCell);
-            row.appendChild(createGaugeCell(0, entry.targetSessions, 'séances/sem'));
-            row.appendChild(createGaugeCell(0, entry.targetSets, 'séries/sem'));
+            row.appendChild(createGaugeCell(stats.sessions, scaledTargetSessions, 'séances'));
+            row.appendChild(createGaugeCell(stats.sets, scaledTargetSets, 'séries'));
             volumeTableBody.appendChild(row);
         });
     }
@@ -243,7 +298,7 @@
 
         saveSettings(nextSettings);
         dlgVolumeEdit.close();
-        renderVolumeTable();
+        void renderVolumeTable();
     }
 
     function toNumber(value, fallback = 0) {
@@ -259,5 +314,125 @@
             return '';
         }
         return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+
+    function getRangeLabel(value) {
+        const label = value ? String(value) : '';
+        if (RANGE_BY_LABEL.has(label)) {
+            return label;
+        }
+        return DEFAULT_RANGE_LABEL;
+    }
+
+    function getRangeDays(rangeLabel) {
+        const today = A.today();
+        const config = RANGE_BY_LABEL.get(getRangeLabel(rangeLabel)) || RANGE_BY_LABEL.get(DEFAULT_RANGE_LABEL);
+        if (!config) {
+            return 7;
+        }
+        if (config.type === 'week') {
+            const start = A.startOfWeek(today);
+            return Math.max(1, daysBetween(start, today));
+        }
+        return config.days || 7;
+    }
+
+    function daysBetween(start, end) {
+        const msPerDay = 24 * 60 * 60 * 1000;
+        const diff = Math.floor((end.getTime() - start.getTime()) / msPerDay);
+        return diff + 1;
+    }
+
+    function normalizeKey(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function parseDateKey(dateKey) {
+        if (!dateKey) {
+            return null;
+        }
+        const parsed = new Date(`${dateKey}T00:00:00`);
+        if (Number.isNaN(parsed.getTime())) {
+            return null;
+        }
+        return parsed;
+    }
+
+    function getExerciseMuscleKeys(exercise) {
+        if (!exercise) {
+            return [];
+        }
+        const keys = [
+            exercise.muscle,
+            exercise.muscleGroup1,
+            exercise.muscleGroup2,
+            exercise.muscleGroup3
+        ]
+            .filter(Boolean)
+            .map(normalizeKey);
+        return Array.from(new Set(keys));
+    }
+
+    async function computeVolumeStats(tracked, rangeLabel) {
+        const trackedKeys = tracked.map((entry) => normalizeKey(entry.key));
+        const statsByKey = new Map(trackedKeys.map((key) => [key, { sessions: 0, sets: 0 }]));
+        if (!statsByKey.size) {
+            return statsByKey;
+        }
+
+        const config = RANGE_BY_LABEL.get(getRangeLabel(rangeLabel)) || RANGE_BY_LABEL.get(DEFAULT_RANGE_LABEL);
+        const today = A.today();
+        const start = config?.type === 'week'
+            ? A.startOfWeek(today)
+            : A.addDays(today, -((config?.days || 7) - 1));
+        const end = today;
+
+        const [sessions, exercises] = await Promise.all([
+            db.getAll('sessions'),
+            db.getAll('exercises')
+        ]);
+        const exerciseById = new Map(exercises.map((exercise) => [exercise.id, exercise]));
+
+        sessions.forEach((session) => {
+            const sessionDate = parseDateKey(session?.date);
+            if (!sessionDate || sessionDate < start || sessionDate > end) {
+                return;
+            }
+
+            const sessionMuscles = new Set();
+            const sessionExercises = Array.isArray(session.exercises) ? session.exercises : [];
+            sessionExercises.forEach((sessionExercise) => {
+                const exercise = exerciseById.get(sessionExercise.exerciseId);
+                if (!exercise) {
+                    return;
+                }
+                const muscles = getExerciseMuscleKeys(exercise);
+                if (!muscles.length) {
+                    return;
+                }
+                const sets = Array.isArray(sessionExercise.sets) ? sessionExercise.sets : [];
+                const doneSets = sets.reduce((total, set) => total + (set?.done === true ? 1 : 0), 0);
+                if (doneSets === 0) {
+                    return;
+                }
+                muscles.forEach((muscleKey) => {
+                    const stats = statsByKey.get(muscleKey);
+                    if (!stats) {
+                        return;
+                    }
+                    stats.sets += doneSets;
+                    sessionMuscles.add(muscleKey);
+                });
+            });
+
+            sessionMuscles.forEach((muscleKey) => {
+                const stats = statsByKey.get(muscleKey);
+                if (stats) {
+                    stats.sessions += 1;
+                }
+            });
+        });
+
+        return statsByKey;
     }
 })();
