@@ -1225,6 +1225,10 @@ input[type="number"]{ -moz-appearance:textfield; }
     background: transparent;
 }
 
+.volume-range {
+    margin-bottom: 12px;
+}
+
 .volume-table {
     width: 100%;
     border-collapse: collapse;
