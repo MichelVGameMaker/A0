@@ -70,6 +70,7 @@
         refs.btnSettingsUpdate = document.getElementById('btnSettingsUpdate');
         refs.btnPreferencesBack = document.getElementById('btnPreferencesBack');
         refs.btnDataBack = document.getElementById('btnDataBack');
+        refs.btnDataReloadExercises = document.getElementById('btnDataReloadExercises');
         refsResolved = true;
         return refs;
     }
@@ -83,7 +84,8 @@
             btnSettingsData,
             btnSettingsUpdate,
             btnPreferencesBack,
-            btnDataBack
+            btnDataBack,
+            btnDataReloadExercises
         } = ensureRefs();
 
         btnSettingsExercises?.addEventListener('click', () => {
@@ -113,6 +115,9 @@
         });
         btnDataBack?.addEventListener('click', () => {
             A.openSettings();
+        });
+        btnDataReloadExercises?.addEventListener('click', () => {
+            void reloadExerciseLibrary(btnDataReloadExercises);
         });
     }
 
@@ -167,6 +172,29 @@
         if (navigator.serviceWorker?.getRegistrations) {
             const registrations = await navigator.serviceWorker.getRegistrations();
             await Promise.all(registrations.map((registration) => registration.unregister()));
+        }
+    }
+
+    async function reloadExerciseLibrary(button) {
+        if (!db?.importExternalExercisesIfNeeded) {
+            alert('Le chargement des exercices est indisponible.');
+            return;
+        }
+
+        if (button) {
+            button.disabled = true;
+        }
+
+        try {
+            await db.importExternalExercisesIfNeeded({ force: true });
+            alert('Bibliothèque d’exercices rechargée.');
+        } catch (error) {
+            console.warn('Recharge des exercices échouée :', error);
+            alert('Le chargement des exercices a échoué.');
+        } finally {
+            if (button) {
+                button.disabled = false;
+            }
         }
     }
 
