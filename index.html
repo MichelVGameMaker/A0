@@ -422,6 +422,29 @@
 
 <!-- ==================== Modales ==================== -->
 
+<!-- ========== Volume : modale édition ========== -->
+<dialog id="dlgVolumeEdit" class="modal">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title">Éditer</div>
+            <div class="row">
+                <button class="btn ghost" value="cancel">Annuler</button>
+                <button id="volumeEditSave" class="btn primary" type="button">Enregistrer</button>
+            </div>
+        </div>
+
+        <div class="bloque">
+            <div class="volume-edit-header">
+                <div>Muscle</div>
+                <div>Séances/sem</div>
+                <div>Séries/sem</div>
+            </div>
+            <div id="volumeEditList" class="volume-edit-list"></div>
+        </div>
+    </form>
+</dialog>
+<!-- ==================== -->
+
 <!-- ========== Routine : modale méta ========== -->
 <dialog id="dlgRoutineEditor" class="modal">
     <form method="dialog" class="modal-form">
@@ -633,11 +656,48 @@
                 <button id="btnSettingsPreferences" class="btn full">⚙️ Préférences</button>
             </div>
             <div class="row">
+                <button id="btnSettingsVolume" class="btn full">🔊 Volume</button>
+            </div>
+            <div class="row">
                 <button id="btnSettingsData" class="btn full">💾 Données</button>
             </div>
             <div class="row">
                 <button id="btnSettingsUpdate" class="btn full danger">🧹 Update</button>
             </div>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Volume ========== -->
+<section id="screenVolume" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnVolumeBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Volume</div>
+        </div>
+        <div class="header-right">
+            <button id="btnVolumeEdit" class="btn">Éditer</button>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <div id="volumeEmpty" class="volume-empty" hidden>Aucun muscle suivi pour le moment.</div>
+            <table id="volumeTable" class="volume-table">
+                <thead>
+                    <tr>
+                        <th>Muscles suivis</th>
+                        <th>Séances/sem</th>
+                        <th>Séries/sem</th>
+                    </tr>
+                </thead>
+                <tbody id="volumeTableBody"></tbody>
+            </table>
         </div>
     </main>
 
@@ -710,6 +770,7 @@
 <script src="ui-routine-edit.js"></script>
 <script src="ui-routine-execution-edit.js"></script>
 <script src="ui-settings.js"></script>
+<script src="ui-volume.js"></script>
 <script src="ui-stats.js"></script>
 <script src="ui-session-execution-edit.js"></script>
 <script src="init.js"></script>
