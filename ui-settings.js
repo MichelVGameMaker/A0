@@ -57,6 +57,7 @@
         refs.btnSettingsRoutines = document.getElementById('btnSettingsRoutines');
         refs.btnSettingsPreferences = document.getElementById('btnSettingsPreferences');
         refs.btnSettingsData = document.getElementById('btnSettingsData');
+        refs.btnSettingsUpdate = document.getElementById('btnSettingsUpdate');
         refs.btnPreferencesBack = document.getElementById('btnPreferencesBack');
         refs.btnDataBack = document.getElementById('btnDataBack');
         refsResolved = true;
@@ -69,6 +70,7 @@
             btnSettingsRoutines,
             btnSettingsPreferences,
             btnSettingsData,
+            btnSettingsUpdate,
             btnPreferencesBack,
             btnDataBack
         } = ensureRefs();
@@ -89,6 +91,9 @@
         btnSettingsData?.addEventListener('click', () => {
             A.openData();
         });
+        btnSettingsUpdate?.addEventListener('click', () => {
+            void handleUpdateReset();
+        });
         btnPreferencesBack?.addEventListener('click', () => {
             A.openSettings();
         });
@@ -107,6 +112,47 @@
     function hideTimerForSettings() {
         if (typeof A.setTimerVisibility === 'function') {
             A.setTimerVisibility({ forcedHidden: true, reason: 'settings' });
+        }
+    }
+
+    async function handleUpdateReset() {
+        const { btnSettingsUpdate } = ensureRefs();
+        const confirmed = window.confirm(
+            'Update : cette action supprime les données locales, le cache et le storage. Continuer ?'
+        );
+        if (!confirmed) {
+            return;
+        }
+
+        if (btnSettingsUpdate) {
+            btnSettingsUpdate.disabled = true;
+        }
+
+        try {
+            await resetAppStorage();
+        } catch (error) {
+            console.warn('Reset Update échoué :', error);
+        } finally {
+            window.location.reload();
+        }
+    }
+
+    async function resetAppStorage() {
+        localStorage.clear();
+        sessionStorage.clear();
+
+        if (typeof db !== 'undefined' && typeof db.reset === 'function') {
+            await db.reset();
+        }
+
+        if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((key) => caches.delete(key)));
+        }
+
+        if (navigator.serviceWorker?.getRegistrations) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map((registration) => registration.unregister()));
         }
     }
 

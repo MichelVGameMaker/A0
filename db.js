@@ -187,6 +187,30 @@ const db = (() => {
         }
     }
 
+    async function reset() {
+        if (handle) {
+            handle.close();
+            handle = null;
+        }
+
+        if (memoryMode) {
+            Object.values(memoryStores).forEach((store) => store.clear());
+        }
+
+        memoryMode = false;
+
+        if (!('indexedDB' in window)) {
+            return true;
+        }
+
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.deleteDatabase(DB_NAME);
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => reject(request.error);
+            request.onblocked = () => resolve(false);
+        });
+    }
+
     /* UTILS */
     function transaction(store, mode = 'readonly') {
         if (!handle) {
@@ -339,6 +363,7 @@ const db = (() => {
         saveSession,
         listSessionDates,
         getActivePlan,
-        importExternalExercisesIfNeeded
+        importExternalExercisesIfNeeded,
+        reset
     };
 })();
