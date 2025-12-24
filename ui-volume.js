@@ -168,24 +168,23 @@
         volumeTable.hidden = false;
 
         const statsByKey = await computeVolumeStats(tracked, selectedRange);
-        const rangeDays = getRangeDays(selectedRange);
-        const targetScale = rangeDays / 7;
+        const rangeConfig = RANGE_BY_LABEL.get(selectedRange) || RANGE_BY_LABEL.get(DEFAULT_RANGE_LABEL);
+        const shouldScaleToWeek = rangeConfig?.type !== 'week';
+        const weeklyScale = shouldScaleToWeek ? 7 / (rangeConfig?.days || 7) : 1;
 
         tracked.forEach((entry) => {
             const normalizedKey = normalizeKey(entry.key);
             const stats = statsByKey.get(normalizedKey) || { sessions: 0, sets: 0 };
-            const scaledTargetSessions = entry.targetSessions > 0
-                ? Math.round(entry.targetSessions * targetScale)
-                : 0;
-            const scaledTargetSets = entry.targetSets > 0
-                ? Math.round(entry.targetSets * targetScale)
-                : 0;
+            const scaledSessions = shouldScaleToWeek ? Math.round(stats.sessions * weeklyScale) : stats.sessions;
+            const scaledSets = shouldScaleToWeek ? Math.round(stats.sets * weeklyScale) : stats.sets;
+            const scaledTargetSessions = entry.targetSessions > 0 ? entry.targetSessions : 0;
+            const scaledTargetSets = entry.targetSets > 0 ? entry.targetSets : 0;
             const row = document.createElement('tr');
             const muscleCell = document.createElement('td');
             muscleCell.textContent = formatLabel(entry.key);
             row.appendChild(muscleCell);
-            row.appendChild(createGaugeCell(stats.sessions, scaledTargetSessions, 'séances'));
-            row.appendChild(createGaugeCell(stats.sets, scaledTargetSets, 'séries'));
+            row.appendChild(createGaugeCell(scaledSessions, scaledTargetSessions, 'séances'));
+            row.appendChild(createGaugeCell(scaledSets, scaledTargetSets, 'séries'));
             volumeTableBody.appendChild(row);
         });
     }
@@ -275,7 +274,8 @@
         }
 
         const rows = Array.from(volumeEditList.querySelectorAll('.volume-edit-row'));
-        const nextSettings = { items: {} };
+        const settings = loadSettings();
+        const nextSettings = { items: {}, range: settings.range };
         rows.forEach((row) => {
             const key = row.dataset.key;
             const checkbox = row.querySelector('.volume-edit-check');
