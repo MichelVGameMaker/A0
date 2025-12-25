@@ -505,6 +505,14 @@ const db = (() => {
             distance_unit: typeof exercise.distance_unit === 'string' && exercise.distance_unit.length ? exercise.distance_unit : 'metric'
         };
 
+        normalized.sets = normalizeSessionExerciseSets(normalized.sets, {
+            sessionId,
+            exerciseId,
+            exerciseName,
+            date,
+            category: normalized.category
+        });
+
         delete normalized.exerciseId;
         delete normalized.exerciseName;
         delete normalized.routineInstructions;
@@ -514,12 +522,50 @@ const db = (() => {
         return normalized;
     }
 
+    function normalizeSessionExerciseSets(sets, context = {}) {
+        const list = Array.isArray(sets) ? sets : [];
+        const sessionId = context.sessionId || '';
+        const exerciseId = context.exerciseId || '';
+        const exerciseName = context.exerciseName || exerciseId || 'exercice';
+        const dateFallback = context.date || null;
+        return list.map((set, index) => {
+            const pos = safeInt(set?.pos ?? set?.position, index + 1);
+            const id = buildSessionSetId(sessionId, exerciseName, pos);
+            const date = normalizeSetDate(
+                set?.date || set?.updatedAt || set?.updated_at || set?.createdAt || set?.created_at,
+                dateFallback
+            );
+            const time = normalizeSetMetric(set?.time ?? set?.duration ?? set?.seconds);
+            const distance = normalizeSetMetric(set?.distance ?? set?.meters ?? set?.kilometers);
+            return {
+                ...set,
+                id,
+                pos,
+                date,
+                type: exerciseId || set?.type || null,
+                time,
+                distance,
+                setType: null
+            };
+        });
+    }
+
     function buildSessionExerciseId(sessionId, rawName) {
         const base = slugifyExerciseName(rawName || 'exercice');
         if (!sessionId) {
             return base;
         }
         return `${sessionId}_${base}`;
+    }
+
+    function buildSessionSetId(sessionId, rawName, position) {
+        const base = slugifyExerciseName(rawName || 'exercice');
+        const pos = String(safeInt(position, 1)).padStart(3, '0');
+        const datePrefix = normalizeSessionId(sessionId);
+        if (!datePrefix) {
+            return `${base}_${pos}`;
+        }
+        return `${datePrefix}_${base}_${pos}`;
     }
 
     function slugifyExerciseName(value) {
@@ -533,6 +579,26 @@ const db = (() => {
     function safeInt(value, fallback = 0) {
         const numeric = Number.parseInt(value, 10);
         return Number.isFinite(numeric) ? numeric : fallback;
+    }
+
+    function normalizeSetDate(value, fallback) {
+        const raw = value ?? fallback;
+        if (!raw) {
+            return new Date().toISOString();
+        }
+        const parsed = new Date(raw);
+        if (Number.isNaN(parsed.getTime())) {
+            return new Date().toISOString();
+        }
+        return parsed.toISOString();
+    }
+
+    function normalizeSetMetric(value) {
+        if (value == null || value === '') {
+            return null;
+        }
+        const numeric = Number.parseFloat(value);
+        return Number.isFinite(numeric) ? numeric : null;
     }
 
     return {
