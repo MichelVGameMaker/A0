@@ -223,7 +223,8 @@
 
         const usageMap = new Map();
         sessions.forEach((session) => {
-            const { date, exercises: executed } = session || {};
+            const { exercises: executed } = session || {};
+            const date = resolveSessionDate(session);
             if (!date || !Array.isArray(executed)) {
                 return;
             }
@@ -958,12 +959,28 @@
     }
 
     function parseDate(key) {
-        const iso = `${key}T00:00:00`;
+        const iso = key.includes('T') ? key : `${key}T00:00:00`;
         const parsed = new Date(iso);
         if (Number.isNaN(parsed.getTime())) {
             return new Date();
         }
         return parsed;
+    }
+
+    function resolveSessionDate(session) {
+        if (!session) {
+            return null;
+        }
+        if (typeof session.date === 'string' && session.date.includes('T')) {
+            return session.date;
+        }
+        if (typeof A.sessionDateKeyFromId === 'function' && typeof session.id === 'string') {
+            return A.sessionDateKeyFromId(session.id);
+        }
+        if (typeof session.date === 'string') {
+            return session.date;
+        }
+        return null;
     }
 
     function getWeekKey(dateObj) {

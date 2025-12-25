@@ -2,7 +2,7 @@
 const db = (() => {
     /* STATE */
     const DB_NAME = 'A0-db';
-    const DB_VER = 1;
+    const DB_VER = 2;
     let handle;
     let memoryMode = false;
     const memoryStores = {
@@ -115,11 +115,15 @@ const db = (() => {
 
     /**
      * Récupère une séance via sa date.
-     * @param {string} dateKey Clé de date (YYYY-MM-DD).
+     * @param {string} dateKey Clé de date (YYYY-MM-DD) ou identifiant YYYYMMDD.
      * @returns {Promise<unknown>} Séance ou `null`.
      */
     async function getSession(dateKey) {
-        return get('sessions', dateKey);
+        const sessionId = normalizeSessionId(dateKey);
+        if (!sessionId) {
+            return null;
+        }
+        return get('sessions', sessionId);
     }
 
     /**
@@ -128,7 +132,8 @@ const db = (() => {
      * @returns {Promise<boolean>} Confirmation d'écriture.
      */
     async function saveSession(session) {
-        return put('sessions', session);
+        const hydrated = ensureSession(session);
+        return put('sessions', hydrated);
     }
 
     /**
@@ -137,7 +142,9 @@ const db = (() => {
      */
     async function listSessionDates() {
         const all = await getAll('sessions');
-        return all.map((session) => ({ date: session.date }));
+        return all
+            .map((session) => ({ date: normalizeDateKey(session?.id || session?.date) }))
+            .filter((entry) => entry.date);
     }
 
     /**
@@ -239,7 +246,23 @@ const db = (() => {
                     database.createObjectStore('plans', { keyPath: 'id' });
                 }
                 if (!database.objectStoreNames.contains('sessions')) {
-                    database.createObjectStore('sessions', { keyPath: 'date' });
+                    database.createObjectStore('sessions', { keyPath: 'id' });
+                } else {
+                    const store = event.target.transaction.objectStore('sessions');
+                    if (store.keyPath !== 'id') {
+                        const existingRequest = store.getAll();
+                        existingRequest.onsuccess = () => {
+                            const legacySessions = existingRequest.result || [];
+                            database.deleteObjectStore('sessions');
+                            const newStore = database.createObjectStore('sessions', { keyPath: 'id' });
+                            legacySessions.forEach((legacy) => {
+                                const migrated = ensureSession(legacy);
+                                if (migrated?.id) {
+                                    newStore.put(migrated);
+                                }
+                            });
+                        };
+                    }
                 }
             };
             request.onsuccess = () => resolve(request.result);
@@ -326,7 +349,7 @@ const db = (() => {
         const map = memoryStore(store);
         const key =
             store === 'sessions'
-                ? value?.date
+                ? value?.id
                 : store === 'plans' || store === 'routines' || store === 'exercises'
                     ? value?.id
                     : null;
@@ -351,6 +374,75 @@ const db = (() => {
     function memoryDelete(store, key) {
         const map = memoryStore(store);
         return Promise.resolve(map.delete(key));
+    }
+
+    function normalizeSessionId(value) {
+        if (!value) {
+            return null;
+        }
+        const raw = String(value);
+        if (/^\d{8}$/.test(raw)) {
+            return raw;
+        }
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+            return raw.replace(/-/g, '');
+        }
+        const parsed = new Date(raw);
+        if (Number.isNaN(parsed.getTime())) {
+            return null;
+        }
+        return parsed.toISOString().slice(0, 10).replace(/-/g, '');
+    }
+
+    function normalizeDateKey(value) {
+        if (!value) {
+            return null;
+        }
+        const raw = String(value);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+            return raw;
+        }
+        if (/^\d{8}$/.test(raw)) {
+            return `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`;
+        }
+        const parsed = new Date(raw);
+        if (Number.isNaN(parsed.getTime())) {
+            return null;
+        }
+        return parsed.toISOString().slice(0, 10);
+    }
+
+    function isoFromDateKey(dateKey) {
+        if (!dateKey) {
+            return null;
+        }
+        const parsed = new Date(`${dateKey}T00:00:00`);
+        if (Number.isNaN(parsed.getTime())) {
+            return null;
+        }
+        return parsed.toISOString();
+    }
+
+    function ensureSession(session) {
+        if (!session || typeof session !== 'object') {
+            return session;
+        }
+        const dateKey = normalizeDateKey(session.date || session.id);
+        const sessionId = normalizeSessionId(session.id || session.date);
+        if (sessionId) {
+            session.id = sessionId;
+        }
+        if (!session.date || /^\d{4}-\d{2}-\d{2}$/.test(session.date)) {
+            const normalizedDateKey = normalizeDateKey(session.date) || dateKey;
+            const iso = isoFromDateKey(normalizedDateKey);
+            if (iso) {
+                session.date = iso;
+            }
+        }
+        if (session.comments == null) {
+            session.comments = '';
+        }
+        return session;
     }
 
     return {

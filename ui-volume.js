@@ -351,11 +351,25 @@
         if (!dateKey) {
             return null;
         }
-        const parsed = new Date(`${dateKey}T00:00:00`);
+        const iso = dateKey.includes('T') ? dateKey : `${dateKey}T00:00:00`;
+        const parsed = new Date(iso);
         if (Number.isNaN(parsed.getTime())) {
             return null;
         }
         return parsed;
+    }
+
+    function resolveSessionDateKey(session) {
+        if (!session) {
+            return null;
+        }
+        if (typeof A.sessionDateKeyFromId === 'function' && typeof session.id === 'string') {
+            return A.sessionDateKeyFromId(session.id);
+        }
+        if (typeof session.date === 'string') {
+            return session.date;
+        }
+        return null;
     }
 
     function getExerciseMuscleKeys(exercise) {
@@ -394,7 +408,8 @@
         const exerciseById = new Map(exercises.map((exercise) => [exercise.id, exercise]));
 
         sessions.forEach((session) => {
-            const sessionDate = parseDateKey(session?.date);
+            const sessionDateKey = resolveSessionDateKey(session);
+            const sessionDate = parseDateKey(sessionDateKey);
             if (!sessionDate || sessionDate < start || sessionDate > end) {
                 return;
             }

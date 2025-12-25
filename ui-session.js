@@ -204,8 +204,8 @@
         if (!Array.isArray(order) || !order.length) {
             return;
         }
-        const key = A.ymd(A.activeDate);
-        const session = await db.getSession(key);
+        const dateKey = A.ymd(A.activeDate);
+        const session = await db.getSession(dateKey);
         if (!session?.exercises?.length) {
             return;
         }
@@ -239,8 +239,8 @@
             return;
         }
 
-        const key = A.ymd(A.activeDate);
-        const session = (await db.getSession(key)) || { date: key, exercises: [] };
+        const dateKey = A.ymd(A.activeDate);
+        const session = (await db.getSession(dateKey)) || createSession(A.activeDate);
         const existing = new Set((session.exercises || []).map((exercise) => exercise.exerciseId));
 
         for (const id of ids) {
@@ -278,8 +278,8 @@
             return;
         }
 
-        const key = A.ymd(A.activeDate);
-        const session = (await db.getSession(key)) || { date: key, exercises: [] };
+        const dateKey = A.ymd(A.activeDate);
+        const session = (await db.getSession(dateKey)) || createSession(A.activeDate);
         const existingIds = new Set((session.exercises || []).map((exercise) => exercise.exerciseId));
 
         for (const routineId of uniqueIds) {
@@ -316,6 +316,14 @@
     };
 
     /* UTILS */
+    function createSession(date) {
+        return {
+            id: A.sessionId(date),
+            date: A.sessionISO(date),
+            comments: '',
+            exercises: []
+        };
+    }
     const dragCtx = {
         active: false,
         card: null,
