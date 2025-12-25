@@ -71,6 +71,8 @@
         refs.btnPreferencesBack = document.getElementById('btnPreferencesBack');
         refs.btnDataBack = document.getElementById('btnDataBack');
         refs.btnDataReloadExercises = document.getElementById('btnDataReloadExercises');
+        refs.btnDataImportFitHero = document.getElementById('btnDataImportFitHero');
+        refs.inputDataImportFitHero = document.getElementById('inputDataImportFitHero');
         refsResolved = true;
         return refs;
     }
@@ -85,7 +87,9 @@
             btnSettingsUpdate,
             btnPreferencesBack,
             btnDataBack,
-            btnDataReloadExercises
+            btnDataReloadExercises,
+            btnDataImportFitHero,
+            inputDataImportFitHero
         } = ensureRefs();
 
         btnSettingsExercises?.addEventListener('click', () => {
@@ -118,6 +122,15 @@
         });
         btnDataReloadExercises?.addEventListener('click', () => {
             void reloadExerciseLibrary(btnDataReloadExercises);
+        });
+        btnDataImportFitHero?.addEventListener('click', () => {
+            inputDataImportFitHero?.click();
+        });
+        inputDataImportFitHero?.addEventListener('change', () => {
+            void importFitHeroSessions({
+                input: inputDataImportFitHero,
+                button: btnDataImportFitHero
+            });
         });
     }
 
@@ -196,6 +209,185 @@
                 button.disabled = false;
             }
         }
+    }
+
+    async function importFitHeroSessions({ input, button } = {}) {
+        const file = input?.files?.[0];
+        if (!file) {
+            return;
+        }
+
+        if (input) {
+            input.value = '';
+        }
+
+        if (!db?.getAll || !db?.del || !db?.saveSession) {
+            alert('Le chargement des séances est indisponible.');
+            return;
+        }
+
+        if (button) {
+            button.disabled = true;
+        }
+
+        try {
+            const payload = await readJsonFile(file);
+            const workouts = payload?.workouts;
+            if (!Array.isArray(workouts)) {
+                throw new Error('Format FitHero invalide : workouts manquant.');
+            }
+
+            await clearAllSessions();
+
+            let imported = 0;
+            for (const workout of workouts) {
+                const session = toFitHeroSession(workout);
+                if (!session) {
+                    continue;
+                }
+                await db.saveSession(session);
+                imported += 1;
+            }
+
+            const label = imported > 1 ? 'séances' : 'séance';
+            alert(`${imported} ${label} FitHero chargée${imported > 1 ? 's' : ''}.`);
+
+            if (typeof A.renderWeek === 'function') {
+                await A.renderWeek();
+            }
+            if (typeof A.renderSession === 'function') {
+                await A.renderSession();
+            }
+        } catch (error) {
+            console.warn('Import FitHero échoué :', error);
+            alert('Le chargement des séances FitHero a échoué.');
+        } finally {
+            if (button) {
+                button.disabled = false;
+            }
+        }
+    }
+
+    async function readJsonFile(file) {
+        const text = await file.text();
+        try {
+            return JSON.parse(text);
+        } catch (error) {
+            throw new Error('JSON invalide.');
+        }
+    }
+
+    async function clearAllSessions() {
+        const sessions = await db.getAll('sessions');
+        if (!Array.isArray(sessions) || !sessions.length) {
+            return;
+        }
+        await Promise.all(
+            sessions.map((session) => (session?.id ? db.del('sessions', session.id) : Promise.resolve(false)))
+        );
+    }
+
+    function toFitHeroSession(workout) {
+        if (!workout || typeof workout !== 'object') {
+            return null;
+        }
+
+        const rawId = typeof workout.id === 'string' ? workout.id.trim() : '';
+        const rawDate = typeof workout.date === 'string' ? workout.date : '';
+        const parsedDate = rawDate ? new Date(rawDate) : null;
+        const isoDate = parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : null;
+        const dateKey = !isoDate && rawId && typeof A.sessionDateKeyFromId === 'function'
+            ? A.sessionDateKeyFromId(rawId)
+            : null;
+        const derivedIso = dateKey ? new Date(`${dateKey}T00:00:00`).toISOString() : null;
+        const sessionDate = isoDate || derivedIso;
+        const sessionId = rawId || (sessionDate ? A.sessionId(new Date(sessionDate)) : '');
+
+        if (!sessionId || !sessionDate) {
+            return null;
+        }
+
+        const exercises = Array.isArray(workout.exercises)
+            ? workout.exercises
+                .map((exercise, index) => toFitHeroExercise(exercise, {
+                    sessionId,
+                    sessionDate,
+                    position: index + 1
+                }))
+                .filter(Boolean)
+            : [];
+
+        return {
+            id: sessionId,
+            date: sessionDate,
+            comments: typeof workout.comments === 'string' ? workout.comments : '',
+            exercises
+        };
+    }
+
+    function toFitHeroExercise(exercise, context) {
+        if (!exercise || typeof exercise !== 'object') {
+            return null;
+        }
+
+        const sessionId = context?.sessionId || '';
+        const sessionDate = context?.sessionDate || null;
+        const type = typeof exercise.type === 'string' ? exercise.type.trim() : '';
+        const fallbackId = typeof exercise.id === 'string' ? exercise.id.trim() : '';
+        const exerciseId = type || fallbackId;
+        const name = exerciseId || 'Exercice';
+        const exerciseDate = typeof exercise.date === 'string' ? exercise.date : sessionDate;
+        const sortValue = Number.isFinite(Number(exercise.sort))
+            ? Number(exercise.sort)
+            : context?.position || 1;
+
+        const sets = Array.isArray(exercise.sets)
+            ? exercise.sets.map((set, index) => toFitHeroSet(set, {
+                type: exerciseId,
+                position: index + 1,
+                date: exerciseDate
+            })).filter(Boolean)
+            : [];
+
+        return {
+            id: typeof exercise.id === 'string' && exercise.id.length
+                ? exercise.id
+                : `${sessionId}_${name}`,
+            exercise_id: exerciseId,
+            exercise_name: name,
+            date: exerciseDate,
+            type: exerciseId,
+            sets,
+            sort: sortValue,
+            category: typeof exercise.category === 'string' ? exercise.category : 'weight_reps',
+            weight_unit: typeof exercise.weight_unit === 'string' ? exercise.weight_unit : 'metric',
+            distance_unit: typeof exercise.distance_unit === 'string' ? exercise.distance_unit : 'metric',
+            comments: typeof exercise.comments === 'string' ? exercise.comments : null,
+            exercise_note: typeof exercise.comments === 'string' ? exercise.comments : ''
+        };
+    }
+
+    function toFitHeroSet(set, context) {
+        if (!set || typeof set !== 'object') {
+            return null;
+        }
+
+        const rawDate = typeof set.date === 'string' ? set.date : context?.date;
+        const parsed = rawDate ? new Date(rawDate) : null;
+        const date = parsed && !Number.isNaN(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
+        const pos = context?.position || 1;
+        return {
+            id: typeof set.id === 'string' ? set.id : '',
+            pos,
+            date,
+            type: context?.type || null,
+            reps: set.reps ?? null,
+            weight: set.weight ?? null,
+            time: set.time ?? null,
+            distance: set.distance ?? null,
+            setType: set.setType ?? null,
+            rpe: set.rpe ?? null
+        };
     }
 
     function switchScreen(target) {
