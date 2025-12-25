@@ -344,6 +344,7 @@
             sort,
             sets
         } = options;
+        const normalizedSets = normalizeSessionSets(sets, { sessionId, exerciseName, exerciseId, date });
         return {
             id: buildSessionExerciseId(sessionId, exerciseName || exerciseId),
             sort,
@@ -356,7 +357,7 @@
             category: 'weight_reps',
             weight_unit: 'metric',
             distance_unit: 'metric',
-            sets: Array.isArray(sets) ? sets : []
+            sets: normalizedSets
         };
     }
 
@@ -368,12 +369,40 @@
         return `${sessionId}_${base}`;
     }
 
+    function buildSessionSetId(sessionId, rawName, position) {
+        const base = slugifyExerciseName(rawName || 'exercice');
+        const pos = String(position || 1).padStart(3, '0');
+        if (!sessionId) {
+            return `${base}_${pos}`;
+        }
+        return `${sessionId}_${base}_${pos}`;
+    }
+
     function slugifyExerciseName(value) {
         return String(value || '')
             .trim()
             .replace(/['’\s]+/g, '-')
             .replace(/-+/g, '-')
             .replace(/^-|-$/g, '') || 'exercice';
+    }
+
+    function normalizeSessionSets(sets, context = {}) {
+        const list = Array.isArray(sets) ? sets : [];
+        const now = new Date().toISOString();
+        return list.map((set, index) => {
+            const pos = set?.pos ?? index + 1;
+            const date = typeof set?.date === 'string' && set.date ? set.date : now;
+            return {
+                ...set,
+                id: buildSessionSetId(context.sessionId, context.exerciseName || context.exerciseId, pos),
+                pos,
+                date,
+                type: context.exerciseId,
+                time: set?.time ?? null,
+                distance: set?.distance ?? null,
+                setType: null
+            };
+        });
     }
     const dragCtx = {
         active: false,

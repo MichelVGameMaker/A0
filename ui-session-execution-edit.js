@@ -264,12 +264,16 @@
         const defaultRest = getDefaultRest();
         const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
         const normalized = sets.map((set, index) => ({
+            ...set,
             pos: safeInt(set.pos, index + 1),
             reps: safePositiveInt(set.reps),
             weight: sanitizeWeight(set.weight),
             rpe: set.rpe != null && set.rpe !== '' ? clampRpe(set.rpe) : null,
             rest: Math.max(0, safeInt(set.rest, defaultRest)),
-            done: set.done === true
+            done: set.done === true,
+            time: set.time ?? null,
+            distance: set.distance ?? null,
+            setType: set.setType ?? null
         }));
         normalized.sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0));
         normalized.forEach((set, index) => {
@@ -493,6 +497,7 @@
         const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
         const previous = sets.length ? sets[sets.length - 1] : null;
         const defaultRest = getDefaultRest();
+        const now = new Date().toISOString();
         const newSet = previous
             ? {
                   pos: sets.length + 1,
@@ -500,7 +505,11 @@
                   weight: sanitizeWeight(previous.weight),
                   rpe: previous.rpe != null && previous.rpe !== '' ? clampRpe(previous.rpe) : null,
                   rest: Math.max(0, safeInt(previous.rest, defaultRest)),
-                  done: false
+                  done: false,
+                  date: now,
+                  time: previous.time ?? null,
+                  distance: previous.distance ?? null,
+                  setType: null
               }
             : {
                   pos: sets.length + 1,
@@ -508,9 +517,14 @@
                   weight: null,
                   rpe: null,
                   rest: defaultRest,
-                  done: false
+                  done: false,
+                  date: now,
+                  time: null,
+                  distance: null,
+                  setType: null
               };
         sets.push(newSet);
+        hydrateSetIdentifiers(exercise, sets);
         exercise.sets = sets;
         await persistSession();
     }
@@ -525,9 +539,7 @@
             return;
         }
         sets.splice(index, 1);
-        sets.forEach((item, idx) => {
-            item.pos = idx + 1;
-        });
+        refreshSetOrderMetadata(exercise, sets);
         exercise.sets = sets;
         await persistSession();
     }
@@ -557,9 +569,7 @@
         }
         const [item] = sets.splice(index, 1);
         sets.splice(target, 0, item);
-        sets.forEach((set, idx) => {
-            set.pos = idx + 1;
-        });
+        refreshSetOrderMetadata(exercise, sets);
         exercise.sets = sets;
         const { execSets } = assertRefs();
         if (row && execSets?.contains(row)) {
@@ -595,8 +605,11 @@
             weight: sanitizeWeight(values.weight),
             rpe: values.rpe != null && values.rpe !== '' ? clampRpe(values.rpe) : null,
             rest: Math.max(0, safeInt(values.rest, getDefaultRest())),
-            done: nextDone
+            done: nextDone,
+            date: new Date().toISOString(),
+            setType: null
         };
+        hydrateSetIdentifiers(exercise, sets);
         exercise.sets = sets;
         await persistSession(shouldRender);
     }
@@ -639,6 +652,47 @@
             return null;
         }
         return state.session.exercises.find((item) => item.exercise_id === state.exerciseId) || null;
+    }
+
+    function refreshSetOrderMetadata(exercise, sets) {
+        const now = new Date().toISOString();
+        sets.forEach((set, idx) => {
+            set.pos = idx + 1;
+            set.date = now;
+        });
+        hydrateSetIdentifiers(exercise, sets);
+    }
+
+    function hydrateSetIdentifiers(exercise, sets) {
+        const sessionId = state.session?.id || '';
+        const exerciseName = exercise?.exercise_name || exercise?.exercise_id || 'exercice';
+        sets.forEach((set) => {
+            set.id = buildSessionSetId(sessionId, exerciseName, set.pos);
+            set.type = exercise?.exercise_id || set.type || null;
+            set.time = set.time ?? null;
+            set.distance = set.distance ?? null;
+            set.setType = null;
+            if (typeof set.date !== 'string' || !set.date) {
+                set.date = new Date().toISOString();
+            }
+        });
+    }
+
+    function buildSessionSetId(sessionId, rawName, position) {
+        const base = slugifyExerciseName(rawName || 'exercice');
+        const pos = String(position || 1).padStart(3, '0');
+        if (!sessionId) {
+            return `${base}_${pos}`;
+        }
+        return `${sessionId}_${base}_${pos}`;
+    }
+
+    function slugifyExerciseName(value) {
+        return String(value || '')
+            .trim()
+            .replace(/['’\s]+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '') || 'exercice';
     }
 
     async function refreshSessionViews() {
