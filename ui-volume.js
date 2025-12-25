@@ -417,7 +417,7 @@
             const sessionMuscles = new Set();
             const sessionExercises = Array.isArray(session.exercises) ? session.exercises : [];
             sessionExercises.forEach((sessionExercise) => {
-                const exercise = exerciseById.get(sessionExercise.exerciseId);
+                const exercise = exerciseById.get(sessionExercise.exercise_id);
                 if (!exercise) {
                     return;
                 }

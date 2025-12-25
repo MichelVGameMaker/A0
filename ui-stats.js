@@ -243,7 +243,7 @@
                     dateObj,
                     metrics
                 };
-                const key = item?.exerciseId;
+                const key = item?.exercise_id;
                 if (!key) {
                     return;
                 }

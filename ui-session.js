@@ -129,7 +129,7 @@
         session.exercises.forEach((exercise) => {
             const structure = listCard.createStructure({ clickable: true });
             const { card, start, body, end } = structure;
-            card.dataset.exerciseId = exercise.exerciseId;
+            card.dataset.exerciseId = exercise.exercise_id;
 
             const handle = listCard.createHandle({
                 interactive: true,
@@ -137,7 +137,7 @@
             });
             start.insertBefore(handle, body);
 
-            const exerciseName = exercise.exerciseName || 'Exercice';
+            const exerciseName = exercise.exercise_name || 'Exercice';
 
             const name = document.createElement('div');
             name.className = 'element';
@@ -192,7 +192,7 @@
             card.setAttribute('aria-label', `${exerciseName} — éditer`);
 
             makeSessionCardInteractive(card, handle, () => A.openExecEdit({
-                currentId: exercise.exerciseId,
+                currentId: exercise.exercise_id,
                 callerScreen: 'screenSessions'
             }));
 
@@ -209,7 +209,7 @@
         if (!session?.exercises?.length) {
             return;
         }
-        const byId = new Map(session.exercises.map((item) => [item.exerciseId, item]));
+        const byId = new Map(session.exercises.map((item) => [item.exercise_id, item]));
         const reordered = [];
         order.forEach((id) => {
             const match = byId.get(id);
@@ -223,7 +223,7 @@
             }
         });
         reordered.forEach((item, index) => {
-            item.pos = index + 1;
+            item.sort = index + 1;
         });
         session.exercises = reordered;
         await db.saveSession(session);
@@ -241,7 +241,7 @@
 
         const dateKey = A.ymd(A.activeDate);
         const session = (await db.getSession(dateKey)) || createSession(A.activeDate);
-        const existing = new Set((session.exercises || []).map((exercise) => exercise.exerciseId));
+        const existing = new Set((session.exercises || []).map((exercise) => exercise.exercise_id));
 
         for (const id of ids) {
             if (existing.has(id)) {
@@ -251,14 +251,18 @@
             if (!exercise) {
                 continue;
             }
-            session.exercises.push({
-                pos: (session.exercises?.length || 0) + 1,
-                exerciseId: exercise.id,
-                exerciseName: exercise.name || 'Exercice',
-                routineInstructions: '',
-                note: '',
-                sets: [{ pos: 1, reps: null, weight: null, rpe: null, rest: null, done: false }]
-            });
+            session.exercises.push(
+                createSessionExercise({
+                    date: session.date,
+                    sessionId: session.id,
+                    exerciseId: exercise.id,
+                    exerciseName: exercise.name || 'Exercice',
+                    routineInstructions: '',
+                    note: '',
+                    sort: (session.exercises?.length || 0) + 1,
+                    sets: [{ pos: 1, reps: null, weight: null, rpe: null, rest: null, done: false }]
+                })
+            );
         }
 
         await db.saveSession(session);
@@ -280,7 +284,7 @@
 
         const dateKey = A.ymd(A.activeDate);
         const session = (await db.getSession(dateKey)) || createSession(A.activeDate);
-        const existingIds = new Set((session.exercises || []).map((exercise) => exercise.exerciseId));
+        const existingIds = new Set((session.exercises || []).map((exercise) => exercise.exercise_id));
 
         for (const routineId of uniqueIds) {
             const routine = await db.get('routines', routineId);
@@ -292,21 +296,25 @@
                     return;
                 }
                 existingIds.add(move.exerciseId);
-                session.exercises.push({
-                    pos: session.exercises.length + 1,
-                    exerciseId: move.exerciseId,
-                    exerciseName: move.exerciseName,
-                    routineInstructions: typeof move.instructions === 'string' ? move.instructions : '',
-                    note: '',
-                    sets: move.sets.map((set) => ({
-                        pos: set.pos,
-                        reps: set.reps ?? null,
-                        weight: null,
-                        rpe: null,
-                        rest: set.rest ?? null,
-                        done: false
-                    }))
-                });
+                session.exercises.push(
+                    createSessionExercise({
+                        date: session.date,
+                        sessionId: session.id,
+                        exerciseId: move.exerciseId,
+                        exerciseName: move.exerciseName,
+                        routineInstructions: typeof move.instructions === 'string' ? move.instructions : '',
+                        note: '',
+                        sort: session.exercises.length + 1,
+                        sets: move.sets.map((set) => ({
+                            pos: set.pos,
+                            reps: set.reps ?? null,
+                            weight: null,
+                            rpe: null,
+                            rest: set.rest ?? null,
+                            done: false
+                        }))
+                    })
+                );
             });
         }
 
@@ -323,6 +331,49 @@
             comments: '',
             exercises: []
         };
+    }
+
+    function createSessionExercise(options = {}) {
+        const {
+            date,
+            sessionId,
+            exerciseId,
+            exerciseName,
+            routineInstructions,
+            note,
+            sort,
+            sets
+        } = options;
+        return {
+            id: buildSessionExerciseId(sessionId, exerciseName || exerciseId),
+            sort,
+            exercise_id: exerciseId,
+            exercise_name: exerciseName || 'Exercice',
+            routine_instructions: routineInstructions || '',
+            exercise_note: note || '',
+            date,
+            type: exerciseId,
+            category: 'weight_reps',
+            weight_unit: 'metric',
+            distance_unit: 'metric',
+            sets: Array.isArray(sets) ? sets : []
+        };
+    }
+
+    function buildSessionExerciseId(sessionId, rawName) {
+        const base = slugifyExerciseName(rawName || 'exercice');
+        if (!sessionId) {
+            return base;
+        }
+        return `${sessionId}_${base}`;
+    }
+
+    function slugifyExerciseName(value) {
+        return String(value || '')
+            .trim()
+            .replace(/['’\s]+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '') || 'exercice';
     }
     const dragCtx = {
         active: false,

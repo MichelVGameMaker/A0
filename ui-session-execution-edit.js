@@ -75,7 +75,7 @@
             return;
         }
         const exercise = Array.isArray(session.exercises)
-            ? session.exercises.find((item) => item.exerciseId === currentId)
+            ? session.exercises.find((item) => item.exercise_id === currentId)
             : null;
         if (!exercise) {
             alert('Exercice introuvable dans la séance.');
@@ -91,13 +91,13 @@
         setTimerVisibility({ forcedHidden: false, reason: null });
 
         const { execTitle, execDate, execRoutineInstructions, execMoveNote } = assertRefs();
-        execTitle.textContent = exercise.exerciseName || 'Exercice';
+        execTitle.textContent = exercise.exercise_name || 'Exercice';
         execDate.textContent = A.fmtUI(date);
         if (execRoutineInstructions) {
-            execRoutineInstructions.value = exercise.routineInstructions || '';
+            execRoutineInstructions.value = exercise.routine_instructions || '';
         }
         if (execMoveNote) {
-            execMoveNote.value = exercise.note || '';
+            execMoveNote.value = exercise.exercise_note || '';
         }
         refreshValueStates();
 
@@ -223,7 +223,7 @@
             if (!exercise) {
                 return;
             }
-            exercise.note = execMoveNote.value;
+            exercise.exercise_note = execMoveNote.value;
             void persistSession(false);
         });
     }
@@ -258,8 +258,9 @@
     }
 
     function normalizeExerciseSets(exercise) {
-        exercise.note = typeof exercise.note === 'string' ? exercise.note : '';
-        exercise.routineInstructions = typeof exercise.routineInstructions === 'string' ? exercise.routineInstructions : '';
+        exercise.exercise_note = typeof exercise.exercise_note === 'string' ? exercise.exercise_note : '';
+        exercise.routine_instructions =
+            typeof exercise.routine_instructions === 'string' ? exercise.routine_instructions : '';
         const defaultRest = getDefaultRest();
         const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
         const normalized = sets.map((set, index) => ({
@@ -622,7 +623,7 @@
         if (!confirm('Supprimer cet exercice de la séance ?')) {
             return;
         }
-        const index = state.session.exercises.findIndex((item) => item.exerciseId === state.exerciseId);
+        const index = state.session.exercises.findIndex((item) => item.exercise_id === state.exerciseId);
         if (index === -1) {
             return;
         }
@@ -637,7 +638,7 @@
         if (!state.session?.exercises) {
             return null;
         }
-        return state.session.exercises.find((item) => item.exerciseId === state.exerciseId) || null;
+        return state.session.exercises.find((item) => item.exercise_id === state.exerciseId) || null;
     }
 
     async function refreshSessionViews() {

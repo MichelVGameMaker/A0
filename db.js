@@ -75,7 +75,14 @@ const db = (() => {
         }
         return new Promise((resolve, reject) => {
             const request = transaction(store).getAll();
-            request.onsuccess = () => resolve(request.result || []);
+            request.onsuccess = () => {
+                const result = request.result || [];
+                if (store === 'sessions') {
+                    resolve(result.map((session) => ensureSession(session)));
+                    return;
+                }
+                resolve(result);
+            };
             request.onerror = () => reject(request.error);
         });
     }
@@ -123,7 +130,8 @@ const db = (() => {
         if (!sessionId) {
             return null;
         }
-        return get('sessions', sessionId);
+        const session = await get('sessions', sessionId);
+        return ensureSession(session);
     }
 
     /**
@@ -363,7 +371,11 @@ const db = (() => {
 
     function memoryGetAll(store) {
         const map = memoryStore(store);
-        return Promise.resolve(Array.from(map.values()));
+        const values = Array.from(map.values());
+        if (store === 'sessions') {
+            return Promise.resolve(values.map((session) => ensureSession(session)));
+        }
+        return Promise.resolve(values);
     }
 
     function memoryCount(store) {
@@ -442,7 +454,85 @@ const db = (() => {
         if (session.comments == null) {
             session.comments = '';
         }
+        if (Array.isArray(session.exercises)) {
+            session.exercises = normalizeSessionExercises(session);
+        }
         return session;
+    }
+
+    function normalizeSessionExercises(session) {
+        const sessionId = normalizeSessionId(session?.id || session?.date);
+        return (session.exercises || [])
+            .map((exercise, index) => normalizeSessionExercise(exercise, { sessionId, index, date: session.date }))
+            .filter(Boolean);
+    }
+
+    function normalizeSessionExercise(exercise, context) {
+        if (!exercise || typeof exercise !== 'object') {
+            return null;
+        }
+        const exerciseId = String(exercise.exercise_id || exercise.exerciseId || exercise.type || '').trim();
+        const exerciseName = String(
+            exercise.exercise_name || exercise.exerciseName || exercise.name || exerciseId || 'Exercice'
+        ).trim();
+        const sessionId = context?.sessionId || '';
+        const date = typeof exercise.date === 'string' ? exercise.date : context?.date || null;
+        const sortValue = safeInt(exercise.sort ?? exercise.pos, context?.index != null ? context.index + 1 : 1);
+        const id = typeof exercise.id === 'string' && exercise.id.length
+            ? exercise.id
+            : buildSessionExerciseId(sessionId, exerciseName || exerciseId);
+
+        const normalized = {
+            ...exercise,
+            id,
+            sort: sortValue,
+            exercise_id: exerciseId,
+            exercise_name: exerciseName,
+            routine_instructions: typeof exercise.routine_instructions === 'string'
+                ? exercise.routine_instructions
+                : typeof exercise.routineInstructions === 'string'
+                    ? exercise.routineInstructions
+                    : '',
+            exercise_note: typeof exercise.exercise_note === 'string'
+                ? exercise.exercise_note
+                : typeof exercise.note === 'string'
+                    ? exercise.note
+                    : '',
+            date,
+            type: typeof exercise.type === 'string' && exercise.type.length ? exercise.type : exerciseId,
+            category: typeof exercise.category === 'string' && exercise.category.length ? exercise.category : 'weight_reps',
+            weight_unit: typeof exercise.weight_unit === 'string' && exercise.weight_unit.length ? exercise.weight_unit : 'metric',
+            distance_unit: typeof exercise.distance_unit === 'string' && exercise.distance_unit.length ? exercise.distance_unit : 'metric'
+        };
+
+        delete normalized.exerciseId;
+        delete normalized.exerciseName;
+        delete normalized.routineInstructions;
+        delete normalized.note;
+        delete normalized.pos;
+
+        return normalized;
+    }
+
+    function buildSessionExerciseId(sessionId, rawName) {
+        const base = slugifyExerciseName(rawName || 'exercice');
+        if (!sessionId) {
+            return base;
+        }
+        return `${sessionId}_${base}`;
+    }
+
+    function slugifyExerciseName(value) {
+        return String(value || '')
+            .trim()
+            .replace(/['’\s]+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '') || 'exercice';
+    }
+
+    function safeInt(value, fallback = 0) {
+        const numeric = Number.parseInt(value, 10);
+        return Number.isFinite(numeric) ? numeric : fallback;
     }
 
     return {
