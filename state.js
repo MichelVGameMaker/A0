@@ -35,6 +35,36 @@
     };
 
     /**
+     * Retourne la clé compacte YYYYMMDD pour une séance.
+     * @param {Date} date Date source.
+     * @returns {string} Clé compacte.
+     */
+    existing.sessionId = function sessionId(date) {
+        return date.toISOString().slice(0, 10).replace(/-/g, '');
+    };
+
+    /**
+     * Retourne la date ISO complète d'une séance.
+     * @param {Date} date Date source.
+     * @returns {string} Date ISO 8601.
+     */
+    existing.sessionISO = function sessionISO(date) {
+        return date.toISOString();
+    };
+
+    /**
+     * Reconstitue une clé YYYY-MM-DD depuis un identifiant compact.
+     * @param {string} id Identifiant YYYYMMDD.
+     * @returns {string|null} Clé ISO ou `null`.
+     */
+    existing.sessionDateKeyFromId = function sessionDateKeyFromId(id) {
+        if (!id || typeof id !== 'string' || id.length !== 8) {
+            return null;
+        }
+        return `${id.slice(0, 4)}-${id.slice(4, 6)}-${id.slice(6, 8)}`;
+    };
+
+    /**
      * Retourne la date du jour sans composante horaire.
      * @returns {Date} Date du jour.
      */
