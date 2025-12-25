@@ -178,6 +178,9 @@
         );
         virtualState.centerStart = A.startOfWeek(virtualState.centerStart || baseAnchor);
 
+        let pageToRender = null;
+        let pageStart = null;
+
         if (direction > 0) {
             const [prev, center, next] = virtualState.pages;
             weekStrip.appendChild(prev);
@@ -185,6 +188,8 @@
             const nextStart = A.addDays(virtualState.centerStart, DAYS_PER_PAGE);
             virtualState.centerStart = A.startOfWeek(nextStart);
             A.currentAnchor = virtualState.centerStart;
+            pageToRender = virtualState.pages[2];
+            pageStart = A.addDays(virtualState.centerStart, DAYS_PER_PAGE);
         } else {
             const [prev, center, next] = virtualState.pages;
             weekStrip.insertBefore(next, prev);
@@ -192,11 +197,11 @@
             const prevStart = A.addDays(virtualState.centerStart, -DAYS_PER_PAGE);
             virtualState.centerStart = A.startOfWeek(prevStart);
             A.currentAnchor = virtualState.centerStart;
+            pageToRender = virtualState.pages[0];
+            pageStart = A.addDays(virtualState.centerStart, -DAYS_PER_PAGE);
         }
 
-        renderPage(virtualState.pages[0], A.addDays(virtualState.centerStart, -DAYS_PER_PAGE));
-        renderPage(virtualState.pages[1], virtualState.centerStart);
-        renderPage(virtualState.pages[2], A.addDays(virtualState.centerStart, DAYS_PER_PAGE));
+        renderPage(pageToRender, pageStart);
 
         requestAnimationFrame(() => {
             weekStrip.scrollLeft = virtualState.pages[1].offsetLeft;
