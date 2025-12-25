@@ -435,6 +435,13 @@ const db = (() => {
         return parsed.toISOString();
     }
 
+    function normalizeOptionalText(value) {
+        if (typeof value !== 'string') {
+            return null;
+        }
+        return value.trim().length ? value : null;
+    }
+
     function ensureSession(session) {
         if (!session || typeof session !== 'object') {
             return session;
@@ -451,9 +458,7 @@ const db = (() => {
                 session.date = iso;
             }
         }
-        if (session.comments == null) {
-            session.comments = '';
-        }
+        session.comments = normalizeOptionalText(session.comments);
         if (Array.isArray(session.exercises)) {
             session.exercises = normalizeSessionExercises(session);
         }
@@ -482,22 +487,25 @@ const db = (() => {
             ? exercise.id
             : buildSessionExerciseId(sessionId, exerciseName || exerciseId);
 
+        const routineInstructions = typeof exercise.routine_instructions === 'string'
+            ? exercise.routine_instructions
+            : typeof exercise.routineInstructions === 'string'
+                ? exercise.routineInstructions
+                : null;
+        const exerciseNote = typeof exercise.exercise_note === 'string'
+            ? exercise.exercise_note
+            : typeof exercise.note === 'string'
+                ? exercise.note
+                : null;
+
         const normalized = {
             ...exercise,
             id,
             sort: sortValue,
             exercise_id: exerciseId,
             exercise_name: exerciseName,
-            routine_instructions: typeof exercise.routine_instructions === 'string'
-                ? exercise.routine_instructions
-                : typeof exercise.routineInstructions === 'string'
-                    ? exercise.routineInstructions
-                    : '',
-            exercise_note: typeof exercise.exercise_note === 'string'
-                ? exercise.exercise_note
-                : typeof exercise.note === 'string'
-                    ? exercise.note
-                    : '',
+            routine_instructions: normalizeOptionalText(routineInstructions),
+            exercise_note: normalizeOptionalText(exerciseNote),
             date,
             type: typeof exercise.type === 'string' && exercise.type.length ? exercise.type : exerciseId,
             category: typeof exercise.category === 'string' && exercise.category.length ? exercise.category : 'weight_reps',
