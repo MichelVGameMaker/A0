@@ -14,8 +14,7 @@
         sessionDates: new Set(),
         plan: null,
         today: null,
-        bound: false,
-        controlsBound: false
+        bound: false
     };
 
     /* WIRE */
@@ -63,13 +62,6 @@
             return refs;
         }
         refs.weekStrip = document.getElementById('weekStrip');
-        refs.weekPrev = document.getElementById('weekPrev');
-        refs.weekNext = document.getElementById('weekNext');
-        if (!virtualState.controlsBound) {
-            refs.weekPrev?.addEventListener('click', () => handleNavClick(-1));
-            refs.weekNext?.addEventListener('click', () => handleNavClick(1));
-            virtualState.controlsBound = true;
-        }
         refsResolved = true;
         return refs;
     }
@@ -95,16 +87,14 @@
         }
         if (!virtualState.bound) {
             weekStrip.addEventListener('scroll', handleScroll, { passive: true });
+            weekStrip.addEventListener('wheel', handleWheel, { passive: false });
             virtualState.bound = true;
         }
         return virtualState.pages;
     }
 
-    function handleNavClick(direction) {
-        if (virtualState.adjusting) {
-            return;
-        }
-        shiftPages(direction);
+    function handleWheel(event) {
+        event.preventDefault();
     }
 
     function renderPage(container, startDate) {
@@ -128,7 +118,7 @@
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'day-cell';
-            button.innerHTML = `<span class="day-weekday">${weekdayLabel}</span><span class="day-number">${dayLabel}</span>`;
+            button.innerHTML = `<span class="day-weekday">${weekdayLabel}</span><br><span class="day-number">${dayLabel}</span>`;
 
             if (hasSession) {
                 button.classList.add('has-session');
