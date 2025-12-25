@@ -701,6 +701,8 @@ textarea:focus{
       margin-bottom:0;
       border-bottom:1px dashed var(--panelBord);
       -webkit-overflow-scrolling:touch;
+      touch-action:pan-x;
+      scroll-snap-type:x mandatory;
       scrollbar-width:none;
     }
     .week-strip::-webkit-scrollbar{ display:none; }
@@ -709,6 +711,8 @@ textarea:focus{
       display:grid; grid-template-columns:repeat(7,minmax(0,1fr));
       gap:var(--gap);
       flex:0 0 100%; width:100%;
+      scroll-snap-align:start;
+      scroll-snap-stop:always;
     }   
     
 /* ========= Selecteur Mois - Contenant ========= */
