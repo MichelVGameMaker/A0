@@ -1,0 +1,107 @@
+[
+  {
+    "slug": "band-apart-shoulder",
+    "exerciseId": null,
+    "name": null
+  },
+  {
+    "slug": "bodyweight-floor-sissy-squat",
+    "exerciseId": null,
+    "name": null
+  },
+  {
+    "slug": "donkey-kickback-weight",
+    "exerciseId": "wSScovH",
+    "name": "band bent-over hip extension"
+  },
+  {
+    "slug": "external-rotator-band",
+    "exerciseId": "FWdVhcW",
+    "name": "cable standing shoulder external rotation"
+  },
+  {
+    "slug": "internal-rotator-band",
+    "exerciseId": null,
+    "name": null
+  },
+  {
+    "slug": "lateral-shoulder-machine",
+    "exerciseId": "dRTfGZT",
+    "name": "lever lateral raise"
+  },
+  {
+    "slug": "leg-curl-band",
+    "exerciseId": null,
+    "name": null
+  },
+  {
+    "slug": "lunges-with-band-dor-abductor",
+    "exerciseId": null,
+    "name": null
+  },
+  {
+    "slug": "lying-hip-abduction",
+    "exerciseId": "7WaDzyL",
+    "name": "side hip abduction"
+  },
+  {
+    "slug": "monster-walk",
+    "exerciseId": "O95afRA",
+    "name": "monster walk"
+  },
+  {
+    "slug": "one-arm-dumbbel-straight-row",
+    "exerciseId": "C0MA9bC",
+    "name": "dumbbell one arm bent-over row"
+  },
+  {
+    "slug": "shoulder-press-deck",
+    "exerciseId": "CggQhII",
+    "name": "lever military press"
+  },
+  {
+    "slug": "single-leg-plank",
+    "exerciseId": null,
+    "name": null
+  },
+  {
+    "slug": "alternating-biceps-curl-with-dumbbell",
+    "exerciseId": "BU15nH4",
+    "name": "dumbbell alternate biceps curl"
+  },
+  {
+    "slug": "alternating-hammer-curl-with-dumbbell",
+    "exerciseId": "79AmJsI",
+    "name": "dumbbell hammer curl with traditional"
+  },
+  {
+    "slug": "arnold-press",
+    "exerciseId": "Xy4jlWA",
+    "name": "dumbbell arnold press"
+  },
+  {
+    "slug": "barbell-bench-press",
+    "exerciseId": "EIeI8Vf",
+    "name": "barbell bench press"
+  },
+  {
+    "slug": "barbell-bent-over-row",
+    "exerciseId": "eZyBC3j",
+    "name": "barbell bent over row"
+  },
+  {
+    "slug": "barbell-deadlift",
+    "exerciseId": "2Ty4idJ",
+    "name": "advanced dumbbell stiff leg deadlift"
+  },
+  {
+    "slug": "barbell-squat",
+    "exerciseId": "Gnfo4FM",
+    "name": "barbell high bar squat"
+  },
+  {
+    "slug": "concentration-curl-with-dumbbell",
+    "exerciseId": "gvsWLQw",
+    "name": "dumbbell concentration curl"
+  }
+]
