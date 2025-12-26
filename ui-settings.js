@@ -257,6 +257,11 @@
                 (Array.isArray(exercises) ? exercises : []).map((exercise) => [exercise.id, exercise])
             );
             const missingExercises = new Set();
+            const mappingStats = {
+                official: 0,
+                user: 0,
+                missing: 0
+            };
 
             await clearAllSessions();
 
@@ -265,7 +270,8 @@
                 const session = toFitHeroSession(workout, {
                     mappingBySlug,
                     exerciseById,
-                    missingExercises
+                    missingExercises,
+                    mappingStats
                 });
                 if (!session) {
                     continue;
@@ -277,7 +283,10 @@
             updateMissingFitHeroExercises(missingExercises);
 
             const label = imported > 1 ? 'séances' : 'séance';
-            alert(`${imported} ${label} FitHero chargée${imported > 1 ? 's' : ''}.`);
+            alert(`${imported} ${label} FitHero chargée${imported > 1 ? 's' : ''}.\n`
+                + `Exercices : ${mappingStats.official} via mapping officiel, `
+                + `${mappingStats.user} via mapping utilisateur, `
+                + `${mappingStats.missing} non trouvé${mappingStats.missing > 1 ? 's' : ''}.`);
 
             if (typeof A.renderWeek === 'function') {
                 await A.renderWeek();
@@ -305,6 +314,18 @@
     }
 
     async function loadFitHeroMapping() {
+        const [official, user] = await Promise.all([
+            loadFitHeroOfficialMapping(),
+            loadUserFitHeroMapping()
+        ]);
+        return {
+            official,
+            user,
+            combined: official.concat(user)
+        };
+    }
+
+    async function loadFitHeroOfficialMapping() {
         try {
             const url = new URL('data/mapping_fithero', document.baseURI).href;
             const response = await fetch(url, { cache: 'no-store' });
@@ -313,12 +334,12 @@
             }
             const data = await response.json();
             if (!Array.isArray(data)) {
-                return loadUserFitHeroMapping();
+                return [];
             }
-            return data.concat(loadUserFitHeroMapping());
+            return data;
         } catch (error) {
             console.warn('Chargement mapping FitHero échoué :', error);
-            return loadUserFitHeroMapping();
+            return [];
         }
     }
 
@@ -337,7 +358,12 @@
     }
 
     function buildFitHeroMapping(mapping) {
-        const entries = Array.isArray(mapping) ? mapping : [];
+        const official = Array.isArray(mapping?.official) ? mapping.official : [];
+        const user = Array.isArray(mapping?.user) ? mapping.user : [];
+        const entries = [
+            ...official.map((entry) => ({ ...entry, source: 'official' })),
+            ...user.map((entry) => ({ ...entry, source: 'user' }))
+        ];
         return new Map(
             entries
                 .filter((entry) => entry && typeof entry.slug === 'string')
@@ -443,8 +469,17 @@
             ? Number(exercise.sort)
             : context?.position || 1;
 
-        if (slug && (!mapping || !mapping.exerciseId)) {
-            context?.missingExercises?.add(slug);
+        if (slug) {
+            if (mapping?.exerciseId) {
+                if (mapping.source === 'user') {
+                    context?.mappingStats && (context.mappingStats.user += 1);
+                } else if (mapping.source === 'official') {
+                    context?.mappingStats && (context.mappingStats.official += 1);
+                }
+            } else {
+                context?.missingExercises?.add(slug);
+                context?.mappingStats && (context.mappingStats.missing += 1);
+            }
         }
 
         const sets = Array.isArray(exercise.sets)
