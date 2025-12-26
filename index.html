@@ -758,12 +758,18 @@
 
     <main class="content">
         <div class="bloque">
-            <p class="details">Importez, exportez ou sauvegardez vos séances et progressions (fonctionnalités à venir).</p>
-        </div>
-        <div class="bloque">
             <button id="btnDataImportFitHero" class="btn full" type="button">Charger séances depuis FitHero</button>
             <input id="inputDataImportFitHero" type="file" accept="application/json,.json" hidden>
             <p class="details">Remplace toutes les séances enregistrées par un fichier JSON FitHero.</p>
+        </div>
+        <div class="bloque">
+            <button id="btnDataExportSessions" class="btn full" type="button">Sauvegarder séances</button>
+            <p class="details">Génère un fichier JSON des séances enregistrées.</p>
+        </div>
+        <div class="bloque">
+            <button id="btnDataImportSessions" class="btn full" type="button">Charger séances</button>
+            <input id="inputDataImportSessions" type="file" accept="application/json,.json" hidden>
+            <p class="details">Remplace toutes les séances par celles du fichier JSON.</p>
         </div>
         <div class="bloque">
             <button id="btnDataFitHeroMapping" class="btn full" type="button">Gérer mapping FitHero</button>
