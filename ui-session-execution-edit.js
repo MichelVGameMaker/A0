@@ -147,6 +147,7 @@
         refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
         refs.execRoutineInstructions = document.getElementById('execRoutineInstructions');
         refs.execMoveNote = document.getElementById('execMoveNote');
+        refs.execReplaceExercise = document.getElementById('execReplaceExercise');
         refs.execMoveEditorClose = document.getElementById('execMoveEditorClose');
         refsResolved = true;
         return refs;
@@ -181,6 +182,7 @@
             'dlgExecMoveEditor',
             'execRoutineInstructions',
             'execMoveNote',
+            'execReplaceExercise',
             'execMoveEditorClose'
         ];
         const missing = required.filter((key) => !refs[key]);
@@ -201,12 +203,15 @@
     }
 
     function wireActions() {
-        const { execAddSet, execDelete } = assertRefs();
+        const { execAddSet, execDelete, execReplaceExercise } = assertRefs();
         execAddSet.addEventListener('click', () => {
             void addSet();
         });
         execDelete.addEventListener('click', () => {
             void removeExercise();
+        });
+        execReplaceExercise.addEventListener('click', () => {
+            void replaceExercise();
         });
     }
 
@@ -647,6 +652,54 @@
         backToCaller();
     }
 
+    async function replaceExercise() {
+        const exercise = getExercise();
+        if (!exercise) {
+            return;
+        }
+        refs.dlgExecMoveEditor?.close();
+        A.openExercises({
+            mode: 'add',
+            callerScreen: 'screenExecEdit',
+            selectionLimit: 1,
+            onAdd: (ids) => {
+                const [nextId] = ids;
+                if (nextId) {
+                    void applyExerciseReplacement(nextId);
+                }
+            }
+        });
+    }
+
+    async function applyExerciseReplacement(nextId) {
+        const exercise = getExercise();
+        if (!exercise || !state.session) {
+            return;
+        }
+        if (exercise.exercise_id === nextId) {
+            return;
+        }
+        const nextExercise = await db.get('exercises', nextId);
+        if (!nextExercise) {
+            alert('Exercice introuvable.');
+            return;
+        }
+        const nextName = nextExercise.name || nextId;
+        exercise.exercise_id = nextId;
+        exercise.exercise_name = nextName;
+        exercise.type = nextId;
+        exercise.id = buildSessionExerciseId(state.session.id, nextName);
+        hydrateSetIdentifiers(exercise, exercise.sets || []);
+        state.exerciseId = nextId;
+        const { execTitle } = assertRefs();
+        execTitle.textContent = nextName || 'Exercice';
+        const timer = ensureSharedTimer();
+        timer.exerciseKey = `${state.dateKey}::${nextId}`;
+        resetTimerState();
+        await persistSession(false);
+        await refreshSessionViews();
+    }
+
     function getExercise() {
         if (!state.session?.exercises) {
             return null;
@@ -685,6 +738,14 @@
             return `${base}_${pos}`;
         }
         return `${sessionId}_${base}_${pos}`;
+    }
+
+    function buildSessionExerciseId(sessionId, rawName) {
+        const base = slugifyExerciseName(rawName || 'exercice');
+        if (!sessionId) {
+            return base;
+        }
+        return `${sessionId}_${base}`;
     }
 
     function slugifyExerciseName(value) {

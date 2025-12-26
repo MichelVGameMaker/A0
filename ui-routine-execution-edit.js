@@ -78,6 +78,7 @@
         refs.routineMoveDone = document.getElementById('routineMoveDone');
         refs.routineMoveAddSet = document.getElementById('routineMoveAddSet');
         refs.routineMoveDelete = document.getElementById('routineMoveDelete');
+        refs.routineMoveReplace = document.getElementById('routineMoveReplace');
         refs.routineMoveEditMeta = document.getElementById('routineMoveEditMeta');
         refs.dlgRoutineMoveEditor = document.getElementById('dlgRoutineMoveEditor');
         refs.routineMoveInstructions = document.getElementById('routineMoveInstructions');
@@ -103,6 +104,7 @@
             'routineMoveBack',
             'routineMoveAddSet',
             'routineMoveDelete',
+            'routineMoveReplace',
             'routineMoveEditMeta',
             'dlgRoutineMoveEditor',
             'routineMoveInstructions',
@@ -126,12 +128,15 @@
     }
 
     function wireActions() {
-        const { routineMoveAddSet, routineMoveDelete } = assertRefs();
+        const { routineMoveAddSet, routineMoveDelete, routineMoveReplace } = assertRefs();
         routineMoveAddSet.addEventListener('click', () => {
             addSet();
         });
         routineMoveDelete.addEventListener('click', () => {
             removeMove();
+        });
+        routineMoveReplace.addEventListener('click', () => {
+            replaceMoveExercise();
         });
     }
 
@@ -497,6 +502,45 @@
         await persistRoutine();
         refs.dlgRoutineMoveEditor?.close();
         returnToCaller();
+    }
+
+    function replaceMoveExercise() {
+        const move = findMove();
+        if (!move) {
+            return;
+        }
+        refs.dlgRoutineMoveEditor?.close();
+        A.openExercises({
+            mode: 'add',
+            callerScreen: 'screenRoutineMoveEdit',
+            selectionLimit: 1,
+            onAdd: (ids) => {
+                const [nextId] = ids;
+                if (nextId) {
+                    void applyMoveReplacement(nextId);
+                }
+            }
+        });
+    }
+
+    async function applyMoveReplacement(nextId) {
+        const move = findMove();
+        if (!move) {
+            return;
+        }
+        if (move.exerciseId === nextId) {
+            return;
+        }
+        const nextExercise = await db.get('exercises', nextId);
+        if (!nextExercise) {
+            alert('Exercice introuvable.');
+            return;
+        }
+        move.exerciseId = nextId;
+        move.exerciseName = nextExercise.name || nextId;
+        const { routineMoveTitle } = assertRefs();
+        routineMoveTitle.textContent = move.exerciseName || 'Exercice';
+        await persistRoutine();
     }
 
     function scheduleSave() {
