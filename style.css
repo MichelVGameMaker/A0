@@ -1254,6 +1254,27 @@ input[type="number"]{ -moz-appearance:textfield; }
     border-top: 1px solid var(--panelBord);
 }
 
+.mapping-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.mapping-table th,
+.mapping-table td {
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.mapping-table th {
+    color: var(--labelColor);
+    font-size: var(--fs-small);
+}
+
+.mapping-table tbody tr + tr td {
+    border-top: 1px solid var(--panelBord);
+}
+
 .volume-gauge {
     position: relative;
     height: 28px;

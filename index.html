@@ -752,8 +752,48 @@
             <p class="details">Remplace toutes les séances enregistrées par un fichier JSON FitHero.</p>
         </div>
         <div class="bloque">
+            <button id="btnDataFitHeroMapping" class="btn full" type="button">Gérer mapping FitHero</button>
+            <p class="details">Associez les exercices FitHero inconnus à ceux de votre bibliothèque.</p>
+        </div>
+        <div class="bloque">
             <button id="btnDataReloadExercises" class="btn full" type="button">Charger bibliothèque d’exercices</button>
             <p class="details">Relance le chargement des exercices depuis internet.</p>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Mapping FitHero ========== -->
+<section id="screenFitHeroMapping" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnFitHeroMappingBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Mapping FitHero</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <p class="details">Liste des slugs FitHero inconnus à associer à vos exercices.</p>
+        </div>
+        <div class="bloque">
+            <div id="fitHeroMappingEmpty" class="empty" hidden>Aucun slug FitHero inconnu.</div>
+            <table class="mapping-table" aria-label="Mapping FitHero">
+                <thead>
+                    <tr>
+                        <th>Slug</th>
+                        <th>Exercice</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="fitHeroMappingBody"></tbody>
+            </table>
         </div>
     </main>
 
@@ -780,6 +820,7 @@
 <script src="ui-routine-edit.js"></script>
 <script src="ui-routine-execution-edit.js"></script>
 <script src="ui-settings.js"></script>
+<script src="ui-fithero-mapping.js"></script>
 <script src="ui-volume.js"></script>
 <script src="ui-stats.js"></script>
 <script src="ui-session-execution-edit.js"></script>
