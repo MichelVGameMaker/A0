@@ -14,6 +14,7 @@
         callerScreen: 'screenExercises',
         fromSettings: false,
         onAddCallback: null,
+        selectionLimit: null,
         filtersInited: false,
         filters: {
             search: '',
@@ -90,7 +91,7 @@
      * @returns {Promise<void>} Promesse résolue après rendu.
      */
     A.openExercises = async function openExercises(options = {}) {
-        const { mode = 'view', callerScreen = 'screenExercises', onAdd = null } = options;
+        const { mode = 'view', callerScreen = 'screenExercises', onAdd = null, selectionLimit = null } = options;
         ensureRefs();
         assertRefs();
 
@@ -124,6 +125,13 @@
             state.onAddCallback = null;
         }
 
+        if (Object.prototype.hasOwnProperty.call(options, 'selectionLimit')) {
+            const normalized = Number(selectionLimit);
+            state.selectionLimit = Number.isFinite(normalized) && normalized > 0 ? normalized : null;
+        } else if (!preserveContext) {
+            state.selectionLimit = null;
+        }
+
         if (!preserveContext) {
             clearFilterState();
             state.selection.clear();
@@ -155,6 +163,7 @@
         refs.screenSettings = document.getElementById('screenSettings');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
+        refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.content = document.querySelector('#screenExercises .content');
         refs.exSearch = document.getElementById('exSearch');
         refs.exFilterGroup = document.getElementById('exFilterGroup');
@@ -296,6 +305,7 @@
         const structure = listCard.createStructure();
         const { card, start, body, end } = structure;
         card.setAttribute('role', 'button');
+        card.dataset.exerciseId = exercise.id;
 
         const image = document.createElement('img');
         image.alt = exercise.name || 'exercice';
@@ -336,6 +346,10 @@
 
             const syncSelection = (selected) => {
                 if (selected) {
+                    if (state.selectionLimit === 1 && !state.selection.has(exercise.id)) {
+                        clearSelectionUI(exercise.id);
+                        state.selection.clear();
+                    }
                     state.selection.add(exercise.id);
                 } else {
                     state.selection.delete(exercise.id);
@@ -396,6 +410,22 @@
         return card;
     }
 
+    function clearSelectionUI(exceptId) {
+        if (!refs.exList) {
+            return;
+        }
+        refs.exList.querySelectorAll('.exercise-card.selected').forEach((card) => {
+            if (card.dataset.exerciseId === exceptId) {
+                return;
+            }
+            card.classList.remove('selected');
+            const checkbox = card.querySelector('.exercise-card-check');
+            if (checkbox instanceof HTMLInputElement) {
+                checkbox.checked = false;
+            }
+        });
+    }
+
     function ensureLazyObserver() {
         if (state.lazyObserver) {
             return state.lazyObserver;
@@ -450,7 +480,8 @@
             screenStatsDetail,
             screenSettings,
             screenPreferences,
-            screenData
+            screenData,
+            screenFitHeroMapping
         } = refs;
         const map = {
             screenExercises,
@@ -464,7 +495,8 @@
             screenStatsDetail,
             screenSettings,
             screenPreferences,
-            screenData
+            screenData,
+            screenFitHeroMapping
         };
         Object.entries(map).forEach(([key, element]) => {
             if (element) {

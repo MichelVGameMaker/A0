@@ -61,6 +61,7 @@
         refs.screenVolume = document.getElementById('screenVolume');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
+        refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabSettings = document.getElementById('tabSettings');
         refs.btnSettingsExercises = document.getElementById('btnSettingsExercises');
         refs.btnSettingsRoutines = document.getElementById('btnSettingsRoutines');
@@ -72,6 +73,7 @@
         refs.btnDataBack = document.getElementById('btnDataBack');
         refs.btnDataReloadExercises = document.getElementById('btnDataReloadExercises');
         refs.btnDataImportFitHero = document.getElementById('btnDataImportFitHero');
+        refs.btnDataFitHeroMapping = document.getElementById('btnDataFitHeroMapping');
         refs.inputDataImportFitHero = document.getElementById('inputDataImportFitHero');
         refsResolved = true;
         return refs;
@@ -89,6 +91,7 @@
             btnDataBack,
             btnDataReloadExercises,
             btnDataImportFitHero,
+            btnDataFitHeroMapping,
             inputDataImportFitHero
         } = ensureRefs();
 
@@ -125,6 +128,9 @@
         });
         btnDataImportFitHero?.addEventListener('click', () => {
             inputDataImportFitHero?.click();
+        });
+        btnDataFitHeroMapping?.addEventListener('click', () => {
+            A.openFitHeroMapping?.();
         });
         inputDataImportFitHero?.addEventListener('change', () => {
             void importFitHeroSessions({
@@ -211,7 +217,10 @@
         }
     }
 
-    const FIT_HERO_MISSING_STORAGE_KEY = 'fithero_missing_exercises';
+    const FIT_HERO_MISSING_STORAGE_KEY = A.fitHeroMissingStorageKey || 'fithero_missing_exercises';
+    const FIT_HERO_USER_MAPPING_KEY = A.fitHeroUserMappingKey || 'fithero_user_mapping';
+    A.fitHeroMissingStorageKey = FIT_HERO_MISSING_STORAGE_KEY;
+    A.fitHeroUserMappingKey = FIT_HERO_USER_MAPPING_KEY;
 
     async function importFitHeroSessions({ input, button } = {}) {
         const file = input?.files?.[0];
@@ -304,11 +313,25 @@
             }
             const data = await response.json();
             if (!Array.isArray(data)) {
-                return [];
+                return loadUserFitHeroMapping();
             }
-            return data;
+            return data.concat(loadUserFitHeroMapping());
         } catch (error) {
             console.warn('Chargement mapping FitHero échoué :', error);
+            return loadUserFitHeroMapping();
+        }
+    }
+
+    function loadUserFitHeroMapping() {
+        const raw = localStorage.getItem(FIT_HERO_USER_MAPPING_KEY);
+        if (!raw) {
+            return [];
+        }
+        try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            console.warn('Mapping FitHero utilisateur invalide :', error);
             return [];
         }
     }
@@ -488,7 +511,8 @@
             screenSettings,
             screenVolume,
             screenPreferences,
-            screenData
+            screenData,
+            screenFitHeroMapping
         } = ensureRefs();
         const map = {
             screenSessions,
@@ -504,7 +528,8 @@
             screenSettings,
             screenVolume,
             screenPreferences,
-            screenData
+            screenData,
+            screenFitHeroMapping
         };
         Object.entries(map).forEach(([key, element]) => {
             if (element) {
