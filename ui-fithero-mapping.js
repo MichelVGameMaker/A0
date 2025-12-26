@@ -166,6 +166,7 @@
         refs.screenSettings = document.getElementById('screenSettings');
         refs.screenAdmin = document.getElementById('screenAdmin');
         refs.screenVolume = document.getElementById('screenVolume');
+        refs.screenVolumeMuscle = document.getElementById('screenVolumeMuscle');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
@@ -213,6 +214,7 @@
             screenSettings,
             screenAdmin,
             screenVolume,
+            screenVolumeMuscle,
             screenPreferences,
             screenData,
             screenFitHeroMapping
@@ -231,6 +233,7 @@
             screenSettings,
             screenAdmin,
             screenVolume,
+            screenVolumeMuscle,
             screenPreferences,
             screenData,
             screenFitHeroMapping

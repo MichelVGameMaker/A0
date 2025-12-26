@@ -42,6 +42,8 @@
     let refsResolved = false;
     let allVolumeItems = null;
     let rangeTagGroup = null;
+    let rangeMuscleTagGroup = null;
+    let currentMuscleKey = '';
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -69,6 +71,13 @@
         refs.volumeTable = document.getElementById('volumeTable');
         refs.volumeTableBody = document.getElementById('volumeTableBody');
         refs.volumeEmpty = document.getElementById('volumeEmpty');
+        refs.screenVolumeMuscle = document.getElementById('screenVolumeMuscle');
+        refs.btnVolumeMuscleBack = document.getElementById('btnVolumeMuscleBack');
+        refs.volumeMuscleTitle = document.getElementById('volumeMuscleTitle');
+        refs.volumeMuscleRangeTags = document.getElementById('volumeMuscleRangeTags');
+        refs.volumeMuscleTable = document.getElementById('volumeMuscleTable');
+        refs.volumeMuscleTableBody = document.getElementById('volumeMuscleTableBody');
+        refs.volumeMuscleEmpty = document.getElementById('volumeMuscleEmpty');
         refs.dlgVolumeEdit = document.getElementById('dlgVolumeEdit');
         refs.volumeEditList = document.getElementById('volumeEditList');
         refs.volumeEditSave = document.getElementById('volumeEditSave');
@@ -77,7 +86,12 @@
     }
 
     function wireEvents() {
-        const { btnVolumeBack, btnVolumeEdit, volumeEditSave } = ensureRefs();
+        const {
+            btnVolumeBack,
+            btnVolumeEdit,
+            btnVolumeMuscleBack,
+            volumeEditSave
+        } = ensureRefs();
 
         btnVolumeBack?.addEventListener('click', () => {
             A.openSettings();
@@ -85,6 +99,10 @@
 
         btnVolumeEdit?.addEventListener('click', () => {
             openEditDialog();
+        });
+
+        btnVolumeMuscleBack?.addEventListener('click', () => {
+            A.openVolume();
         });
 
         volumeEditSave?.addEventListener('click', () => {
@@ -112,6 +130,54 @@
             rangeTagGroup.setItems(RANGE_OPTIONS.map((option) => option.label));
         }
         return rangeTagGroup;
+    }
+
+    function ensureMuscleRangeTags() {
+        const { volumeMuscleRangeTags } = ensureRefs();
+        if (!volumeMuscleRangeTags || !A.TagGroup) {
+            return null;
+        }
+        if (!rangeMuscleTagGroup) {
+            rangeMuscleTagGroup = new A.TagGroup(volumeMuscleRangeTags, {
+                mode: 'mono',
+                columns: 3,
+                onChange: (values) => {
+                    const nextLabel = values?.[0] || DEFAULT_RANGE_LABEL;
+                    const settings = loadSettings();
+                    settings.range = getRangeLabel(nextLabel);
+                    saveSettings(settings);
+                    void renderVolumeMuscleTable();
+                }
+            });
+            rangeMuscleTagGroup.setItems(RANGE_OPTIONS.map((option) => option.label));
+        }
+        return rangeMuscleTagGroup;
+    }
+
+    A.openVolumeMuscle = async function openVolumeMuscle(muscleKey) {
+        ensureRefs();
+        currentMuscleKey = normalizeKey(muscleKey);
+        if (!currentMuscleKey) {
+            return;
+        }
+        await renderVolumeMuscleScreen();
+        showVolumeMuscleScreen();
+    };
+
+    async function renderVolumeMuscleScreen() {
+        ensureRefs();
+        ensureMuscleRangeTags();
+        await renderVolumeMuscleTable();
+    }
+
+    function showVolumeMuscleScreen() {
+        const { screenVolume, screenVolumeMuscle } = ensureRefs();
+        if (screenVolume) {
+            screenVolume.hidden = true;
+        }
+        if (screenVolumeMuscle) {
+            screenVolumeMuscle.hidden = false;
+        }
     }
 
     function getAllVolumeItems() {
@@ -203,11 +269,195 @@
             const scaledTargetSets = entry.targetSets > 0 ? entry.targetSets : 0;
             const row = document.createElement('tr');
             const muscleCell = document.createElement('td');
-            muscleCell.textContent = formatLabel(entry.key);
+            const muscleButton = document.createElement('button');
+            muscleButton.type = 'button';
+            muscleButton.className = 'volume-link';
+            muscleButton.textContent = formatLabel(entry.key);
+            muscleButton.addEventListener('click', () => {
+                void A.openVolumeMuscle?.(entry.key);
+            });
+            muscleCell.appendChild(muscleButton);
             row.appendChild(muscleCell);
             row.appendChild(createGaugeCell(scaledSessions, scaledTargetSessions, 'séances'));
             row.appendChild(createGaugeCell(scaledSets, scaledTargetSets, 'séries'));
             volumeTableBody.appendChild(row);
+        });
+    }
+
+    async function renderVolumeMuscleTable() {
+        const {
+            volumeMuscleTableBody,
+            volumeMuscleEmpty,
+            volumeMuscleTable,
+            volumeMuscleTitle
+        } = ensureRefs();
+        if (!volumeMuscleTableBody || !volumeMuscleEmpty || !volumeMuscleTable || !volumeMuscleTitle) {
+            return;
+        }
+
+        if (!currentMuscleKey) {
+            volumeMuscleTitle.textContent = 'Volume';
+            volumeMuscleEmpty.hidden = false;
+            volumeMuscleTable.hidden = true;
+            return;
+        }
+
+        const settings = loadSettings();
+        const selectedRange = getRangeLabel(settings.range);
+        const tagGroup = ensureMuscleRangeTags();
+        if (tagGroup) {
+            tagGroup.setSelection(selectedRange);
+        }
+
+        volumeMuscleTitle.textContent = formatLabel(currentMuscleKey);
+
+        const [sessions, exercises] = await Promise.all([
+            db.getAll('sessions'),
+            db.getAll('exercises')
+        ]);
+
+        const normalizedMuscle = normalizeKey(currentMuscleKey);
+        const primaryExercises = [];
+        const secondaryExercises = [];
+        exercises.forEach((exercise) => {
+            if (!exercise) {
+                return;
+            }
+            const primaryKey = normalizeKey(exercise.muscle);
+            const secondaryKeys = [
+                exercise.muscleGroup1,
+                exercise.muscleGroup2,
+                exercise.muscleGroup3
+            ]
+                .filter(Boolean)
+                .map(normalizeKey);
+
+            if (primaryKey && primaryKey === normalizedMuscle) {
+                primaryExercises.push(exercise);
+            } else if (secondaryKeys.includes(normalizedMuscle)) {
+                secondaryExercises.push(exercise);
+            }
+        });
+
+        const allExercises = [...primaryExercises, ...secondaryExercises];
+        const statsByExercise = new Map(allExercises.map((exercise) => [exercise.id, { sessions: 0, sets: 0 }]));
+
+        const rangeConfig = RANGE_BY_LABEL.get(selectedRange) || RANGE_BY_LABEL.get(DEFAULT_RANGE_LABEL);
+        const today = A.today();
+        const start = rangeConfig?.type === 'week'
+            ? A.startOfWeek(today)
+            : A.addDays(today, -((rangeConfig?.days || 7) - 1));
+        const end = today;
+
+        sessions.forEach((session) => {
+            const sessionDateKey = resolveSessionDateKey(session);
+            const sessionDate = parseDateKey(sessionDateKey);
+            if (!sessionDate || sessionDate < start || sessionDate > end) {
+                return;
+            }
+
+            const countedExercises = new Set();
+            const sessionExercises = Array.isArray(session.exercises) ? session.exercises : [];
+            sessionExercises.forEach((sessionExercise) => {
+                const exerciseId = sessionExercise?.exercise_id;
+                const stats = statsByExercise.get(exerciseId);
+                if (!stats) {
+                    return;
+                }
+                const sets = Array.isArray(sessionExercise.sets) ? sessionExercise.sets : [];
+                const doneSets = sets.reduce((total, set) => total + (set?.done === true ? 1 : 0), 0);
+                if (doneSets === 0) {
+                    return;
+                }
+                stats.sets += doneSets;
+                if (!countedExercises.has(exerciseId)) {
+                    stats.sessions += 1;
+                    countedExercises.add(exerciseId);
+                }
+            });
+        });
+
+        const shouldScaleToWeek = rangeConfig?.type !== 'week';
+        const weeklyScale = shouldScaleToWeek ? 7 / (rangeConfig?.days || 7) : 1;
+
+        volumeMuscleTableBody.innerHTML = '';
+
+        const hasExercises = allExercises.length > 0;
+        if (!hasExercises) {
+            volumeMuscleEmpty.hidden = false;
+            volumeMuscleTable.hidden = true;
+            return;
+        }
+
+        volumeMuscleEmpty.hidden = true;
+        volumeMuscleTable.hidden = false;
+
+        appendExerciseSection(
+            volumeMuscleTableBody,
+            'Haut',
+            primaryExercises,
+            statsByExercise,
+            shouldScaleToWeek,
+            weeklyScale
+        );
+
+        appendExerciseSection(
+            volumeMuscleTableBody,
+            'Bas',
+            secondaryExercises,
+            statsByExercise,
+            shouldScaleToWeek,
+            weeklyScale
+        );
+    }
+
+    function appendExerciseSection(
+        tableBody,
+        label,
+        exercises,
+        statsByExercise,
+        shouldScaleToWeek,
+        weeklyScale
+    ) {
+        const headerRow = document.createElement('tr');
+        headerRow.className = 'volume-section-row';
+        const headerCell = document.createElement('td');
+        headerCell.colSpan = 3;
+        headerCell.textContent = label;
+        headerRow.appendChild(headerCell);
+        tableBody.appendChild(headerRow);
+
+        const sorted = [...exercises].sort((a, b) => {
+            const statsA = statsByExercise.get(a.id) || { sessions: 0, sets: 0 };
+            const statsB = statsByExercise.get(b.id) || { sessions: 0, sets: 0 };
+            if (statsB.sets !== statsA.sets) {
+                return statsB.sets - statsA.sets;
+            }
+            return String(a.name || '').localeCompare(String(b.name || ''), 'fr', { sensitivity: 'base' });
+        });
+
+        if (sorted.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.className = 'volume-section-empty';
+            const emptyCell = document.createElement('td');
+            emptyCell.colSpan = 3;
+            emptyCell.textContent = '—';
+            emptyRow.appendChild(emptyCell);
+            tableBody.appendChild(emptyRow);
+            return;
+        }
+
+        sorted.forEach((exercise) => {
+            const stats = statsByExercise.get(exercise.id) || { sessions: 0, sets: 0 };
+            const scaledSessions = shouldScaleToWeek ? Math.round(stats.sessions * weeklyScale) : stats.sessions;
+            const scaledSets = shouldScaleToWeek ? Math.round(stats.sets * weeklyScale) : stats.sets;
+            const row = document.createElement('tr');
+            const nameCell = document.createElement('td');
+            nameCell.textContent = exercise.name || '—';
+            row.appendChild(nameCell);
+            row.appendChild(createGaugeCell(scaledSessions, 0, 'séances'));
+            row.appendChild(createGaugeCell(scaledSets, 0, 'séries'));
+            tableBody.appendChild(row);
         });
     }
 

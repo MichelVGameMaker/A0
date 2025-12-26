@@ -161,6 +161,8 @@
         refs.screenStatsList = document.getElementById('screenStatsList');
         refs.screenStatsDetail = document.getElementById('screenStatsDetail');
         refs.screenSettings = document.getElementById('screenSettings');
+        refs.screenVolume = document.getElementById('screenVolume');
+        refs.screenVolumeMuscle = document.getElementById('screenVolumeMuscle');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
@@ -479,6 +481,8 @@
             screenStatsList,
             screenStatsDetail,
             screenSettings,
+            screenVolume,
+            screenVolumeMuscle,
             screenPreferences,
             screenData,
             screenFitHeroMapping
@@ -494,6 +498,8 @@
             screenStatsList,
             screenStatsDetail,
             screenSettings,
+            screenVolume,
+            screenVolumeMuscle,
             screenPreferences,
             screenData,
             screenFitHeroMapping
