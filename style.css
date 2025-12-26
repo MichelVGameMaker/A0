@@ -448,6 +448,12 @@ textarea:focus{
   text-overflow:ellipsis;
   white-space:nowrap;
 }
+.exercise-card-text .exercise-card-name{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  white-space:normal;
+}
 .list-card__handle{
   border:none;
   background:none;
