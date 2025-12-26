@@ -79,6 +79,8 @@
         refs.screenStatsList = document.getElementById('screenStatsList');
         refs.screenStatsDetail = document.getElementById('screenStatsDetail');
         refs.screenSettings = document.getElementById('screenSettings');
+        refs.screenVolume = document.getElementById('screenVolume');
+        refs.screenVolumeMuscle = document.getElementById('screenVolumeMuscle');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.exEditTitle = document.getElementById('exEditTitle');
@@ -246,6 +248,8 @@
             screenStatsList: refs.screenStatsList,
             screenStatsDetail: refs.screenStatsDetail,
             screenSettings: refs.screenSettings,
+            screenVolume: refs.screenVolume,
+            screenVolumeMuscle: refs.screenVolumeMuscle,
             screenPreferences: refs.screenPreferences,
             screenData: refs.screenData
         };

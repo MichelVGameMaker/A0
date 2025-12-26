@@ -1260,6 +1260,38 @@ input[type="number"]{ -moz-appearance:textfield; }
     border-top: 1px solid var(--panelBord);
 }
 
+.volume-link {
+    border: none;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+
+.volume-link:hover,
+.volume-link:focus-visible {
+    color: var(--emphase);
+    text-decoration: underline;
+}
+
+.volume-section-row td {
+    padding-top: 16px;
+    padding-bottom: 4px;
+    font-size: var(--fs-small);
+    font-weight: var(--fw-strong);
+    color: var(--labelColor);
+    border-top: none;
+}
+
+.volume-section-empty td {
+    padding-top: 4px;
+    padding-bottom: 8px;
+    color: var(--labelColor);
+    border-top: none;
+}
+
 .mapping-table {
     width: 100%;
     border-collapse: collapse;
