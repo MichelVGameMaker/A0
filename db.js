@@ -553,7 +553,8 @@ const db = (() => {
                 type: exerciseId || set?.type || null,
                 time,
                 distance,
-                setType: null
+                setType: null,
+                done: set?.done === true
             };
         });
     }
