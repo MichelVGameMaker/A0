@@ -693,7 +693,8 @@
             time: set.time ?? null,
             distance: set.distance ?? null,
             setType: set.setType ?? null,
-            rpe: set.rpe ?? null
+            rpe: set.rpe ?? null,
+            done: true
         };
     }
 

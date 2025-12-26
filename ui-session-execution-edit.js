@@ -423,7 +423,9 @@
                 default:
                     return;
             }
-            await applySetEditorResult(currentIndex, next, { done: set.done, render: false });
+            const currentDone = getExercise()?.sets?.[currentIndex]?.done ?? set.done;
+            const markDone = rawValue !== '' ? true : currentDone;
+            await applySetEditorResult(currentIndex, next, { done: markDone, render: false });
             updatePreview(next);
         };
 
