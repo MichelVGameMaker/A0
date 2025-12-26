@@ -382,7 +382,17 @@
 
         volumeMuscleTableBody.innerHTML = '';
 
-        const hasExercises = allExercises.length > 0;
+        const muscleStats = computeMuscleStats(
+            sessions,
+            exercises,
+            normalizedMuscle,
+            start,
+            end
+        );
+
+        const filteredPrimary = primaryExercises.filter((exercise) => hasExerciseStats(statsByExercise, exercise.id));
+        const filteredSecondary = secondaryExercises.filter((exercise) => hasExerciseStats(statsByExercise, exercise.id));
+        const hasExercises = filteredPrimary.length > 0 || filteredSecondary.length > 0;
         if (!hasExercises) {
             volumeMuscleEmpty.hidden = false;
             volumeMuscleTable.hidden = true;
@@ -392,10 +402,18 @@
         volumeMuscleEmpty.hidden = true;
         volumeMuscleTable.hidden = false;
 
+        appendMuscleRow(
+            volumeMuscleTableBody,
+            formatLabel(currentMuscleKey),
+            muscleStats,
+            shouldScaleToWeek,
+            weeklyScale
+        );
+
         appendExerciseSection(
             volumeMuscleTableBody,
-            'Haut',
-            primaryExercises,
+            'Principal',
+            filteredPrimary,
             statsByExercise,
             shouldScaleToWeek,
             weeklyScale
@@ -403,12 +421,25 @@
 
         appendExerciseSection(
             volumeMuscleTableBody,
-            'Bas',
-            secondaryExercises,
+            'Secondaire',
+            filteredSecondary,
             statsByExercise,
             shouldScaleToWeek,
             weeklyScale
         );
+    }
+
+    function appendMuscleRow(tableBody, label, stats, shouldScaleToWeek, weeklyScale) {
+        const row = document.createElement('tr');
+        row.className = 'volume-muscle-row';
+        const nameCell = document.createElement('td');
+        nameCell.textContent = label;
+        row.appendChild(nameCell);
+        const scaledSessions = shouldScaleToWeek ? Math.round(stats.sessions * weeklyScale) : stats.sessions;
+        const scaledSets = shouldScaleToWeek ? Math.round(stats.sets * weeklyScale) : stats.sets;
+        row.appendChild(createGaugeCell(scaledSessions, 0, 'séances'));
+        row.appendChild(createGaugeCell(scaledSets, 0, 'séries'));
+        tableBody.appendChild(row);
     }
 
     function appendExerciseSection(
@@ -452,6 +483,10 @@
             const scaledSessions = shouldScaleToWeek ? Math.round(stats.sessions * weeklyScale) : stats.sessions;
             const scaledSets = shouldScaleToWeek ? Math.round(stats.sets * weeklyScale) : stats.sets;
             const row = document.createElement('tr');
+            row.className = 'volume-exercise-row';
+            row.addEventListener('click', () => {
+                A.openExerciseRead?.({ currentId: exercise.id, callerScreen: 'screenVolumeMuscle' });
+            });
             const nameCell = document.createElement('td');
             nameCell.textContent = exercise.name || '—';
             row.appendChild(nameCell);
@@ -459,6 +494,14 @@
             row.appendChild(createGaugeCell(scaledSets, 0, 'séries'));
             tableBody.appendChild(row);
         });
+    }
+
+    function hasExerciseStats(statsByExercise, exerciseId) {
+        const stats = statsByExercise.get(exerciseId);
+        if (!stats) {
+            return false;
+        }
+        return stats.sessions > 0 || stats.sets > 0;
     }
 
     function createGaugeCell(current, target, label) {
@@ -642,6 +685,48 @@
             return session.date;
         }
         return null;
+    }
+
+    function computeMuscleStats(sessions, exercises, muscleKey, start, end) {
+        const exerciseById = new Map(exercises.map((exercise) => [exercise.id, exercise]));
+        const stats = { sessions: 0, sets: 0 };
+
+        sessions.forEach((session) => {
+            const sessionDateKey = resolveSessionDateKey(session);
+            const sessionDate = parseDateKey(sessionDateKey);
+            if (!sessionDate || sessionDate < start || sessionDate > end) {
+                return;
+            }
+
+            let sessionCounted = false;
+            const sessionExercises = Array.isArray(session.exercises) ? session.exercises : [];
+            sessionExercises.forEach((sessionExercise) => {
+                const exercise = exerciseById.get(sessionExercise.exercise_id);
+                if (!exercise) {
+                    return;
+                }
+                const muscles = getExerciseMuscleKeys(exercise);
+                const primaryMuscle = normalizeKey(exercise.muscle);
+                if (!muscles.length && !primaryMuscle) {
+                    return;
+                }
+                const sets = Array.isArray(sessionExercise.sets) ? sessionExercise.sets : [];
+                const doneSets = sets.reduce((total, set) => total + (set?.done === true ? 1 : 0), 0);
+                if (doneSets === 0) {
+                    return;
+                }
+
+                if (primaryMuscle && primaryMuscle === muscleKey) {
+                    stats.sets += doneSets;
+                }
+                if (!sessionCounted && muscles.includes(muscleKey)) {
+                    stats.sessions += 1;
+                    sessionCounted = true;
+                }
+            });
+        });
+
+        return stats;
     }
 
     function getExerciseMuscleKeys(exercise) {

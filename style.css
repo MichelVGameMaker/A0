@@ -1292,6 +1292,19 @@ input[type="number"]{ -moz-appearance:textfield; }
     border-top: none;
 }
 
+.volume-muscle-row td {
+    font-weight: var(--fw-strong);
+}
+
+.volume-exercise-row {
+    cursor: pointer;
+}
+
+.volume-exercise-row:hover td,
+.volume-exercise-row:focus-within td {
+    color: var(--emphase);
+}
+
 .mapping-table {
     width: 100%;
     border-collapse: collapse;
