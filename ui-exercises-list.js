@@ -321,7 +321,7 @@
         }
 
         const name = document.createElement('div');
-        name.className = 'element';
+        name.className = 'element exercise-card-name';
         name.textContent = exercise.name || '—';
         const details = document.createElement('div');
         details.className = 'details';
