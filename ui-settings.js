@@ -211,6 +211,8 @@
         }
     }
 
+    const FIT_HERO_MISSING_STORAGE_KEY = 'fithero_missing_exercises';
+
     async function importFitHeroSessions({ input, button } = {}) {
         const file = input?.files?.[0];
         if (!file) {
@@ -231,23 +233,39 @@
         }
 
         try {
-            const payload = await readJsonFile(file);
+            const [payload, mapping, exercises] = await Promise.all([
+                readJsonFile(file),
+                loadFitHeroMapping(),
+                db.getAll('exercises')
+            ]);
             const workouts = payload?.workouts;
             if (!Array.isArray(workouts)) {
                 throw new Error('Format FitHero invalide : workouts manquant.');
             }
 
+            const mappingBySlug = buildFitHeroMapping(mapping);
+            const exerciseById = new Map(
+                (Array.isArray(exercises) ? exercises : []).map((exercise) => [exercise.id, exercise])
+            );
+            const missingExercises = new Set();
+
             await clearAllSessions();
 
             let imported = 0;
             for (const workout of workouts) {
-                const session = toFitHeroSession(workout);
+                const session = toFitHeroSession(workout, {
+                    mappingBySlug,
+                    exerciseById,
+                    missingExercises
+                });
                 if (!session) {
                     continue;
                 }
                 await db.saveSession(session);
                 imported += 1;
             }
+
+            updateMissingFitHeroExercises(missingExercises);
 
             const label = imported > 1 ? 'séances' : 'séance';
             alert(`${imported} ${label} FitHero chargée${imported > 1 ? 's' : ''}.`);
@@ -277,6 +295,54 @@
         }
     }
 
+    async function loadFitHeroMapping() {
+        try {
+            const url = new URL('data/mapping_fithero', document.baseURI).href;
+            const response = await fetch(url, { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error('mapping_fithero introuvable');
+            }
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                return [];
+            }
+            return data;
+        } catch (error) {
+            console.warn('Chargement mapping FitHero échoué :', error);
+            return [];
+        }
+    }
+
+    function buildFitHeroMapping(mapping) {
+        const entries = Array.isArray(mapping) ? mapping : [];
+        return new Map(
+            entries
+                .filter((entry) => entry && typeof entry.slug === 'string')
+                .map((entry) => [entry.slug.trim(), entry])
+        );
+    }
+
+    function updateMissingFitHeroExercises(missingExercises) {
+        if (!missingExercises || missingExercises.size === 0) {
+            return;
+        }
+        const raw = localStorage.getItem(FIT_HERO_MISSING_STORAGE_KEY);
+        let existing = [];
+        if (raw) {
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    existing = parsed;
+                }
+            } catch {
+                existing = [];
+            }
+        }
+        const merged = new Set(existing);
+        missingExercises.forEach((slug) => merged.add(slug));
+        localStorage.setItem(FIT_HERO_MISSING_STORAGE_KEY, JSON.stringify(Array.from(merged)));
+    }
+
     async function clearAllSessions() {
         const sessions = await db.getAll('sessions');
         if (!Array.isArray(sessions) || !sessions.length) {
@@ -287,7 +353,7 @@
         );
     }
 
-    function toFitHeroSession(workout) {
+    function toFitHeroSession(workout, context = {}) {
         if (!workout || typeof workout !== 'object') {
             return null;
         }
@@ -312,7 +378,10 @@
                 .map((exercise, index) => toFitHeroExercise(exercise, {
                     sessionId,
                     sessionDate,
-                    position: index + 1
+                    position: index + 1,
+                    mappingBySlug: context.mappingBySlug,
+                    exerciseById: context.exerciseById,
+                    missingExercises: context.missingExercises
                 }))
                 .filter(Boolean)
             : [];
@@ -334,12 +403,26 @@
         const sessionDate = context?.sessionDate || null;
         const type = typeof exercise.type === 'string' ? exercise.type.trim() : '';
         const fallbackId = typeof exercise.id === 'string' ? exercise.id.trim() : '';
-        const exerciseId = type || fallbackId;
-        const name = exerciseId || 'Exercice';
+        const slug = type || fallbackId;
+        const mapping = slug && context?.mappingBySlug ? context.mappingBySlug.get(slug) : null;
+        const mappedId = mapping?.exerciseId || '';
+        const mappedExercise = mappedId && context?.exerciseById
+            ? context.exerciseById.get(mappedId)
+            : null;
+        const exerciseId = mappedExercise?.id || mappedId || slug;
+        const name = mappedExercise?.name
+            || mapping?.name
+            || (typeof exercise.name === 'string' ? exercise.name : '')
+            || exerciseId
+            || 'Exercice';
         const exerciseDate = typeof exercise.date === 'string' ? exercise.date : sessionDate;
         const sortValue = Number.isFinite(Number(exercise.sort))
             ? Number(exercise.sort)
             : context?.position || 1;
+
+        if (slug && (!mapping || !mapping.exerciseId)) {
+            context?.missingExercises?.add(slug);
+        }
 
         const sets = Array.isArray(exercise.sets)
             ? exercise.sets.map((set, index) => toFitHeroSet(set, {
@@ -359,9 +442,9 @@
             type: exerciseId,
             sets,
             sort: sortValue,
-            category: typeof exercise.category === 'string' ? exercise.category : 'weight_reps',
-            weight_unit: typeof exercise.weight_unit === 'string' ? exercise.weight_unit : 'metric',
-            distance_unit: typeof exercise.distance_unit === 'string' ? exercise.distance_unit : 'metric',
+            category: 'weight_reps',
+            weight_unit: 'metric',
+            distance_unit: 'metric',
             comments: typeof exercise.comments === 'string' ? exercise.comments : null,
             exercise_note: typeof exercise.comments === 'string' ? exercise.comments : ''
         };
