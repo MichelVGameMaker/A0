@@ -147,12 +147,8 @@
     }
 
     async function fetchBaseFitHeroMapping() {
-        const baseUrl = 'https://github.com/MichelVGameMaker/A0/blob/main/data/mapping_fithero';
-        const response = await fetch(baseUrl, {
-            headers: {
-                Accept: 'application/vnd.github.raw'
-            }
-        });
+        const baseUrl = 'https://raw.githubusercontent.com/MichelVGameMaker/A0/main/data/mapping_fithero';
+        const response = await fetch(baseUrl);
         if (!response.ok) {
             throw new Error('Impossible de charger le mapping FitHero en ligne.');
         }
