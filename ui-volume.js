@@ -14,6 +14,28 @@
     ];
     const RANGE_BY_LABEL = new Map(RANGE_OPTIONS.map((option) => [option.label, option]));
     const DEFAULT_RANGE_LABEL = 'sem';
+    const DEFAULT_SELECTED_MUSCLES = [
+        'biceps',
+        'triceps',
+        'back',
+        'chest',
+        'delts',
+        'glutes',
+        'hamstrings',
+        'quads',
+        'calves'
+    ];
+    const DEFAULT_SESSIONS = 2;
+    const DEFAULT_SETS = 10;
+    const DEFAULT_SETS_BOOST = new Set(['back', 'chest', 'delts']);
+    const DEFAULT_VOLUME_ITEMS = DEFAULT_SELECTED_MUSCLES.reduce((items, muscle) => {
+        items[muscle] = {
+            selected: true,
+            targetSessions: DEFAULT_SESSIONS,
+            targetSets: DEFAULT_SETS_BOOST.has(muscle) ? 15 : DEFAULT_SETS
+        };
+        return items;
+    }, {});
 
     /* STATE */
     const refs = {};
@@ -118,7 +140,7 @@
     function loadSettings() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) {
-            return { items: {}, range: DEFAULT_RANGE_LABEL };
+            return { items: DEFAULT_VOLUME_ITEMS, range: DEFAULT_RANGE_LABEL };
         }
         try {
             const parsed = JSON.parse(raw);
