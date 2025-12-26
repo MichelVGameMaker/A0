@@ -75,8 +75,11 @@
         refs.btnDataBack = document.getElementById('btnDataBack');
         refs.btnDataReloadExercises = document.getElementById('btnDataReloadExercises');
         refs.btnDataImportFitHero = document.getElementById('btnDataImportFitHero');
+        refs.btnDataExportSessions = document.getElementById('btnDataExportSessions');
+        refs.btnDataImportSessions = document.getElementById('btnDataImportSessions');
         refs.btnDataFitHeroMapping = document.getElementById('btnDataFitHeroMapping');
         refs.inputDataImportFitHero = document.getElementById('inputDataImportFitHero');
+        refs.inputDataImportSessions = document.getElementById('inputDataImportSessions');
         refsResolved = true;
         return refs;
     }
@@ -94,8 +97,11 @@
             btnDataBack,
             btnDataReloadExercises,
             btnDataImportFitHero,
+            btnDataExportSessions,
+            btnDataImportSessions,
             btnDataFitHeroMapping,
-            inputDataImportFitHero
+            inputDataImportFitHero,
+            inputDataImportSessions
         } = ensureRefs();
 
         btnSettingsExercises?.addEventListener('click', () => {
@@ -135,6 +141,12 @@
         btnDataImportFitHero?.addEventListener('click', () => {
             inputDataImportFitHero?.click();
         });
+        btnDataExportSessions?.addEventListener('click', () => {
+            void exportSessions(btnDataExportSessions);
+        });
+        btnDataImportSessions?.addEventListener('click', () => {
+            inputDataImportSessions?.click();
+        });
         btnDataFitHeroMapping?.addEventListener('click', () => {
             A.openFitHeroMapping?.();
         });
@@ -142,6 +154,12 @@
             void importFitHeroSessions({
                 input: inputDataImportFitHero,
                 button: btnDataImportFitHero
+            });
+        });
+        inputDataImportSessions?.addEventListener('change', () => {
+            void importAppSessions({
+                input: inputDataImportSessions,
+                button: btnDataImportSessions
             });
         });
     }
@@ -247,6 +265,122 @@
                 button.disabled = false;
             }
         }
+    }
+
+    async function exportSessions(button) {
+        if (!db?.getAll) {
+            alert('La sauvegarde des séances est indisponible.');
+            return;
+        }
+
+        if (button) {
+            button.disabled = true;
+        }
+
+        try {
+            const sessions = await db.getAll('sessions');
+            const payload = {
+                format: 'a0-sessions',
+                exportedAt: new Date().toISOString(),
+                sessions: Array.isArray(sessions) ? sessions : []
+            };
+            downloadJson('a0_seances.json', payload);
+            alert('Sauvegarde des séances générée.');
+        } catch (error) {
+            console.warn('Sauvegarde des séances échouée :', error);
+            alert('La sauvegarde des séances a échoué.');
+        } finally {
+            if (button) {
+                button.disabled = false;
+            }
+        }
+    }
+
+    async function importAppSessions({ input, button } = {}) {
+        const file = input?.files?.[0];
+        if (!file) {
+            return;
+        }
+
+        if (input) {
+            input.value = '';
+        }
+
+        if (!db?.getAll || !db?.del || !db?.saveSession) {
+            alert('Le chargement des séances est indisponible.');
+            return;
+        }
+
+        if (button) {
+            button.disabled = true;
+        }
+
+        try {
+            const payload = await readJsonFile(file);
+            const sessions = Array.isArray(payload)
+                ? payload
+                : Array.isArray(payload?.sessions)
+                    ? payload.sessions
+                    : null;
+            if (!sessions) {
+                throw new Error('Format invalide : sessions manquant.');
+            }
+
+            const invalidIndex = sessions.findIndex((session) => !isSessionPayloadValid(session));
+            if (invalidIndex !== -1) {
+                throw new Error(`Format invalide : séance ${invalidIndex + 1} incorrecte.`);
+            }
+
+            const confirmed = window.confirm(
+                `Charger ${sessions.length} séance${sessions.length > 1 ? 's' : ''} et remplacer toutes les données actuelles ?`
+            );
+            if (!confirmed) {
+                return;
+            }
+
+            await clearAllSessions();
+
+            for (const session of sessions) {
+                await db.saveSession(session);
+            }
+
+            const label = sessions.length > 1 ? 'séances' : 'séance';
+            alert(`${sessions.length} ${label} chargée${sessions.length > 1 ? 's' : ''}.`);
+
+            if (typeof A.renderWeek === 'function') {
+                await A.renderWeek();
+            }
+            if (typeof A.renderSession === 'function') {
+                await A.renderSession();
+            }
+        } catch (error) {
+            console.warn('Import séances échoué :', error);
+            alert('Le chargement des séances a échoué.');
+        } finally {
+            if (button) {
+                button.disabled = false;
+            }
+        }
+    }
+
+    function isSessionPayloadValid(session) {
+        if (!session || typeof session !== 'object') {
+            return false;
+        }
+        const id = typeof session.id === 'string' ? session.id.trim() : '';
+        const date = typeof session.date === 'string' ? session.date.trim() : '';
+        return Boolean(id || date);
+    }
+
+    function downloadJson(filename, data) {
+        const payload = JSON.stringify(data, null, 2);
+        const blob = new Blob([payload], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
     }
 
     const FIT_HERO_MISSING_STORAGE_KEY = A.fitHeroMissingStorageKey || 'fithero_missing_exercises';
