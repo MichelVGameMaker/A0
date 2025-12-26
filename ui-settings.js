@@ -70,6 +70,7 @@
         refs.btnSettingsVolume = document.getElementById('btnSettingsVolume');
         refs.btnSettingsData = document.getElementById('btnSettingsData');
         refs.btnSettingsUpdate = document.getElementById('btnSettingsUpdate');
+        refs.btnSettingsReset = document.getElementById('btnSettingsReset');
         refs.btnPreferencesBack = document.getElementById('btnPreferencesBack');
         refs.btnDataBack = document.getElementById('btnDataBack');
         refs.btnDataReloadExercises = document.getElementById('btnDataReloadExercises');
@@ -88,6 +89,7 @@
             btnSettingsVolume,
             btnSettingsData,
             btnSettingsUpdate,
+            btnSettingsReset,
             btnPreferencesBack,
             btnDataBack,
             btnDataReloadExercises,
@@ -116,7 +118,10 @@
             A.openData();
         });
         btnSettingsUpdate?.addEventListener('click', () => {
-            void handleUpdateReset();
+            void handleUpdateRefresh();
+        });
+        btnSettingsReset?.addEventListener('click', () => {
+            void handleReset();
         });
         btnPreferencesBack?.addEventListener('click', () => {
             A.openSettings();
@@ -154,10 +159,10 @@
         }
     }
 
-    async function handleUpdateReset() {
+    async function handleUpdateRefresh() {
         const { btnSettingsUpdate } = ensureRefs();
         const confirmed = window.confirm(
-            'Update : cette action supprime les données locales, le cache et le storage. Continuer ?'
+            'Update : cette action recharge l’application sans effacer vos données. Continuer ?'
         );
         if (!confirmed) {
             return;
@@ -168,9 +173,31 @@
         }
 
         try {
+            await clearAppCache();
+        } catch (error) {
+            console.warn('Update échoué :', error);
+        } finally {
+            window.location.reload();
+        }
+    }
+
+    async function handleReset() {
+        const { btnSettingsReset } = ensureRefs();
+        const confirmed = window.confirm(
+            'Reset : cette action supprime toutes les données locales et le cache. Continuer ?'
+        );
+        if (!confirmed) {
+            return;
+        }
+
+        if (btnSettingsReset) {
+            btnSettingsReset.disabled = true;
+        }
+
+        try {
             await resetAppStorage();
         } catch (error) {
-            console.warn('Reset Update échoué :', error);
+            console.warn('Reset échoué :', error);
         } finally {
             window.location.reload();
         }
@@ -184,6 +211,10 @@
             await db.reset();
         }
 
+        await clearAppCache();
+    }
+
+    async function clearAppCache() {
         if ('caches' in window) {
             const keys = await caches.keys();
             await Promise.all(keys.map((key) => caches.delete(key)));
