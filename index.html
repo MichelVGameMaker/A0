@@ -660,6 +660,9 @@
                 <button id="btnSettingsData" class="btn full">💾 Données</button>
             </div>
             <div class="row">
+                <button id="btnSettingsAdmin" class="btn full">🛠️ Admin</button>
+            </div>
+            <div class="row">
                 <button id="btnSettingsUpdate" class="btn full danger">🧹 Update</button>
             </div>
         </div>
@@ -764,6 +767,34 @@
 </section>
 <!-- ==================== -->
 
+<!-- ========== Admin ========== -->
+<section id="screenAdmin" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnAdminBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Admin</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <button id="btnAdminUpdateFitHeroMapping" class="btn full" type="button">
+                Mettre à jour le mapping FitHero
+            </button>
+            <p class="details">
+                Mets à jour le mapping FitHero en ligne depuis les mapping custom que vous avez définis.
+            </p>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
 <!-- ========== Mapping FitHero ========== -->
 <section id="screenFitHeroMapping" class="screen" hidden>
 
@@ -820,6 +851,7 @@
 <script src="ui-routine-edit.js"></script>
 <script src="ui-routine-execution-edit.js"></script>
 <script src="ui-settings.js"></script>
+<script src="ui-admin.js"></script>
 <script src="ui-fithero-mapping.js"></script>
 <script src="ui-volume.js"></script>
 <script src="ui-stats.js"></script>

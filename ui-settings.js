@@ -58,6 +58,7 @@
         refs.screenStatsList = document.getElementById('screenStatsList');
         refs.screenStatsDetail = document.getElementById('screenStatsDetail');
         refs.screenSettings = document.getElementById('screenSettings');
+        refs.screenAdmin = document.getElementById('screenAdmin');
         refs.screenVolume = document.getElementById('screenVolume');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
@@ -544,6 +545,7 @@
             screenStatsList,
             screenStatsDetail,
             screenSettings,
+            screenAdmin,
             screenVolume,
             screenPreferences,
             screenData,
@@ -561,6 +563,7 @@
             screenStatsList,
             screenStatsDetail,
             screenSettings,
+            screenAdmin,
             screenVolume,
             screenPreferences,
             screenData,
