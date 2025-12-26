@@ -444,7 +444,8 @@
                     return;
                 }
                 const muscles = getExerciseMuscleKeys(exercise);
-                if (!muscles.length) {
+                const primaryMuscle = normalizeKey(exercise.muscle);
+                if (!muscles.length && !primaryMuscle) {
                     return;
                 }
                 const sets = Array.isArray(sessionExercise.sets) ? sessionExercise.sets : [];
@@ -453,13 +454,14 @@
                     return;
                 }
                 muscles.forEach((muscleKey) => {
-                    const stats = statsByKey.get(muscleKey);
-                    if (!stats) {
+                    if (!statsByKey.has(muscleKey)) {
                         return;
                     }
-                    stats.sets += doneSets;
                     sessionMuscles.add(muscleKey);
                 });
+                if (primaryMuscle && statsByKey.has(primaryMuscle)) {
+                    statsByKey.get(primaryMuscle).sets += doneSets;
+                }
             });
 
             sessionMuscles.forEach((muscleKey) => {
