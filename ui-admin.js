@@ -201,6 +201,9 @@
             if (!entry?.slug) {
                 return;
             }
+            if (!hasMappingValue(entry)) {
+                return;
+            }
             mergedBySlug.set(entry.slug, {
                 slug: entry.slug,
                 exerciseId: entry.exerciseId ?? null,
@@ -211,6 +214,9 @@
             if (!entry?.slug) {
                 return;
             }
+            if (!hasMappingValue(entry)) {
+                return;
+            }
             mergedBySlug.set(entry.slug, {
                 slug: entry.slug,
                 exerciseId: entry.exerciseId ?? null,
@@ -218,6 +224,10 @@
             });
         });
         return Array.from(mergedBySlug.values()).sort((a, b) => a.slug.localeCompare(b.slug));
+    }
+
+    function hasMappingValue(entry) {
+        return Boolean(entry?.exerciseId || entry?.name);
     }
 
     function downloadMapping(mapping) {
