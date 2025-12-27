@@ -1251,6 +1251,13 @@ input[type="number"]{ -moz-appearance:textfield; }
     vertical-align: middle;
 }
 
+.volume-table th:nth-child(2),
+.volume-table th:nth-child(3),
+.volume-table td:nth-child(2),
+.volume-table td:nth-child(3) {
+    text-align: center;
+}
+
 .volume-table th {
     color: var(--labelColor);
     font-size: var(--fs-small);
@@ -1258,22 +1265,6 @@ input[type="number"]{ -moz-appearance:textfield; }
 
 .volume-table tbody tr + tr td {
     border-top: 1px solid var(--panelBord);
-}
-
-.volume-link {
-    border: none;
-    background: transparent;
-    padding: 0;
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-    text-align: left;
-}
-
-.volume-link:hover,
-.volume-link:focus-visible {
-    color: var(--emphase);
-    text-decoration: underline;
 }
 
 .volume-section-row td {
@@ -1296,12 +1287,12 @@ input[type="number"]{ -moz-appearance:textfield; }
     font-weight: var(--fw-strong);
 }
 
-.volume-exercise-row {
+.volume-row-clickable {
     cursor: pointer;
 }
 
-.volume-exercise-row:hover td,
-.volume-exercise-row:focus-within td {
+.volume-row-clickable:hover td,
+.volume-row-clickable:focus-within td {
     color: var(--emphase);
 }
 
