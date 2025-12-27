@@ -3,26 +3,37 @@
    ========================================================= */
 :root{
   /* --- Couleurs --- */
-  --emphase:       #00ff5e;
+  --emphase:       #34ebdb;
+  --emphase_white: #f0faf9;
   --red:           #8b0000;
   --green:         #06402b;
+  --white:         #ffffff;
+  --pink:          #faebf2;
+  --almost_white:  #f8f8f8; 
+  --light_grey:    #e8e8e8;
+  --grey:          #d4d4d4;
+  --dark_grey:     #ccc;
+  --darker_grey:   #bbb;
+  --black:         #000000;  
   /* --- Styles --- */
-  --panelBack:     #ffffff;
-  --panelBord:     #f8f8f8;
-  --labelColor:    #bbb;
-  --emptyColor:    #ccc;
-  --filledColor:   #000000;
-  --selectedColor: #000000;
   --bodyBack:      #8b0000;
-  --selectedBack:  #d4d4d4;
+  --contentBack:   var(--emphase_white);
+  --panelBack:     var(--white);
+  --panelBord:     var(--almost_white);
+
+  --emptyColor:    var(--dark_grey);
+  --labelColor:    var(--darker_grey);
+  --filledColor:   var(--black);
+  --selectedColor: var(--black);
+  --selectedBack:  var(--grey);
   --selectedBord:  var(--emphase);
-  --focusedBack:   #d4d4d4;
-  --focusedColor:  #ffffff;
+  --focusedBack:   var(--grey);
+  --focusedColor:  var(--white);
   --focusedBord:   var(--emphase);
-  --clickableBack: #e8e8e8;
-  --clickableBord: #f8f8f8;
+  --clickableBack: var(--#light_grey);
+  --clickableBord: var(--#almost_white); 
   --nonClickableBord: var(--emphase);
-  --black:         #000000;
+  /* --- RPE styles --- */
   --rpe-ink:       #0f243a;
   --rpe-5-bg:      #e6f1ff;
   --rpe-5-bord:    #c9ddf6;
@@ -53,7 +64,7 @@
   --fs-base:   16px;        /* base */
   --fs-small:  13px;        /* petits textes (ex: cellules série) */
   --fs-rpe:    13px;        /* taille spécifique RPE dans série */
-  --fw-light:   500;
+  --fw-light:  500;
   --fw-base:   600;
   --fw-strong: 700;
 
@@ -70,7 +81,10 @@
 .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 8px); }
 
 
-/* Reset simple */
+/* =========================================================
+   1) Contenu
+   ========================================================= */
+ /* Reset simple */
 *{
   box-sizing:border-box;
   user-select:none;
@@ -89,6 +103,7 @@ body{
     color: var(--black);
     font-family: var(--font);
     font-size: var(--fs-base);
+    font-weight: var(--fw-base);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -108,15 +123,11 @@ body{
 .full{ width:100%; }
 .flex-1{ flex:1; }
   
-
-/* =========================================================
-   1) Contenu
-   ========================================================= */
- .content {
+.content {
     flex: 1;
-    background: var(--panelBord);                /* panneau blanc */
+    background: var(--contentBack);                /* panneau blanc */
     border-inline: 6px solid var(--panelBord);
-    padding:  12px;
+    padding:  8px;
     min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
 }
 

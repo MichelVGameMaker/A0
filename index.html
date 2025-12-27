@@ -682,7 +682,7 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== Volume ========== -->
+<!-- ========== Volume principal ========== -->
 <section id="screenVolume" class="screen" hidden>
 
     <header class="header">
@@ -794,11 +794,6 @@
 
     <main class="content">
         <div class="bloque">
-            <button id="btnDataImportFitHero" class="btn full" type="button">Charger séances depuis FitHero</button>
-            <input id="inputDataImportFitHero" type="file" accept="application/json,.json" hidden>
-            <p class="details">Remplace toutes les séances enregistrées par un fichier JSON FitHero.</p>
-        </div>
-        <div class="bloque">
             <button id="btnDataExportSessions" class="btn full" type="button">Sauvegarder séances</button>
             <p class="details">Génère un fichier JSON des séances enregistrées.</p>
         </div>
@@ -808,12 +803,17 @@
             <p class="details">Remplace toutes les séances par celles du fichier JSON.</p>
         </div>
         <div class="bloque">
+            <button id="btnDataImportFitHero" class="btn full" type="button">Charger séances depuis FitHero</button>
+            <input id="inputDataImportFitHero" type="file" accept="application/json,.json" hidden>
+            <p class="details">Remplace toutes les séances enregistrées par celles du fichier JSON, au format FitHero.</p>
+        </div>
+        <div class="bloque">
             <button id="btnDataFitHeroMapping" class="btn full" type="button">Gérer mapping FitHero</button>
-            <p class="details">Associez les exercices FitHero inconnus à ceux de votre bibliothèque.</p>
+            <p class="details">Gère les associations des exercices FitHero inconnus vers ceux de votre bibliothèque.</p>
         </div>
         <div class="bloque">
             <button id="btnDataReloadExercises" class="btn full" type="button">Charger bibliothèque d’exercices</button>
-            <p class="details">Relance le chargement des exercices depuis internet.</p>
+            <p class="details">Relance le chargement de la Bibliothèque d'exercices depuis internet.</p>
         </div>
     </main>
 
