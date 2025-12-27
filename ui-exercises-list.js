@@ -6,6 +6,12 @@
         throw new Error('ui-exercises-list: composant listCard manquant.');
     }
 
+    const SEARCH_SYNONYM_GROUPS = [
+        ['bicep', 'biceps'],
+        ['delt', 'delts', 'deltoids', 'deltoid', 'shoulder', 'shoulders']
+    ];
+    const SEARCH_SYNONYMS = buildSynonymMap(SEARCH_SYNONYM_GROUPS);
+
     /* STATE */
     const refs = {};
     let refsResolved = false;
@@ -46,12 +52,13 @@
         state.filters.equip = (exFilterEquip.value || '').trim();
 
         const query = state.filters.search.toLowerCase().trim();
+        const searchTerms = normalizeSearchTerms(query);
         const groupFilter = state.filters.group;
         const equipFilter = state.filters.equip;
 
         const all = await db.getAll('exercises');
         const filtered = all.filter((exercise) => {
-            if (query && !String(exercise.name || '').toLowerCase().includes(query)) {
+            if (query && !matchesSearch(String(exercise.name || ''), searchTerms)) {
                 return false;
             }
             if (groupFilter) {
@@ -145,6 +152,35 @@
         configureHeaderButtons();
         await A.refreshExerciseList();
     };
+
+    function normalizeSearchTerms(query) {
+        return String(query || '')
+            .toLowerCase()
+            .split(/\s+/)
+            .filter(Boolean);
+    }
+
+    function matchesSearch(haystack, terms) {
+        if (!terms.length) {
+            return true;
+        }
+        const normalized = String(haystack || '').toLowerCase();
+        return terms.every((term) => {
+            const synonyms = SEARCH_SYNONYMS.get(term) || [term];
+            return synonyms.some((synonym) => normalized.includes(synonym));
+        });
+    }
+
+    function buildSynonymMap(groups) {
+        const map = new Map();
+        groups.forEach((group) => {
+            const normalized = group.map((term) => String(term || '').toLowerCase()).filter(Boolean);
+            normalized.forEach((term) => {
+                map.set(term, normalized);
+            });
+        });
+        return map;
+    }
 
     /* UTILS */
     function ensureRefs() {
