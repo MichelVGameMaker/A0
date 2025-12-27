@@ -8,7 +8,9 @@
 
     const SEARCH_SYNONYM_GROUPS = [
         ['bicep', 'biceps'],
-        ['delt', 'delts', 'deltoids', 'deltoid', 'shoulder', 'shoulders']
+        ['delt', 'delts', 'deltoids', 'deltoid', 'shoulder', 'shoulders'],
+        ['single', 'one'],
+        ['calf', 'calves']
     ];
     const SEARCH_SYNONYMS = buildSynonymMap(SEARCH_SYNONYM_GROUPS);
 
@@ -500,7 +502,8 @@
 
     function configureHeaderButtons() {
         const { exOkList, exBackList } = assertRefs();
-        exOkList.textContent = 'Créer nouveau';
+        exOkList.textContent = '＋';
+        exOkList.title = 'Créer un exercice';
         exOkList.onclick = () => {
             A.openExerciseEdit({ callerScreen: 'screenExercises' });
         };
