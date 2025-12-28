@@ -64,14 +64,13 @@
         if (refsResolved) {
             return refs;
         }
-        refs.screenVolume = document.getElementById('screenVolume');
-        refs.btnVolumeBack = document.getElementById('btnVolumeBack');
+        refs.screenStatMuscles = document.getElementById('screenStatMuscles');
         refs.btnVolumeEdit = document.getElementById('btnVolumeEdit');
         refs.volumeRangeTags = document.getElementById('volumeRangeTags');
         refs.volumeTable = document.getElementById('volumeTable');
         refs.volumeTableBody = document.getElementById('volumeTableBody');
         refs.volumeEmpty = document.getElementById('volumeEmpty');
-        refs.screenVolumeMuscle = document.getElementById('screenVolumeMuscle');
+        refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.btnVolumeMuscleBack = document.getElementById('btnVolumeMuscleBack');
         refs.volumeMuscleTitle = document.getElementById('volumeMuscleTitle');
         refs.volumeMuscleRangeTags = document.getElementById('volumeMuscleRangeTags');
@@ -86,16 +85,7 @@
     }
 
     function wireEvents() {
-        const {
-            btnVolumeBack,
-            btnVolumeEdit,
-            btnVolumeMuscleBack,
-            volumeEditSave
-        } = ensureRefs();
-
-        btnVolumeBack?.addEventListener('click', () => {
-            A.openSettings();
-        });
+        const { btnVolumeEdit, btnVolumeMuscleBack, volumeEditSave } = ensureRefs();
 
         btnVolumeEdit?.addEventListener('click', () => {
             openEditDialog();
@@ -171,12 +161,12 @@
     }
 
     function showVolumeMuscleScreen() {
-        const { screenVolume, screenVolumeMuscle } = ensureRefs();
-        if (screenVolume) {
-            screenVolume.hidden = true;
+        const { screenStatMuscles, screenStatMusclesDetail } = ensureRefs();
+        if (screenStatMuscles) {
+            screenStatMuscles.hidden = true;
         }
-        if (screenVolumeMuscle) {
-            screenVolumeMuscle.hidden = false;
+        if (screenStatMusclesDetail) {
+            screenStatMusclesDetail.hidden = false;
         }
     }
 

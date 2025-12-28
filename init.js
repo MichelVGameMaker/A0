@@ -47,8 +47,8 @@
             screenRoutineEdit,
             screenRoutineMoveEdit,
             screenRoutineList,
-            screenStatsList,
-            screenStatsDetail,
+            screenStatExercises,
+            screenStatExercisesDetail,
             screenSettings,
             screenPreferences,
             screenData
@@ -65,7 +65,7 @@
         tabStats?.addEventListener('click', async () => {
             setActiveTab('tabStats');
             A.setTimerVisibility?.({ forcedHidden: false, reason: null });
-            await A.openStatsList();
+            await A.openVolume?.();
         });
 
         tabSettings?.addEventListener('click', async () => {
@@ -79,8 +79,8 @@
         screenRoutineEdit?.setAttribute('data-screen', 'routine');
         screenRoutineMoveEdit?.setAttribute('data-screen', 'routineMove');
         screenRoutineList?.setAttribute('data-screen', 'routineList');
-        screenStatsList?.setAttribute('data-screen', 'statsList');
-        screenStatsDetail?.setAttribute('data-screen', 'statsDetail');
+        screenStatExercises?.setAttribute('data-screen', 'stat-exercises');
+        screenStatExercisesDetail?.setAttribute('data-screen', 'stat-exercises-detail');
         screenSettings?.setAttribute('data-screen', 'settings');
         screenPreferences?.setAttribute('data-screen', 'preferences');
         screenData?.setAttribute('data-screen', 'data');
@@ -129,8 +129,8 @@
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
         refs.screenRoutineList = document.getElementById('screenRoutineList');
         refs.screenExecEdit = document.getElementById('screenExecEdit');
-        refs.screenStatsList = document.getElementById('screenStatsList');
-        refs.screenStatsDetail = document.getElementById('screenStatsDetail');
+        refs.screenStatExercises = document.getElementById('screenStatExercises');
+        refs.screenStatExercisesDetail = document.getElementById('screenStatExercisesDetail');
         refs.screenSettings = document.getElementById('screenSettings');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
@@ -173,8 +173,8 @@
             screenRoutineMoveEdit,
             screenExecEdit,
             screenRoutineList,
-            screenStatsList,
-            screenStatsDetail,
+            screenStatExercises,
+            screenStatExercisesDetail,
             screenSettings,
             screenPreferences,
             screenData
@@ -200,11 +200,11 @@
         if (screenRoutineList) {
             screenRoutineList.hidden = which !== 'routineList';
         }
-        if (screenStatsList) {
-            screenStatsList.hidden = which !== 'statsList';
+        if (screenStatExercises) {
+            screenStatExercises.hidden = which !== 'stat-exercises';
         }
-        if (screenStatsDetail) {
-            screenStatsDetail.hidden = which !== 'statsDetail';
+        if (screenStatExercisesDetail) {
+            screenStatExercisesDetail.hidden = which !== 'stat-exercises-detail';
         }
         if (screenSettings) {
             screenSettings.hidden = which !== 'settings';

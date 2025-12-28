@@ -76,11 +76,11 @@
         refs.screenExecEdit = document.getElementById('screenExecEdit');
         refs.screenRoutineEdit = document.getElementById('screenRoutineEdit');
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
-        refs.screenStatsList = document.getElementById('screenStatsList');
-        refs.screenStatsDetail = document.getElementById('screenStatsDetail');
+        refs.screenStatExercises = document.getElementById('screenStatExercises');
+        refs.screenStatExercisesDetail = document.getElementById('screenStatExercisesDetail');
         refs.screenSettings = document.getElementById('screenSettings');
-        refs.screenVolume = document.getElementById('screenVolume');
-        refs.screenVolumeMuscle = document.getElementById('screenVolumeMuscle');
+        refs.screenStatMuscles = document.getElementById('screenStatMuscles');
+        refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.exEditTitle = document.getElementById('exEditTitle');
@@ -245,11 +245,11 @@
             screenExerciseRead: refs.screenExerciseRead,
             screenRoutineEdit: refs.screenRoutineEdit,
             screenRoutineMoveEdit: refs.screenRoutineMoveEdit,
-            screenStatsList: refs.screenStatsList,
-            screenStatsDetail: refs.screenStatsDetail,
+            screenStatExercises: refs.screenStatExercises,
+            screenStatExercisesDetail: refs.screenStatExercisesDetail,
             screenSettings: refs.screenSettings,
-            screenVolume: refs.screenVolume,
-            screenVolumeMuscle: refs.screenVolumeMuscle,
+            screenStatMuscles: refs.screenStatMuscles,
+            screenStatMusclesDetail: refs.screenStatMusclesDetail,
             screenPreferences: refs.screenPreferences,
             screenData: refs.screenData
         };
