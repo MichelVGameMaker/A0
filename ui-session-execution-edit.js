@@ -356,6 +356,41 @@
             inputs.forEach((input) => input?._update?.());
         };
 
+        const buildKeyboardActions = () => [
+            {
+                icon: '🗑️',
+                ariaLabel: 'Supprimer la série',
+                className: 'inline-keyboard-action--danger inline-keyboard-action--icon',
+                onClick: async () => {
+                    await removeSet(currentIndex);
+                }
+            },
+            {
+                label: 'prévu',
+                className: 'inline-keyboard-action--muted',
+                onClick: async () => {
+                    await applySetEditorResult(
+                        currentIndex,
+                        { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest },
+                        { done: false }
+                    );
+                }
+            },
+            {
+                label: 'fait',
+                className: 'inline-keyboard-action--emphase inline-keyboard-action--span-2',
+                span: 2,
+                onClick: async () => {
+                    await applySetEditorResult(
+                        currentIndex,
+                        { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest },
+                        { done: true }
+                    );
+                    startTimer(value.rest);
+                }
+            }
+        ];
+
         const openEditor = (focusField) => {
             const editor = ensureInlineEditor();
             if (!editor) {
@@ -467,6 +502,7 @@
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
                     layout: field === 'rpe' ? 'rpe' : 'default',
+                    actions: buildKeyboardActions(),
                     getValue: () => input.value,
                     onChange: (next) => {
                         input.value = next;
