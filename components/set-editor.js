@@ -705,7 +705,8 @@
             const target = event.target;
             const isInsideKeyboard = path.includes(keyboard) || keyboard.contains(target);
             const isInsideTarget = path.includes(active.target) || active.target?.contains?.(target);
-            if (isInsideKeyboard || isInsideTarget) {
+            const isInsideInlineSetEditor = path.some((node) => node?.classList?.contains?.('inline-set-editor-row'));
+            if (isInsideKeyboard || isInsideTarget || isInsideInlineSetEditor) {
                 return;
             }
             handleClose();
