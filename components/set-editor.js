@@ -1007,7 +1007,7 @@
         };
 
         const adjustState = (state, field, delta, config) => {
-            inlineKeyboard?.selectTarget?.();
+            inlineKeyboard?.detach?.();
             switch (field) {
                 case 'reps': {
                     const current = Math.max(0, parseIntSafe(state.reps, 0));
