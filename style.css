@@ -1216,9 +1216,10 @@ input[type="number"]{ -moz-appearance:textfield; }
 }
 
 .stats-timeline-item {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: baseline;
+    gap: 12px;
     padding: 12px 16px;
     border: 1px solid var(--panelBord);
     border-radius: var(--radius);
@@ -1234,9 +1235,16 @@ input[type="number"]{ -moz-appearance:textfield; }
     font-weight: var(--fw-strong);
 }
 
+.stats-timeline-middle {
+    color: var(--selectedBord);
+    font-weight: var(--fw-strong);
+    white-space: nowrap;
+}
+
 .stats-timeline-value {
     color: var(--black);
     font-weight: var(--fw-strong);
+    white-space: nowrap;
 }
 
 .stats-timeline-empty {

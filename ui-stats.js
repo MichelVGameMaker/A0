@@ -61,6 +61,13 @@
             format: formatKilograms
         },
         {
+            key: 'volume',
+            tagLabel: 'Volume',
+            label: 'Volume total',
+            axisUnit: 'kg',
+            format: formatVolume
+        },
+        {
             key: 'setsWeek',
             tagLabel: 'Séries/sem.',
             label: 'Nombre de séries sur la semaine',
@@ -719,6 +726,14 @@
         date.className = 'stats-timeline-date';
         date.textContent = entry?.dateObj ? A.fmtUI(entry.dateObj) : '—';
 
+        const middle = document.createElement('span');
+        middle.className = 'stats-timeline-middle';
+        const middleMetric = state.activeMetric === 'setsWeek' ? 'volume' : 'setCount';
+        const middleValue =
+            middleMetric === 'volume' ? entry?.metrics?.volume || 0 : entry?.metrics?.setCount || 0;
+        middle.textContent =
+            middleMetric === 'volume' ? formatVolume(middleValue) : formatSeries(middleValue);
+
         const value = document.createElement('span');
         value.className = 'stats-timeline-value';
         const metricValue = getMetricValue(entry, state.activeMetric, weeklySets);
@@ -738,7 +753,7 @@
             }
         });
 
-        item.append(date, value);
+        item.append(date, middle, value);
         return item;
     }
 
@@ -758,6 +773,7 @@
                         orm: 0,
                         tenrm: 0,
                         tenrmReal: 0,
+                        volume: 0,
                         setCount: 0,
                         avgRpe: 0,
                         rpeSum: 0,
@@ -772,6 +788,7 @@
             target.metrics.orm = Math.max(target.metrics.orm, metrics.orm || 0);
             target.metrics.tenrm = Math.max(target.metrics.tenrm, metrics.tenrm || 0);
             target.metrics.tenrmReal = Math.max(target.metrics.tenrmReal, metrics.tenrmReal || 0);
+            target.metrics.volume += metrics.volume || 0;
             target.metrics.setCount += metrics.setCount || 0;
             target.metrics.rpeSum += metrics.rpeSum || 0;
             target.metrics.rpeCount += metrics.rpeCount || 0;
@@ -805,6 +822,7 @@
                         orm: 0,
                         tenrm: 0,
                         tenrmReal: 0,
+                        volume: 0,
                         setCount: 0,
                         avgRpe: 0,
                         rpeSum: 0,
@@ -819,6 +837,7 @@
             target.metrics.orm = Math.max(target.metrics.orm, metrics.orm || 0);
             target.metrics.tenrm = Math.max(target.metrics.tenrm, metrics.tenrm || 0);
             target.metrics.tenrmReal = Math.max(target.metrics.tenrmReal, metrics.tenrmReal || 0);
+            target.metrics.volume += metrics.volume || 0;
             target.metrics.setCount += metrics.setCount || 0;
             target.metrics.rpeSum += metrics.rpeSum || 0;
             target.metrics.rpeCount += metrics.rpeCount || 0;
@@ -901,6 +920,7 @@
         let maxOrm = 0;
         let maxTenRm = 0;
         let maxTenRmReal = 0;
+        let totalVolume = 0;
         let setCount = 0;
         let rpeSum = 0;
         let rpeCount = 0;
@@ -930,6 +950,7 @@
                 hasData = true;
             }
             if (Number.isFinite(weight) && weight > 0 && Number.isFinite(reps) && reps > 0) {
+                totalVolume += reps * weight;
                 const estimatedOrm = weight * (1 + reps / 30);
                 if (estimatedOrm > maxOrm) {
                     maxOrm = estimatedOrm;
@@ -947,6 +968,7 @@
             orm: maxOrm,
             tenrm: maxTenRm,
             tenrmReal: maxTenRmReal,
+            volume: totalVolume,
             setCount,
             avgRpe: rpeCount ? rpeSum / rpeCount : 0,
             rpeSum,
@@ -1011,6 +1033,12 @@
     function formatKilograms(value) {
         const normalized = Number.isFinite(value) ? value : 0;
         const rounded = Math.round(normalized * 10) / 10;
+        return `${rounded} kg`;
+    }
+
+    function formatVolume(value) {
+        const normalized = Number.isFinite(value) ? value : 0;
+        const rounded = Math.round(normalized);
         return `${rounded} kg`;
     }
 
