@@ -236,6 +236,16 @@ header .title{
 .lbl{     color: var(--labelColor); font-weight: var(--fw-strong); }
 .element{ font-weight: var(--fw-strong); }
 .details{ color: var(--labelColor); font-weight: var(--fw-light); }
+.exec-date-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+}
+.exec-date-tag{
+    flex: 0 0 auto;
+    max-width: none;
+}
 .centered{ text-align:center; }
 .listing{ margin: 0; font-weight: var(--fw-strong); padding-left: 0; list-style-position: inside; }
 
