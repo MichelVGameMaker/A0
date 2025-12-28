@@ -1105,27 +1105,6 @@
             return row;
         };
 
-        const buildActionsRow = (state, config) => {
-            if (typeof config.onDelete !== 'function') {
-                return null;
-            }
-            const row = document.createElement('div');
-            row.className = 'inline-set-editor-actions set-editor-actions set-editor-actions-vertical';
-
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'btn danger full';
-            button.textContent = 'Supprimer';
-            button.addEventListener('click', (event) => {
-                event.preventDefault();
-                config.onDelete();
-                close();
-            });
-            row.appendChild(button);
-
-            return row;
-        };
-
         const open = (row, options = {}) => {
             if (!row) {
                 return;
@@ -1140,9 +1119,7 @@
 
             const plusRow = buildStepperRow('plus', state, config, order, active.moveButtons);
             const minusRow = buildStepperRow('minus', state, config, order, active.moveButtons);
-            const actionsRow = buildActionsRow(state, config);
-
-            active.nodes = [plusRow, minusRow, actionsRow].filter(Boolean);
+            active.nodes = [plusRow, minusRow].filter(Boolean);
             attachNodes();
             updateMoveButtons();
             emitChange(config, state);
