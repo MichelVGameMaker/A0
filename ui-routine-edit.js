@@ -33,6 +33,7 @@
         wireInputs();
         wireAddExercisesButton();
         wireHeaderButtons();
+        wireDuplication();
         wireDeletion();
         wireValueStates();
     });
@@ -86,6 +87,7 @@
         refs.routineDetails = document.getElementById('routineDetails');
         refs.dlgRoutineEditor = document.getElementById('dlgRoutineEditor');
         refs.routineEditorClose = document.getElementById('routineEditorClose');
+        refs.routineDuplicate = document.getElementById('routineDuplicate');
         refs.routineDelete = document.getElementById('routineDelete');
         refs.routineList = document.getElementById('routineList');
         refs.routineEditTitle = document.getElementById('routineEditTitle');
@@ -121,6 +123,7 @@
             'routineEditEdit',
             'dlgRoutineEditor',
             'routineEditorClose',
+            'routineDuplicate',
             'routineDelete'
         ];
         const missing = required.filter((key) => !refs[key]);
@@ -147,6 +150,13 @@
         });
     }
 
+    function wireDuplication() {
+        const { routineDuplicate } = assertRefs();
+        routineDuplicate.addEventListener('click', () => {
+            void duplicateRoutine();
+        });
+    }
+
     async function deleteRoutine() {
         if (!state.routineId) {
             return;
@@ -165,6 +175,47 @@
             await A.populateRoutineSelect();
         }
         void A.openRoutineList({ callerScreen: state.callerScreen });
+    }
+
+    async function duplicateRoutine() {
+        if (!state.routine) {
+            return;
+        }
+        const base = serializeRoutine(state.routine);
+        const newRoutine = {
+            id: uid('routine'),
+            name: `${base.name || 'Routine'} (copie)`,
+            icon: base.icon,
+            details: base.details || '',
+            moves: base.moves.map((move, index) => ({
+                id: uid('move'),
+                pos: safeInt(move.pos, index + 1),
+                exerciseId: move.exerciseId,
+                exerciseName: move.exerciseName,
+                instructions: typeof move.instructions === 'string' ? move.instructions : '',
+                sets: Array.isArray(move.sets)
+                    ? move.sets.map((set, idx) => ({
+                        pos: safeInt(set.pos, idx + 1),
+                        reps: safeIntOrNull(set.reps),
+                        weight: safeFloatOrNull(set.weight),
+                        rpe: safeFloatOrNull(set.rpe),
+                        rest: safeIntOrNull(set.rest)
+                    }))
+                    : []
+            }))
+        };
+        await db.put('routines', newRoutine);
+        state.routineId = newRoutine.id;
+        state.routine = normalizeRoutine(newRoutine);
+        const { dlgRoutineEditor } = assertRefs();
+        dlgRoutineEditor?.close();
+        if (typeof A.refreshRoutineList === 'function') {
+            await A.refreshRoutineList();
+        }
+        if (typeof A.populateRoutineSelect === 'function') {
+            await A.populateRoutineSelect();
+        }
+        renderRoutine();
     }
 
     async function loadRoutine(force = false) {
