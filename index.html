@@ -155,7 +155,7 @@
 <!-- ==================== -->
 
 <!-- ========== Statistiques : liste ========== -->
-<section id="screenStatsList" class="screen" hidden>
+<section id="screenStatExercises" class="screen" hidden>
 
     <header class="header">
         <div class="header-left"></div>
@@ -173,7 +173,7 @@
 <!-- ==================== -->
 
 <!-- ========== Statistiques : détail exercice ========== -->
-<section id="screenStatsDetail" class="screen" hidden>
+<section id="screenStatExercisesDetail" class="screen" hidden>
 
     <header class="header">
         <div class="header-left">
@@ -233,6 +233,77 @@
             <h2 class="stats-section-title">Historique</h2>
             <ul id="statsTimeline" class="stats-timeline" aria-live="polite"></ul>
         </section>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Statistiques : volume muscles ========== -->
+<section id="screenStatMuscles" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left"></div>
+        <div class="header-center">
+            <div class="title">Volume</div>
+        </div>
+        <div class="header-right">
+            <button id="btnVolumeEdit" class="btn">Éditer</button>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <div class="volume-range">
+                <div id="volumeRangeTags" class="tags mono"></div>
+            </div>
+            <div id="volumeEmpty" class="volume-empty" hidden>Aucun muscle suivi pour le moment.</div>
+            <table id="volumeTable" class="volume-table">
+                <thead>
+                    <tr>
+                        <th aria-label="Muscles"></th>
+                        <th>Séances</th>
+                        <th>Séries</th>
+                    </tr>
+                </thead>
+                <tbody id="volumeTableBody"></tbody>
+            </table>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Statistiques : volume par muscle ========== -->
+<section id="screenStatMusclesDetail" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnVolumeMuscleBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div id="volumeMuscleTitle" class="title">Volume</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <div class="volume-range">
+                <div id="volumeMuscleRangeTags" class="tags mono"></div>
+            </div>
+            <div id="volumeMuscleEmpty" class="volume-empty" hidden>Aucun exercice pour ce muscle.</div>
+            <table id="volumeMuscleTable" class="volume-table">
+                <thead>
+                    <tr>
+                        <th aria-label="Exercices"></th>
+                        <th>Séances</th>
+                        <th>Séries</th>
+                    </tr>
+                </thead>
+                <tbody id="volumeMuscleTableBody"></tbody>
+            </table>
+        </div>
     </main>
 
 </section>
@@ -702,79 +773,6 @@
             <div class="row">
                 <button id="btnSettingsReset" class="btn full danger">🗑️ Reset</button>
             </div>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== Volume principal ========== -->
-<section id="screenVolume" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="btnVolumeBack" class="btn" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title">Volume</div>
-        </div>
-        <div class="header-right">
-            <button id="btnVolumeEdit" class="btn">Éditer</button>
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <div class="volume-range">
-                <div id="volumeRangeTags" class="tags mono"></div>
-            </div>
-            <div id="volumeEmpty" class="volume-empty" hidden>Aucun muscle suivi pour le moment.</div>
-            <table id="volumeTable" class="volume-table">
-                <thead>
-                    <tr>
-                        <th aria-label="Muscles"></th>
-                        <th>Séances</th>
-                        <th>Séries</th>
-                    </tr>
-                </thead>
-                <tbody id="volumeTableBody"></tbody>
-            </table>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== Volume par muscle ========== -->
-<section id="screenVolumeMuscle" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="btnVolumeMuscleBack" class="btn" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div id="volumeMuscleTitle" class="title">Volume</div>
-        </div>
-        <div class="header-right">
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <div class="volume-range">
-                <div id="volumeMuscleRangeTags" class="tags mono"></div>
-            </div>
-            <div id="volumeMuscleEmpty" class="volume-empty" hidden>Aucun exercice pour ce muscle.</div>
-            <table id="volumeMuscleTable" class="volume-table">
-                <thead>
-                    <tr>
-                        <th aria-label="Exercices"></th>
-                        <th>Séances</th>
-                        <th>Séries</th>
-                    </tr>
-                </thead>
-                <tbody id="volumeMuscleTableBody"></tbody>
-            </table>
         </div>
     </main>
 

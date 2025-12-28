@@ -64,11 +64,11 @@
         refs.screenRoutineList = document.getElementById('screenRoutineList');
         refs.screenRoutineEdit = document.getElementById('screenRoutineEdit');
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
-        refs.screenStatsList = document.getElementById('screenStatsList');
-        refs.screenStatsDetail = document.getElementById('screenStatsDetail');
+        refs.screenStatExercises = document.getElementById('screenStatExercises');
+        refs.screenStatExercisesDetail = document.getElementById('screenStatExercisesDetail');
         refs.screenSettings = document.getElementById('screenSettings');
-        refs.screenVolume = document.getElementById('screenVolume');
-        refs.screenVolumeMuscle = document.getElementById('screenVolumeMuscle');
+        refs.screenStatMuscles = document.getElementById('screenStatMuscles');
+        refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.routineCatalog = document.getElementById('routineCatalog');
@@ -253,7 +253,9 @@
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
         const map = {
             screenSessions: 'tabSessions',
-            screenStatsList: 'tabStats',
+            screenStatExercises: 'tabStats',
+            screenStatMuscles: 'tabStats',
+            screenStatMusclesDetail: 'tabStats',
             screenSettings: 'tabSettings',
             screenPreferences: 'tabSettings',
             screenData: 'tabSettings'
@@ -329,12 +331,12 @@
             screenRoutineEdit,
             screenRoutineMoveEdit,
             screenSettings,
-            screenVolume,
-            screenVolumeMuscle,
+            screenStatMuscles,
+            screenStatMusclesDetail,
             screenPreferences,
             screenData
         } = assertRefs();
-        const { screenStatsList, screenStatsDetail } = refs;
+        const { screenStatExercises, screenStatExercisesDetail } = refs;
         const map = {
             screenSessions,
             screenExercises,
@@ -344,11 +346,11 @@
             screenRoutineList,
             screenRoutineEdit,
             screenRoutineMoveEdit,
-            screenStatsList,
-            screenStatsDetail,
+            screenStatExercises,
+            screenStatExercisesDetail,
             screenSettings,
-            screenVolume,
-            screenVolumeMuscle,
+            screenStatMuscles,
+            screenStatMusclesDetail,
             screenPreferences,
             screenData
         };

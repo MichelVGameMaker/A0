@@ -75,11 +75,11 @@
         refs.screenRoutineList = document.getElementById('screenRoutineList');
         refs.screenRoutineEdit = document.getElementById('screenRoutineEdit');
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
-        refs.screenStatsList = document.getElementById('screenStatsList');
-        refs.screenStatsDetail = document.getElementById('screenStatsDetail');
+        refs.screenStatExercises = document.getElementById('screenStatExercises');
+        refs.screenStatExercisesDetail = document.getElementById('screenStatExercisesDetail');
         refs.screenSettings = document.getElementById('screenSettings');
-        refs.screenVolume = document.getElementById('screenVolume');
-        refs.screenVolumeMuscle = document.getElementById('screenVolumeMuscle');
+        refs.screenStatMuscles = document.getElementById('screenStatMuscles');
+        refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.routineName = document.getElementById('routineName');
@@ -762,12 +762,12 @@
             screenRoutineMoveEdit,
             screenRoutineList,
             screenSettings,
-            screenVolume,
-            screenVolumeMuscle,
+            screenStatMuscles,
+            screenStatMusclesDetail,
             screenPreferences,
             screenData
         } = assertRefs();
-        const { screenStatsList, screenStatsDetail } = refs;
+        const { screenStatExercises, screenStatExercisesDetail } = refs;
         const map = {
             screenSessions,
             screenExercises,
@@ -777,11 +777,11 @@
             screenRoutineEdit,
             screenRoutineList,
             screenRoutineMoveEdit,
-            screenStatsList,
-            screenStatsDetail,
+            screenStatExercises,
+            screenStatExercisesDetail,
             screenSettings,
-            screenVolume,
-            screenVolumeMuscle,
+            screenStatMuscles,
+            screenStatMusclesDetail,
             screenPreferences,
             screenData
         };

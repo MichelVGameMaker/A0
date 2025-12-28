@@ -108,7 +108,7 @@
         await loadData(true);
         state.activeExercise = null;
         renderExerciseList();
-        switchScreen('screenStatsList');
+        switchScreen('screenStatExercises');
     };
 
     A.openExerciseStats = async function openExerciseStats(exerciseId) {
@@ -118,7 +118,7 @@
         const exercise = state.exercises.find((item) => item.id === exerciseId) || (await db.get('exercises', exerciseId));
         state.activeExercise = exercise || null;
         renderExerciseDetail();
-        switchScreen('screenStatsDetail');
+        switchScreen('screenStatExercisesDetail');
     };
 
     A.invalidateStatsCache = function invalidateStatsCache() {
@@ -139,11 +139,11 @@
         refs.screenRoutineList = document.getElementById('screenRoutineList');
         refs.screenRoutineEdit = document.getElementById('screenRoutineEdit');
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
-        refs.screenStatsList = document.getElementById('screenStatsList');
-        refs.screenStatsDetail = document.getElementById('screenStatsDetail');
+        refs.screenStatExercises = document.getElementById('screenStatExercises');
+        refs.screenStatExercisesDetail = document.getElementById('screenStatExercisesDetail');
         refs.screenSettings = document.getElementById('screenSettings');
-        refs.screenVolume = document.getElementById('screenVolume');
-        refs.screenVolumeMuscle = document.getElementById('screenVolumeMuscle');
+        refs.screenStatMuscles = document.getElementById('screenStatMuscles');
+        refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.statsExerciseList = document.getElementById('statsExerciseList');
@@ -165,9 +165,9 @@
     function assertStatsRefs() {
         ensureRefs();
         const required = [
-            'screenStatsList',
+            'screenStatExercises',
             'statsExerciseList',
-            'screenStatsDetail',
+            'screenStatExercisesDetail',
             'statsExerciseTitle',
             'statsExerciseSubtitle',
             'statsChart',
@@ -190,7 +190,7 @@
             highlightStatsTab();
             state.activeExercise = null;
             renderExerciseList();
-            switchScreen('screenStatsList');
+            switchScreen('screenStatExercises');
         });
         if (statsMetricTags) {
             statsMetricTags.addEventListener('click', (event) => {
@@ -1077,11 +1077,11 @@
             screenRoutineList,
             screenRoutineEdit,
             screenRoutineMoveEdit,
-            screenStatsList,
-            screenStatsDetail,
+            screenStatExercises,
+            screenStatExercisesDetail,
             screenSettings,
-            screenVolume,
-            screenVolumeMuscle,
+            screenStatMuscles,
+            screenStatMusclesDetail,
             screenPreferences,
             screenData
         } = ensureRefs();
@@ -1094,11 +1094,11 @@
             screenRoutineList,
             screenRoutineEdit,
             screenRoutineMoveEdit,
-            screenStatsList,
-            screenStatsDetail,
+            screenStatExercises,
+            screenStatExercisesDetail,
             screenSettings,
-            screenVolume,
-            screenVolumeMuscle,
+            screenStatMuscles,
+            screenStatMusclesDetail,
             screenPreferences,
             screenData
         };

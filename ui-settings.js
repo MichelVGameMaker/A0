@@ -36,10 +36,10 @@
 
     A.openVolume = function openVolume() {
         ensureRefs();
-        highlightSettingsTab();
-        hideTimerForSettings();
+        highlightStatsTab();
+        showTimerForStats();
         A.renderVolumeScreen?.();
-        switchScreen('screenVolume');
+        switchScreen('screenStatMuscles');
     };
 
     /* UTILS */
@@ -55,12 +55,12 @@
         refs.screenRoutineList = document.getElementById('screenRoutineList');
         refs.screenRoutineEdit = document.getElementById('screenRoutineEdit');
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
-        refs.screenStatsList = document.getElementById('screenStatsList');
-        refs.screenStatsDetail = document.getElementById('screenStatsDetail');
+        refs.screenStatExercises = document.getElementById('screenStatExercises');
+        refs.screenStatExercisesDetail = document.getElementById('screenStatExercisesDetail');
         refs.screenSettings = document.getElementById('screenSettings');
         refs.screenAdmin = document.getElementById('screenAdmin');
-        refs.screenVolume = document.getElementById('screenVolume');
-        refs.screenVolumeMuscle = document.getElementById('screenVolumeMuscle');
+        refs.screenStatMuscles = document.getElementById('screenStatMuscles');
+        refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
@@ -172,9 +172,20 @@
         }
     }
 
+    function highlightStatsTab() {
+        document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
+        document.getElementById('tabStats')?.classList.add('active');
+    }
+
     function hideTimerForSettings() {
         if (typeof A.setTimerVisibility === 'function') {
             A.setTimerVisibility({ forcedHidden: true, reason: 'settings' });
+        }
+    }
+
+    function showTimerForStats() {
+        if (typeof A.setTimerVisibility === 'function') {
+            A.setTimerVisibility({ forcedHidden: false, reason: null });
         }
     }
 
@@ -709,12 +720,12 @@
             screenRoutineList,
             screenRoutineEdit,
             screenRoutineMoveEdit,
-            screenStatsList,
-            screenStatsDetail,
+            screenStatExercises,
+            screenStatExercisesDetail,
             screenSettings,
             screenAdmin,
-            screenVolume,
-            screenVolumeMuscle,
+            screenStatMuscles,
+            screenStatMusclesDetail,
             screenPreferences,
             screenData,
             screenFitHeroMapping
@@ -728,12 +739,12 @@
             screenRoutineList,
             screenRoutineEdit,
             screenRoutineMoveEdit,
-            screenStatsList,
-            screenStatsDetail,
+            screenStatExercises,
+            screenStatExercisesDetail,
             screenSettings,
             screenAdmin,
-            screenVolume,
-            screenVolumeMuscle,
+            screenStatMuscles,
+            screenStatMusclesDetail,
             screenPreferences,
             screenData,
             screenFitHeroMapping
