@@ -9,7 +9,8 @@
         dateKey: null,
         exerciseId: null,
         callerScreen: 'screenSessions',
-        session: null
+        session: null,
+        historySelected: false
     };
     let inlineEditor = null;
     const inlineKeyboard = A.components?.inlineKeyboard || A.components?.createInlineKeyboard?.();
@@ -100,6 +101,7 @@
             execMoveNote.value = exercise.exercise_note || '';
         }
         refreshValueStates();
+        setHistorySelected(false);
 
         const timerKey = `${dateKey}::${currentId}`;
         const timer = ensureSharedTimer();
@@ -151,6 +153,7 @@
         refs.execMoveNote = document.getElementById('execMoveNote');
         refs.execReplaceExercise = document.getElementById('execReplaceExercise');
         refs.execMoveEditorClose = document.getElementById('execMoveEditorClose');
+        refs.execHistoryToggle = document.getElementById('execHistoryToggle');
         refsResolved = true;
         return refs;
     }
@@ -185,7 +188,8 @@
             'execRoutineInstructions',
             'execMoveNote',
             'execReplaceExercise',
-            'execMoveEditorClose'
+            'execMoveEditorClose',
+            'execHistoryToggle'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -205,7 +209,7 @@
     }
 
     function wireActions() {
-        const { execAddSet, execDelete, execReplaceExercise } = assertRefs();
+        const { execAddSet, execDelete, execReplaceExercise, execHistoryToggle } = assertRefs();
         execAddSet.addEventListener('click', () => {
             void addSet();
         });
@@ -214,6 +218,9 @@
         });
         execReplaceExercise.addEventListener('click', () => {
             void replaceExercise();
+        });
+        execHistoryToggle.addEventListener('click', () => {
+            setHistorySelected(!state.historySelected);
         });
     }
 
@@ -262,6 +269,13 @@
                 execTimerBar.hidden = true;
             }
         });
+    }
+
+    function setHistorySelected(selected) {
+        const { execHistoryToggle } = assertRefs();
+        state.historySelected = Boolean(selected);
+        execHistoryToggle.classList.toggle('selected', state.historySelected);
+        execHistoryToggle.setAttribute('aria-pressed', state.historySelected ? 'true' : 'false');
     }
 
     function normalizeExerciseSets(exercise) {
