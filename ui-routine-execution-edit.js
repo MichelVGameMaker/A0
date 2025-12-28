@@ -232,6 +232,28 @@
             inputs.forEach((input) => input?._update?.());
         };
 
+        const buildKeyboardActions = () => [
+            {
+                icon: '🗑️',
+                ariaLabel: 'Supprimer la série',
+                className: 'inline-keyboard-action--danger inline-keyboard-action--icon',
+                onClick: () => removeSet(currentIndex)
+            },
+            {
+                label: 'prévu',
+                className: 'inline-keyboard-action--span-3',
+                span: 3,
+                onClick: () => {
+                    applySetEditorResult(currentIndex, {
+                        reps: value.reps,
+                        weight: value.weight,
+                        rpe: value.rpe,
+                        rest: value.rest
+                    });
+                }
+            }
+        ];
+
         const openEditor = (focusField) => {
             const editor = ensureInlineEditor();
             if (!editor) {
@@ -340,6 +362,7 @@
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
                     layout: field === 'rpe' ? 'rpe' : 'default',
+                    actions: buildKeyboardActions(),
                     getValue: () => input.value,
                     onChange: (next) => {
                         input.value = next;

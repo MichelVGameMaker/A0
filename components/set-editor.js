@@ -611,9 +611,17 @@
         keyboard.className = 'inline-keyboard';
         keyboard.hidden = true;
 
+        const content = document.createElement('div');
+        content.className = 'inline-keyboard-content';
+        keyboard.appendChild(content);
+
         const grid = document.createElement('div');
         grid.className = 'inline-keyboard-grid';
-        keyboard.appendChild(grid);
+        content.appendChild(grid);
+
+        const actionsGrid = document.createElement('div');
+        actionsGrid.className = 'inline-keyboard-actions';
+        content.appendChild(actionsGrid);
 
         const layouts = {
             default: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'],
@@ -637,6 +645,45 @@
                     handleInput(key);
                 });
                 grid.appendChild(button);
+            });
+        };
+
+        const renderActions = (actions = []) => {
+            actionsGrid.innerHTML = '';
+            const list = Array.isArray(actions) ? actions : [];
+            if (!list.length) {
+                actionsGrid.hidden = true;
+                actionsGrid.setAttribute('data-empty', 'true');
+                return;
+            }
+            actionsGrid.hidden = false;
+            actionsGrid.removeAttribute('data-empty');
+            list.forEach((action) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                const className = ['inline-keyboard-action', action?.className].filter(Boolean).join(' ');
+                button.className = className;
+                if (action?.label) {
+                    button.textContent = action.label;
+                } else if (action?.icon) {
+                    button.textContent = action.icon;
+                }
+                if (action?.ariaLabel) {
+                    button.setAttribute('aria-label', action.ariaLabel);
+                }
+                if (Number.isFinite(action?.span)) {
+                    button.style.gridRow = `span ${action.span}`;
+                }
+                button.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    if (typeof action?.onClick === 'function') {
+                        await action.onClick();
+                    }
+                    if (action?.close !== false) {
+                        handleClose();
+                    }
+                });
+                actionsGrid.appendChild(button);
             });
         };
 
@@ -731,6 +778,7 @@
                 currentLayout = layout;
                 renderKeys(currentLayout);
             }
+            renderActions(handlers.actions || []);
             active = { target, ...handlers, layout };
             keyboard.hidden = false;
             keyboard.setAttribute('data-visible', 'true');
