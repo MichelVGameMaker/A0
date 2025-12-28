@@ -28,16 +28,15 @@
     <!-- En-tête -->
     <header class="header">
         <div class="header-left">
-            <button id="btnPrevSession" class="btn ghost" title="Séance précédente">◀︎</button>
+            <button id="btnQuickNav" class="btn ghost" title="Calendrier">📅</button>
         </div>
 
         <div class="header-center">
             <span id="todayLabel">—</span>
-            <button id="btnQuickNav" class="btn ghost" title="Calendrier">📅</button>
         </div>
 
         <div class="header-right">
-            <button id="btnNextSession" class="btn ghost" title="Séance suivante">▶︎</button>
+            <button id="btnSessionEdit" class="btn ghost" title="Éditer">✏️ Éditer</button>
         </div>
     </header>
     
@@ -537,6 +536,28 @@
 
         <div class="bloque">
             <button id="execDelete" class="btn danger full" type="button">🗑️ Supprimer de la séance</button>
+        </div>
+    </form>
+</dialog>
+<!-- ==================== -->
+
+<!-- ========== Séance : méta séance ========== -->
+<dialog id="dlgSessionEditor" class="modal">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title" id="sessionEditorTitle">Séance</div>
+            <button id="sessionEditorClose" class="btn primary" value="close">OK</button>
+        </div>
+
+        <div class="bloque">
+            <div class="vstack">
+                <label class="lbl" for="sessionComments">Commentaires</label>
+                <textarea id="sessionComments" class="input" rows="3" placeholder="Ajouter des commentaires sur la séance"></textarea>
+            </div>
+        </div>
+
+        <div class="bloque">
+            <button id="sessionCreateRoutine" class="btn full" type="button">Créer une routine à partir de la séance</button>
         </div>
     </form>
 </dialog>

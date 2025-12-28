@@ -9,6 +9,10 @@
     /* STATE */
     const refs = {};
     let refsResolved = false;
+    const sessionEditorState = {
+        session: null,
+        saveTimer: null
+    };
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -16,6 +20,7 @@
         assertRefs();
         wireAddExercisesButton();
         wireAddRoutinesButton();
+        wireSessionEditor();
     });
 
     function getRpeDatasetValue(value) {
@@ -589,6 +594,12 @@
         refs.selectRoutine = document.getElementById('selectRoutine');
         refs.todayLabel = document.getElementById('todayLabel');
         refs.sessionList = document.getElementById('sessionList');
+        refs.btnSessionEdit = document.getElementById('btnSessionEdit');
+        refs.dlgSessionEditor = document.getElementById('dlgSessionEditor');
+        refs.sessionEditorTitle = document.getElementById('sessionEditorTitle');
+        refs.sessionEditorClose = document.getElementById('sessionEditorClose');
+        refs.sessionComments = document.getElementById('sessionComments');
+        refs.sessionCreateRoutine = document.getElementById('sessionCreateRoutine');
         refsResolved = true;
         return refs;
     }
@@ -627,5 +638,173 @@
                 }
             });
         });
+    }
+
+    function wireSessionEditor() {
+        const {
+            btnSessionEdit,
+            dlgSessionEditor,
+            sessionEditorClose,
+            sessionComments,
+            sessionCreateRoutine
+        } = ensureRefs();
+        if (!btnSessionEdit || !dlgSessionEditor) {
+            return;
+        }
+
+        btnSessionEdit.addEventListener('click', () => {
+            void openSessionEditor();
+        });
+
+        sessionEditorClose?.addEventListener('click', () => {
+            flushSessionSave();
+            dlgSessionEditor.close();
+        });
+
+        dlgSessionEditor.addEventListener('close', () => {
+            flushSessionSave();
+        });
+
+        sessionComments?.addEventListener('input', () => {
+            if (!sessionEditorState.session) {
+                return;
+            }
+            sessionEditorState.session.comments = sessionComments.value;
+            scheduleSessionSave();
+        });
+
+        sessionCreateRoutine?.addEventListener('click', () => {
+            void createRoutineFromSession();
+        });
+    }
+
+    async function openSessionEditor() {
+        const { dlgSessionEditor, sessionEditorTitle, sessionComments, sessionCreateRoutine } = ensureRefs();
+        if (!dlgSessionEditor) {
+            return;
+        }
+        const date = A.activeDate;
+        if (sessionEditorTitle) {
+            sessionEditorTitle.textContent = A.fmtUI(date);
+        }
+        const session = await ensureSessionForDate(date);
+        sessionEditorState.session = session;
+        if (sessionComments) {
+            sessionComments.value = session.comments || '';
+        }
+        if (sessionCreateRoutine) {
+            const hasExercises = Array.isArray(session.exercises) && session.exercises.length > 0;
+            sessionCreateRoutine.disabled = !hasExercises;
+        }
+        dlgSessionEditor.showModal();
+    }
+
+    async function ensureSessionForDate(date) {
+        const key = A.ymd(date);
+        let session = await db.getSession(key);
+        if (!session) {
+            session = createSession(date);
+            await db.saveSession(session);
+            if (typeof A.renderWeek === 'function') {
+                await A.renderWeek();
+            }
+        }
+        return session;
+    }
+
+    function scheduleSessionSave() {
+        if (sessionEditorState.saveTimer) {
+            clearTimeout(sessionEditorState.saveTimer);
+        }
+        sessionEditorState.saveTimer = setTimeout(() => {
+            void flushSessionSave();
+        }, 300);
+    }
+
+    async function flushSessionSave() {
+        if (sessionEditorState.saveTimer) {
+            clearTimeout(sessionEditorState.saveTimer);
+            sessionEditorState.saveTimer = null;
+        }
+        if (!sessionEditorState.session) {
+            return;
+        }
+        await db.saveSession(sessionEditorState.session);
+    }
+
+    async function createRoutineFromSession() {
+        const { dlgSessionEditor } = ensureRefs();
+        const session = sessionEditorState.session || await ensureSessionForDate(A.activeDate);
+        const exercises = Array.isArray(session.exercises) ? session.exercises : [];
+        if (!exercises.length) {
+            return;
+        }
+        const routineId = createRoutineId();
+        const routine = buildRoutineFromSession(session, routineId);
+        await db.put('routines', routine);
+        if (typeof A.refreshRoutineList === 'function') {
+            await A.refreshRoutineList();
+        }
+        if (typeof A.populateRoutineSelect === 'function') {
+            await A.populateRoutineSelect();
+        }
+        dlgSessionEditor?.close();
+        if (typeof A.openRoutineEdit === 'function') {
+            await A.openRoutineEdit({ routineId, callerScreen: 'screenSessions' });
+        }
+    }
+
+    function buildRoutineFromSession(session, routineId) {
+        const dateLabel = A.fmtUI(A.activeDate);
+        const exercises = Array.isArray(session.exercises) ? session.exercises : [];
+        const moves = exercises.map((exercise, index) => ({
+            id: uid('move'),
+            pos: index + 1,
+            exerciseId: exercise.exercise_id,
+            exerciseName: exercise.exercise_name || 'Exercice',
+            instructions: typeof exercise.routine_instructions === 'string' ? exercise.routine_instructions : '',
+            sets: Array.isArray(exercise.sets)
+                ? exercise.sets.map((set, setIndex) => ({
+                    pos: safeInt(set?.pos, setIndex + 1),
+                    reps: safeIntOrNull(set?.reps),
+                    weight: null,
+                    rpe: safeFloatOrNull(set?.rpe),
+                    rest: safeIntOrNull(set?.rest)
+                }))
+                : []
+        }));
+
+        return {
+            id: routineId,
+            name: `Séance ${dateLabel}`,
+            icon: '🏋️',
+            details: '',
+            moves
+        };
+    }
+
+    function createRoutineId() {
+        return `routine-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
+    }
+
+    function safeInt(value, fallback) {
+        const numeric = Number.parseInt(value, 10);
+        return Number.isFinite(numeric) ? numeric : fallback;
+    }
+
+    function safeIntOrNull(value) {
+        const numeric = Number.parseInt(value, 10);
+        return Number.isFinite(numeric) ? numeric : null;
+    }
+
+    function safeFloatOrNull(value) {
+        const numeric = Number.parseFloat(value);
+        return Number.isFinite(numeric) ? numeric : null;
+    }
+
+    function uid(prefix) {
+        const base = Math.random().toString(36).slice(2, 8);
+        const time = Date.now().toString(36);
+        return prefix ? `${prefix}-${base}-${time}` : `${base}-${time}`;
     }
 })();
