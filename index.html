@@ -493,6 +493,204 @@
 </section>
 <!-- ==================== -->
 
+<!-- ========== Réglages ========== -->
+<section id="screenSettings" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+        </div>
+        <div class="header-center">
+            <div class="title">Réglages</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <div class="row">
+                <button id="btnSettingsExercises" class="btn full">📚 Exercices</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsRoutines" class="btn full">📓 Routines</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsPreferences" class="btn full">⚙️ Préférences</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsVolume" class="btn full">🔊 Volume</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsData" class="btn full">💾 Données</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsAdmin" class="btn full">🛠️ Admin</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsUpdate" class="btn full danger">🧹 Update</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsReset" class="btn full danger">🗑️ Reset</button>
+            </div>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Préférences ========== -->
+<section id="screenPreferences" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnPreferencesBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Préférences</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <p class="details">Personnalisez votre expérience : choix des durées par défaut, unités et options d’affichage (à venir).</p>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Données ========== -->
+<section id="screenData" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnDataBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Données</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <button id="btnDataExportSessions" class="btn full" type="button">Sauvegarder séances</button>
+            <p class="details">Génère un fichier JSON des séances enregistrées.</p>
+        </div>
+        <div class="bloque">
+            <button id="btnDataImportSessions" class="btn full" type="button">Charger séances</button>
+            <input id="inputDataImportSessions" type="file" accept="application/json,.json" hidden>
+            <p class="details">Remplace toutes les séances par celles du fichier JSON.</p>
+        </div>
+        <div class="bloque">
+            <button id="btnDataImportFitHero" class="btn full" type="button">Charger séances depuis FitHero</button>
+            <input id="inputDataImportFitHero" type="file" accept="application/json,.json" hidden>
+            <p class="details">Remplace toutes les séances enregistrées par celles du fichier JSON, au format FitHero.</p>
+        </div>
+        <div class="bloque">
+            <button id="btnDataFitHeroMapping" class="btn full" type="button">Gérer mapping FitHero</button>
+            <p class="details">Gère les associations des exercices FitHero inconnus vers ceux de votre bibliothèque.</p>
+        </div>
+        <div class="bloque">
+            <button id="btnDataReloadExercises" class="btn full" type="button">Charger bibliothèque d’exercices</button>
+            <p class="details">Relance le chargement de la Bibliothèque d'exercices depuis internet.</p>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Admin ========== -->
+<section id="screenAdmin" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnAdminBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Admin</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <button id="btnAdminUpdateFitHeroMapping" class="btn full" type="button">
+                Mettre à jour le mapping FitHero
+            </button>
+            <p class="details">
+                Génère un fichier de mapping FitHero à jour depuis les mappings en ligne et personnalisés.
+            </p>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Mapping FitHero ========== -->
+<section id="screenFitHeroMapping" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnFitHeroMappingBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Mapping FitHero</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <p class="details">Liste des slugs FitHero inconnus à associer à vos exercices.</p>
+        </div>
+        <div class="bloque">
+            <div id="fitHeroMappingEmpty" class="empty" hidden>Aucun slug FitHero inconnu.</div>
+            <table class="mapping-table" aria-label="Mapping FitHero">
+                <thead>
+                    <tr>
+                        <th>Slug</th>
+                        <th>Exercice</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="fitHeroMappingBody"></tbody>
+            </table>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ✅ Barre de timer collante en bas -->
+<footer id="execTimerBar" class="exec-timer" hidden>
+    <!-- pause/play -->
+    <button id="tmrToggle" class="btn primary" aria-label="Mettre en pause ou reprendre le timer">⏸</button>
+    <!-- timer avec - [temps] + -->
+    <div class="tmr-center">
+        <button id="tmrMinus"   class="btn" aria-label="Retirer 10 secondes">−10s</button>
+        <div    id="tmrDisplay" class="tmr-display">0:00</div>
+        <button id="tmrPlus"    class="btn" aria-label="Ajouter 10 secondes">+10s</button>
+    </div>
+    <!-- reset -->
+    <button id="tmrReset" class="btn" aria-label="Réinitialiser le chronomètre">↺</button>
+</footer>
+ <!-- ==================== -->
+ 
+<!-- Barre d’onglets fixe (icônes) -->
+<nav class="tabbar safe-bottom" aria-label="Navigation principale">
+    <button id="tabSessions" class="tab active" title="Séances"      aria-label="Séances">🏋️</button>
+    <button id="tabStats"    class="tab"        title="Statistiques" aria-label="Statistiques">📈</button>
+    <button id="tabSettings" class="tab"        title="Réglages"     aria-label="Réglages">⚙️</button>
+    <button id="tabTimer"    class="tab"        title="Chronomètre"  aria-label="Chronomètre" aria-pressed="false">⏱️</button>
+</nav>
+<!-- ==================== -->
+
 <!-- ==================== Modales ==================== -->
 
 <!-- ========== Volume : modale édition ========== -->
@@ -714,206 +912,6 @@
     </form>
 </dialog>
 <!-- ==================== -->
-
-<!-- ✅ Barre de timer collante en bas -->
-<footer id="execTimerBar" class="exec-timer" hidden>
-    <!-- pause/play -->
-    <button id="tmrToggle" class="btn primary" aria-label="Mettre en pause ou reprendre le timer">⏸</button>
-    <!-- timer avec - [temps] + -->
-    <div class="tmr-center">
-        <button id="tmrMinus"   class="btn" aria-label="Retirer 10 secondes">−10s</button>
-        <div    id="tmrDisplay" class="tmr-display">0:00</div>
-        <button id="tmrPlus"    class="btn" aria-label="Ajouter 10 secondes">+10s</button>
-    </div>
-    <!-- reset -->
-    <button id="tmrReset" class="btn" aria-label="Réinitialiser le chronomètre">↺</button>
-</footer>
- <!-- ==================== -->
- 
-<!-- Barre d’onglets fixe (icônes) -->
-<nav class="tabbar safe-bottom" aria-label="Navigation principale">
-    <button id="tabSessions" class="tab active" title="Séances"      aria-label="Séances">🏋️</button>
-    <button id="tabStats"    class="tab"        title="Statistiques" aria-label="Statistiques">📈</button>
-    <button id="tabSettings" class="tab"        title="Réglages"     aria-label="Réglages">⚙️</button>
-    <button id="tabTimer"    class="tab"        title="Chronomètre"  aria-label="Chronomètre" aria-pressed="false">⏱️</button>
-</nav>
-<!-- ==================== -->
- 
-<!-- ========== Réglages ========== -->
-<section id="screenSettings" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-        </div>
-        <div class="header-center">
-            <div class="title">Réglages</div>
-        </div>
-        <div class="header-right">
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <div class="row">
-                <button id="btnSettingsExercises" class="btn full">📚 Exercices</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsRoutines" class="btn full">📓 Routines</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsPreferences" class="btn full">⚙️ Préférences</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsVolume" class="btn full">🔊 Volume</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsData" class="btn full">💾 Données</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsAdmin" class="btn full">🛠️ Admin</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsUpdate" class="btn full danger">🧹 Update</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsReset" class="btn full danger">🗑️ Reset</button>
-            </div>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== Préférences ========== -->
-<section id="screenPreferences" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="btnPreferencesBack" class="btn" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title">Préférences</div>
-        </div>
-        <div class="header-right">
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <p class="details">Personnalisez votre expérience : choix des durées par défaut, unités et options d’affichage (à venir).</p>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== Données ========== -->
-<section id="screenData" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="btnDataBack" class="btn" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title">Données</div>
-        </div>
-        <div class="header-right">
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <button id="btnDataExportSessions" class="btn full" type="button">Sauvegarder séances</button>
-            <p class="details">Génère un fichier JSON des séances enregistrées.</p>
-        </div>
-        <div class="bloque">
-            <button id="btnDataImportSessions" class="btn full" type="button">Charger séances</button>
-            <input id="inputDataImportSessions" type="file" accept="application/json,.json" hidden>
-            <p class="details">Remplace toutes les séances par celles du fichier JSON.</p>
-        </div>
-        <div class="bloque">
-            <button id="btnDataImportFitHero" class="btn full" type="button">Charger séances depuis FitHero</button>
-            <input id="inputDataImportFitHero" type="file" accept="application/json,.json" hidden>
-            <p class="details">Remplace toutes les séances enregistrées par celles du fichier JSON, au format FitHero.</p>
-        </div>
-        <div class="bloque">
-            <button id="btnDataFitHeroMapping" class="btn full" type="button">Gérer mapping FitHero</button>
-            <p class="details">Gère les associations des exercices FitHero inconnus vers ceux de votre bibliothèque.</p>
-        </div>
-        <div class="bloque">
-            <button id="btnDataReloadExercises" class="btn full" type="button">Charger bibliothèque d’exercices</button>
-            <p class="details">Relance le chargement de la Bibliothèque d'exercices depuis internet.</p>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== Admin ========== -->
-<section id="screenAdmin" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="btnAdminBack" class="btn" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title">Admin</div>
-        </div>
-        <div class="header-right">
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <button id="btnAdminUpdateFitHeroMapping" class="btn full" type="button">
-                Mettre à jour le mapping FitHero
-            </button>
-            <p class="details">
-                Génère un fichier de mapping FitHero à jour depuis les mappings en ligne et personnalisés.
-            </p>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== Mapping FitHero ========== -->
-<section id="screenFitHeroMapping" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="btnFitHeroMappingBack" class="btn" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title">Mapping FitHero</div>
-        </div>
-        <div class="header-right">
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <p class="details">Liste des slugs FitHero inconnus à associer à vos exercices.</p>
-        </div>
-        <div class="bloque">
-            <div id="fitHeroMappingEmpty" class="empty" hidden>Aucun slug FitHero inconnu.</div>
-            <table class="mapping-table" aria-label="Mapping FitHero">
-                <thead>
-                    <tr>
-                        <th>Slug</th>
-                        <th>Exercice</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="fitHeroMappingBody"></tbody>
-            </table>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-  
- 
 
 <!-- JS (ordre important) -->
 <script src="cfg.js"></script>
