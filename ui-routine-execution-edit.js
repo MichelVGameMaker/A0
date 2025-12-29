@@ -403,12 +403,16 @@
             return;
         }
         const shouldRender = options.render !== false;
+        const rest = values.rest ?? null;
+        if (rest != null) {
+            updateLastRestDuration(rest);
+        }
         move.sets[index] = {
             ...move.sets[index],
             reps: values.reps ?? null,
             weight: values.weight ?? null,
             rpe: values.rpe ?? null,
-            rest: values.rest ?? null,
+            rest,
             pos: index + 1
         };
         scheduleSave();
@@ -424,14 +428,14 @@
         }
         const sets = Array.isArray(move.sets) ? move.sets : [];
         const previous = sets.length ? sets[sets.length - 1] : null;
-        const defaultRest = A.preferences?.getDefaultTimerDuration?.() ?? 90;
+        const defaultRest = getRestForNewSet(previous?.rest);
         const newSet = previous
             ? {
                   pos: sets.length + 1,
                   reps: previous.reps ?? null,
                   weight: previous.weight ?? null,
                   rpe: previous.rpe ?? null,
-                  rest: previous.rest ?? null
+                  rest: defaultRest
               }
             : {
                   pos: sets.length + 1,
@@ -712,6 +716,27 @@
     function safeIntOrNull(value) {
         const number = Number.parseInt(value, 10);
         return Number.isFinite(number) ? number : null;
+    }
+
+    function getRestDefaultDuration() {
+        return Math.max(0, safeInt(A.preferences?.getRestDefaultDuration?.(), 80));
+    }
+
+    function getRestForNewSet(previousRest) {
+        const restDefaultDuration = getRestDefaultDuration();
+        const lastRestDuration = Math.max(0, safeInt(A.preferences?.getLastRestDuration?.(), restDefaultDuration));
+        const restDefaultEnabled = A.preferences?.getRestDefaultEnabled?.() !== false;
+        if (restDefaultEnabled) {
+            return restDefaultDuration;
+        }
+        if (previousRest != null) {
+            return Math.max(0, safeInt(previousRest, lastRestDuration));
+        }
+        return lastRestDuration;
+    }
+
+    function updateLastRestDuration(value) {
+        A.preferences?.setLastRestDuration?.(value);
     }
 
     function safePositiveInt(value) {

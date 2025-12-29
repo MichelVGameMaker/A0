@@ -550,13 +550,14 @@
         const previous = sets.length ? sets[sets.length - 1] : null;
         const defaultRest = getDefaultRest();
         const now = new Date().toISOString();
+        const restForNewSet = getRestForNewSet(previous?.rest);
         const newSet = previous
             ? {
                   pos: sets.length + 1,
                   reps: safePositiveInt(previous.reps),
                   weight: sanitizeWeight(previous.weight),
                   rpe: previous.rpe != null && previous.rpe !== '' ? clampRpe(previous.rpe) : null,
-                  rest: Math.max(0, safeInt(previous.rest, defaultRest)),
+                  rest: restForNewSet,
                   done: false,
                   date: now,
                   time: previous.time ?? null,
@@ -568,7 +569,7 @@
                   reps: 8,
                   weight: null,
                   rpe: null,
-                  rest: defaultRest,
+                  rest: restForNewSet,
                   done: false,
                   date: now,
                   time: null,
@@ -650,13 +651,15 @@
         }
         const shouldRender = options.render !== false;
         const nextDone = options.done ?? sets[index].done ?? false;
+        const rest = Math.max(0, safeInt(values.rest, getDefaultRest()));
+        updateLastRestDuration(rest);
         sets[index] = {
             ...sets[index],
             pos: index + 1,
             reps: safePositiveInt(values.reps),
             weight: sanitizeWeight(values.weight),
             rpe: values.rpe != null && values.rpe !== '' ? clampRpe(values.rpe) : null,
-            rest: Math.max(0, safeInt(values.rest, getDefaultRest())),
+            rest,
             done: nextDone,
             date: new Date().toISOString(),
             setType: null
@@ -945,7 +948,29 @@
     }
 
     function getDefaultRest() {
-        return Math.max(0, safeInt(A.preferences?.getDefaultTimerDuration?.(), 90));
+        const preferences = A.preferences;
+        const restDefaultDuration = Math.max(0, safeInt(preferences?.getRestDefaultDuration?.(), 80));
+        const lastRestDuration = Math.max(0, safeInt(preferences?.getLastRestDuration?.(), restDefaultDuration));
+        const restDefaultEnabled = preferences?.getRestDefaultEnabled?.() !== false;
+        return restDefaultEnabled ? restDefaultDuration : lastRestDuration;
+    }
+
+    function getRestForNewSet(previousRest) {
+        const preferences = A.preferences;
+        const restDefaultDuration = Math.max(0, safeInt(preferences?.getRestDefaultDuration?.(), 80));
+        const lastRestDuration = Math.max(0, safeInt(preferences?.getLastRestDuration?.(), restDefaultDuration));
+        const restDefaultEnabled = preferences?.getRestDefaultEnabled?.() !== false;
+        if (restDefaultEnabled) {
+            return restDefaultDuration;
+        }
+        if (previousRest != null) {
+            return Math.max(0, safeInt(previousRest, lastRestDuration));
+        }
+        return lastRestDuration;
+    }
+
+    function updateLastRestDuration(value) {
+        A.preferences?.setLastRestDuration?.(value);
     }
 
     function ensureSharedTimer() {
@@ -1053,6 +1078,7 @@
         if (exercise && Array.isArray(exercise.sets) && exercise.sets.length) {
             const last = exercise.sets[exercise.sets.length - 1];
             last.rest = Math.max(0, safeInt(last.rest, 0) + delta);
+            updateLastRestDuration(last.rest);
             await persistSession();
         }
         updateTimerUI();

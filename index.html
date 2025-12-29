@@ -518,19 +518,21 @@
                 <button id="btnSettingsPreferences" class="btn full">⚙️ Préférences</button>
             </div>
             <div class="row">
-                <button id="btnSettingsVolume" class="btn full">🔊 Volume</button>
-            </div>
-            <div class="row">
                 <button id="btnSettingsData" class="btn full">💾 Données</button>
             </div>
+        </div>
+        <div class="bloque">
             <div class="row">
-                <button id="btnSettingsAdmin" class="btn full">🛠️ Admin</button>
+                <div class="element">Application</div>
             </div>
             <div class="row">
                 <button id="btnSettingsUpdate" class="btn full danger">🧹 Update</button>
             </div>
             <div class="row">
                 <button id="btnSettingsReset" class="btn full danger">🗑️ Reset</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsAdmin" class="btn full">🛠️ Admin</button>
             </div>
         </div>
     </main>
@@ -555,6 +557,12 @@
     <main class="content">
         <div class="bloque">
             <p class="details">Personnalisez votre expérience : choix des durées par défaut, unités et options d’affichage (à venir).</p>
+        </div>
+        <div class="bloque">
+            <div class="row">
+                <button id="btnPreferencesRest" class="btn full">⏱️ Durée de repos</button>
+            </div>
+            <p id="prefRestSummary" class="details"></p>
         </div>
     </main>
 
@@ -692,6 +700,33 @@
 <!-- ==================== -->
 
 <!-- ==================== Modales ==================== -->
+
+<!-- ========== Volume : modale édition ========== -->
+<dialog id="dlgPreferencesRest" class="modal">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title">Durée de repos</div>
+            <button id="prefRestCancel" class="btn ghost" value="cancel" type="submit">✕</button>
+        </div>
+        <div class="bloque">
+            <label class="lbl" for="prefRestEnabled">Durée par défaut</label>
+            <div class="row">
+                <input id="prefRestEnabled" type="checkbox" />
+                <span class="details">Activer pour appliquer cette durée à chaque nouvelle série.</span>
+            </div>
+        </div>
+        <div class="bloque">
+            <label class="lbl">Durée de repos par défaut</label>
+            <div class="row">
+                <input id="prefRestMinutes" class="input" type="number" min="0" step="1" inputmode="numeric" aria-label="Minutes de repos" />
+                <input id="prefRestSeconds" class="input" type="number" min="0" max="59" step="5" inputmode="numeric" aria-label="Secondes de repos" />
+            </div>
+        </div>
+        <div class="row">
+            <button id="prefRestSave" class="btn primary full" value="confirm" type="submit">Enregistrer</button>
+        </div>
+    </form>
+</dialog>
 
 <!-- ========== Volume : modale édition ========== -->
 <dialog id="dlgVolumeEdit" class="modal">
@@ -930,6 +965,7 @@
 <script src="ui-routines-list.js"></script>
 <script src="ui-routine-edit.js"></script>
 <script src="ui-routine-execution-edit.js"></script>
+<script src="ui-preferences.js"></script>
 <script src="ui-settings.js"></script>
 <script src="ui-admin.js"></script>
 <script src="ui-fithero-mapping.js"></script>
