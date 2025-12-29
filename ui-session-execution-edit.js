@@ -147,7 +147,8 @@
         refs.timerToggle = document.getElementById('tmrToggle');
         refs.timerMinus = document.getElementById('tmrMinus');
         refs.timerPlus = document.getElementById('tmrPlus');
-        refs.timerClose = document.getElementById('tmrClose');
+        refs.timerReset = document.getElementById('tmrReset');
+        refs.tabTimer = document.getElementById('tabTimer');
         refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
         refs.execRoutineInstructions = document.getElementById('execRoutineInstructions');
         refs.execMoveNote = document.getElementById('execMoveNote');
@@ -183,7 +184,7 @@
             'timerToggle',
             'timerMinus',
             'timerPlus',
-            'timerClose',
+            'timerReset',
             'dlgExecMoveEditor',
             'execRoutineInstructions',
             'execMoveNote',
@@ -248,7 +249,7 @@
     }
 
     function wireTimerControls() {
-        const { execTimerBar, timerToggle, timerMinus, timerPlus, timerClose } = assertRefs();
+        const { execTimerBar, timerToggle, timerMinus, timerPlus, timerReset } = assertRefs();
         timerToggle.addEventListener('click', () => {
             const timer = ensureSharedTimer();
             if (timer.running) {
@@ -263,11 +264,8 @@
         timerPlus.addEventListener('click', () => {
             void adjustTimer(10);
         });
-        timerClose.addEventListener('click', () => {
-            resetTimerState();
-            if (execTimerBar) {
-                execTimerBar.hidden = true;
-            }
+        timerReset.addEventListener('click', () => {
+            resetTimerToDefault();
         });
     }
 
@@ -978,6 +976,20 @@
         updateTimerUI();
     }
 
+    function resetTimerToDefault() {
+        const timer = ensureSharedTimer();
+        const currentExerciseKey = timer.exerciseKey;
+        stopTimer();
+        const defaultRest = getDefaultRest();
+        Object.assign(timer, defaultTimerState(), {
+            exerciseKey: currentExerciseKey,
+            startSec: defaultRest,
+            remainSec: defaultRest
+        });
+        updateTimerUI();
+    }
+    A.resetTimerToDefault = resetTimerToDefault;
+
     function startTimer(duration) {
         const timer = ensureSharedTimer();
         const seconds = Math.max(0, safeInt(duration, getDefaultRest()));
@@ -1047,12 +1059,17 @@
     function updateTimerUI() {
         const timer = ensureSharedTimer();
         const { execTimerBar, timerDisplay, timerToggle } = assertRefs();
+        const { tabTimer } = refs;
         if (!execTimerBar) {
             return;
         }
         const baseHidden = !timer.intervalId && !timer.running && timer.startSec === 0;
         const shouldHide = baseHidden || isTimerForcedHidden();
         execTimerBar.hidden = shouldHide;
+        if (tabTimer) {
+            tabTimer.setAttribute('aria-pressed', String(!shouldHide));
+            tabTimer.classList.toggle('is-on', !shouldHide);
+        }
         if (shouldHide) {
             return;
         }
