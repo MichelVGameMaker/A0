@@ -41,6 +41,7 @@
             tabSessions,
             tabSettings,
             tabStats,
+            tabTimer,
             screenSessions,
             screenExercises,
             screenExerciseEdit,
@@ -71,6 +72,17 @@
         tabSettings?.addEventListener('click', async () => {
             setActiveTab('tabSettings');
             await A.openSettings();
+        });
+
+        tabTimer?.addEventListener('click', () => {
+            const timer = A.execTimer;
+            const baseHidden = !timer?.intervalId && !timer?.running && safeNumber(timer?.startSec) === 0;
+            const forcedHidden = Boolean(A.timerVisibility?.forcedHidden);
+            const shouldShow = baseHidden || forcedHidden;
+            if (shouldShow) {
+                A.resetTimerToDefault?.();
+            }
+            A.setTimerVisibility?.({ forcedHidden: !shouldShow, reason: !shouldShow ? 'manual' : null });
         });
 
         screenSessions?.setAttribute('data-screen', 'sessions');
@@ -122,6 +134,7 @@
         refs.tabSessions = document.getElementById('tabSessions');
         refs.tabStats = document.getElementById('tabStats');
         refs.tabSettings = document.getElementById('tabSettings');
+        refs.tabTimer = document.getElementById('tabTimer');
         refs.screenSessions = document.getElementById('screenSessions');
         refs.screenExercises = document.getElementById('screenExercises');
         refs.screenExerciseEdit = document.getElementById('screenExerciseEdit');
@@ -215,6 +228,10 @@
         if (screenData) {
             screenData.hidden = which !== 'data';
         }
+    }
+
+    function safeNumber(value, fallback = 0) {
+        return Number.isFinite(value) ? value : fallback;
     }
 
     async function ensureSeed() {

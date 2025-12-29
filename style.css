@@ -222,7 +222,7 @@ header .title{
     bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0));
     display:grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items:center; gap:12px;
-    padding:12px 12px;
+    padding:11px 12px;
     background: var(--panelBack);
     border-top:1px solid var(--panelBord);
 }
