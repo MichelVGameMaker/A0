@@ -135,7 +135,6 @@
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.execBack = document.getElementById('execBack');
-        refs.execOk = document.getElementById('execOk');
         refs.execEditMeta = document.getElementById('execEditMeta');
         refs.execTitle = document.getElementById('execTitle');
         refs.execDate = document.getElementById('execDate');
@@ -172,7 +171,6 @@
         const required = [
             'screenExecEdit',
             'execBack',
-            'execOk',
             'execEditMeta',
             'execTitle',
             'execDate',
@@ -200,11 +198,8 @@
     }
 
     function wireNavigation() {
-        const { execBack, execOk } = assertRefs();
+        const { execBack } = assertRefs();
         execBack.addEventListener('click', () => {
-            backToCaller();
-        });
-        execOk.addEventListener('click', () => {
             backToCaller();
         });
     }
