@@ -68,7 +68,6 @@
         refs.btnSettingsExercises = document.getElementById('btnSettingsExercises');
         refs.btnSettingsRoutines = document.getElementById('btnSettingsRoutines');
         refs.btnSettingsPreferences = document.getElementById('btnSettingsPreferences');
-        refs.btnSettingsVolume = document.getElementById('btnSettingsVolume');
         refs.btnSettingsData = document.getElementById('btnSettingsData');
         refs.btnSettingsUpdate = document.getElementById('btnSettingsUpdate');
         refs.btnSettingsReset = document.getElementById('btnSettingsReset');
@@ -90,7 +89,6 @@
             btnSettingsExercises,
             btnSettingsRoutines,
             btnSettingsPreferences,
-            btnSettingsVolume,
             btnSettingsData,
             btnSettingsUpdate,
             btnSettingsReset,
@@ -117,9 +115,6 @@
         });
         btnSettingsPreferences?.addEventListener('click', () => {
             A.openPreferences();
-        });
-        btnSettingsVolume?.addEventListener('click', () => {
-            A.openVolume();
         });
         btnSettingsData?.addEventListener('click', () => {
             A.openData();
