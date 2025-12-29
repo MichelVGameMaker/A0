@@ -698,7 +698,14 @@
             return;
         }
         state.session.exercises.splice(index, 1);
-        await db.saveSession(state.session);
+        if (state.session.exercises.length === 0) {
+            if (state.session.id) {
+                await db.del('sessions', state.session.id);
+            }
+            state.session = null;
+        } else {
+            await db.saveSession(state.session);
+        }
         await refreshSessionViews();
         refs.dlgExecMoveEditor?.close();
         backToCaller();

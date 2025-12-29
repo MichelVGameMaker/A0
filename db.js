@@ -151,6 +151,7 @@ const db = (() => {
     async function listSessionDates() {
         const all = await getAll('sessions');
         return all
+            .filter((session) => hasDoneSet(session))
             .map((session) => ({ date: normalizeDateKey(session?.id || session?.date) }))
             .filter((entry) => entry.date);
     }
@@ -440,6 +441,16 @@ const db = (() => {
             return null;
         }
         return value.trim().length ? value : null;
+    }
+
+    function hasDoneSet(session) {
+        if (!session || !Array.isArray(session.exercises)) {
+            return false;
+        }
+        return session.exercises.some((exercise) => {
+            const sets = Array.isArray(exercise?.sets) ? exercise.sets : [];
+            return sets.some((set) => set?.done === true);
+        });
     }
 
     function ensureSession(session) {
