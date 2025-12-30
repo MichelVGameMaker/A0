@@ -468,8 +468,7 @@
                     return;
             }
             const currentDone = getExercise()?.sets?.[currentIndex]?.done ?? set.done;
-            const markDone = rawValue !== '' ? true : currentDone;
-            await applySetEditorResult(currentIndex, next, { done: markDone, render: false });
+            await applySetEditorResult(currentIndex, next, { done: currentDone, render: false });
             updatePreview(next);
         };
 
