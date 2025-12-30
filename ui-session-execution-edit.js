@@ -1091,6 +1091,7 @@
         if (!execTimerBar) {
             return;
         }
+        ensureTimerPlacement(execTimerBar);
         const baseHidden = !timer.intervalId && !timer.running && timer.startSec === 0;
         const shouldHide = baseHidden || isTimerForcedHidden();
         execTimerBar.hidden = shouldHide;
@@ -1108,6 +1109,33 @@
         const seconds = abs % 60;
         timerDisplay.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
         timerToggle.textContent = timer.running ? '⏸' : '▶︎';
+    }
+
+    function ensureTimerPlacement(execTimerBar) {
+        const activeScreen = [
+            refs.screenExecEdit,
+            refs.screenExercises,
+            refs.screenExerciseRead,
+            refs.screenExerciseEdit,
+            refs.screenRoutineEdit,
+            refs.screenRoutineMoveEdit,
+            refs.screenSessions,
+            refs.screenStatExercises,
+            refs.screenStatExercisesDetail,
+            refs.screenStatMuscles,
+            refs.screenStatMusclesDetail,
+            refs.screenSettings,
+            refs.screenPreferences,
+            refs.screenData
+        ].find((screen) => screen && !screen.hidden);
+        if (!activeScreen) {
+            return;
+        }
+        const content = activeScreen.querySelector('.content');
+        if (!content || execTimerBar.parentElement === content) {
+            return;
+        }
+        content.appendChild(execTimerBar);
     }
 
     function safeInt(value, fallback = 0) {
