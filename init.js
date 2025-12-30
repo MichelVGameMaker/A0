@@ -35,6 +35,7 @@
         A.setTimerVisibility?.({ forcedHidden: false, reason: null });
         await A.renderWeek();
         await A.renderSession();
+        hideSplash();
     }
 
     function wireNavigation() {
@@ -125,6 +126,16 @@
             spacer.className = 'exec-timer-spacer';
             spacer.setAttribute('aria-hidden', 'true');
             panel.appendChild(spacer);
+        });
+    }
+
+    function hideSplash() {
+        const splash = document.getElementById('appSplash');
+        if (!splash) {
+            return;
+        }
+        requestAnimationFrame(() => {
+            splash.classList.add('is-hidden');
         });
     }
 

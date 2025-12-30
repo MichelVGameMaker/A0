@@ -110,6 +110,26 @@ body{
     overscroll-behavior: none;
 }
 
+.app-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    background: var(--emphase);
+    color: var(--white);
+    font-size: clamp(36px, 10vw, 72px);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    transition: opacity 180ms ease, visibility 180ms ease;
+}
+
+.app-splash.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
 /* Ecran */
 .screen {
     display: flex;
