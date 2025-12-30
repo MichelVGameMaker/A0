@@ -10,6 +10,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
         assertRefs();
+        ensureTimerSpacers();
         wireNavigation();
         wireCalendar();
         void bootstrap();
@@ -115,6 +116,18 @@
     }
 
     /* UTILS */
+    function ensureTimerSpacers() {
+        document.querySelectorAll('main.content').forEach((panel) => {
+            if (panel.querySelector('.exec-timer-spacer')) {
+                return;
+            }
+            const spacer = document.createElement('div');
+            spacer.className = 'exec-timer-spacer';
+            spacer.setAttribute('aria-hidden', 'true');
+            panel.appendChild(spacer);
+        });
+    }
+
     function ensureRefs() {
         if (refsResolved) {
             return refs;
