@@ -151,6 +151,7 @@ body{
     border-inline: 6px solid var(--panelBord);
     padding:  8px;
     padding-top: var(--header-total-h);
+    padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0) + 8px);
     min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
 }
 
