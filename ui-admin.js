@@ -42,6 +42,7 @@
         refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
+        refs.screenApplication = document.getElementById('screenApplication');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.btnSettingsAdmin = document.getElementById('btnSettingsAdmin');
         refs.btnAdminBack = document.getElementById('btnAdminBack');
@@ -58,7 +59,7 @@
         });
 
         btnAdminBack?.addEventListener('click', () => {
-            A.openSettings?.();
+            A.openApplication?.();
         });
 
         btnAdminUpdateFitHeroMapping?.addEventListener('click', () => {
@@ -98,6 +99,7 @@
             screenStatMusclesDetail,
             screenPreferences,
             screenData,
+            screenApplication,
             screenFitHeroMapping
         } = ensureRefs();
         const map = {
@@ -117,6 +119,7 @@
             screenStatMusclesDetail,
             screenPreferences,
             screenData,
+            screenApplication,
             screenFitHeroMapping
         };
         Object.entries(map).forEach(([key, element]) => {
