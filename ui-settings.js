@@ -34,6 +34,13 @@
         switchScreen('screenData');
     };
 
+    A.openApplication = function openApplication() {
+        ensureRefs();
+        highlightSettingsTab();
+        hideTimerForSettings();
+        switchScreen('screenApplication');
+    };
+
     A.openVolume = function openVolume() {
         ensureRefs();
         highlightStatsTab();
@@ -63,16 +70,19 @@
         refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
+        refs.screenApplication = document.getElementById('screenApplication');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabSettings = document.getElementById('tabSettings');
         refs.btnSettingsExercises = document.getElementById('btnSettingsExercises');
         refs.btnSettingsRoutines = document.getElementById('btnSettingsRoutines');
         refs.btnSettingsPreferences = document.getElementById('btnSettingsPreferences');
         refs.btnSettingsData = document.getElementById('btnSettingsData');
+        refs.btnSettingsApplication = document.getElementById('btnSettingsApplication');
         refs.btnSettingsUpdate = document.getElementById('btnSettingsUpdate');
         refs.btnSettingsReset = document.getElementById('btnSettingsReset');
         refs.btnPreferencesBack = document.getElementById('btnPreferencesBack');
         refs.btnDataBack = document.getElementById('btnDataBack');
+        refs.btnApplicationBack = document.getElementById('btnApplicationBack');
         refs.btnDataReloadExercises = document.getElementById('btnDataReloadExercises');
         refs.btnDataImportFitHero = document.getElementById('btnDataImportFitHero');
         refs.btnDataExportSessions = document.getElementById('btnDataExportSessions');
@@ -90,10 +100,12 @@
             btnSettingsRoutines,
             btnSettingsPreferences,
             btnSettingsData,
+            btnSettingsApplication,
             btnSettingsUpdate,
             btnSettingsReset,
             btnPreferencesBack,
             btnDataBack,
+            btnApplicationBack,
             btnDataReloadExercises,
             btnDataImportFitHero,
             btnDataExportSessions,
@@ -119,6 +131,9 @@
         btnSettingsData?.addEventListener('click', () => {
             A.openData();
         });
+        btnSettingsApplication?.addEventListener('click', () => {
+            A.openApplication();
+        });
         btnSettingsUpdate?.addEventListener('click', () => {
             void handleUpdateRefresh();
         });
@@ -129,6 +144,9 @@
             A.openSettings();
         });
         btnDataBack?.addEventListener('click', () => {
+            A.openSettings();
+        });
+        btnApplicationBack?.addEventListener('click', () => {
             A.openSettings();
         });
         btnDataReloadExercises?.addEventListener('click', () => {
@@ -723,6 +741,7 @@
             screenStatMusclesDetail,
             screenPreferences,
             screenData,
+            screenApplication,
             screenFitHeroMapping
         } = ensureRefs();
         const map = {
@@ -742,6 +761,7 @@
             screenStatMusclesDetail,
             screenPreferences,
             screenData,
+            screenApplication,
             screenFitHeroMapping
         };
         Object.entries(map).forEach(([key, element]) => {
