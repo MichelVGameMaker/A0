@@ -517,6 +517,9 @@
                 <button id="btnSettingsRoutines" class="btn full">📓 Routines</button>
             </div>
             <div class="row">
+                <button id="btnSettingsPlanning" class="btn full">🗓️ Planning</button>
+            </div>
+            <div class="row">
                 <button id="btnSettingsPreferences" class="btn full">⚙️ Préférences</button>
             </div>
             <div class="row">
@@ -525,6 +528,30 @@
             <div class="row">
                 <button id="btnSettingsApplication" class="btn full">📱 Application</button>
             </div>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Planning ========== -->
+<section id="screenPlanning" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnPlanningBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Planning</div>
+        </div>
+        <div class="header-right">
+            <button id="btnPlanningEditDays" class="btn" title="Modifier la durée">✏️</button>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <div id="planningDaysList"></div>
         </div>
     </main>
 
@@ -987,6 +1014,7 @@
 <script src="ui-routines-list.js"></script>
 <script src="ui-routine-edit.js"></script>
 <script src="ui-routine-execution-edit.js"></script>
+<script src="ui-planning.js"></script>
 <script src="ui-preferences.js"></script>
 <script src="ui-settings.js"></script>
 <script src="ui-admin.js"></script>
