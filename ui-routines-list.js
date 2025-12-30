@@ -163,7 +163,8 @@
         const structure = listCard.createStructure({ clickable: true, role: 'button' });
         const { card, start, body, end } = structure;
         const routineName = routine?.name || 'Routine';
-        card.setAttribute('aria-label', `${routineName} — ${selectable ? 'sélectionner' : 'éditer'}`);
+        const labelAction = selectable ? (state.autoAdd ? 'ajouter' : 'sélectionner') : 'éditer';
+        card.setAttribute('aria-label', `${routineName} — ${labelAction}`);
 
         const title = document.createElement('div');
         title.className = 'element';
@@ -175,7 +176,21 @@
 
         body.append(title, details);
 
-        if (selectable) {
+        if (selectable && state.autoAdd) {
+            card.addEventListener('click', async () => {
+                const routineId = routine?.id;
+                if (!routineId) {
+                    return;
+                }
+                if (state.onAddCallback) {
+                    await state.onAddCallback([routineId]);
+                }
+                returnToCaller();
+            });
+
+            const plus = listCard.createIcon('+');
+            end.appendChild(plus);
+        } else if (selectable) {
             const isSelected = state.selection.has(routine?.id);
             if (isSelected) {
                 card.classList.add('selected');
@@ -200,13 +215,6 @@
             card.addEventListener('click', async () => {
                 const routineId = routine?.id;
                 if (!routineId) {
-                    return;
-                }
-                if (state.autoAdd) {
-                    if (state.onAddCallback) {
-                        await state.onAddCallback([routineId]);
-                    }
-                    returnToCaller();
                     return;
                 }
                 syncSelection(!state.selection.has(routineId));
