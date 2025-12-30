@@ -67,43 +67,31 @@
     }
 
     async function selectRoutineForDay(dayIndex) {
+        if (typeof A.openRoutineList !== 'function') {
+            return;
+        }
+        await A.openRoutineList({
+            callerScreen: 'screenPlanning',
+            mode: 'add',
+            autoAdd: true,
+            onAdd: async (ids) => {
+                const routineId = Array.isArray(ids) ? ids[0] : null;
+                await assignRoutineToDay(dayIndex, routineId || null);
+            }
+        });
+    }
+
+    async function assignRoutineToDay(dayIndex, routineId) {
         const plan = await ensureActivePlan();
-        const routines = await loadRoutines();
-        if (!routines.length) {
-            alert('Aucune routine disponible.');
-            return;
-        }
-
-        const label = getDayLabel(dayIndex);
-        const routineLines = routines.map((routine, index) => `${index + 1} — ${routine.name || 'Routine'}`);
-        const message = [
-            `Choisir une routine pour ${label} :`,
-            '0 — Aucune',
-            ...routineLines,
-            'Entrez le numéro souhaité :'
-        ].join('\n');
-        const input = window.prompt(message, '0');
-        if (input === null) {
-            return;
-        }
-        const choice = Number.parseInt(input, 10);
-        if (!Number.isFinite(choice) || choice < 0 || choice > routines.length) {
-            alert('Sélection invalide.');
-            return;
-        }
-
         const dayKey = String(dayIndex);
         if (!plan.days || typeof plan.days !== 'object') {
             plan.days = {};
         }
-
-        if (choice === 0) {
-            delete plan.days[dayKey];
+        if (routineId) {
+            plan.days[dayKey] = routineId;
         } else {
-            const routine = routines[choice - 1];
-            plan.days[dayKey] = routine?.id || null;
+            delete plan.days[dayKey];
         }
-
         await db.put('plans', plan);
         await renderPlanning();
         await A.populateRoutineSelect?.();

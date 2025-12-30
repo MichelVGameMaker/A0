@@ -15,7 +15,8 @@
         callerScreen: 'screenSettings',
         listMode: 'view',
         selection: new Set(),
-        onAddCallback: null
+        onAddCallback: null,
+        autoAdd: false
     };
 
     /* WIRE */
@@ -27,10 +28,11 @@
 
     /* ACTIONS */
     A.openRoutineList = async function openRoutineList(options = {}) {
-        const { callerScreen = 'screenSettings', mode = 'view', onAdd = null } = options;
+        const { callerScreen = 'screenSettings', mode = 'view', onAdd = null, autoAdd = false } = options;
         ensureRefs();
         state.listMode = mode === 'add' ? 'add' : 'view';
         state.onAddCallback = typeof onAdd === 'function' ? onAdd : null;
+        state.autoAdd = Boolean(autoAdd);
         state.selection.clear();
         state.callerScreen = callerScreen;
         highlightCallerTab(callerScreen);
@@ -71,6 +73,7 @@
         refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
+        refs.screenPlanning = document.getElementById('screenPlanning');
         refs.routineCatalog = document.getElementById('routineCatalog');
         refs.btnRoutineCreate = document.getElementById('btnRoutineCreate');
         refs.tabSettings = document.getElementById('tabSettings');
@@ -88,7 +91,12 @@
     }
 
     function isSettingsScreen(name) {
-        return name === 'screenSettings' || name === 'screenPreferences' || name === 'screenData';
+        return (
+            name === 'screenSettings' ||
+            name === 'screenPreferences' ||
+            name === 'screenData' ||
+            name === 'screenPlanning'
+        );
     }
 
     function assertRefs() {
@@ -189,9 +197,16 @@
                 updateSelectionBar();
             };
 
-            card.addEventListener('click', () => {
+            card.addEventListener('click', async () => {
                 const routineId = routine?.id;
                 if (!routineId) {
+                    return;
+                }
+                if (state.autoAdd) {
+                    if (state.onAddCallback) {
+                        await state.onAddCallback([routineId]);
+                    }
+                    returnToCaller();
                     return;
                 }
                 syncSelection(!state.selection.has(routineId));
@@ -258,7 +273,8 @@
             screenStatMusclesDetail: 'tabStats',
             screenSettings: 'tabSettings',
             screenPreferences: 'tabSettings',
-            screenData: 'tabSettings'
+            screenData: 'tabSettings',
+            screenPlanning: 'tabSettings'
         };
         const tabId = map[callerScreen];
         if (tabId) {
@@ -302,7 +318,7 @@
         if (!refs.routineSelectBar || !refs.btnAddSelectedRoutines) {
             return;
         }
-        const isAddMode = state.listMode === 'add';
+        const isAddMode = state.listMode === 'add' && !state.autoAdd;
         refs.routineSelectBar.classList.toggle('hidden', !isAddMode);
         if (!isAddMode) {
             return;
@@ -334,7 +350,8 @@
             screenStatMuscles,
             screenStatMusclesDetail,
             screenPreferences,
-            screenData
+            screenData,
+            screenPlanning
         } = assertRefs();
         const { screenStatExercises, screenStatExercisesDetail } = refs;
         const map = {
@@ -352,7 +369,8 @@
             screenStatMuscles,
             screenStatMusclesDetail,
             screenPreferences,
-            screenData
+            screenData,
+            screenPlanning
         };
         Object.entries(map).forEach(([key, element]) => {
             if (element) {
