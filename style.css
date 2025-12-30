@@ -256,7 +256,7 @@ header .title{
 .tmr-display{ font-weight: var(--fw-strong); min-width:76px; text-align:center; }
 .exec-timer-spacer{
     height: calc(var(--control-h) + 22px);
-    background: yellow;
+    background: transparent;
 }
 
 /* =========================================================

@@ -268,11 +268,9 @@
             if (!state.routine) {
                 return;
             }
-            state.routine.name = routineName.value.trim() || 'Routine';
+            const nextName = routineName.value;
+            state.routine.name = nextName.trim() ? nextName : 'Routine';
             scheduleSave();
-            if (refs.routineEditTitle) {
-                refs.routineEditTitle.textContent = state.routine.name || 'Routine';
-            }
         });
         routineIcon.addEventListener('change', () => {
             if (!state.routine) {
@@ -290,6 +288,9 @@
             scheduleSave();
         });
         routineEditorClose?.addEventListener('click', () => {
+            if (refs.routineEditTitle) {
+                refs.routineEditTitle.textContent = state.routine?.name || 'Routine';
+            }
             dlgRoutineEditor?.close();
         });
     }
