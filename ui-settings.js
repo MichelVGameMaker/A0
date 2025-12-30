@@ -71,10 +71,12 @@
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
+        refs.screenPlanning = document.getElementById('screenPlanning');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabSettings = document.getElementById('tabSettings');
         refs.btnSettingsExercises = document.getElementById('btnSettingsExercises');
         refs.btnSettingsRoutines = document.getElementById('btnSettingsRoutines');
+        refs.btnSettingsPlanning = document.getElementById('btnSettingsPlanning');
         refs.btnSettingsPreferences = document.getElementById('btnSettingsPreferences');
         refs.btnSettingsData = document.getElementById('btnSettingsData');
         refs.btnSettingsApplication = document.getElementById('btnSettingsApplication');
@@ -98,6 +100,7 @@
         const {
             btnSettingsExercises,
             btnSettingsRoutines,
+            btnSettingsPlanning,
             btnSettingsPreferences,
             btnSettingsData,
             btnSettingsApplication,
@@ -124,6 +127,11 @@
             highlightSettingsTab();
             hideTimerForSettings();
             void A.openRoutineList();
+        });
+        btnSettingsPlanning?.addEventListener('click', () => {
+            highlightSettingsTab();
+            hideTimerForSettings();
+            A.openPlanning?.();
         });
         btnSettingsPreferences?.addEventListener('click', () => {
             A.openPreferences();
@@ -742,6 +750,7 @@
             screenPreferences,
             screenData,
             screenApplication,
+            screenPlanning,
             screenFitHeroMapping
         } = ensureRefs();
         const map = {
@@ -762,6 +771,7 @@
             screenPreferences,
             screenData,
             screenApplication,
+            screenPlanning,
             screenFitHeroMapping
         };
         Object.entries(map).forEach(([key, element]) => {
