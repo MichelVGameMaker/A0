@@ -221,7 +221,9 @@ header .title{
 /* Timer bas */
 .exec-timer{
     z-index:20;
-    position:sticky;
+    position:fixed;
+    left:0;
+    right:0;
     bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0));
     display:grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items:center; gap:12px;

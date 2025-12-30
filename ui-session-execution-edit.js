@@ -1112,30 +1112,11 @@
     }
 
     function ensureTimerPlacement(execTimerBar) {
-        const activeScreen = [
-            refs.screenExecEdit,
-            refs.screenExercises,
-            refs.screenExerciseRead,
-            refs.screenExerciseEdit,
-            refs.screenRoutineEdit,
-            refs.screenRoutineMoveEdit,
-            refs.screenSessions,
-            refs.screenStatExercises,
-            refs.screenStatExercisesDetail,
-            refs.screenStatMuscles,
-            refs.screenStatMusclesDetail,
-            refs.screenSettings,
-            refs.screenPreferences,
-            refs.screenData
-        ].find((screen) => screen && !screen.hidden);
-        if (!activeScreen) {
+        const target = document.body;
+        if (execTimerBar.parentElement === target) {
             return;
         }
-        const content = activeScreen.querySelector('.content');
-        if (!content || execTimerBar.parentElement === content) {
-            return;
-        }
-        content.appendChild(execTimerBar);
+        target.appendChild(execTimerBar);
     }
 
     function safeInt(value, fallback = 0) {
