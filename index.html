@@ -935,66 +935,6 @@
 </dialog>
 <!-- ==================== -->
 
-<!-- ==========  Modale série ========== -->
-<dialog id="dlgSetEditor" class="modal">
-    <form method="dialog" class="set-editor-form" data-role="set-editor-form">
-        <div class="exec-grid routine-set-grid">
-            <label class="set-editor-field">
-                <span class="lbl">#</span>
-                <div class="vstepper">
-                    <button type="button" class="btn" data-action="move-up" aria-label="Monter la série">▲</button>
-                    <input id="setEditorReps" class="input" data-role="set-editor-order-number" type="number" min="0" inputmode="numeric" />
-                    <button type="button" class="btn" data-action="move-down" aria-label="Descendre la série">▼</button>
-                </div>
-            </label>
-            <label class="set-editor-field">
-                <span class="lbl">Reps</span>
-                <div class="vstepper">
-                    <button type="button" class="btn" data-action="reps-plus">+</button>
-                    <input id="setEditorReps" class="input" type="number" min="0" inputmode="numeric" data-role="reps" />
-                    <button type="button" class="btn" data-action="reps-minus">−</button>
-                </div>
-            </label>
-            <label class="set-editor-field">
-                <span class="lbl">Poids</span>
-                <div class="vstepper">
-                    <button type="button" class="btn" data-action="weight-plus">+</button>
-                    <input id="setEditorWeight" class="input" type="number" min="0" step="0.5" inputmode="decimal" data-role="weight" />
-                    <button type="button" class="btn" data-action="weight-minus">−</button>
-                </div>
-            </label>
-            <label class="set-editor-field">
-                <span class="lbl">RPE</span>
-                <div class="vstepper">
-                    <button type="button" class="btn" data-action="rpe-plus">+</button>
-                    <input id="setEditorRpe" class="input" type="number" min="5" max="10" step="0.5" inputmode="decimal" data-role="rpe" />
-                    <button type="button" class="btn" data-action="rpe-minus">−</button>
-                </div>
-            </label>
-            <div class="set-editor-field set-editor-rest">
-                <span class="lbl">Repos</span>
-                <div class="set-editor-rest-grid">
-                    <label class="set-editor-subfield">
-                        <div class="vstepper">
-                            <button type="button" class="btn" data-action="minutes-plus">+</button>
-                            <input id="setEditorMinutes" class="input" type="number" min="0" inputmode="numeric" data-role="minutes" aria-label="Minutes de repos" />
-                            <button type="button" class="btn" data-action="minutes-minus">−</button>
-                        </div>
-                    </label>
-                    <label class="set-editor-subfield">
-                        <div class="vstepper">
-                            <button type="button" class="btn" data-action="seconds-plus">+</button>
-                            <input id="setEditorSeconds" class="input" type="number" min="0" step="10" inputmode="numeric" data-role="seconds" aria-label="Secondes de repos" />
-                            <button type="button" class="btn" data-action="seconds-minus">−</button>
-                        </div>
-                    </label>
-                </div>
-            </div>
-        </div>
-        <div class="set-editor-actions" data-role="set-editor-actions"></div>
-        <div class="set-editor-actions set-editor-actions-secondary" data-role="set-editor-actions-secondary"></div>
-    </form>
-</dialog>
 <!-- ==================== -->
 
 <!-- JS (ordre important) -->
