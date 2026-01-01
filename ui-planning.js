@@ -9,6 +9,11 @@
     const refs = {};
     let refsResolved = false;
     const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+    const MAX_PLAN_DAYS = 28;
+    const dialogState = {
+        plan: null,
+        selected: null
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
@@ -74,8 +79,9 @@
             callerScreen: 'screenPlanning',
             mode: 'add',
             autoAdd: true,
+            includeNone: true,
             onAdd: async (ids) => {
-                const routineId = Array.isArray(ids) ? ids[0] : null;
+                const routineId = Array.isArray(ids) ? ids[0] : ids;
                 await assignRoutineToDay(dayIndex, routineId || null);
             }
         });
@@ -99,35 +105,10 @@
 
     async function handleEditDayCount() {
         const plan = await ensureActivePlan();
-        const current = clampDayCount(plan.length);
-        const input = window.prompt('Nombre de jours dans le planning (1-7) :', String(current));
-        if (input === null) {
-            return;
-        }
-        const next = Number.parseInt(input, 10);
-        if (!Number.isFinite(next) || next < 1 || next > 7) {
-            alert('Veuillez entrer un nombre entre 1 et 7.');
-            return;
-        }
-
-        if (next === current) {
-            return;
-        }
-
-        plan.length = next;
-        if (!plan.days || typeof plan.days !== 'object') {
-            plan.days = {};
-        }
-        Object.keys(plan.days).forEach((key) => {
-            const numeric = Number.parseInt(key, 10);
-            if (Number.isFinite(numeric) && numeric > next) {
-                delete plan.days[key];
-            }
-        });
-
-        await db.put('plans', plan);
-        await renderPlanning();
-        await A.populateRoutineSelect?.();
+        dialogState.plan = plan;
+        dialogState.selected = clampDayCount(plan.length);
+        renderPlanningDurationTags();
+        refs.dlgPlanningDuration?.showModal();
     }
 
     async function ensureActivePlan() {
@@ -138,12 +119,22 @@
                 name: 'Planning actif',
                 days: {},
                 length: 7,
+                startDate: A.ymd(A.today()),
                 active: true
             };
             await db.put('plans', plan);
         }
+        let shouldPersist = false;
         if (!plan.days || typeof plan.days !== 'object') {
             plan.days = {};
+            shouldPersist = true;
+        }
+        if (!plan.startDate) {
+            plan.startDate = A.ymd(A.today());
+            shouldPersist = true;
+        }
+        if (shouldPersist) {
+            await db.put('plans', plan);
         }
         return plan;
     }
@@ -163,7 +154,68 @@
         if (!Number.isFinite(numeric)) {
             return 7;
         }
-        return Math.min(7, Math.max(1, numeric));
+        return Math.min(MAX_PLAN_DAYS, Math.max(1, numeric));
+    }
+
+    function renderPlanningDurationTags() {
+        const { planningDurationTags } = ensureRefs();
+        if (!planningDurationTags) {
+            return;
+        }
+        planningDurationTags.innerHTML = '';
+        for (let index = 1; index <= MAX_PLAN_DAYS; index += 1) {
+            const tag = document.createElement('button');
+            tag.type = 'button';
+            tag.className = 'tag';
+            tag.textContent = String(index);
+            tag.dataset.value = String(index);
+            const isSelected = dialogState.selected === index;
+            tag.classList.toggle('selected', isSelected);
+            tag.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+            tag.addEventListener('click', () => {
+                dialogState.selected = index;
+                updatePlanningDurationSelection();
+            });
+            planningDurationTags.appendChild(tag);
+        }
+    }
+
+    function updatePlanningDurationSelection() {
+        const { planningDurationTags } = refs;
+        if (!planningDurationTags) {
+            return;
+        }
+        const tags = planningDurationTags.querySelectorAll('.tag');
+        tags.forEach((tag) => {
+            const value = Number.parseInt(tag.dataset.value, 10);
+            const isSelected = value === dialogState.selected;
+            tag.classList.toggle('selected', isSelected);
+            tag.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+        });
+    }
+
+    async function savePlanningDuration() {
+        const plan = dialogState.plan || (await ensureActivePlan());
+        const next = clampDayCount(dialogState.selected);
+        const current = clampDayCount(plan.length);
+        if (next === current) {
+            refs.dlgPlanningDuration?.close();
+            return;
+        }
+        plan.length = next;
+        if (!plan.days || typeof plan.days !== 'object') {
+            plan.days = {};
+        }
+        Object.keys(plan.days).forEach((key) => {
+            const numeric = Number.parseInt(key, 10);
+            if (Number.isFinite(numeric) && numeric > next) {
+                delete plan.days[key];
+            }
+        });
+        await db.put('plans', plan);
+        await renderPlanning();
+        await A.populateRoutineSelect?.();
+        refs.dlgPlanningDuration?.close();
     }
 
     function getDayLabel(dayIndex) {
@@ -197,17 +249,27 @@
         refs.planningDaysList = document.getElementById('planningDaysList');
         refs.btnPlanningBack = document.getElementById('btnPlanningBack');
         refs.btnPlanningEditDays = document.getElementById('btnPlanningEditDays');
+        refs.dlgPlanningDuration = document.getElementById('dlgPlanningDuration');
+        refs.planningDurationTags = document.getElementById('planningDurationTags');
+        refs.planningDurationCancel = document.getElementById('planningDurationCancel');
+        refs.planningDurationSave = document.getElementById('planningDurationSave');
         refsResolved = true;
         return refs;
     }
 
     function wireButtons() {
-        const { btnPlanningBack, btnPlanningEditDays } = ensureRefs();
+        const { btnPlanningBack, btnPlanningEditDays, planningDurationCancel, planningDurationSave } = ensureRefs();
         btnPlanningBack?.addEventListener('click', () => {
             A.openSettings?.();
         });
         btnPlanningEditDays?.addEventListener('click', () => {
             void handleEditDayCount();
+        });
+        planningDurationCancel?.addEventListener('click', () => {
+            refs.dlgPlanningDuration?.close();
+        });
+        planningDurationSave?.addEventListener('click', () => {
+            void savePlanningDuration();
         });
     }
 

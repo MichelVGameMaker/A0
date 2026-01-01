@@ -16,7 +16,8 @@
         listMode: 'view',
         selection: new Set(),
         onAddCallback: null,
-        autoAdd: false
+        autoAdd: false,
+        includeNone: false
     };
 
     /* WIRE */
@@ -28,11 +29,18 @@
 
     /* ACTIONS */
     A.openRoutineList = async function openRoutineList(options = {}) {
-        const { callerScreen = 'screenSettings', mode = 'view', onAdd = null, autoAdd = false } = options;
+        const {
+            callerScreen = 'screenSettings',
+            mode = 'view',
+            onAdd = null,
+            autoAdd = false,
+            includeNone = false
+        } = options;
         ensureRefs();
         state.listMode = mode === 'add' ? 'add' : 'view';
         state.onAddCallback = typeof onAdd === 'function' ? onAdd : null;
         state.autoAdd = Boolean(autoAdd);
+        state.includeNone = Boolean(includeNone);
         state.selection.clear();
         state.callerScreen = callerScreen;
         highlightCallerTab(callerScreen);
@@ -140,7 +148,14 @@
     function renderList() {
         const { routineCatalog } = assertRefs();
         routineCatalog.innerHTML = '';
+        if (state.listMode === 'add' && state.includeNone) {
+            routineCatalog.appendChild(renderNoneCard());
+        }
         if (!state.routines.length) {
+            if (state.listMode === 'add' && state.includeNone) {
+                updateSelectionBar();
+                return;
+            }
             const empty = document.createElement('div');
             empty.className = 'empty';
             empty.textContent = 'Aucune routine enregistrée.';
@@ -156,6 +171,35 @@
             routineCatalog.appendChild(renderRoutineCard(routine));
         });
         updateSelectionBar();
+    }
+
+    function renderNoneCard() {
+        const structure = listCard.createStructure({ clickable: true, role: 'button' });
+        const { card, body, end } = structure;
+        card.classList.add('is-neutral');
+        card.setAttribute('aria-label', 'Aucune routine — ajouter');
+
+        const title = document.createElement('div');
+        title.className = 'element';
+        title.textContent = 'Aucune routine';
+
+        const details = document.createElement('div');
+        details.className = 'details';
+        details.textContent = 'Ne pas associer de routine.';
+
+        body.append(title, details);
+
+        const icon = listCard.createIcon('⦸');
+        end.appendChild(icon);
+
+        card.addEventListener('click', async () => {
+            if (state.onAddCallback) {
+                await state.onAddCallback([null]);
+            }
+            returnToCaller();
+        });
+
+        return card;
     }
 
     function renderRoutineCard(routine) {

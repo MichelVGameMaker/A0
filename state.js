@@ -97,6 +97,32 @@
         return new Date(base.toDateString());
     };
 
+    /**
+     * Calcule l'index de jour dans le planning (1..N) pour une date donnée.
+     * @param {Date} date Date ciblée.
+     * @param {{length?: number, startDate?: string}|null} plan Plan actif.
+     * @returns {number|null} Index du jour (1..N) ou `null` si indéterminé.
+     */
+    existing.getPlanDayIndex = function getPlanDayIndex(date, plan) {
+        if (!plan || !(date instanceof Date)) {
+            return null;
+        }
+        const length = Number.parseInt(plan.length, 10);
+        if (!Number.isFinite(length) || length < 1) {
+            return null;
+        }
+        const cappedLength = Math.min(28, Math.max(1, length));
+        const startDate = plan.startDate
+            ? new Date(`${plan.startDate}T00:00:00`)
+            : existing.today();
+        const start = new Date(startDate.toDateString());
+        const target = new Date(date.toDateString());
+        const diffMs = target.getTime() - start.getTime();
+        const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+        const offset = ((diffDays % cappedLength) + cappedLength) % cappedLength;
+        return offset + 1;
+    };
+
     const VALUE_STATE_TAGS = new Set(['INPUT', 'SELECT', 'TEXTAREA']);
 
     function resolveDefaultValue(element) {
