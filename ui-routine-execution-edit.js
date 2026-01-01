@@ -5,6 +5,7 @@
     /* STATE */
     const refs = {};
     let refsResolved = false;
+    let routineMoveSnapshot = null;
     const state = {
         routineId: null,
         moveId: null,
@@ -85,6 +86,7 @@
         refs.dlgRoutineMoveEditor = document.getElementById('dlgRoutineMoveEditor');
         refs.routineMoveInstructions = document.getElementById('routineMoveInstructions');
         refs.routineMoveEditorClose = document.getElementById('routineMoveEditorClose');
+        refs.routineMoveEditorCancel = document.getElementById('routineMoveEditorCancel');
         refsResolved = true;
         return refs;
     }
@@ -110,7 +112,8 @@
             'routineMoveEditMeta',
             'dlgRoutineMoveEditor',
             'routineMoveInstructions',
-            'routineMoveEditorClose'
+            'routineMoveEditorClose',
+            'routineMoveEditorCancel'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -143,13 +146,46 @@
     }
 
     function wireMetaDialog() {
-        const { routineMoveEditMeta, dlgRoutineMoveEditor, routineMoveEditorClose, routineMoveInstructions } =
+        const {
+            routineMoveEditMeta,
+            dlgRoutineMoveEditor,
+            routineMoveEditorClose,
+            routineMoveEditorCancel,
+            routineMoveInstructions
+        } =
             assertRefs();
         routineMoveEditMeta.addEventListener('click', () => {
+            const move = findMove();
+            routineMoveSnapshot = move ? { instructions: move.instructions || '' } : null;
+            if (routineMoveSnapshot) {
+                routineMoveInstructions.value = routineMoveSnapshot.instructions;
+                refreshValueStates();
+            }
             dlgRoutineMoveEditor?.showModal();
         });
         routineMoveEditorClose.addEventListener('click', () => {
+            if (state.pendingSave) {
+                clearTimeout(state.pendingSave);
+                state.pendingSave = null;
+                void persistRoutine();
+            }
             dlgRoutineMoveEditor?.close();
+            routineMoveSnapshot = null;
+        });
+        routineMoveEditorCancel.addEventListener('click', () => {
+            const move = findMove();
+            if (move && routineMoveSnapshot) {
+                move.instructions = routineMoveSnapshot.instructions;
+                routineMoveInstructions.value = routineMoveSnapshot.instructions;
+                refreshValueStates();
+                if (state.pendingSave) {
+                    clearTimeout(state.pendingSave);
+                    state.pendingSave = null;
+                }
+                void persistRoutine();
+            }
+            dlgRoutineMoveEditor?.close();
+            routineMoveSnapshot = null;
         });
         routineMoveInstructions.addEventListener('input', () => {
             const move = findMove();

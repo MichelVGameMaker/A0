@@ -5,6 +5,7 @@
     /* STATE */
     const refs = {};
     let refsResolved = false;
+    let execMoveSnapshot = null;
     const state = {
         dateKey: null,
         exerciseId: null,
@@ -153,6 +154,7 @@
         refs.execMoveNote = document.getElementById('execMoveNote');
         refs.execReplaceExercise = document.getElementById('execReplaceExercise');
         refs.execMoveEditorClose = document.getElementById('execMoveEditorClose');
+        refs.execMoveEditorCancel = document.getElementById('execMoveEditorCancel');
         refs.execHistoryToggle = document.getElementById('execHistoryToggle');
         refsResolved = true;
         return refs;
@@ -188,6 +190,7 @@
             'execMoveNote',
             'execReplaceExercise',
             'execMoveEditorClose',
+            'execMoveEditorCancel',
             'execHistoryToggle'
         ];
         const missing = required.filter((key) => !refs[key]);
@@ -221,12 +224,31 @@
     }
 
     function wireMetaDialog() {
-        const { execEditMeta, dlgExecMoveEditor, execMoveEditorClose, execMoveNote } = assertRefs();
+        const { execEditMeta, dlgExecMoveEditor, execMoveEditorClose, execMoveEditorCancel, execMoveNote } =
+            assertRefs();
         execEditMeta.addEventListener('click', () => {
+            const exercise = getExercise();
+            execMoveSnapshot = exercise ? { note: exercise.exercise_note || '' } : null;
+            if (execMoveSnapshot) {
+                execMoveNote.value = execMoveSnapshot.note;
+                refreshValueStates();
+            }
             dlgExecMoveEditor?.showModal();
         });
         execMoveEditorClose.addEventListener('click', () => {
             dlgExecMoveEditor?.close();
+            execMoveSnapshot = null;
+        });
+        execMoveEditorCancel.addEventListener('click', () => {
+            const exercise = getExercise();
+            if (exercise && execMoveSnapshot) {
+                exercise.exercise_note = execMoveSnapshot.note;
+                execMoveNote.value = execMoveSnapshot.note;
+                refreshValueStates();
+                void persistSession(false);
+            }
+            dlgExecMoveEditor?.close();
+            execMoveSnapshot = null;
         });
         execMoveNote.addEventListener('input', () => {
             const exercise = getExercise();

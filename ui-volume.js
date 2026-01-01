@@ -80,12 +80,13 @@
         refs.dlgVolumeEdit = document.getElementById('dlgVolumeEdit');
         refs.volumeEditList = document.getElementById('volumeEditList');
         refs.volumeEditSave = document.getElementById('volumeEditSave');
+        refs.volumeEditCancel = document.getElementById('volumeEditCancel');
         refsResolved = true;
         return refs;
     }
 
     function wireEvents() {
-        const { btnVolumeEdit, btnVolumeMuscleBack, volumeEditSave } = ensureRefs();
+        const { btnVolumeEdit, btnVolumeMuscleBack, volumeEditSave, volumeEditCancel } = ensureRefs();
 
         btnVolumeEdit?.addEventListener('click', () => {
             openEditDialog();
@@ -97,6 +98,11 @@
 
         volumeEditSave?.addEventListener('click', () => {
             saveEditDialog();
+        });
+
+        volumeEditCancel?.addEventListener('click', () => {
+            const { dlgVolumeEdit } = ensureRefs();
+            dlgVolumeEdit?.close();
         });
     }
 

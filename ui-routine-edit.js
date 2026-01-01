@@ -10,6 +10,7 @@
     const ICONS = ['🏋️', '💪', '🤸', '🏃', '🧘', '🚴', '🥊', '🏊', '🧗', '⚽'];
     const refs = {};
     let refsResolved = false;
+    let routineEditorSnapshot = null;
     const state = {
         routineId: 'routine-test',
         callerScreen: 'screenSettings',
@@ -87,6 +88,7 @@
         refs.routineDetails = document.getElementById('routineDetails');
         refs.dlgRoutineEditor = document.getElementById('dlgRoutineEditor');
         refs.routineEditorClose = document.getElementById('routineEditorClose');
+        refs.routineEditorCancel = document.getElementById('routineEditorCancel');
         refs.routineDuplicate = document.getElementById('routineDuplicate');
         refs.routineDelete = document.getElementById('routineDelete');
         refs.routineList = document.getElementById('routineList');
@@ -123,6 +125,7 @@
             'routineEditEdit',
             'dlgRoutineEditor',
             'routineEditorClose',
+            'routineEditorCancel',
             'routineDuplicate',
             'routineDelete'
         ];
@@ -134,11 +137,23 @@
     }
 
     function wireHeaderButtons() {
-        const { routineEditBack, routineEditEdit, dlgRoutineEditor } = assertRefs();
+        const { routineEditBack, routineEditEdit, dlgRoutineEditor, routineName, routineIcon, routineDetails } = assertRefs();
         routineEditBack.addEventListener('click', () => {
             void A.openRoutineList({ callerScreen: state.callerScreen });
         });
         routineEditEdit.addEventListener('click', () => {
+            if (state.routine) {
+                routineEditorSnapshot = {
+                    name: state.routine.name || '',
+                    icon: state.routine.icon || ICONS[0],
+                    details: state.routine.details || ''
+                };
+                routineName.value = routineEditorSnapshot.name;
+                routineIcon.value = routineEditorSnapshot.icon;
+                routineDetails.value = routineEditorSnapshot.details;
+                renderIconPreview();
+                refreshValueStates();
+            }
             dlgRoutineEditor?.showModal();
         });
     }
@@ -263,7 +278,14 @@
     }
 
     function wireInputs() {
-        const { routineName, routineIcon, routineDetails, dlgRoutineEditor, routineEditorClose } = assertRefs();
+        const {
+            routineName,
+            routineIcon,
+            routineDetails,
+            dlgRoutineEditor,
+            routineEditorClose,
+            routineEditorCancel
+        } = assertRefs();
         routineName.addEventListener('input', () => {
             if (!state.routine) {
                 return;
@@ -288,10 +310,40 @@
             scheduleSave();
         });
         routineEditorClose?.addEventListener('click', () => {
+            if (state.pendingSave) {
+                clearTimeout(state.pendingSave);
+                state.pendingSave = null;
+                void persistRoutine();
+            }
             if (refs.routineEditTitle) {
                 refs.routineEditTitle.textContent = state.routine?.name || 'Routine';
             }
             dlgRoutineEditor?.close();
+            routineEditorSnapshot = null;
+        });
+        routineEditorCancel?.addEventListener('click', () => {
+            if (!routineEditorSnapshot || !state.routine) {
+                dlgRoutineEditor?.close();
+                return;
+            }
+            if (state.pendingSave) {
+                clearTimeout(state.pendingSave);
+                state.pendingSave = null;
+            }
+            state.routine.name = routineEditorSnapshot.name || 'Routine';
+            state.routine.icon = routineEditorSnapshot.icon || ICONS[0];
+            state.routine.details = routineEditorSnapshot.details || '';
+            routineName.value = routineEditorSnapshot.name;
+            routineIcon.value = routineEditorSnapshot.icon;
+            routineDetails.value = routineEditorSnapshot.details;
+            renderIconPreview();
+            refreshValueStates();
+            if (refs.routineEditTitle) {
+                refs.routineEditTitle.textContent = state.routine?.name || 'Routine';
+            }
+            void persistRoutine();
+            dlgRoutineEditor?.close();
+            routineEditorSnapshot = null;
         });
     }
 

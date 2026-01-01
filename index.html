@@ -751,171 +751,190 @@
 <!-- ==================== Modales ==================== -->
 
 <!-- ========== Volume : modale édition ========== -->
-<dialog id="dlgPreferencesRest" class="modal">
+<dialog id="dlgPreferencesRest" class="modal modal-fixed">
     <form method="dialog" class="modal-form">
         <div class="modal-header">
-            <div class="title">Durée de repos</div>
-            <button id="prefRestCancel" class="btn ghost" value="cancel" type="submit">✕</button>
+            <div class="title modal-title">Durée de repos</div>
+            <button id="prefRestCancel" class="btn ghost modal-close" type="button">✕</button>
         </div>
-        <div class="bloque">
-            <label class="lbl" for="prefRestEnabled">Durée par défaut</label>
-            <div class="row">
-                <input id="prefRestEnabled" type="checkbox" />
-                <span class="details">Activer pour appliquer cette durée à chaque nouvelle série.</span>
+        <div class="modal-body">
+            <div class="bloque">
+                <label class="lbl" for="prefRestEnabled">Durée par défaut</label>
+                <div class="row">
+                    <input id="prefRestEnabled" type="checkbox" />
+                    <span class="details">Activer pour appliquer cette durée à chaque nouvelle série.</span>
+                </div>
+            </div>
+            <div class="bloque">
+                <label class="lbl">Durée de repos par défaut</label>
+                <div class="row">
+                    <input id="prefRestMinutes" class="input" type="number" min="0" step="1" inputmode="numeric" aria-label="Minutes de repos" />
+                    <input id="prefRestSeconds" class="input" type="number" min="0" max="59" step="5" inputmode="numeric" aria-label="Secondes de repos" />
+                </div>
             </div>
         </div>
-        <div class="bloque">
-            <label class="lbl">Durée de repos par défaut</label>
-            <div class="row">
-                <input id="prefRestMinutes" class="input" type="number" min="0" step="1" inputmode="numeric" aria-label="Minutes de repos" />
-                <input id="prefRestSeconds" class="input" type="number" min="0" max="59" step="5" inputmode="numeric" aria-label="Secondes de repos" />
-            </div>
-        </div>
-        <div class="row">
-            <button id="prefRestSave" class="btn primary full" value="confirm" type="submit">Enregistrer</button>
+        <div class="modal-footer">
+            <button id="prefRestSave" class="btn primary full" type="button">ok</button>
         </div>
     </form>
 </dialog>
 
 <!-- ========== Volume : modale édition ========== -->
-<dialog id="dlgVolumeEdit" class="modal">
+<dialog id="dlgVolumeEdit" class="modal modal-fixed">
     <form method="dialog" class="modal-form">
         <div class="modal-header">
-            <div class="title">Éditer</div>
-            <div class="row">
-                <button class="btn ghost" value="cancel">Annuler</button>
-                <button id="volumeEditSave" class="btn primary" type="button">Enregistrer</button>
+            <div class="title modal-title">Éditer</div>
+            <button id="volumeEditCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="volume-edit-header">
+                    <div>Muscle</div>
+                    <div>Séances/sem</div>
+                    <div>Séries/sem</div>
+                </div>
+                <div id="volumeEditList" class="volume-edit-list"></div>
             </div>
         </div>
-
-        <div class="bloque">
-            <div class="volume-edit-header">
-                <div>Muscle</div>
-                <div>Séances/sem</div>
-                <div>Séries/sem</div>
-            </div>
-            <div id="volumeEditList" class="volume-edit-list"></div>
+        <div class="modal-footer">
+            <button id="volumeEditSave" class="btn primary full" type="button">ok</button>
         </div>
     </form>
 </dialog>
 <!-- ==================== -->
 
 <!-- ========== Routine : modale méta ========== -->
-<dialog id="dlgRoutineEditor" class="modal">
+<dialog id="dlgRoutineEditor" class="modal modal-fixed">
     <form method="dialog" class="modal-form">
         <div class="modal-header">
-            <div class="title">Modifier</div>
-            <button id="routineEditorClose" class="btn primary" value="close">OK</button>
+            <div class="title modal-title">Éditer</div>
+            <button id="routineEditorCancel" class="btn ghost modal-close" type="button">✕</button>
         </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="routineName">Nom</label>
+                    <input id="routineName" class="input" placeholder="Nom de la routine" />
+                </div>
+            </div>
 
-        <div class="bloque">
-            <div class="vstack">
-                <label class="lbl" for="routineName">Nom</label>
-                <input id="routineName" class="input" placeholder="Nom de la routine" />
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="routineIcon">Icône</label>
+                    <select id="routineIcon" class="input" aria-label="Icône de routine"></select>
+                </div>
+            </div>
+
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="routineDetails">Détails</label>
+                    <textarea id="routineDetails" class="input" rows="3" placeholder="Ajouter des détails sur la routine"></textarea>
+                </div>
+            </div>
+
+            <div class="bloque">
+                <button id="routineDuplicate" class="btn full" type="button">Dupliquer</button>
+            </div>
+
+            <div class="bloque">
+                <button id="routineDelete" class="btn danger full" type="button">🗑️ Supprimer de la liste des routines</button>
             </div>
         </div>
-
-        <div class="bloque">
-            <div class="vstack">
-                <label class="lbl" for="routineIcon">Icône</label>
-                <select id="routineIcon" class="input" aria-label="Icône de routine"></select>
-            </div>
-        </div>
-
-        <div class="bloque">
-            <div class="vstack">
-                <label class="lbl" for="routineDetails">Détails</label>
-                <textarea id="routineDetails" class="input" rows="3" placeholder="Ajouter des détails sur la routine"></textarea>
-            </div>
-        </div>
-
-        <div class="bloque">
-            <button id="routineDuplicate" class="btn full" type="button">Dupliquer</button>
-        </div>
-
-        <div class="bloque">
-            <button id="routineDelete" class="btn danger full" type="button">🗑️ Supprimer de la liste des routines</button>
+        <div class="modal-footer">
+            <button id="routineEditorClose" class="btn primary full" type="button">ok</button>
         </div>
     </form>
 </dialog>
 <!-- ==================== -->
 
 <!-- ========== Routine : méta d'un exercice ========== -->
-<dialog id="dlgRoutineMoveEditor" class="modal">
+<dialog id="dlgRoutineMoveEditor" class="modal modal-fixed">
     <form method="dialog" class="modal-form">
         <div class="modal-header">
-            <div class="title">Modifier</div>
-            <button id="routineMoveEditorClose" class="btn primary" value="close">OK</button>
+            <div class="title modal-title">Éditer</div>
+            <button id="routineMoveEditorCancel" class="btn ghost modal-close" type="button">✕</button>
         </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="routineMoveInstructions">Instructions</label>
+                    <textarea id="routineMoveInstructions" class="input" rows="3" placeholder="Ajouter des commentaires pour cette routine"></textarea>
+                </div>
+            </div>
 
-        <div class="bloque">
-            <div class="vstack">
-                <label class="lbl" for="routineMoveInstructions">Instructions</label>
-                <textarea id="routineMoveInstructions" class="input" rows="3" placeholder="Ajouter des commentaires pour cette routine"></textarea>
+            <div class="bloque">
+                <button id="routineMoveReplace" class="btn full" type="button">Remplacer l’exercice</button>
+            </div>
+
+            <div class="bloque">
+                <button id="routineMoveDelete" class="btn danger full" type="button">🗑️ Supprimer de la routine</button>
             </div>
         </div>
-
-        <div class="bloque">
-            <button id="routineMoveReplace" class="btn full" type="button">Remplacer l’exercice</button>
-        </div>
-
-        <div class="bloque">
-            <button id="routineMoveDelete" class="btn danger full" type="button">🗑️ Supprimer de la routine</button>
+        <div class="modal-footer">
+            <button id="routineMoveEditorClose" class="btn primary full" type="button">ok</button>
         </div>
     </form>
 </dialog>
 <!-- ==================== -->
 
 <!-- ========== Séance : méta d'un exercice ========== -->
-<dialog id="dlgExecMoveEditor" class="modal">
+<dialog id="dlgExecMoveEditor" class="modal modal-fixed">
     <form method="dialog" class="modal-form">
         <div class="modal-header">
-            <div class="title">Modifier</div>
-            <button id="execMoveEditorClose" class="btn primary" value="close">OK</button>
+            <div class="title modal-title">Éditer</div>
+            <button id="execMoveEditorCancel" class="btn ghost modal-close" type="button">✕</button>
         </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="execRoutineInstructions">Instructions</label>
+                    <textarea id="execRoutineInstructions" class="input" rows="3" readonly placeholder="Commentaire de la routine (lecture seule)"></textarea>
+                </div>
+            </div>
 
-        <div class="bloque">
-            <div class="vstack">
-                <label class="lbl" for="execRoutineInstructions">Instructions</label>
-                <textarea id="execRoutineInstructions" class="input" rows="3" readonly placeholder="Commentaire de la routine (lecture seule)"></textarea>
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="execMoveNote">Note</label>
+                    <textarea id="execMoveNote" class="input" rows="3" placeholder="Ajouter une note pour cette séance"></textarea>
+                </div>
+            </div>
+
+            <div class="bloque">
+                <button id="execReplaceExercise" class="btn full" type="button">Remplacer l’exercice</button>
+            </div>
+
+            <div class="bloque">
+                <button id="execDelete" class="btn danger full" type="button">🗑️ Supprimer de la séance</button>
             </div>
         </div>
-
-        <div class="bloque">
-            <div class="vstack">
-                <label class="lbl" for="execMoveNote">Note</label>
-                <textarea id="execMoveNote" class="input" rows="3" placeholder="Ajouter une note pour cette séance"></textarea>
-            </div>
-        </div>
-
-        <div class="bloque">
-            <button id="execReplaceExercise" class="btn full" type="button">Remplacer l’exercice</button>
-        </div>
-
-        <div class="bloque">
-            <button id="execDelete" class="btn danger full" type="button">🗑️ Supprimer de la séance</button>
+        <div class="modal-footer">
+            <button id="execMoveEditorClose" class="btn primary full" type="button">ok</button>
         </div>
     </form>
 </dialog>
 <!-- ==================== -->
 
 <!-- ========== Séance : méta séance ========== -->
-<dialog id="dlgSessionEditor" class="modal">
+<dialog id="dlgSessionEditor" class="modal modal-fixed">
     <form method="dialog" class="modal-form">
         <div class="modal-header">
-            <div class="title" id="sessionEditorTitle">Séance</div>
-            <button id="sessionEditorClose" class="btn primary" value="close">OK</button>
+            <div class="title modal-title" id="sessionEditorTitle">Éditer</div>
+            <button id="sessionEditorCancel" class="btn ghost modal-close" type="button">✕</button>
         </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="sessionComments">Commentaires</label>
+                    <textarea id="sessionComments" class="input" rows="3" placeholder="Ajouter des commentaires sur la séance"></textarea>
+                </div>
+            </div>
 
-        <div class="bloque">
-            <div class="vstack">
-                <label class="lbl" for="sessionComments">Commentaires</label>
-                <textarea id="sessionComments" class="input" rows="3" placeholder="Ajouter des commentaires sur la séance"></textarea>
+            <div class="bloque">
+                <button id="sessionCreateRoutine" class="btn full" type="button">Créer une routine à partir de la séance</button>
             </div>
         </div>
-
-        <div class="bloque">
-            <button id="sessionCreateRoutine" class="btn full" type="button">Créer une routine à partir de la séance</button>
+        <div class="modal-footer">
+            <button id="sessionEditorClose" class="btn primary full" type="button">ok</button>
         </div>
     </form>
 </dialog>
