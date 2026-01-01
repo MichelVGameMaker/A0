@@ -11,7 +11,8 @@
     let refsResolved = false;
     const sessionEditorState = {
         session: null,
-        saveTimer: null
+        saveTimer: null,
+        initialComments: ''
     };
 
     /* WIRE */
@@ -598,6 +599,7 @@
         refs.dlgSessionEditor = document.getElementById('dlgSessionEditor');
         refs.sessionEditorTitle = document.getElementById('sessionEditorTitle');
         refs.sessionEditorClose = document.getElementById('sessionEditorClose');
+        refs.sessionEditorCancel = document.getElementById('sessionEditorCancel');
         refs.sessionComments = document.getElementById('sessionComments');
         refs.sessionCreateRoutine = document.getElementById('sessionCreateRoutine');
         refsResolved = true;
@@ -645,6 +647,7 @@
             btnSessionEdit,
             dlgSessionEditor,
             sessionEditorClose,
+            sessionEditorCancel,
             sessionComments,
             sessionCreateRoutine
         } = ensureRefs();
@@ -658,6 +661,19 @@
 
         sessionEditorClose?.addEventListener('click', () => {
             flushSessionSave();
+            dlgSessionEditor.close();
+        });
+
+        sessionEditorCancel?.addEventListener('click', () => {
+            if (sessionEditorState.saveTimer) {
+                clearTimeout(sessionEditorState.saveTimer);
+                sessionEditorState.saveTimer = null;
+            }
+            if (sessionEditorState.session && sessionComments) {
+                sessionEditorState.session.comments = sessionEditorState.initialComments || '';
+                sessionComments.value = sessionEditorState.initialComments || '';
+                void flushSessionSave();
+            }
             dlgSessionEditor.close();
         });
 
@@ -685,12 +701,13 @@
         }
         const date = A.activeDate;
         if (sessionEditorTitle) {
-            sessionEditorTitle.textContent = A.fmtUI(date);
+            sessionEditorTitle.textContent = 'Éditer';
         }
         const session = await ensureSessionForDate(date);
         sessionEditorState.session = session;
         if (sessionComments) {
             sessionComments.value = session.comments || '';
+            sessionEditorState.initialComments = sessionComments.value;
         }
         if (sessionCreateRoutine) {
             const hasExercises = Array.isArray(session.exercises) && session.exercises.length > 0;

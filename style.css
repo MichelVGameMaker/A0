@@ -228,6 +228,12 @@ header .title{
     left:50%;
     transform: translateX(-50%);
 }
+.modal-fixed{
+    height: 80vh;
+    top: 50%;
+    padding: 0;
+    transform: translate(-50%, -50%);
+}
 .modal::backdrop{ 
     background: rgba(0,0,0,.25); 
     }
@@ -235,6 +241,38 @@ header .title{
     display:flex;  align-items:center; justify-content:space-between;
     padding: var(--pad-y) var(--pad-x);
     border-bottom:1px solid var(--panelBord);
+    background: var(--panelBack);
+}
+.modal-fixed .modal-form{
+    display:flex;
+    flex-direction:column;
+    height: 100%;
+}
+.modal-fixed .modal-header{
+    flex: 0 0 auto;
+    position: relative;
+    justify-content:center;
+}
+.modal-title{
+    flex: 1 1 auto;
+    text-align:center;
+}
+.modal-close{
+    position:absolute;
+    right: var(--pad-x);
+    top: 50%;
+    transform: translateY(-50%);
+}
+.modal-body{
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: var(--gap);
+}
+.modal-footer{
+    flex: 0 0 auto;
+    padding: var(--pad-y) var(--pad-x);
+    border-top: 1px solid var(--panelBord);
+    background: var(--panelBack);
 }
 /* =========================================================
    5) Timer
