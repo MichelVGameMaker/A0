@@ -35,6 +35,10 @@
         ]);
 
         virtualState.sessionDates = new Set(sessionDates.map((item) => item.date));
+        if (plan && !plan.startDate) {
+            plan.startDate = A.ymd(A.today());
+            await db.put('plans', plan);
+        }
         virtualState.plan = plan;
         virtualState.today = A.today();
 
@@ -215,8 +219,11 @@
         if (!plan) {
             return false;
         }
-        const weekday = (date.getDay() + 6) % 7 + 1;
-        return Boolean(plan.days?.[String(weekday)]);
+        const dayIndex = A.getPlanDayIndex?.(date, plan);
+        if (!dayIndex) {
+            return false;
+        }
+        return Boolean(plan.days?.[String(dayIndex)]);
     }
 
     function formatDayLabel(date) {

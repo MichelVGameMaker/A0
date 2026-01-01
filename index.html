@@ -59,6 +59,9 @@
                 <button id="btnAddExercises" class="btn flex-1">Ajouter exercice/s</button>
                 <button id="btnAddRoutines" class="btn flex-1">Ajouter routine/s</button>
             </div>
+            <div id="plannedRoutineRow" class="row" hidden>
+                <button id="btnPlannedRoutine" class="btn full" type="button">Routine planifiée</button>
+            </div>
         </div>
     </main>
     
@@ -543,10 +546,9 @@
         </div>
         <div class="header-center">
             <div class="title">Planning</div>
+            <button id="btnPlanningEditDays" class="btn ghost" title="Modifier la durée">✏️</button>
         </div>
-        <div class="header-right">
-            <button id="btnPlanningEditDays" class="btn" title="Modifier la durée">✏️</button>
-        </div>
+        <div class="header-right"></div>
     </header>
 
     <main class="content">
@@ -842,6 +844,31 @@
         </div>
         <div class="modal-footer">
             <button id="routineEditorClose" class="btn primary full" type="button">ok</button>
+        </div>
+    </form>
+</dialog>
+<!-- ==================== -->
+
+<!-- ========== Planning : durée ========== -->
+<dialog id="dlgPlanningDuration" class="modal modal-fixed modal-centered">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Éditer</div>
+            <button id="planningDurationCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl">Durée du planning de séances</label>
+                    <div id="planningDurationTags" class="tags mono" style="--tag-columns: 7;"></div>
+                </div>
+            </div>
+            <div class="bloque">
+                <div class="details">Ce planning est utilisé pour déterminer la séance prévue pour chaque jour.</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="planningDurationSave" class="btn primary full" type="button">ok</button>
         </div>
     </form>
 </dialog>

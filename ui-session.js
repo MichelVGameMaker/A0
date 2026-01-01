@@ -14,6 +14,9 @@
         saveTimer: null,
         initialComments: ''
     };
+    const plannedRoutineState = {
+        routineId: null
+    };
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -21,6 +24,7 @@
         assertRefs();
         wireAddExercisesButton();
         wireAddRoutinesButton();
+        wirePlannedRoutineButton();
         wireSessionEditor();
     });
 
@@ -74,8 +78,15 @@
         if (!plan) {
             return null;
         }
-        const weekday = (date.getDay() + 6) % 7 + 1;
-        return plan.days?.[String(weekday)] || null;
+        if (!plan.startDate) {
+            plan.startDate = A.ymd(A.today());
+            await db.put('plans', plan);
+        }
+        const dayIndex = A.getPlanDayIndex?.(date, plan);
+        if (!dayIndex) {
+            return null;
+        }
+        return plan.days?.[String(dayIndex)] || null;
     };
 
     /**
@@ -126,6 +137,7 @@
         const key = A.ymd(A.activeDate);
         const session = await db.getSession(key);
         sessionList.innerHTML = '';
+        await updatePlannedRoutineButton();
 
         if (!(session?.exercises?.length)) {
             sessionList.innerHTML = '<div class="empty">Aucun exercice pour cette date.</div>';
@@ -328,6 +340,28 @@
         await A.renderWeek();
         await A.renderSession();
     };
+
+    async function updatePlannedRoutineButton() {
+        const { plannedRoutineRow, btnPlannedRoutine } = ensureRefs();
+        if (!plannedRoutineRow || !btnPlannedRoutine) {
+            return;
+        }
+        const plannedId = await A.getPlannedRoutineId(A.activeDate);
+        if (!plannedId) {
+            plannedRoutineRow.hidden = true;
+            plannedRoutineState.routineId = null;
+            return;
+        }
+        const routine = await db.get('routines', plannedId);
+        if (!routine) {
+            plannedRoutineRow.hidden = true;
+            plannedRoutineState.routineId = null;
+            return;
+        }
+        plannedRoutineState.routineId = plannedId;
+        btnPlannedRoutine.textContent = routine.name || 'Routine planifiée';
+        plannedRoutineRow.hidden = false;
+    }
 
     /* UTILS */
     function createSession(date) {
@@ -592,6 +626,8 @@
         }
         refs.btnAddExercises = document.getElementById('btnAddExercises');
         refs.btnAddRoutines = document.getElementById('btnAddRoutines');
+        refs.plannedRoutineRow = document.getElementById('plannedRoutineRow');
+        refs.btnPlannedRoutine = document.getElementById('btnPlannedRoutine');
         refs.selectRoutine = document.getElementById('selectRoutine');
         refs.todayLabel = document.getElementById('todayLabel');
         refs.sessionList = document.getElementById('sessionList');
@@ -639,6 +675,16 @@
                     await A.addRoutineToSession(ids);
                 }
             });
+        });
+    }
+
+    function wirePlannedRoutineButton() {
+        const { btnPlannedRoutine } = refs;
+        btnPlannedRoutine?.addEventListener('click', async () => {
+            if (!plannedRoutineState.routineId) {
+                return;
+            }
+            await A.addRoutineToSession(plannedRoutineState.routineId);
         });
     }
 

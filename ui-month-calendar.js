@@ -143,7 +143,14 @@
         if (!plan) {
             return false;
         }
-        const weekday = ((date.getDay() + 6) % 7) + 1;
-        return Boolean(plan.days[String(weekday)]);
+        if (!plan.startDate) {
+            plan.startDate = A.ymd(A.today());
+            await db.put('plans', plan);
+        }
+        const dayIndex = A.getPlanDayIndex?.(date, plan);
+        if (!dayIndex) {
+            return false;
+        }
+        return Boolean(plan.days[String(dayIndex)]);
     }
 })();
