@@ -82,10 +82,10 @@
     }, {});
 
     const RANGE_OPTIONS = [
-        { key: '1M', label: '1M', days: 30 },
-        { key: '3M', label: '3M', days: 91 },
-        { key: '6M', label: '6M', days: 182 },
-        { key: '12M', label: '12M', days: 365 }
+        { key: '1M', label: '1 m.', days: 30 },
+        { key: '3M', label: '3 m.', days: 91 },
+        { key: '6M', label: '6 m.', days: 182 },
+        { key: '12M', label: '12 m.', days: 365 }
     ];
 
     const RANGE_MAP = RANGE_OPTIONS.reduce((acc, item) => {

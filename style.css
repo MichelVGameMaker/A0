@@ -1356,7 +1356,7 @@ input[type="number"]{ -moz-appearance:textfield; }
 
 .stats-timeline-item {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: baseline;
     gap: 12px;
     padding: 12px 16px;
@@ -1378,12 +1378,14 @@ input[type="number"]{ -moz-appearance:textfield; }
     color: var(--selectedBord);
     font-weight: var(--fw-strong);
     white-space: nowrap;
+    text-align: center;
 }
 
 .stats-timeline-value {
     color: var(--black);
     font-weight: var(--fw-strong);
     white-space: nowrap;
+    text-align: center;
 }
 
 .stats-timeline-empty {
@@ -1395,6 +1397,20 @@ input[type="number"]{ -moz-appearance:textfield; }
 
 .volume-range {
     margin-bottom: 12px;
+}
+
+#volumeRangeTags .tag,
+#volumeMuscleRangeTags .tag {
+    flex: 0 0 calc((100% - (3 * var(--tag-gap, 1px))) / 4);
+    max-width: calc((100% - (3 * var(--tag-gap, 1px))) / 4);
+}
+
+#volumeRangeTags .tag:nth-child(1),
+#volumeRangeTags .tag:nth-child(2),
+#volumeMuscleRangeTags .tag:nth-child(1),
+#volumeMuscleRangeTags .tag:nth-child(2) {
+    flex-basis: calc((100% - var(--tag-gap, 1px)) / 2);
+    max-width: calc((100% - var(--tag-gap, 1px)) / 2);
 }
 
 .volume-table {

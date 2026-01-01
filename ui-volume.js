@@ -5,15 +5,26 @@
 
     const STORAGE_KEY = 'volumeSettings';
     const RANGE_OPTIONS = [
-        { label: 'sem', type: 'week' },
-        { label: '7 j', days: 7 },
+        { label: 'Sem', type: 'week' },
+        { label: 'Mois', type: 'month' },
         { label: '1 m.', days: 28 },
         { label: '3 m.', days: 91 },
         { label: '6 m.', days: 182 },
-        { label: '1 an', days: 365 }
+        { label: '12 m.', days: 365 }
     ];
     const RANGE_BY_LABEL = new Map(RANGE_OPTIONS.map((option) => [option.label, option]));
-    const DEFAULT_RANGE_LABEL = 'sem';
+    const DEFAULT_RANGE_LABEL = 'Sem';
+    const RANGE_LABEL_ALIASES = new Map([
+        ['sem', 'Sem'],
+        ['semaine', 'Sem'],
+        ['7j', 'Sem'],
+        ['mois', 'Mois'],
+        ['1m', '1 m.'],
+        ['3m', '3 m.'],
+        ['6m', '6 m.'],
+        ['12m', '12 m.'],
+        ['1an', '12 m.']
+    ]);
     const DEFAULT_SELECTED_MUSCLES = [
         'biceps',
         'triceps',
@@ -114,7 +125,7 @@
         if (!rangeTagGroup) {
             rangeTagGroup = new A.TagGroup(volumeRangeTags, {
                 mode: 'mono',
-                columns: 3,
+                columns: 4,
                 onChange: (values) => {
                     const nextLabel = values?.[0] || DEFAULT_RANGE_LABEL;
                     const settings = loadSettings();
@@ -136,7 +147,7 @@
         if (!rangeMuscleTagGroup) {
             rangeMuscleTagGroup = new A.TagGroup(volumeMuscleRangeTags, {
                 mode: 'mono',
-                columns: 3,
+                columns: 4,
                 onChange: (values) => {
                     const nextLabel = values?.[0] || DEFAULT_RANGE_LABEL;
                     const settings = loadSettings();
@@ -252,17 +263,23 @@
         volumeTable.hidden = false;
 
         const statsByKey = await computeVolumeStats(tracked, selectedRange);
-        const rangeConfig = RANGE_BY_LABEL.get(selectedRange) || RANGE_BY_LABEL.get(DEFAULT_RANGE_LABEL);
-        const shouldScaleToWeek = rangeConfig?.type !== 'week';
+        const { config: rangeConfig, monthLength } = getRangeWindow(selectedRange);
+        const isMonthRange = rangeConfig?.type === 'month';
+        const shouldScaleToWeek = rangeConfig?.type !== 'week' && !isMonthRange;
         const weeklyScale = shouldScaleToWeek ? 7 / (rangeConfig?.days || 7) : 1;
+        const monthScale = isMonthRange ? monthLength / 7 : 1;
 
         tracked.forEach((entry) => {
             const normalizedKey = normalizeKey(entry.key);
             const stats = statsByKey.get(normalizedKey) || { sessions: 0, sets: 0 };
             const scaledSessions = shouldScaleToWeek ? stats.sessions * weeklyScale : stats.sessions;
             const scaledSets = shouldScaleToWeek ? stats.sets * weeklyScale : stats.sets;
-            const scaledTargetSessions = entry.targetSessions > 0 ? entry.targetSessions : 0;
-            const scaledTargetSets = entry.targetSets > 0 ? entry.targetSets : 0;
+            const scaledTargetSessions = entry.targetSessions > 0
+                ? (isMonthRange ? entry.targetSessions * monthScale : entry.targetSessions)
+                : 0;
+            const scaledTargetSets = entry.targetSets > 0
+                ? (isMonthRange ? entry.targetSets * monthScale : entry.targetSets)
+                : 0;
             const row = document.createElement('tr');
             makeRowClickable(row, () => {
                 void A.openVolumeMuscle?.(entry.key);
@@ -334,12 +351,7 @@
         const allExercises = [...primaryExercises, ...secondaryExercises];
         const statsByExercise = new Map(allExercises.map((exercise) => [exercise.id, { sessions: 0, sets: 0 }]));
 
-        const rangeConfig = RANGE_BY_LABEL.get(selectedRange) || RANGE_BY_LABEL.get(DEFAULT_RANGE_LABEL);
-        const today = A.today();
-        const start = rangeConfig?.type === 'week'
-            ? A.startOfWeek(today)
-            : A.addDays(today, -((rangeConfig?.days || 7) - 1));
-        const end = today;
+        const { config: rangeConfig, start, end, monthLength } = getRangeWindow(selectedRange);
 
         sessions.forEach((session) => {
             const sessionDateKey = resolveSessionDateKey(session);
@@ -369,8 +381,10 @@
             });
         });
 
-        const shouldScaleToWeek = rangeConfig?.type !== 'week';
+        const isMonthRange = rangeConfig?.type === 'month';
+        const shouldScaleToWeek = rangeConfig?.type !== 'week' && !isMonthRange;
         const weeklyScale = shouldScaleToWeek ? 7 / (rangeConfig?.days || 7) : 1;
+        const monthScale = isMonthRange ? monthLength / 7 : 1;
 
         volumeMuscleTableBody.innerHTML = '';
 
@@ -397,6 +411,8 @@
         const targetSettings = settings.items?.[normalizedMuscle] || {};
         const targetSessions = toNumber(targetSettings.targetSessions);
         const targetSets = toNumber(targetSettings.targetSets);
+        const scaledTargetSessions = isMonthRange ? targetSessions * monthScale : targetSessions;
+        const scaledTargetSets = isMonthRange ? targetSets * monthScale : targetSets;
 
         appendMuscleRow(
             volumeMuscleTableBody,
@@ -404,8 +420,8 @@
             muscleStats,
             shouldScaleToWeek,
             weeklyScale,
-            targetSessions,
-            targetSets
+            scaledTargetSessions,
+            scaledTargetSets
         );
 
         appendExerciseSection(
@@ -671,14 +687,22 @@
         if (RANGE_BY_LABEL.has(label)) {
             return label;
         }
+        const normalized = label.toLowerCase().replace(/\s+/g, '').replace(/\./g, '');
+        const alias = RANGE_LABEL_ALIASES.get(normalized);
+        if (alias && RANGE_BY_LABEL.has(alias)) {
+            return alias;
+        }
         return DEFAULT_RANGE_LABEL;
     }
 
     function getRangeDays(rangeLabel) {
         const today = A.today();
-        const config = RANGE_BY_LABEL.get(getRangeLabel(rangeLabel)) || RANGE_BY_LABEL.get(DEFAULT_RANGE_LABEL);
+        const { config } = getRangeWindow(rangeLabel, today);
         if (!config) {
             return 7;
+        }
+        if (config.type === 'month') {
+            return getMonthLength(today);
         }
         if (config.type === 'week') {
             const start = A.startOfWeek(today);
@@ -695,6 +719,34 @@
 
     function normalizeKey(value) {
         return String(value || '').trim().toLowerCase();
+    }
+
+    function getMonthLength(date) {
+        if (!(date instanceof Date)) {
+            return 30;
+        }
+        return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    }
+
+    function getRangeWindow(rangeLabel, referenceDate = null) {
+        const config = RANGE_BY_LABEL.get(getRangeLabel(rangeLabel)) || RANGE_BY_LABEL.get(DEFAULT_RANGE_LABEL);
+        const today = referenceDate instanceof Date ? referenceDate : A.today();
+        let start = today;
+        let end = today;
+        if (config?.type === 'week') {
+            start = A.startOfWeek(today);
+        } else if (config?.type === 'month') {
+            start = new Date(today.getFullYear(), today.getMonth(), 1);
+        } else {
+            start = A.addDays(today, -((config?.days || 7) - 1));
+        }
+        return {
+            config,
+            start,
+            end,
+            today,
+            monthLength: getMonthLength(today)
+        };
     }
 
     function parseDateKey(dateKey) {
@@ -786,12 +838,7 @@
             return statsByKey;
         }
 
-        const config = RANGE_BY_LABEL.get(getRangeLabel(rangeLabel)) || RANGE_BY_LABEL.get(DEFAULT_RANGE_LABEL);
-        const today = A.today();
-        const start = config?.type === 'week'
-            ? A.startOfWeek(today)
-            : A.addDays(today, -((config?.days || 7) - 1));
-        const end = today;
+        const { start, end } = getRangeWindow(rangeLabel);
 
         const [sessions, exercises] = await Promise.all([
             db.getAll('sessions'),
