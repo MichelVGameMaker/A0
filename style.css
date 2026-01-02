@@ -477,6 +477,11 @@ textarea:focus{
 .btn.primary{
    color: var(--emphase);
 }
+.btn.cta{
+  background: var(--emphase);
+  border-color: var(--emphase);
+  color: var(--white);
+}
 
 /* Supprimer */
 .btn.danger{
