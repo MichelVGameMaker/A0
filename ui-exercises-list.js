@@ -88,9 +88,29 @@
             return;
         }
 
+        const recentCounts = await getRecentExerciseCounts(12);
+        const recentExercises = [];
+        const otherExercises = [];
+
         filtered.forEach((exercise) => {
-            exList.appendChild(renderItem(exercise));
+            if (recentCounts.has(exercise.id)) {
+                recentExercises.push(exercise);
+            } else {
+                otherExercises.push(exercise);
+            }
         });
+
+        recentExercises.sort((a, b) => {
+            const countDiff = (recentCounts.get(b.id) || 0) - (recentCounts.get(a.id) || 0);
+            if (countDiff !== 0) {
+                return countDiff;
+            }
+            return compareExerciseNames(a, b);
+        });
+        otherExercises.sort(compareExerciseNames);
+
+        appendExerciseSection(exList, 'récents', recentExercises, { force: true });
+        appendExerciseSection(exList, 'autres', otherExercises, { force: true });
         updateSelectionBar();
     };
 
@@ -182,6 +202,53 @@
             });
         });
         return map;
+    }
+
+    async function getRecentExerciseCounts(limit = 12) {
+        const counts = new Map();
+        const dates = await db.listSessionDates();
+        const sortedDates = dates
+            .map((entry) => entry?.date)
+            .filter(Boolean)
+            .sort((a, b) => String(b).localeCompare(String(a)))
+            .slice(0, limit);
+
+        for (const date of sortedDates) {
+            const session = await db.getSession(date);
+            if (!Array.isArray(session?.exercises)) {
+                continue;
+            }
+            const seen = new Set();
+            session.exercises.forEach((exercise) => {
+                const exerciseId = exercise?.exercise_id;
+                if (!exerciseId || seen.has(exerciseId)) {
+                    return;
+                }
+                seen.add(exerciseId);
+                counts.set(exerciseId, (counts.get(exerciseId) || 0) + 1);
+            });
+        }
+        return counts;
+    }
+
+    function appendExerciseSection(container, label, exercises, options = {}) {
+        const { force = false } = options;
+        if (!exercises.length && !force) {
+            return;
+        }
+        const header = document.createElement('div');
+        header.className = 'exercise-list-section';
+        header.textContent = label;
+        container.appendChild(header);
+        exercises.forEach((exercise) => {
+            container.appendChild(renderItem(exercise));
+        });
+    }
+
+    function compareExerciseNames(a, b) {
+        const nameA = String(a?.name || '').toLocaleLowerCase();
+        const nameB = String(b?.name || '').toLocaleLowerCase();
+        return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
     }
 
     /* UTILS */

@@ -767,6 +767,15 @@ textarea:focus{
   background:var(--panelBack);
 }
 .exercise-selection-bar.hidden{ display:none; }
+.exercise-list-section{
+  margin:16px 0 8px;
+  font-weight:var(--fw-strong);
+  color:var(--selectedBord);
+  font-size:0.9em;
+}
+.exercise-list-section:first-child{
+  margin-top:0;
+}
 .exercise-hero-placeholder{ object-fit:contain; }
 
 
