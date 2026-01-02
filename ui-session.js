@@ -278,7 +278,7 @@
                     routineInstructions: '',
                     note: '',
                     sort: (session.exercises?.length || 0) + 1,
-                    sets: [{ pos: 1, reps: null, weight: null, rpe: null, rest: null, done: false }]
+                    sets: []
                 })
             );
         }
