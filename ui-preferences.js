@@ -9,6 +9,7 @@
         ensureRefs();
         wireEvents();
         renderRestSummary();
+        renderNewSetSummary();
     });
 
     function ensureRefs() {
@@ -23,6 +24,13 @@
         refs.prefRestSeconds = document.getElementById('prefRestSeconds');
         refs.prefRestSave = document.getElementById('prefRestSave');
         refs.prefRestCancel = document.getElementById('prefRestCancel');
+        refs.btnPreferencesNewSet = document.getElementById('btnPreferencesNewSet');
+        refs.prefNewSetSummary = document.getElementById('prefNewSetSummary');
+        refs.dlgPreferencesNewSet = document.getElementById('dlgPreferencesNewSet');
+        refs.prefNewSetLastSet = document.getElementById('prefNewSetLastSet');
+        refs.prefNewSetLastSession = document.getElementById('prefNewSetLastSession');
+        refs.prefNewSetSave = document.getElementById('prefNewSetSave');
+        refs.prefNewSetCancel = document.getElementById('prefNewSetCancel');
         refsResolved = true;
         return refs;
     }
@@ -32,7 +40,11 @@
             btnPreferencesRest,
             dlgPreferencesRest,
             prefRestSave,
-            prefRestCancel
+            prefRestCancel,
+            btnPreferencesNewSet,
+            dlgPreferencesNewSet,
+            prefNewSetSave,
+            prefNewSetCancel
         } = ensureRefs();
 
         btnPreferencesRest?.addEventListener('click', () => {
@@ -52,6 +64,25 @@
 
         dlgPreferencesRest?.addEventListener('close', () => {
             renderRestSummary();
+        });
+
+        btnPreferencesNewSet?.addEventListener('click', () => {
+            openNewSetDialog();
+        });
+
+        prefNewSetSave?.addEventListener('click', (event) => {
+            event.preventDefault();
+            saveNewSetPreferences();
+            dlgPreferencesNewSet?.close();
+        });
+
+        prefNewSetCancel?.addEventListener('click', (event) => {
+            event.preventDefault();
+            dlgPreferencesNewSet?.close();
+        });
+
+        dlgPreferencesNewSet?.addEventListener('close', () => {
+            renderNewSetSummary();
         });
     }
 
@@ -98,6 +129,38 @@
         prefRestSummary.textContent = `${statusLabel} — ${durationLabel}`;
     }
 
+    function openNewSetDialog() {
+        const { dlgPreferencesNewSet, prefNewSetLastSet, prefNewSetLastSession } = ensureRefs();
+        if (!dlgPreferencesNewSet || !prefNewSetLastSet || !prefNewSetLastSession) {
+            return;
+        }
+        const source = A.preferences?.getNewSetValueSource?.() ?? 'last_set';
+        prefNewSetLastSet.checked = source !== 'last_session';
+        prefNewSetLastSession.checked = source === 'last_session';
+        if (typeof dlgPreferencesNewSet.showModal === 'function') {
+            dlgPreferencesNewSet.showModal();
+        }
+    }
+
+    function saveNewSetPreferences() {
+        const { prefNewSetLastSet, prefNewSetLastSession } = ensureRefs();
+        if (!prefNewSetLastSet || !prefNewSetLastSession) {
+            return;
+        }
+        const next = prefNewSetLastSession.checked ? 'last_session' : 'last_set';
+        A.preferences?.setNewSetValueSource?.(next);
+    }
+
+    function renderNewSetSummary() {
+        const { prefNewSetSummary } = ensureRefs();
+        if (!prefNewSetSummary) {
+            return;
+        }
+        const source = A.preferences?.getNewSetValueSource?.() ?? 'last_set';
+        const label = source === 'last_session' ? 'Dernière séance' : 'Dernière série';
+        prefNewSetSummary.textContent = label;
+    }
+
     function splitDuration(totalSeconds) {
         const secondsSafe = Math.max(0, safeInt(totalSeconds, 0));
         const minutes = Math.floor(secondsSafe / 60);
@@ -121,4 +184,5 @@
         const number = Number.parseInt(value, 10);
         return Number.isFinite(number) ? number : fallback;
     }
+
 })();
