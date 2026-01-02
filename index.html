@@ -615,6 +615,12 @@
             </div>
             <p id="prefRestSummary" class="details"></p>
         </div>
+        <div class="bloque">
+            <div class="row">
+                <button id="btnPreferencesNewSet" class="btn full">🧮 Valeur pour nouvelle série</button>
+            </div>
+            <p id="prefNewSetSummary" class="details"></p>
+        </div>
     </main>
 
 </section>
@@ -777,6 +783,33 @@
         </div>
         <div class="modal-footer">
             <button id="prefRestSave" class="btn primary full" type="button">ok</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="dlgPreferencesNewSet" class="modal modal-fixed modal-centered">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Valeur pour nouvelle série</div>
+            <button id="prefNewSetCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <label class="lbl">Nouvelle série</label>
+                <div class="vstack">
+                    <label class="row" for="prefNewSetLastSet">
+                        <input id="prefNewSetLastSet" type="radio" name="prefNewSetSource" value="last_set" />
+                        <span class="details">Dernière série (jour même ou séance précédente).</span>
+                    </label>
+                    <label class="row" for="prefNewSetLastSession">
+                        <input id="prefNewSetLastSession" type="radio" name="prefNewSetSource" value="last_session" />
+                        <span class="details">Dernière séance (même position dans la séance précédente).</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="prefNewSetSave" class="btn primary full" type="button">ok</button>
         </div>
     </form>
 </dialog>

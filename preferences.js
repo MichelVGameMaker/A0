@@ -6,7 +6,8 @@
     const DEFAULTS = {
         restDefaultEnabled: true,
         restDefaultDuration: 80,
-        lastRestDuration: 80
+        lastRestDuration: 80,
+        newSetValueSource: 'last_set'
     };
     let cache = null;
 
@@ -35,6 +36,7 @@
         cache.restDefaultEnabled = typeof cache.restDefaultEnabled === 'boolean' ? cache.restDefaultEnabled : true;
         cache.restDefaultDuration = sanitizeDuration(cache.restDefaultDuration);
         cache.lastRestDuration = sanitizeDuration(cache.lastRestDuration, cache.restDefaultDuration);
+        cache.newSetValueSource = normalizeNewSetValueSource(cache.newSetValueSource);
         return cache;
     }
 
@@ -109,6 +111,18 @@
         return sanitizeDuration(source, data.restDefaultDuration);
     };
 
+    preferences.getNewSetValueSource = function getNewSetValueSource() {
+        const data = ensureLoaded();
+        return normalizeNewSetValueSource(data.newSetValueSource);
+    };
+
+    preferences.setNewSetValueSource = function setNewSetValueSource(value) {
+        const data = ensureLoaded();
+        data.newSetValueSource = normalizeNewSetValueSource(value);
+        persist();
+        return data.newSetValueSource;
+    };
+
     preferences.getDefaultTimerDuration = function getDefaultTimerDuration() {
         return preferences.getRestDefaultDuration();
     };
@@ -121,6 +135,10 @@
         cache = { ...DEFAULTS };
         persist();
     };
+
+    function normalizeNewSetValueSource(value) {
+        return value === 'last_session' ? 'last_session' : 'last_set';
+    }
 
     existing.preferences = preferences;
     window.App = existing;

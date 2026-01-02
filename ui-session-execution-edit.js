@@ -570,34 +570,21 @@
         }
         const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
         const previous = sets.length ? sets[sets.length - 1] : null;
-        const defaultRest = getDefaultRest();
         const now = new Date().toISOString();
         const restForNewSet = getRestForNewSet(previous?.rest);
-        const newSet = previous
-            ? {
-                  pos: sets.length + 1,
-                  reps: safePositiveInt(previous.reps),
-                  weight: sanitizeWeight(previous.weight),
-                  rpe: previous.rpe != null && previous.rpe !== '' ? clampRpe(previous.rpe) : null,
-                  rest: restForNewSet,
-                  done: true,
-                  date: now,
-                  time: previous.time ?? null,
-                  distance: previous.distance ?? null,
-                  setType: null
-              }
-            : {
-                  pos: sets.length + 1,
-                  reps: 8,
-                  weight: null,
-                  rpe: null,
-                  rest: restForNewSet,
-                  done: true,
-                  date: now,
-                  time: null,
-                  distance: null,
-                  setType: null
-              };
+        const preferredValues = await resolveNewSetValues(exercise, sets, previous);
+        const newSet = {
+            pos: sets.length + 1,
+            reps: preferredValues?.reps ?? 8,
+            weight: preferredValues?.weight ?? null,
+            rpe: preferredValues?.rpe ?? null,
+            rest: restForNewSet,
+            done: true,
+            date: now,
+            time: previous?.time ?? null,
+            distance: previous?.distance ?? null,
+            setType: null
+        };
         sets.push(newSet);
         hydrateSetIdentifiers(exercise, sets);
         exercise.sets = sets;
@@ -967,6 +954,106 @@
         const minutes = Math.floor(secondsTotal / 60);
         const seconds = secondsTotal % 60;
         return { minutes, seconds };
+    }
+
+    async function resolveNewSetValues(exercise, sets, previous) {
+        const source = A.preferences?.getNewSetValueSource?.() ?? 'last_set';
+        const exerciseId = exercise.exercise_id;
+        if (source === 'last_session') {
+            const fromPreviousSession = await findPreviousSessionSet(exerciseId, sets.length + 1);
+            if (fromPreviousSession) {
+                return sanitizeSetValues(fromPreviousSession);
+            }
+            if (previous) {
+                return sanitizeSetValues(previous);
+            }
+            const lastFromHistory = await findPreviousSessionLastSet(exerciseId);
+            if (lastFromHistory) {
+                return sanitizeSetValues(lastFromHistory);
+            }
+            return null;
+        }
+        if (previous) {
+            return sanitizeSetValues(previous);
+        }
+        const lastFromHistory = await findPreviousSessionLastSet(exerciseId);
+        if (lastFromHistory) {
+            return sanitizeSetValues(lastFromHistory);
+        }
+        return null;
+    }
+
+    function sanitizeSetValues(source) {
+        return {
+            reps: safePositiveInt(source?.reps),
+            weight: sanitizeWeight(source?.weight),
+            rpe: source?.rpe != null && source?.rpe !== '' ? clampRpe(source?.rpe) : null
+        };
+    }
+
+    async function findPreviousSessionSet(exerciseId, position) {
+        const exercise = await findPreviousSessionExercise(exerciseId);
+        if (!exercise) {
+            return null;
+        }
+        return findSetByPosition(exercise.sets, position);
+    }
+
+    async function findPreviousSessionLastSet(exerciseId) {
+        const exercise = await findPreviousSessionExercise(exerciseId);
+        if (!exercise) {
+            return null;
+        }
+        return findLastSet(exercise.sets);
+    }
+
+    async function findPreviousSessionExercise(exerciseId) {
+        const dateKey = state.dateKey;
+        if (!dateKey || !exerciseId) {
+            return null;
+        }
+        const sessions = await db.listSessionDates();
+        const previousDates = sessions
+            .map((entry) => entry.date)
+            .filter((date) => date && date < dateKey)
+            .sort((a, b) => b.localeCompare(a));
+        for (const date of previousDates) {
+            const session = await db.getSession(date);
+            const exercise = Array.isArray(session?.exercises)
+                ? session.exercises.find((item) => item.exercise_id === exerciseId)
+                : null;
+            if (exercise && Array.isArray(exercise.sets) && exercise.sets.length) {
+                return exercise;
+            }
+        }
+        return null;
+    }
+
+    function findSetByPosition(sets, position) {
+        if (!Array.isArray(sets) || !position) {
+            return null;
+        }
+        const exactMatch = sets.find((set, index) => safeInt(set.pos, index + 1) === position);
+        if (exactMatch) {
+            return exactMatch;
+        }
+        return sets[position - 1] ?? null;
+    }
+
+    function findLastSet(sets) {
+        if (!Array.isArray(sets) || !sets.length) {
+            return null;
+        }
+        let best = null;
+        let bestPos = -Infinity;
+        sets.forEach((set, index) => {
+            const pos = safeInt(set.pos, index + 1);
+            if (pos >= bestPos) {
+                bestPos = pos;
+                best = set;
+            }
+        });
+        return best;
     }
 
     function getDefaultRest() {
