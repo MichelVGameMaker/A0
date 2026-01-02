@@ -305,7 +305,7 @@
 
         const button = document.createElement('button');
         button.id = 'btnAddSelected';
-        button.className = 'btn full';
+        button.className = 'btn cta full';
         button.disabled = true;
         button.textContent = 'Ajouter 0 exercice(s)';
         button.addEventListener('click', () => {
@@ -337,7 +337,6 @@
 
         const count = state.selection.size;
         refs.btnAddSelected.disabled = count === 0;
-        refs.btnAddSelected.classList.toggle('primary', count > 0);
         refs.btnAddSelected.textContent = `Ajouter ${count} exercice(s)`;
     }
 
