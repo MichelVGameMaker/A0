@@ -638,6 +638,7 @@
         refs.sessionEditorCancel = document.getElementById('sessionEditorCancel');
         refs.sessionComments = document.getElementById('sessionComments');
         refs.sessionCreateRoutine = document.getElementById('sessionCreateRoutine');
+        refs.sessionDelete = document.getElementById('sessionDelete');
         refsResolved = true;
         return refs;
     }
@@ -695,7 +696,8 @@
             sessionEditorClose,
             sessionEditorCancel,
             sessionComments,
-            sessionCreateRoutine
+            sessionCreateRoutine,
+            sessionDelete
         } = ensureRefs();
         if (!btnSessionEdit || !dlgSessionEditor) {
             return;
@@ -737,6 +739,10 @@
 
         sessionCreateRoutine?.addEventListener('click', () => {
             void createRoutineFromSession();
+        });
+
+        sessionDelete?.addEventListener('click', () => {
+            void deleteSessionFromEditor();
         });
     }
 
@@ -814,6 +820,32 @@
         dlgSessionEditor?.close();
         if (typeof A.openRoutineEdit === 'function') {
             await A.openRoutineEdit({ routineId, callerScreen: 'screenSessions' });
+        }
+    }
+
+    async function deleteSessionFromEditor() {
+        const { dlgSessionEditor } = ensureRefs();
+        const session = sessionEditorState.session;
+        if (!session) {
+            return;
+        }
+        if (!confirm('Supprimer la séance ?')) {
+            return;
+        }
+        if (sessionEditorState.saveTimer) {
+            clearTimeout(sessionEditorState.saveTimer);
+            sessionEditorState.saveTimer = null;
+        }
+        if (session.id) {
+            await db.del('sessions', session.id);
+        }
+        sessionEditorState.session = null;
+        dlgSessionEditor?.close();
+        if (typeof A.renderWeek === 'function') {
+            await A.renderWeek();
+        }
+        if (typeof A.renderSession === 'function') {
+            await A.renderSession();
         }
     }
 
