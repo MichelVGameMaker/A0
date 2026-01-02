@@ -703,7 +703,7 @@ textarea:focus{
 }
 
 .list-card__icon{
-  font-size:20px;
+  font-size:14px;
   line-height:1;
 }
 .session-card-dragging{
@@ -743,7 +743,7 @@ textarea:focus{
   border:none;
   background:none;
   color:inherit;
-  font-size:20px;
+  font-size:14px;
   line-height:1;
   cursor:pointer;
   padding:4px;
