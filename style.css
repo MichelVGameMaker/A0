@@ -30,8 +30,8 @@
   --focusedBack:   var(--grey);
   --focusedColor:  var(--white);
   --focusedBord:   var(--emphase);
-  --clickableBack: var(--#light_grey);
-  --clickableBord: var(--#almost_white); 
+  --clickableBack: var(--light_grey);
+  --clickableBord: var(--almost_white); 
   --nonClickableBord: var(--emphase);
   /* --- RPE styles --- */
   --rpe-ink:       #0f243a;
