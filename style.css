@@ -341,6 +341,7 @@ header .header-left .btn{
 }
 .centered{ text-align:center; }
 .listing{ margin: 0; font-weight: var(--fw-strong); padding-left: 0; list-style-position: inside; }
+.listing-instructions{ font-weight: var(--fw-base); }
 
 /* Grosse image pour l'exécution */
 image_big{
