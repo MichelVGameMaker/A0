@@ -71,6 +71,11 @@
         refs.exReadInstruc = document.getElementById('exReadInstruc');
         refs.exReadBack = document.getElementById('exReadBack');
         refs.exReadEdit = document.getElementById('exReadEdit');
+        refs.dlgExerciseActions = document.getElementById('dlgExerciseActions');
+        refs.exerciseActionsClose = document.getElementById('exerciseActionsClose');
+        refs.exerciseActionEdit = document.getElementById('exerciseActionEdit');
+        refs.exerciseActionDuplicate = document.getElementById('exerciseActionDuplicate');
+        refs.exerciseActionDelete = document.getElementById('exerciseActionDelete');
         refsResolved = true;
         return refs;
     }
@@ -85,7 +90,12 @@
             'exReadEquipment',
             'exReadInstruc',
             'exReadBack',
-            'exReadEdit'
+            'exReadEdit',
+            'dlgExerciseActions',
+            'exerciseActionsClose',
+            'exerciseActionEdit',
+            'exerciseActionDuplicate',
+            'exerciseActionDelete'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -95,7 +105,15 @@
     }
 
     function wireNavigation() {
-        const { exReadBack, exReadEdit } = assertRefs();
+        const {
+            exReadBack,
+            exReadEdit,
+            dlgExerciseActions,
+            exerciseActionsClose,
+            exerciseActionEdit,
+            exerciseActionDuplicate,
+            exerciseActionDelete
+        } = assertRefs();
         exReadBack?.addEventListener('click', () => {
             if (state.callerScreen === 'screenExercises') {
                 void A.openExercises({ callerScreen: 'screenExerciseRead' });
@@ -104,12 +122,64 @@
             }
         });
         exReadEdit?.addEventListener('click', () => {
-            if (!state.currentId) {
-                alert('Aucun exercice sélectionné.');
+            openExerciseActions();
+        });
+        exerciseActionsClose?.addEventListener('click', () => {
+            dlgExerciseActions?.close();
+        });
+        exerciseActionEdit?.addEventListener('click', () => {
+            void handleExerciseAction('edit');
+        });
+        exerciseActionDuplicate?.addEventListener('click', () => {
+            void handleExerciseAction('duplicate');
+        });
+        exerciseActionDelete?.addEventListener('click', () => {
+            void handleExerciseAction('delete');
+        });
+    }
+
+    function openExerciseActions() {
+        const { dlgExerciseActions } = assertRefs();
+        if (!state.currentId) {
+            alert('Aucun exercice sélectionné.');
+            return;
+        }
+        if (!dlgExerciseActions.open) {
+            dlgExerciseActions.showModal();
+        }
+    }
+
+    async function handleExerciseAction(action) {
+        const { dlgExerciseActions } = assertRefs();
+        if (!state.currentId) {
+            alert('Aucun exercice sélectionné.');
+            return;
+        }
+        if (action === 'edit') {
+            dlgExerciseActions.close();
+            await A.openExerciseEdit({ currentId: state.currentId, callerScreen: 'screenExerciseRead' });
+            return;
+        }
+        if (action === 'duplicate') {
+            const exercise = await db.get('exercises', state.currentId);
+            if (!exercise) {
+                alert('Exercice introuvable.');
                 return;
             }
-            A.openExerciseEdit({ currentId: state.currentId, callerScreen: 'screenExerciseRead' });
-        });
+            const copy = { ...exercise, id: `ex_${Date.now()}` };
+            await db.put('exercises', copy);
+            dlgExerciseActions.close();
+            await A.openExerciseEdit({ currentId: copy.id, callerScreen: 'screenExerciseRead' });
+            return;
+        }
+        if (action === 'delete') {
+            if (!confirm('Supprimer cet exercice ?')) {
+                return;
+            }
+            await db.del('exercises', state.currentId);
+            dlgExerciseActions.close();
+            await A.openExercises({ callerScreen: 'screenExerciseRead' });
+        }
     }
 
     function updateHero(exercise) {
