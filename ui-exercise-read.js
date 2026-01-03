@@ -39,7 +39,6 @@
         refs.exReadTitle.textContent = exercise.name || 'Exercice';
         updateHero(exercise);
         updateMuscles(exercise);
-        updateEquipment(exercise);
         updateInstructions(exercise);
 
         switchScreen('screenExerciseRead');
@@ -66,8 +65,8 @@
         refs.screenData = document.getElementById('screenData');
         refs.exReadTitle = document.getElementById('exReadTitle');
         refs.exReadHero = document.getElementById('exReadHero');
-        refs.exReadMuscle = document.getElementById('exReadMuscle');
-        refs.exReadEquipment = document.getElementById('exReadEquipment');
+        refs.exReadMuscleMain = document.getElementById('exReadMuscleMain');
+        refs.exReadMuscleSecondary = document.getElementById('exReadMuscleSecondary');
         refs.exReadInstruc = document.getElementById('exReadInstruc');
         refs.exReadBack = document.getElementById('exReadBack');
         refs.exReadEdit = document.getElementById('exReadEdit');
@@ -86,8 +85,8 @@
             'screenExerciseRead',
             'exReadTitle',
             'exReadHero',
-            'exReadMuscle',
-            'exReadEquipment',
+            'exReadMuscleMain',
+            'exReadMuscleSecondary',
             'exReadInstruc',
             'exReadBack',
             'exReadEdit',
@@ -195,19 +194,11 @@
     }
 
     function updateMuscles(exercise) {
-        const { exReadMuscle } = assertRefs();
+        const { exReadMuscleMain, exReadMuscleSecondary } = assertRefs();
         const main = exercise.muscle || exercise.muscleGroup2 || exercise.muscleGroup3 || '—';
         const secondary = toArray(exercise.secondaryMuscles).filter(Boolean).join(', ');
-        const primaryLine = secondary
-            ? `Principal : ${ucFirst(main)} · Secondaires : ${secondary}`
-            : `Principal : ${ucFirst(main)}`;
-        exReadMuscle.textContent = primaryLine;
-    }
-
-    function updateEquipment(exercise) {
-        const { exReadEquipment } = assertRefs();
-        const line = `Matériel : ${toArray(exercise.equipmentGroup2 || exercise.equipment).filter(Boolean).join(', ') || '—'}`;
-        exReadEquipment.textContent = line;
+        exReadMuscleMain.textContent = `Principal : ${ucFirst(main)}`;
+        exReadMuscleSecondary.textContent = `Secondaires : ${secondary || '—'}`;
     }
 
     function updateInstructions(exercise) {
