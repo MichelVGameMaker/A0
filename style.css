@@ -756,6 +756,29 @@ textarea:focus{
   width:20px;
   height:20px;
   cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+  border:2px solid var(--selectedBord);
+  border-radius:4px;
+  background:var(--panelBack);
+  display:grid;
+  place-content:center;
+}
+.exercise-card-check::after{
+  content:"";
+  width:6px;
+  height:12px;
+  border-right:2px solid var(--selectedBord);
+  border-bottom:2px solid var(--selectedBord);
+  transform:rotate(45deg) scale(0);
+  transition:transform 0.12s ease-out;
+}
+.exercise-card-check:checked::after{
+  transform:rotate(45deg) scale(1);
+}
+.exercise-card-check:focus-visible{
+  outline:2px solid var(--selectedBord);
+  outline-offset:2px;
 }
 .exercise-card-eye{
   border:none;
