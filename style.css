@@ -61,6 +61,7 @@
 
   /* --- Typo unifiée --- */
   --font:      system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  --fs-big:    19px;        /* icones */
   --fs-base:   16px;        /* base */
   --fs-small:  13px;        /* petits textes (ex: cellules série) */
   --fs-rpe:    13px;        /* taille spécifique RPE dans série */
@@ -93,7 +94,7 @@
 }
 html {
    height:100%;
-    font-size: var(--fs-base);
+   font-size: var(--fs-base);
    -webkit-text-size-adjust: 100%;
    overscroll-behavior: none;
 }
@@ -119,7 +120,7 @@ body{
     background: var(--emphase);
     color: var(--white);
     font-size: clamp(36px, 10vw, 72px);
-    font-weight: 700;
+    font-weight: var(--fw-strong);
     letter-spacing: 0.08em;
     transition: opacity 180ms ease, visibility 180ms ease;
 }
@@ -488,8 +489,13 @@ textarea:focus{
 
 /* CTA */
 .btn.primary{
+   border-radius: 50%;
+   font-size: var(--fs-big);
+   background: transparent;
+   border-color: var(--emphase);
    color: var(--emphase);
 }
+
 .btn.cta{
   background: var(--emphase);
   border-color: var(--emphase);
@@ -754,26 +760,28 @@ textarea:focus{
 }
 /* Check Box */
 .app-check{
-  width:20px;
+  width: 20px;
   height:20px;
-  cursor:pointer;
+  border-radius:4px;
   appearance:none;
   -webkit-appearance:none;
-  border:none;
-  border-radius:4px;
-  background:var(--panelBack);
   display:grid;
   place-content:center;
-  font:inherit;
+  font:inherit;  
+  /* Cliquable */
+  border:1px solid var(--clickableBord);
+  background: var(--clickableBack);
+  cursor:pointer;
+  touch-action: manipulation;       /* coupe le geste double-tap=zoom */
 }
 .app-check::after{
   content:"✓";
   color:var(--white);
   font-size:14px;
   line-height:1;
-  font-weight:700;
+  font-weight:var(--fw-strong);;
   transform:scale(0);
-  transition:transform 0.12s ease-out;
+  transition:transform 0.15s ease-out;
 }
 .app-check:checked{
   background:var(--emphase);

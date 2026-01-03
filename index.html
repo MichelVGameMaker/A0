@@ -30,7 +30,7 @@
     <!-- En-tête -->
     <header class="header">
         <div class="header-left">
-            <button id="btnQuickNav" class="btn ghost" title="Calendrier">📅</button>
+            <button id="btnQuickNav" class="btn" title="Calendrier">📅</button>
         </div>
 
         <div class="header-center">
@@ -38,7 +38,7 @@
         </div>
 
         <div class="header-right">
-            <button id="btnSessionEdit" class="btn ghost" title="Éditer" aria-label="Éditer">✏️</button>
+            <button id="btnSessionEdit" class="btn primary" title="Éditer" aria-label="Éditer">✎</button>
         </div>
     </header>
     
@@ -80,7 +80,9 @@
             <div class="title">Routines</div>
         </div>
 
-        <div class="header-right"><button id="btnRoutineCreate" class="btn primary" title="Créer une routine">＋</button></div>
+        <div class="header-right">
+            <button id="btnRoutineCreate" class="btn primary" title="Créer une routine">＋</button>
+         </div>
     </header>
 
     <main class="content">
@@ -103,7 +105,7 @@
             <div class="title" id="routineEditTitle">Routine</div>
         </div>
         <div class="header-right">
-            <button id="routineEditEdit" class="btn primary" title="Éditer">✏️</button>
+            <button id="routineEditEdit" class="btn primary" title="Éditer" aria-label="Éditer">✎</button>
         </div>
     </header>
 
@@ -135,7 +137,7 @@
         </div>
 
         <div class="header-right">
-            <button id="routineMoveEditMeta" class="btn ghost" title="Éditer">✏️</button>
+            <button id="routineMoveEditMeta" class="btn primary" title="Éditer" aria-label="Éditer">✎</button>
         </div>
     </header>
 
@@ -188,7 +190,7 @@
             <div class="title" id="statsExerciseTitle">Exercice</div>
         </div>
         <div class="header-right">
-            <button id="statsGoal" class="btn ghost" type="button" title="Objectif">objectif</button>
+            <button id="statsGoal" class="btn primary" type="button" title="Objectif">obj</button>
         </div>
     </header>
 
@@ -252,7 +254,7 @@
             <div class="title">Volume</div>
         </div>
         <div class="header-right">
-            <button id="btnVolumeEdit" class="btn" title="Éditer" aria-label="Éditer">✏️</button>
+            <button id="btnVolumeEdit" class="btn primary" title="Éditer" aria-label="Éditer">✎</button>
         </div>
     </header>
 
@@ -327,7 +329,7 @@
         </div>
 
         <div class="header-right">
-            <button id="execEditMeta" class="btn ghost" title="Éditer">✏️</button>
+            <button id="execEditMeta" class="btn primary" title="Éditer" aria-label="Éditer">✎</button>
         </div>
     </header>
 
@@ -369,7 +371,7 @@
             <div class="title" id="exListTitle">Exercices</div>
         </div>
         <div class="header-right">
-            <button class="btn" id="exOkList" title="Créer un exercice">＋</button>
+            <button class="btn primary" id="exOkList" title="Créer un exercice">＋</button>
         </div>
     </header>
 
@@ -413,7 +415,7 @@
             <div class="title" id="exReadTitle">Exercice</div>
         </div>
         <div class="header-right">
-            <button class="btn" id="exReadEdit" title="Éditer">✏️</button>
+            <button class="btn primary" id="exReadEdit" title="Éditer" aria-label="Éditer">✎</button>
         </div>
     </header>
 
@@ -546,9 +548,10 @@
         </div>
         <div class="header-center">
             <div class="title">Planning</div>
-            <button id="btnPlanningEditDays" class="btn ghost" title="Modifier la durée">✏️</button>
         </div>
-        <div class="header-right"></div>
+        <div class="header-right">
+            <button id="btnPlanningEditDays" class="btn primary" title="Modifier la durée">✎</button>
+        </div>
     </header>
 
     <main class="content">
@@ -737,7 +740,7 @@
 <!-- ✅ Barre de timer collante en bas -->
 <footer id="execTimerBar" class="exec-timer" hidden>
     <!-- pause/play -->
-    <button id="tmrToggle" class="btn primary" aria-label="Mettre en pause ou reprendre le timer">⏸</button>
+    <button id="tmrToggle" class="btn cta" aria-label="Mettre en pause ou reprendre le timer">⏸</button>
     <!-- timer avec - [temps] + -->
     <div class="tmr-center">
         <button id="tmrMinus"   class="btn" aria-label="Retirer 10 secondes">−10s</button>
@@ -745,7 +748,7 @@
         <button id="tmrPlus"    class="btn" aria-label="Ajouter 10 secondes">+10s</button>
     </div>
     <!-- reset -->
-    <button id="tmrReset" class="btn" aria-label="Réinitialiser le chronomètre">↺</button>
+    <button id="tmrReset" class="btn danger" aria-label="Réinitialiser le chronomètre">↺</button>
 </footer>
  <!-- ==================== -->
  
