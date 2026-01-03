@@ -174,6 +174,16 @@ header{
     display:flex;
     align-items:center;
     gap: var(--gap);
+    flex: 0 0 60pt;
+    width: 60pt;
+    min-width: 60pt;
+    max-width: 60pt;
+}
+.header-left{
+    justify-content: flex-start;
+}
+.header-right{
+    justify-content: flex-end;
 }
 .header-center{
     flex:1;
@@ -188,6 +198,13 @@ header .title{
     text-overflow:ellipsis;
     white-space:nowrap;
     max-width: min(260px, 72vw);
+}
+header .header-left .btn{
+    width: 100%;
+    justify-content: flex-start;
+    background: transparent;
+    border-color: transparent;
+    text-align: left;
 }
 
 /* =========================================================
