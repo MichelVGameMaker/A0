@@ -752,6 +752,7 @@ textarea:focus{
   cursor: pointer;
   border-color: var(--clickableBord);
 }
+/* Check Box */
 .exercise-card-check{
   width:20px;
   height:20px;
@@ -780,6 +781,7 @@ textarea:focus{
   outline:2px solid var(--selectedBord);
   outline-offset:2px;
 }
+/* Eye icon */
 .exercise-card-eye{
   border:none;
   background:none;
