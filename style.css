@@ -753,32 +753,36 @@ textarea:focus{
   border-color: var(--clickableBord);
 }
 /* Check Box */
-.exercise-card-check{
+.app-check{
   width:20px;
   height:20px;
   cursor:pointer;
   appearance:none;
   -webkit-appearance:none;
-  border:2px solid var(--selectedBord);
+  border:none;
   border-radius:4px;
   background:var(--panelBack);
   display:grid;
   place-content:center;
+  font:inherit;
 }
-.exercise-card-check::after{
-  content:"";
-  width:6px;
-  height:12px;
-  border-right:2px solid var(--selectedBord);
-  border-bottom:2px solid var(--selectedBord);
-  transform:rotate(45deg) scale(0);
+.app-check::after{
+  content:"✓";
+  color:var(--white);
+  font-size:14px;
+  line-height:1;
+  font-weight:700;
+  transform:scale(0);
   transition:transform 0.12s ease-out;
 }
-.exercise-card-check:checked::after{
-  transform:rotate(45deg) scale(1);
+.app-check:checked{
+  background:var(--emphase);
 }
-.exercise-card-check:focus-visible{
-  outline:2px solid var(--selectedBord);
+.app-check:checked::after{
+  transform:scale(1);
+}
+.app-check:focus-visible{
+  outline:2px solid var(--emphase);
   outline-offset:2px;
 }
 /* Eye icon */
