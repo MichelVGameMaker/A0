@@ -173,7 +173,15 @@ const db = (() => {
         const { force = false } = options;
         const currentCount = await countStore('exercises');
         if (!force && currentCount > 0) {
-            return;
+            if (currentCount > 3) {
+                return;
+            }
+            const seededIds = new Set(['push_up', 'pull_up', 'squat']);
+            const seededExercises = await getAll('exercises');
+            const onlySeeds = seededExercises.every((exercise) => seededIds.has(exercise.id));
+            if (!onlySeeds) {
+                return;
+            }
         }
 
         try {
@@ -182,7 +190,13 @@ const db = (() => {
             if (!response.ok) {
                 throw new Error('data/exercises.json introuvable');
             }
-            const data = await response.json();
+            const raw = await response.text();
+            let data;
+            try {
+                data = JSON.parse(raw);
+            } catch (parseError) {
+                data = parseLooseExercises(raw);
+            }
             if (!Array.isArray(data)) {
                 console.warn('exercises.json pas un tableau, import ignoré.');
                 return;
@@ -202,6 +216,83 @@ const db = (() => {
         } catch (error) {
             console.warn('Import externe sauté :', error.message);
         }
+    }
+
+    function parseLooseExercises(raw) {
+        const lines = String(raw || '').split(/\r?\n/);
+        const exercises = [];
+        let current = null;
+        let listKey = null;
+
+        function pushCurrent() {
+            if (current && Object.keys(current).length) {
+                exercises.push(current);
+            }
+            current = null;
+            listKey = null;
+        }
+
+        function parseValue(line) {
+            const rawValue = line.split(':').slice(1).join(':').trim().replace(/,$/, '');
+            try {
+                return JSON.parse(rawValue);
+            } catch {
+                return rawValue.replace(/^"|"$/g, '');
+            }
+        }
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) {
+                continue;
+            }
+            if (trimmed.startsWith('"gifUrl"')) {
+                if (current) {
+                    pushCurrent();
+                }
+                current = { gifUrl: parseValue(trimmed) };
+                continue;
+            }
+            if (!current) {
+                continue;
+            }
+            if (trimmed.startsWith('"targetMuscles"')) {
+                listKey = 'targetMuscles';
+                current[listKey] = [];
+                continue;
+            }
+            if (trimmed.startsWith('"bodyParts"')) {
+                listKey = 'bodyParts';
+                current[listKey] = [];
+                continue;
+            }
+            if (trimmed.startsWith('"equipments"')) {
+                listKey = 'equipments';
+                current[listKey] = [];
+                continue;
+            }
+            if (trimmed.startsWith('"secondaryMuscles"')) {
+                listKey = 'secondaryMuscles';
+                current[listKey] = [];
+                continue;
+            }
+            if (listKey) {
+                if (trimmed.startsWith(']')) {
+                    listKey = null;
+                    continue;
+                }
+                const item = trimmed.replace(/,$/, '');
+                if (item) {
+                    current[listKey].push(item.replace(/^"|"$/g, ''));
+                }
+            }
+        }
+
+        if (current) {
+            pushCurrent();
+        }
+
+        return exercises;
     }
 
     async function reset() {
@@ -289,7 +380,8 @@ const db = (() => {
     }
 
     async function normalizeExercise(exercise) {
-        const id = String(exercise.exerciseId || exercise.id || exercise._id || exercise.uuid || '').trim();
+        const inferredId = inferExerciseId(exercise);
+        const id = String(exercise.exerciseId || exercise.id || exercise._id || exercise.uuid || inferredId || '').trim();
         if (!id) {
             return null;
         }
@@ -335,6 +427,16 @@ const db = (() => {
             secondaryMuscles: exercise.secondaryMuscles || [],
             instructions: exercise.instructions || []
         };
+    }
+
+    function inferExerciseId(exercise) {
+        const source = exercise?.gifUrl || exercise?.image || '';
+        if (!source) {
+            return '';
+        }
+        const file = String(source).split('/').pop() || '';
+        const clean = file.split('?')[0].split('#')[0];
+        return clean.replace(/\.[^/.]+$/, '');
     }
 
     async function countStore(store) {
