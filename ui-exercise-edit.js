@@ -180,8 +180,10 @@
             .filter(Boolean);
         const image = (refs.exImage.value || '').trim() || null;
 
+        const existing = state.currentId ? await db.get('exercises', state.currentId) : null;
         const muscle = CFG.muscleTranscode[String(targetRaw).trim().toLowerCase()] || {};
         const exercise = {
+            ...(existing || {}),
             id: state.currentId || `ex_${Date.now()}`,
             name,
             muscle: targetRaw,
