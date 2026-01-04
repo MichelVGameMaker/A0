@@ -265,7 +265,7 @@
             if (existing.has(id)) {
                 continue;
             }
-            const exercise = await db.get('exercises', id);
+            const exercise = await db.getExercise(id);
             if (!exercise) {
                 continue;
             }

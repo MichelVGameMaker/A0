@@ -2,11 +2,12 @@
 const db = (() => {
     /* STATE */
     const DB_NAME = 'A0-db';
-    const DB_VER = 2;
+    const DB_VER = 3;
     let handle;
     let memoryMode = false;
     const memoryStores = {
         exercises: new Map(),
+        exercises_custom: new Map(),
         routines: new Map(),
         plans: new Map(),
         sessions: new Map()
@@ -208,7 +209,7 @@ const db = (() => {
                 const rows = await Promise.all(slice.map(normalizeExercise));
                 for (const row of rows) {
                     if (row) {
-                        await put('exercises', row);
+                        await put('exercises', { ...row, origin: 'native', source: 'native' });
                     }
                 }
             }
@@ -336,8 +337,12 @@ const db = (() => {
             const request = indexedDB.open(DB_NAME, DB_VER);
             request.onupgradeneeded = (event) => {
                 const database = event.target.result;
+                const upgradeTransaction = event.target.transaction;
                 if (!database.objectStoreNames.contains('exercises')) {
                     database.createObjectStore('exercises', { keyPath: 'id' });
+                }
+                if (!database.objectStoreNames.contains('exercises_custom')) {
+                    database.createObjectStore('exercises_custom', { keyPath: 'id' });
                 }
                 if (!database.objectStoreNames.contains('routines')) {
                     database.createObjectStore('routines', { keyPath: 'id' });
@@ -363,6 +368,25 @@ const db = (() => {
                             });
                         };
                     }
+                }
+
+                if (event.oldVersion < 3 && upgradeTransaction && database.objectStoreNames.contains('exercises')) {
+                    const legacyStore = upgradeTransaction.objectStore('exercises');
+                    const customStore = upgradeTransaction.objectStore('exercises_custom');
+                    const requestAll = legacyStore.getAll();
+                    requestAll.onsuccess = () => {
+                        const entries = requestAll.result || [];
+                        entries.forEach((exercise) => {
+                            if (!exercise || !exercise.id) {
+                                return;
+                            }
+                            if (isLikelyCustomExercise(exercise)) {
+                                const origin = inferCustomOrigin(exercise);
+                                customStore.put({ ...exercise, origin });
+                                legacyStore.delete(exercise.id);
+                            }
+                        });
+                    };
                 }
             };
             request.onsuccess = () => resolve(request.result);
@@ -425,8 +449,137 @@ const db = (() => {
             bodyPart: muscle.g1 || rawBody || null,
             image,
             secondaryMuscles: exercise.secondaryMuscles || [],
-            instructions: exercise.instructions || []
+            instructions: exercise.instructions || [],
+            origin: 'native',
+            source: 'native'
         };
+    }
+
+    function isLikelyCustomExercise(exercise) {
+        const id = typeof exercise?.id === 'string' ? exercise.id : '';
+        if (!id) {
+            return false;
+        }
+        if (id.startsWith('ex_') || id.startsWith('user-exercise--') || id.startsWith('fh_')
+            || id.startsWith('import-exercise--') || id.startsWith('override--')) {
+            return true;
+        }
+        if (exercise?.external_source || exercise?.external_exercise_id || exercise?.source === 'FitHero') {
+            return true;
+        }
+        if (exercise?.origin && exercise.origin !== 'native') {
+            return true;
+        }
+        return false;
+    }
+
+    function inferCustomOrigin(exercise) {
+        if (exercise?.origin && exercise.origin !== 'native') {
+            return exercise.origin;
+        }
+        if (exercise?.external_source === 'FitHero' || exercise?.source === 'FitHero') {
+            return 'import';
+        }
+        return 'user';
+    }
+
+    function buildOverrideId(nativeId) {
+        return `override--${nativeId}`;
+    }
+
+    async function getExerciseWithMeta(id) {
+        if (!id) {
+            return { exercise: null, originType: null, native: null, override: null, custom: null };
+        }
+        const [native, custom] = await Promise.all([
+            get('exercises', id),
+            get('exercises_custom', id)
+        ]);
+        if (custom && custom.origin !== 'override') {
+            const originType = custom.origin === 'import' ? 'imported' : 'created';
+            return { exercise: { ...custom, originType }, originType, native: null, override: null, custom };
+        }
+        if (!native) {
+            return { exercise: null, originType: null, native: null, override: null, custom: null };
+        }
+        const override = await get('exercises_custom', buildOverrideId(native.id));
+        if (override) {
+            const merged = { ...native, ...override, id: native.id, native_id: native.id, originType: 'modified' };
+            return { exercise: merged, originType: 'modified', native, override, custom: null };
+        }
+        return {
+            exercise: { ...native, originType: 'native' },
+            originType: 'native',
+            native,
+            override: null,
+            custom: null
+        };
+    }
+
+    async function getExercise(id) {
+        const result = await getExerciseWithMeta(id);
+        return result.exercise;
+    }
+
+    async function getAllExercises() {
+        const [nativeList, customList] = await Promise.all([
+            getAll('exercises'),
+            getAll('exercises_custom')
+        ]);
+        const overrides = new Map();
+        customList.forEach((entry) => {
+            if (!entry || entry.origin !== 'override') {
+                return;
+            }
+            const nativeId = entry.native_id || '';
+            if (nativeId) {
+                overrides.set(nativeId, entry);
+            }
+        });
+        const merged = nativeList.map((exercise) => {
+            const override = overrides.get(exercise.id);
+            if (override) {
+                return { ...exercise, ...override, id: exercise.id, native_id: exercise.id, originType: 'modified' };
+            }
+            return { ...exercise, originType: 'native' };
+        });
+        const customs = customList
+            .filter((entry) => entry && entry.origin !== 'override')
+            .map((entry) => ({
+                ...entry,
+                originType: entry.origin === 'import' ? 'imported' : 'created'
+            }));
+        return merged.concat(customs);
+    }
+
+    async function saveExerciseOverride(nativeId, data) {
+        if (!nativeId) {
+            throw new Error('nativeId manquant pour override.');
+        }
+        const { originType, ...payload } = data || {};
+        const override = {
+            ...payload,
+            id: buildOverrideId(nativeId),
+            native_id: nativeId,
+            origin: 'override'
+        };
+        await put('exercises_custom', override);
+        return override;
+    }
+
+    async function saveCustomExercise(exercise, origin = 'user') {
+        const { originType, ...payload } = exercise || {};
+        const record = { ...payload, origin };
+        await put('exercises_custom', record);
+        return record;
+    }
+
+    async function deleteCustomExercise(id) {
+        return del('exercises_custom', id);
+    }
+
+    async function deleteExerciseOverride(nativeId) {
+        return del('exercises_custom', buildOverrideId(nativeId));
     }
 
     function inferExerciseId(exercise) {
@@ -461,7 +614,7 @@ const db = (() => {
         const key =
             store === 'sessions'
                 ? value?.id
-                : store === 'plans' || store === 'routines' || store === 'exercises'
+                : store === 'plans' || store === 'routines' || store === 'exercises' || store === 'exercises_custom'
                     ? value?.id
                     : null;
         if (!key) {
@@ -730,6 +883,13 @@ const db = (() => {
         getAll,
         count,
         del,
+        getExercise,
+        getExerciseWithMeta,
+        getAllExercises,
+        saveExerciseOverride,
+        saveCustomExercise,
+        deleteCustomExercise,
+        deleteExerciseOverride,
         getSession,
         saveSession,
         listSessionDates,

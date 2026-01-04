@@ -5,7 +5,7 @@
     /* STATE */
     const refs = {};
     let refsResolved = false;
-    const state = { currentId: null, callerScreen: 'screenExercises' };
+    const state = { currentId: null, callerScreen: 'screenExercises', originType: null };
     const tagGroups = { equipment: null, secondary: null };
 
     /* WIRE */
@@ -31,16 +31,19 @@
 
         state.currentId = currentId;
         state.callerScreen = callerScreen;
+        state.originType = null;
 
         refs.exEditTitle.textContent = currentId ? 'Modifier' : 'Ajouter';
         refs.exEditDelete.hidden = !currentId;
 
         if (currentId) {
-            const exercise = await db.get('exercises', currentId);
+            const meta = await db.getExerciseWithMeta(currentId);
+            const exercise = meta.exercise;
             if (!exercise) {
                 alert('Exercice introuvable.');
                 return;
             }
+            state.originType = meta.originType;
             refs.exName.value = exercise.name || '';
             refs.exTargetMuscle.value = exercise.muscle || '';
             refs.exImage.value = exercise.image || '';
@@ -165,7 +168,11 @@
         if (!confirmed) {
             return;
         }
-        await db.del('exercises', state.currentId);
+        if (state.originType === 'native') {
+            await db.deleteExerciseOverride(state.currentId);
+        } else {
+            await db.deleteCustomExercise(state.currentId);
+        }
         await A.openExercises({ callerScreen: 'screenExerciseEdit' });
     }
 
@@ -186,11 +193,13 @@
             .filter(Boolean);
         const image = (refs.exImage.value || '').trim() || null;
 
-        const existing = state.currentId ? await db.get('exercises', state.currentId) : null;
+        const existingMeta = state.currentId ? await db.getExerciseWithMeta(state.currentId) : null;
+        const existing = existingMeta?.exercise || null;
+        const { originType, ...existingBase } = existing || {};
         const muscle = CFG.muscleTranscode[String(targetRaw).trim().toLowerCase()] || {};
         const exercise = {
-            ...(existing || {}),
-            id: state.currentId || `ex_${Date.now()}`,
+            ...(existingBase || {}),
+            id: state.currentId || buildUserExerciseId(),
             name,
             muscle: targetRaw,
             muscleGroup1: muscle.g1 || null,
@@ -204,7 +213,13 @@
             bodyPart: muscle.g1 || null
         };
 
-        await db.put('exercises', exercise);
+        if (state.currentId && existingMeta?.originType === 'native') {
+            await db.saveExerciseOverride(state.currentId, exercise);
+        } else if (state.currentId && existingMeta?.originType === 'imported') {
+            await db.saveCustomExercise(exercise, 'import');
+        } else {
+            await db.saveCustomExercise(exercise, 'user');
+        }
         if (state.callerScreen === 'screenExerciseRead' && exercise.id) {
             await A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
         } else {
@@ -273,5 +288,9 @@
         A.updateValueState?.(refs.exTargetMuscle);
         A.updateValueState?.(refs.exImage);
         A.updateValueState?.(refs.exInstr);
+    }
+
+    function buildUserExerciseId() {
+        return `user-exercise--${Date.now()}`;
     }
 })();

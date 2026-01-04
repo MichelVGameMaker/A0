@@ -118,7 +118,7 @@
         ensureRefs();
         highlightStatsTab();
         await loadData(true);
-        const exercise = state.exercises.find((item) => item.id === exerciseId) || (await db.get('exercises', exerciseId));
+        const exercise = state.exercises.find((item) => item.id === exerciseId) || (await db.getExercise(exerciseId));
         state.activeExercise = exercise || null;
         renderExerciseDetail();
         switchScreen('screenStatExercisesDetail');
@@ -253,7 +253,7 @@
         if (!force && state.exercises.length) {
             return;
         }
-        const [exercisesRaw, sessionsRaw] = await Promise.all([db.getAll('exercises'), db.getAll('sessions')]);
+        const [exercisesRaw, sessionsRaw] = await Promise.all([db.getAllExercises(), db.getAll('sessions')]);
         const exercises = Array.isArray(exercisesRaw) ? exercisesRaw : [];
         const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : [];
 
@@ -494,15 +494,24 @@
             return;
         }
         const goals = buildGoalDataFromInputs();
+        const { originType, ...baseExercise } = exercise;
         const updated = {
-            ...exercise,
+            ...baseExercise,
             goals
         };
-        await db.put('exercises', updated);
-        state.activeExercise = updated;
-        const index = state.exercises.findIndex((item) => item.id === updated.id);
+        const meta = await db.getExerciseWithMeta(exercise.id);
+        if (meta.originType === 'native') {
+            await db.saveExerciseOverride(exercise.id, updated);
+        } else if (meta.originType === 'imported') {
+            await db.saveCustomExercise(updated, 'import');
+        } else {
+            await db.saveCustomExercise(updated, 'user');
+        }
+        const refreshed = await db.getExercise(exercise.id);
+        state.activeExercise = refreshed;
+        const index = state.exercises.findIndex((item) => item.id === exercise.id);
         if (index >= 0) {
-            state.exercises[index] = updated;
+            state.exercises[index] = refreshed;
         }
         dlgStatsGoal.close();
         renderExerciseDetail();

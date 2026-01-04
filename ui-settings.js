@@ -483,7 +483,7 @@
             const [payload, mapping, exercises, catalog] = await Promise.all([
                 readJsonFile(file),
                 loadFitHeroMapping(),
-                db.getAll('exercises'),
+                db.getAllExercises(),
                 loadExercisesCatalog()
             ]);
             const workouts = payload?.workouts;
@@ -498,11 +498,19 @@
             const userExerciseById = buildFitHeroUserExerciseIndex(payload?.exercises);
             const exerciseByExternalKey = buildExerciseByExternalKey(exercises);
             const catalogById = buildExerciseCatalogIndex(catalog);
-            const missingExercises = new Set();
+            const catalogBySlug = buildFitHeroCatalogBySlug(payload?.exercises, catalog);
+            const nameIndexes = buildExerciseNameIndexes(exercises);
+            const missingMappings = new Map(
+                (Array.isArray(mapping?.missing) ? mapping.missing : [])
+                    .filter((entry) => entry?.slug)
+                    .map((entry) => [entry.slug, entry])
+            );
             const mappingStats = {
                 official: 0,
                 user: 0,
-                missing: 0
+                nativeMatch: 0,
+                userMatch: 0,
+                created: 0
             };
 
             const userExerciseIds = collectFitHeroUserExerciseIds(workouts);
@@ -511,7 +519,8 @@
                     userExerciseById,
                     exerciseById,
                     exerciseByExternalKey,
-                    catalogById
+                    catalogById,
+                    catalogBySlug
                 });
             }
 
@@ -519,13 +528,15 @@
 
             let imported = 0;
             for (const workout of workouts) {
-                const session = toFitHeroSession(workout, {
+                const session = await toFitHeroSession(workout, {
                     mappingBySlug,
                     exerciseById,
                     userExerciseById,
                     exerciseByExternalKey,
                     catalogById,
-                    missingExercises,
+                    catalogBySlug,
+                    nameIndexes,
+                    missingMappings,
                     mappingStats
                 });
                 if (!session) {
@@ -535,13 +546,15 @@
                 imported += 1;
             }
 
-            updateMissingFitHeroExercises(missingExercises);
+            updateMissingFitHeroMappings(missingMappings);
 
             const label = imported > 1 ? 'séances' : 'séance';
             const summaryMessage = `${imported} ${label} FitHero chargée${imported > 1 ? 's' : ''}.\n`
-                + `Exercices : ${mappingStats.official} via mapping officiel, `
-                + `${mappingStats.user} via mapping utilisateur, `
-                + `${mappingStats.missing} non trouvé${mappingStats.missing > 1 ? 's' : ''}.`;
+                + `Exercices : ${mappingStats.nativeMatch} trouvé${mappingStats.nativeMatch > 1 ? 's' : ''} `
+                + `dans la base native, ${mappingStats.userMatch} trouvé${mappingStats.userMatch > 1 ? 's' : ''} `
+                + `dans les exercices créés, ${mappingStats.official + mappingStats.user} `
+                + `via mapping FitHero, ${mappingStats.created} créé${mappingStats.created > 1 ? 's' : ''} `
+                + 'par l’import.';
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Import FitHero terminé',
@@ -559,13 +572,16 @@
             }
         } catch (error) {
             console.warn('Import FitHero échoué :', error);
+            const message = error?.isFitHeroValidation
+                ? `Valeur non gérée pour "${error.exerciseName}".\n${error.fieldName} = ${error.fieldValue}`
+                : 'Le chargement des séances FitHero a échoué.';
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Import FitHero',
-                    message: 'Le chargement des séances FitHero a échoué.'
+                    message
                 });
             } else {
-                alert('Le chargement des séances FitHero a échoué.');
+                alert(message);
             }
         } finally {
             if (button) {
@@ -584,14 +600,16 @@
     }
 
     async function loadFitHeroMapping() {
-        const [official, user] = await Promise.all([
+        const [official, user, missing] = await Promise.all([
             loadFitHeroOfficialMapping(),
-            loadUserFitHeroMapping()
+            loadUserFitHeroMapping(),
+            loadMissingFitHeroMappings()
         ]);
         return {
             official,
             user,
-            combined: official.concat(user)
+            missing,
+            combined: official.concat(user, missing)
         };
     }
 
@@ -642,10 +660,49 @@
         }
     }
 
+    function loadMissingFitHeroMappings() {
+        const raw = localStorage.getItem(FIT_HERO_MISSING_STORAGE_KEY);
+        if (!raw) {
+            return [];
+        }
+        try {
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+            return parsed
+                .map((entry) => {
+                    if (typeof entry === 'string') {
+                        return {
+                            slug: entry,
+                            appExerciseId: null,
+                            name: '',
+                            exerciseId: null
+                        };
+                    }
+                    if (!entry || typeof entry.slug !== 'string') {
+                        return null;
+                    }
+                    return {
+                        slug: entry.slug,
+                        appExerciseId: entry.appExerciseId ?? null,
+                        name: entry.name ?? '',
+                        exerciseId: entry.exerciseId ?? null
+                    };
+                })
+                .filter(Boolean);
+        } catch (error) {
+            console.warn('Mapping FitHero manquant invalide :', error);
+            return [];
+        }
+    }
+
     function buildFitHeroMapping(mapping) {
         const official = Array.isArray(mapping?.official) ? mapping.official : [];
         const user = Array.isArray(mapping?.user) ? mapping.user : [];
+        const missing = Array.isArray(mapping?.missing) ? mapping.missing : [];
         const entries = [
+            ...missing.map((entry) => ({ ...entry, source: 'missing' })),
             ...official.map((entry) => ({ ...entry, source: 'official' })),
             ...user.map((entry) => ({ ...entry, source: 'user' }))
         ];
@@ -701,13 +758,27 @@
         return `${source}::${id}`;
     }
 
-    function buildFitHeroUserExerciseId(rawId) {
-        return `fh_${rawId}`;
+    function buildFitHeroImportExerciseId(rawId) {
+        const sanitized = String(rawId || '').trim() || 'exercise';
+        return `import-exercise--${sanitized}`;
+    }
+
+    function buildUniqueExerciseId(baseId, exerciseById) {
+        let id = baseId;
+        if (exerciseById?.has(id)) {
+            let counter = 1;
+            while (exerciseById.has(`${baseId}_${counter}`)) {
+                counter += 1;
+            }
+            id = `${baseId}_${counter}`;
+        }
+        return id;
     }
 
     function buildFitHeroUserExerciseName(def, rawId, catalogById) {
         const catalogId = resolveFitHeroUserExerciseCatalogId(def, rawId);
-        const catalogName = catalogId ? catalogById?.get(catalogId) : '';
+        const catalogEntry = catalogId ? catalogById?.get(catalogId) : null;
+        const catalogName = typeof catalogEntry?.name === 'string' ? catalogEntry.name : '';
         if (catalogName) {
             return `(user) ${catalogName}`;
         }
@@ -762,10 +833,273 @@
                 if (!id || !name) {
                     return null;
                 }
-                return [id, name];
+                return [id, exercise];
             })
             .filter(Boolean);
         return new Map(entries);
+    }
+
+    function buildFitHeroCatalogBySlug(payloadCatalog, fallbackCatalog) {
+        const primary = Array.isArray(payloadCatalog) ? payloadCatalog : [];
+        const fallback = Array.isArray(fallbackCatalog) ? fallbackCatalog : [];
+        const list = primary.concat(fallback);
+        const entries = list
+            .map((exercise) => {
+                const slug = getFitHeroCatalogSlug(exercise);
+                if (!slug) {
+                    return null;
+                }
+                return [slug, exercise];
+            })
+            .filter(Boolean);
+        const map = new Map();
+        entries.forEach(([slug, exercise]) => {
+            if (!map.has(slug)) {
+                map.set(slug, exercise);
+            }
+        });
+        return map;
+    }
+
+    function buildExerciseNameIndexes(exercises) {
+        const list = Array.isArray(exercises) ? exercises : [];
+        const native = new Map();
+        const created = new Map();
+        list.forEach((exercise) => {
+            if (!exercise?.name) {
+                return;
+            }
+            const key = normalizeExerciseNameKey(exercise.name);
+            if (!key) {
+                return;
+            }
+            if (exercise.originType === 'created') {
+                created.set(key, exercise);
+            } else if (exercise.originType === 'native' || exercise.originType === 'modified') {
+                native.set(key, exercise);
+            }
+        });
+        return { native, created };
+    }
+
+    function normalizeExerciseNameKey(name) {
+        return String(name || '').trim().toLowerCase();
+    }
+
+    function getFitHeroCatalogSlug(exercise) {
+        if (!exercise || typeof exercise !== 'object') {
+            return '';
+        }
+        if (typeof exercise.slug === 'string' && exercise.slug.trim()) {
+            return exercise.slug.trim();
+        }
+        if (typeof exercise.exercise_id === 'string' && exercise.exercise_id.trim()) {
+            return exercise.exercise_id.trim();
+        }
+        if (typeof exercise.exerciseId === 'string' && exercise.exerciseId.trim()) {
+            return exercise.exerciseId.trim();
+        }
+        if (typeof exercise.id === 'string' && exercise.id.trim()) {
+            return exercise.id.trim();
+        }
+        return '';
+    }
+
+    function buildFitHeroImportExercise({
+        id,
+        slug,
+        name,
+        technicalName,
+        definition,
+        catalogBySlug,
+        origin
+    }) {
+        const catalogEntry = definition || (catalogBySlug ? catalogBySlug.get(slug) : null) || null;
+        const resolvedName = name
+            || (typeof catalogEntry?.name === 'string' ? catalogEntry.name.trim() : '')
+            || slug
+            || id;
+        const rawNotes = typeof catalogEntry?.notes === 'string'
+            ? catalogEntry.notes
+            : typeof definition?.notes === 'string'
+                ? definition.notes
+                : '';
+        const rawPrimary = extractFitHeroPrimary(definition) || extractFitHeroPrimary(catalogEntry);
+        const rawSecondary = extractFitHeroSecondary(definition) || extractFitHeroSecondary(catalogEntry) || [];
+        const rawCategory = typeof catalogEntry?.category === 'string'
+            ? catalogEntry.category
+            : typeof definition?.category === 'string'
+                ? definition.category
+                : null;
+
+        const primary = normalizeFitHeroMuscle(rawPrimary, resolvedName, 'primary');
+        const secondaryMuscles = normalizeFitHeroMuscles(rawSecondary, resolvedName, 'secondary');
+        const category = normalizeFitHeroCategory(rawCategory, resolvedName);
+        const equipment = inferFitHeroEquipment(resolvedName);
+        const equipmentGroups = CFG.decodeEquipment(equipment);
+        const muscleGroups = CFG.decodeMuscle(primary);
+        const instructions = normalizeFitHeroInstructions(rawNotes);
+        const image = resolveFitHeroImage(catalogEntry, definition);
+
+        return {
+            id,
+            name: resolvedName,
+            muscle: muscleGroups.muscle || primary || null,
+            muscleGroup1: muscleGroups.g1 || null,
+            muscleGroup2: muscleGroups.g2 || null,
+            muscleGroup3: muscleGroups.g3 || null,
+            bodyPart: muscleGroups.g1 || null,
+            secondaryMuscles,
+            equipment: equipmentGroups.equipment || equipment || null,
+            equipmentGroup1: equipmentGroups.g1 || null,
+            equipmentGroup2: equipmentGroups.g2 || null,
+            instructions,
+            image,
+            source: 'FitHero',
+            origin,
+            external_source: 'FitHero',
+            external_exercise_id: slug,
+            import_date: new Date().toISOString(),
+            category,
+            notes: rawNotes || null,
+            primary: rawPrimary || null,
+            secondary: Array.isArray(rawSecondary) ? rawSecondary : [],
+            technical_name: technicalName || null
+        };
+    }
+
+    function extractFitHeroPrimary(definition) {
+        if (!definition || typeof definition !== 'object') {
+            return '';
+        }
+        return definition.primary
+            || definition.primaryMuscle
+            || definition.target
+            || definition.muscle
+            || '';
+    }
+
+    function extractFitHeroSecondary(definition) {
+        if (!definition || typeof definition !== 'object') {
+            return [];
+        }
+        const raw = definition.secondary
+            || definition.secondaryMuscles
+            || definition.secondary_muscles
+            || [];
+        return Array.isArray(raw) ? raw : raw ? [raw] : [];
+    }
+
+    function normalizeFitHeroMuscle(raw, exerciseName, fieldName) {
+        if (!raw) {
+            return null;
+        }
+        const normalized = String(raw).trim().toLowerCase();
+        const match = CFG.muscleTranscode[normalized];
+        if (!match) {
+            throwFitHeroImportError(exerciseName, fieldName, raw);
+        }
+        return match.muscle || normalized;
+    }
+
+    function normalizeFitHeroMuscles(rawList, exerciseName, fieldName) {
+        if (!rawList || (Array.isArray(rawList) && rawList.length === 0)) {
+            return [];
+        }
+        const list = Array.isArray(rawList) ? rawList : [rawList];
+        return list.map((item) => normalizeFitHeroMuscle(item, exerciseName, fieldName)).filter(Boolean);
+    }
+
+    function normalizeFitHeroCategory(raw, exerciseName) {
+        if (!raw) {
+            return null;
+        }
+        const allowed = new Set([
+            'Weight & Reps',
+            'Time',
+            'Distance & Time',
+            'Assisted Weight & Reps'
+        ]);
+        if (!allowed.has(raw)) {
+            throwFitHeroImportError(exerciseName, 'category', raw);
+        }
+        return raw;
+    }
+
+    function normalizeFitHeroInstructions(rawNotes) {
+        if (!rawNotes) {
+            return [];
+        }
+        return String(rawNotes)
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean);
+    }
+
+    function resolveFitHeroImage(catalogEntry, definition) {
+        if (catalogEntry?.gifUrl) {
+            return catalogEntry.gifUrl;
+        }
+        if (catalogEntry?.image) {
+            return catalogEntry.image;
+        }
+        if (definition?.gifUrl) {
+            return definition.gifUrl;
+        }
+        if (definition?.image) {
+            return definition.image;
+        }
+        return null;
+    }
+
+    function inferFitHeroEquipment(name) {
+        const label = String(name || '').toLowerCase();
+        if (label.includes('body weight')) {
+            return 'body weight';
+        }
+        if (label.includes('weighted')) {
+            return 'weighted';
+        }
+        if (label.includes('band')) {
+            return 'band';
+        }
+        if (label.includes('cable')) {
+            return 'cable';
+        }
+        if (label.includes('lever')) {
+            return 'leverage machine';
+        }
+        if (label.includes('machine')) {
+            return 'leverage machine';
+        }
+        if (label.includes('barbell')) {
+            return 'barbell';
+        }
+        if (label.includes('bar')) {
+            return 'barbell';
+        }
+        if (label.includes('dumbbell')) {
+            return 'dumbbell';
+        }
+        if (label.includes('kettlebell')) {
+            return 'kettlebell';
+        }
+        if (label.includes('ball')) {
+            return 'medicine ball';
+        }
+        if (label.includes('assisted')) {
+            return 'assisted';
+        }
+        return null;
+    }
+
+    function throwFitHeroImportError(exerciseName, fieldName, value) {
+        const error = new Error(`Valeur non gérée : ${exerciseName} • ${fieldName} = ${value}`);
+        error.isFitHeroValidation = true;
+        error.exerciseName = exerciseName;
+        error.fieldName = fieldName;
+        error.fieldValue = value;
+        throw error;
     }
 
     function resolveFitHeroUserExercise(rawId, context) {
@@ -790,43 +1124,66 @@
 
         const resolvedName = buildFitHeroUserExerciseName(def, rawId, context?.catalogById);
         const technicalName = buildFitHeroUserExerciseTechnicalName(def, rawId);
-        const idBase = buildFitHeroUserExerciseId(rawId);
-        let id = idBase;
-        if (context?.exerciseById?.has(id)) {
-            let counter = 1;
-            while (context.exerciseById.has(`${idBase}_${counter}`)) {
-                counter += 1;
-            }
-            id = `${idBase}_${counter}`;
-        }
-
-        const exercise = {
+        const baseId = buildFitHeroImportExerciseId(rawId);
+        const id = buildUniqueExerciseId(baseId, context?.exerciseById);
+        const exercise = buildFitHeroImportExercise({
             id,
+            slug: rawId,
             name: resolvedName,
-            muscle: null,
-            muscleGroup1: null,
-            muscleGroup2: null,
-            muscleGroup3: null,
-            bodyPart: null,
-            equipment: null,
-            equipmentGroup1: null,
-            equipmentGroup2: null,
-            secondaryMuscles: Array.isArray(def?.secondary) ? def.secondary : [],
-            instructions: [],
-            image: null,
-            source: 'FitHero',
-            origin: 'user',
-            external_source: 'FitHero',
-            external_exercise_id: rawId,
-            category: typeof def?.category === 'string' ? def.category : null,
-            notes: typeof def?.notes === 'string' ? def.notes : null,
-            primary: typeof def?.primary === 'string' ? def.primary : null,
-            technical_name: technicalName
-        };
+            technicalName,
+            definition: def,
+            catalogBySlug: context?.catalogBySlug,
+            origin: 'import'
+        });
 
-        await db.put('exercises', exercise);
+        await db.saveCustomExercise(exercise, 'import');
         context?.exerciseById?.set(exercise.id, exercise);
         context?.exerciseByExternalKey?.set(key, exercise);
+        return exercise;
+    }
+
+    async function ensureFitHeroImportExercise(slug, context, rawExercise) {
+        if (!slug) {
+            return null;
+        }
+        const key = buildExternalExerciseKey('FitHero', slug);
+        const existing = context?.exerciseByExternalKey?.get(key);
+        if (existing) {
+            return existing;
+        }
+        const existingMapping = context?.missingMappings?.get(slug);
+        if (existingMapping?.appExerciseId) {
+            const mapped = context?.exerciseById?.get(existingMapping.appExerciseId) || null;
+            if (mapped) {
+                context?.exerciseByExternalKey?.set(key, mapped);
+                return mapped;
+            }
+        }
+
+        const baseId = buildFitHeroImportExerciseId(slug);
+        const id = buildUniqueExerciseId(baseId, context?.exerciseById);
+        const technicalName = typeof rawExercise?.name === 'string' ? rawExercise.name.trim() : '';
+        const exercise = buildFitHeroImportExercise({
+            id,
+            slug,
+            name: technicalName,
+            technicalName,
+            definition: context?.catalogBySlug?.get(slug) || rawExercise,
+            catalogBySlug: context?.catalogBySlug,
+            origin: 'import'
+        });
+
+        await db.saveCustomExercise(exercise, 'import');
+        context?.exerciseById?.set(exercise.id, exercise);
+        context?.exerciseByExternalKey?.set(key, exercise);
+        if (context?.missingMappings) {
+            context.missingMappings.set(slug, {
+                slug,
+                appExerciseId: exercise.id,
+                name: exercise.name || '',
+                exerciseId: existingMapping?.exerciseId ?? null
+            });
+        }
         return exercise;
     }
 
@@ -849,8 +1206,8 @@
         return typeof value === 'string' && value.startsWith('user-exercise--');
     }
 
-    function updateMissingFitHeroExercises(missingExercises) {
-        if (!missingExercises || missingExercises.size === 0) {
+    function updateMissingFitHeroMappings(missingMappings) {
+        if (!missingMappings || missingMappings.size === 0) {
             return;
         }
         const raw = localStorage.getItem(FIT_HERO_MISSING_STORAGE_KEY);
@@ -865,9 +1222,16 @@
                 existing = [];
             }
         }
-        const merged = new Set(existing);
-        missingExercises.forEach((slug) => merged.add(slug));
-        localStorage.setItem(FIT_HERO_MISSING_STORAGE_KEY, JSON.stringify(Array.from(merged)));
+        const map = new Map(
+            existing
+                .map((entry) => (typeof entry === 'string' ? { slug: entry } : entry))
+                .filter((entry) => entry?.slug)
+                .map((entry) => [entry.slug, entry])
+        );
+        missingMappings.forEach((entry, slug) => {
+            map.set(slug, entry);
+        });
+        localStorage.setItem(FIT_HERO_MISSING_STORAGE_KEY, JSON.stringify(Array.from(map.values())));
     }
 
     async function clearAllSessions() {
@@ -880,7 +1244,7 @@
         );
     }
 
-    function toFitHeroSession(workout, context = {}) {
+    async function toFitHeroSession(workout, context = {}) {
         if (!workout || typeof workout !== 'object') {
             return null;
         }
@@ -904,16 +1268,22 @@
         }
 
         const exercises = Array.isArray(workout.exercises)
-            ? workout.exercises
-                .map((exercise, index) => toFitHeroExercise(exercise, {
+            ? (await Promise.all(
+                workout.exercises.map((exercise, index) => toFitHeroExercise(exercise, {
                     sessionId,
                     sessionDate,
                     position: index + 1,
                     mappingBySlug: context.mappingBySlug,
                     exerciseById: context.exerciseById,
-                    missingExercises: context.missingExercises
+                    userExerciseById: context.userExerciseById,
+                    exerciseByExternalKey: context.exerciseByExternalKey,
+                    catalogById: context.catalogById,
+                    catalogBySlug: context.catalogBySlug,
+                    nameIndexes: context.nameIndexes,
+                    missingMappings: context.missingMappings,
+                    mappingStats: context.mappingStats
                 }))
-                .filter(Boolean)
+            )).filter(Boolean)
             : [];
 
         return {
@@ -976,7 +1346,7 @@
         return `${values.year}-${values.month}-${values.day}`;
     }
 
-    function toFitHeroExercise(exercise, context) {
+    async function toFitHeroExercise(exercise, context) {
         if (!exercise || typeof exercise !== 'object') {
             return null;
         }
@@ -988,40 +1358,74 @@
         const userExercise = isUserExercise ? resolveFitHeroUserExercise(slug, context) : null;
         const userDef = isUserExercise ? context?.userExerciseById?.get(slug) : null;
         const mapping = !isUserExercise && slug && context?.mappingBySlug ? context.mappingBySlug.get(slug) : null;
-        const mappedId = mapping?.exerciseId || '';
-        const mappedExercise = isUserExercise
-            ? userExercise
-            : mappedId && context?.exerciseById
-                ? context.exerciseById.get(mappedId)
-                : null;
-        const fallbackUserId = isUserExercise ? buildFitHeroUserExerciseId(slug) : '';
-        const exerciseId = mappedExercise?.id || mappedId || fallbackUserId || slug;
-        const resolvedUserName = isUserExercise
-            ? buildFitHeroUserExerciseName(userDef, slug, context?.catalogById)
-            : '';
-        const name = mappedExercise?.name
-            || resolvedUserName
-            || mapping?.name
-            || (typeof exercise.name === 'string' ? exercise.name : '')
-            || exerciseId
-            || 'Exercice';
+        let mappedExercise = null;
+        let exerciseId = '';
+        let name = '';
+
+        if (isUserExercise) {
+            mappedExercise = userExercise;
+            exerciseId = mappedExercise?.id || buildFitHeroImportExerciseId(slug);
+            name = mappedExercise?.name || buildFitHeroUserExerciseName(userDef, slug, context?.catalogById) || exerciseId;
+            context?.mappingStats && (context.mappingStats.created += 1);
+        } else if (mapping) {
+            const mappedId = mapping?.exerciseId || mapping?.appExerciseId || '';
+            mappedExercise = mappedId && context?.exerciseById ? context.exerciseById.get(mappedId) : null;
+            exerciseId = mappedExercise?.id || mappedId || slug;
+            name = mappedExercise?.name
+                || mapping?.name
+                || (typeof exercise.name === 'string' ? exercise.name : '')
+                || exerciseId
+                || 'Exercice';
+            if (mapping.source === 'user') {
+                context?.mappingStats && (context.mappingStats.user += 1);
+            } else if (mapping.source === 'official') {
+                context?.mappingStats && (context.mappingStats.official += 1);
+            } else if (mapping.source === 'missing') {
+                context?.mappingStats && (context.mappingStats.created += 1);
+            }
+        } else {
+            const nameKey = normalizeExerciseNameKey(exercise.name || '');
+            const nativeMatch = nameKey ? context?.nameIndexes?.native?.get(nameKey) : null;
+            const userMatch = nameKey ? context?.nameIndexes?.created?.get(nameKey) : null;
+            if (nativeMatch) {
+                mappedExercise = nativeMatch;
+                exerciseId = nativeMatch.id;
+                name = nativeMatch.name || exercise.name || nativeMatch.id;
+                context?.mappingStats && (context.mappingStats.nativeMatch += 1);
+            } else if (userMatch) {
+                mappedExercise = userMatch;
+                exerciseId = userMatch.id;
+                name = userMatch.name || exercise.name || userMatch.id;
+                context?.mappingStats && (context.mappingStats.userMatch += 1);
+            }
+        }
+
+        if (!exerciseId && slug) {
+            const created = await ensureFitHeroImportExercise(slug, {
+                exerciseById: context.exerciseById,
+                exerciseByExternalKey: context.exerciseByExternalKey,
+                catalogBySlug: context.catalogBySlug,
+                missingMappings: context.missingMappings
+            }, exercise);
+            if (created) {
+                mappedExercise = created;
+                exerciseId = created.id;
+                name = created.name || exercise.name || created.id;
+                context?.mappingStats && (context.mappingStats.created += 1);
+            }
+        }
+
+        if (!exerciseId) {
+            exerciseId = slug || `${sessionId}_${context?.position || 1}`;
+            name = name || exerciseId || 'Exercice';
+        }
+        if (!name) {
+            name = (typeof exercise.name === 'string' ? exercise.name : '') || exerciseId || 'Exercice';
+        }
         const exerciseDate = typeof exercise.date === 'string' ? exercise.date : sessionDate;
         const sortValue = Number.isFinite(Number(exercise.sort))
             ? Number(exercise.sort)
             : context?.position || 1;
-
-        if (slug && !isUserExercise) {
-            if (mapping?.exerciseId) {
-                if (mapping.source === 'user') {
-                    context?.mappingStats && (context.mappingStats.user += 1);
-                } else if (mapping.source === 'official') {
-                    context?.mappingStats && (context.mappingStats.official += 1);
-                }
-            } else {
-                context?.missingExercises?.add(slug);
-                context?.mappingStats && (context.mappingStats.missing += 1);
-            }
-        }
 
         const sets = Array.isArray(exercise.sets)
             ? exercise.sets.map((set, index) => toFitHeroSet(set, {

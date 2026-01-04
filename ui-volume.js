@@ -322,7 +322,7 @@
 
         const [sessions, exercises] = await Promise.all([
             db.getAll('sessions'),
-            db.getAll('exercises')
+            db.getAllExercises()
         ]);
 
         const normalizedMuscle = normalizeKey(currentMuscleKey);
@@ -842,7 +842,7 @@
 
         const [sessions, exercises] = await Promise.all([
             db.getAll('sessions'),
-            db.getAll('exercises')
+            db.getAllExercises()
         ]);
         const exerciseById = new Map(exercises.map((exercise) => [exercise.id, exercise]));
 

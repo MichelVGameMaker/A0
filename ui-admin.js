@@ -208,7 +208,12 @@
         }
         try {
             const parsed = JSON.parse(raw);
-            return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+            return parsed
+                .map((entry) => (typeof entry === 'string' ? entry : entry?.slug))
+                .filter(Boolean);
         } catch (error) {
             console.warn('Slugs FitHero inconnus invalides :', error);
             return [];

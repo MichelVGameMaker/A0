@@ -29,10 +29,16 @@
             return;
         }
 
-        const missingSlugs = loadMissingSlugs();
+        const missingMappings = loadMissingMappings();
         const userMappings = loadUserMappings();
-        const mappingBySlug = new Map(userMappings.map((entry) => [entry.slug, entry]));
-        const slugs = [...missingSlugs];
+        const userBySlug = new Map(userMappings.map((entry) => [entry.slug, entry]));
+        const missingBySlug = new Map(missingMappings.map((entry) => [entry.slug, entry]));
+        const slugs = [];
+        missingMappings.forEach((entry) => {
+            if (entry?.slug && !slugs.includes(entry.slug)) {
+                slugs.push(entry.slug);
+            }
+        });
         userMappings.forEach((entry) => {
             if (entry?.slug && !slugs.includes(entry.slug)) {
                 slugs.push(entry.slug);
@@ -50,14 +56,15 @@
         mappingEmpty?.setAttribute('hidden', 'true');
         mappingTable?.removeAttribute('hidden');
 
-        const allExercises = await db.getAll('exercises');
+        const allExercises = await db.getAllExercises();
         const exercises = Array.isArray(allExercises) ? allExercises : [];
         const exerciseById = new Map(exercises.map((exercise) => [exercise.id, exercise]));
 
         slugs.forEach((slug) => {
-            const mapping = mappingBySlug.get(slug);
+            const mapping = userBySlug.get(slug) || missingBySlug.get(slug);
             const mappedExercise = mapping?.exerciseId ? exerciseById.get(mapping.exerciseId) : null;
-            const exerciseName = mappedExercise?.name || mapping?.name || '—';
+            const appExercise = mapping?.appExerciseId ? exerciseById.get(mapping.appExerciseId) : null;
+            const exerciseName = mappedExercise?.name || appExercise?.name || mapping?.name || '—';
 
             const row = document.createElement('tr');
 
@@ -106,7 +113,7 @@
     async function saveUserMapping(slug, exerciseId) {
         const mappings = loadUserMappings();
         const index = mappings.findIndex((entry) => entry?.slug === slug);
-        const exercise = exerciseId ? await db.get('exercises', exerciseId) : null;
+        const exercise = exerciseId ? await db.getExercise(exerciseId) : null;
         const entry = {
             slug,
             exerciseId,
@@ -119,16 +126,40 @@
             mappings.push(entry);
         }
         localStorage.setItem(FIT_HERO_USER_MAPPING_KEY, JSON.stringify(mappings));
+        updateMissingMapping(slug, entry);
     }
 
-    function loadMissingSlugs() {
+    function loadMissingMappings() {
         const raw = localStorage.getItem(FIT_HERO_MISSING_STORAGE_KEY);
         if (!raw) {
             return [];
         }
         try {
             const parsed = JSON.parse(raw);
-            return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+            return parsed
+                .map((entry) => {
+                    if (typeof entry === 'string') {
+                        return {
+                            slug: entry,
+                            appExerciseId: null,
+                            name: '',
+                            exerciseId: null
+                        };
+                    }
+                    if (!entry || typeof entry.slug !== 'string') {
+                        return null;
+                    }
+                    return {
+                        slug: entry.slug,
+                        appExerciseId: entry.appExerciseId ?? null,
+                        name: entry.name ?? '',
+                        exerciseId: entry.exerciseId ?? null
+                    };
+                })
+                .filter(Boolean);
         } catch (error) {
             console.warn('Slugs FitHero inconnus invalides :', error);
             return [];
@@ -147,6 +178,23 @@
             console.warn('Mapping FitHero utilisateur invalide :', error);
             return [];
         }
+    }
+
+    function updateMissingMapping(slug, entry) {
+        if (!slug) {
+            return;
+        }
+        const missingMappings = loadMissingMappings();
+        const index = missingMappings.findIndex((item) => item.slug === slug);
+        if (index < 0) {
+            return;
+        }
+        missingMappings[index] = {
+            ...missingMappings[index],
+            exerciseId: entry.exerciseId,
+            name: entry.name || missingMappings[index].name
+        };
+        localStorage.setItem(FIT_HERO_MISSING_STORAGE_KEY, JSON.stringify(missingMappings));
     }
 
     function ensureRefs() {

@@ -751,7 +751,7 @@
         if (exercise.exercise_id === nextId) {
             return;
         }
-        const nextExercise = await db.get('exercises', nextId);
+        const nextExercise = await db.getExercise(nextId);
         if (!nextExercise) {
             alert('Exercice introuvable.');
             return;

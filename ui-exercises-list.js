@@ -58,7 +58,7 @@
         const groupFilter = state.filters.group;
         const equipFilter = state.filters.equip;
 
-        const all = await db.getAll('exercises');
+        const all = await db.getAllExercises();
         const filtered = all.filter((exercise) => {
             if (query && !matchesSearch(String(exercise.name || ''), searchTerms)) {
                 return false;

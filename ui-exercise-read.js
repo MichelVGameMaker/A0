@@ -30,13 +30,15 @@
         state.currentId = currentId;
         state.callerScreen = callerScreen;
 
-        const exercise = await db.get('exercises', currentId);
+        const result = await db.getExerciseWithMeta(currentId);
+        const exercise = result.exercise;
         if (!exercise) {
             alert('Exercice introuvable.');
             return;
         }
 
         refs.exReadTitle.textContent = exercise.name || 'Exercice';
+        refs.exReadStatus.textContent = formatExerciseOrigin(result.originType);
         updateHero(exercise);
         updateMuscles(exercise);
         updateInstructions(exercise);
@@ -64,6 +66,7 @@
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.exReadTitle = document.getElementById('exReadTitle');
+        refs.exReadStatus = document.getElementById('exReadStatus');
         refs.exReadHero = document.getElementById('exReadHero');
         refs.exReadMuscleMain = document.getElementById('exReadMuscleMain');
         refs.exReadMuscleSecondary = document.getElementById('exReadMuscleSecondary');
@@ -84,6 +87,7 @@
         const required = [
             'screenExerciseRead',
             'exReadTitle',
+            'exReadStatus',
             'exReadHero',
             'exReadMuscleMain',
             'exReadMuscleSecondary',
@@ -160,13 +164,14 @@
             return;
         }
         if (action === 'duplicate') {
-            const exercise = await db.get('exercises', state.currentId);
+            const exercise = await db.getExercise(state.currentId);
             if (!exercise) {
                 alert('Exercice introuvable.');
                 return;
             }
-            const copy = { ...exercise, id: `ex_${Date.now()}` };
-            await db.put('exercises', copy);
+            const { native_id: nativeId, originType, origin, ...rest } = exercise;
+            const copy = { ...rest, id: buildUserExerciseId() };
+            await db.saveCustomExercise(copy, 'user');
             dlgExerciseActions.close();
             await A.openExerciseEdit({ currentId: copy.id, callerScreen: 'screenExerciseRead' });
             return;
@@ -181,7 +186,12 @@
             if (!confirmed) {
                 return;
             }
-            await db.del('exercises', state.currentId);
+            const meta = await db.getExerciseWithMeta(state.currentId);
+            if (meta.originType === 'native') {
+                await db.deleteExerciseOverride(state.currentId);
+            } else {
+                await db.deleteCustomExercise(state.currentId);
+            }
             dlgExerciseActions.close();
             await A.openExercises({ callerScreen: 'screenExerciseRead' });
         }
@@ -273,5 +283,24 @@
     function ucFirst(value) {
         const text = value || '';
         return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    function formatExerciseOrigin(originType) {
+        switch (originType) {
+            case 'native':
+                return 'Natif';
+            case 'modified':
+                return 'Modifié';
+            case 'created':
+                return 'Créé';
+            case 'imported':
+                return 'Importé';
+            default:
+                return '';
+        }
+    }
+
+    function buildUserExerciseId() {
+        return `user-exercise--${Date.now()}`;
     }
 })();
