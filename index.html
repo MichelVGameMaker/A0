@@ -1010,6 +1010,28 @@
 </dialog>
 <!-- ==================== -->
 
+<dialog id="dlgConfirm" class="modal modal-fixed modal-centered">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title" data-role="confirm-title">Confirmation</div>
+            <button class="btn ghost modal-close" type="button" data-action="close">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="details" data-role="confirm-message"></p>
+        </div>
+        <div class="modal-footer">
+            <div class="modal-actions" data-role="confirm-actions">
+                <button class="btn danger" type="button" data-action="cancel">annuler</button>
+                <button class="btn cta" type="button" data-action="confirm">confirmer</button>
+            </div>
+            <div class="modal-actions" data-role="ok-actions">
+                <button class="btn cta full" type="button" data-action="ok">ok</button>
+            </div>
+        </div>
+    </form>
+</dialog>
+<!-- ==================== -->
+
 <!-- ========== Séance : méta d'un exercice ========== -->
 <dialog id="dlgExecMoveEditor" class="modal modal-fixed modal-centered">
     <form method="dialog" class="modal-form">
@@ -1100,6 +1122,7 @@
 <script src="components/list-card.js"></script>
 <script src="components/tag-group.js"></script>
 <script src="components/set-editor.js"></script>
+<script src="components/confirm-dialog.js"></script>
 <script src="ui-week-strip.js"></script>
 <script src="ui-month-calendar.js"></script>
 <script src="ui-session.js"></script>

@@ -829,7 +829,13 @@
         if (!session) {
             return;
         }
-        if (!confirm('Supprimer la séance ?')) {
+        const confirmed = A.components?.confirmDialog?.confirm
+            ? await A.components.confirmDialog.confirm({
+                title: 'Supprimer la séance',
+                message: 'Supprimer la séance ?'
+            })
+            : confirm('Supprimer la séance ?');
+        if (!confirmed) {
             return;
         }
         if (sessionEditorState.saveTimer) {

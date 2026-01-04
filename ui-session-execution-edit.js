@@ -697,7 +697,13 @@
         if (!state.session?.exercises) {
             return;
         }
-        if (!confirm('Supprimer cet exercice de la séance ?')) {
+        const confirmed = A.components?.confirmDialog?.confirm
+            ? await A.components.confirmDialog.confirm({
+                title: 'Supprimer un exercice',
+                message: 'Supprimer cet exercice de la séance ?'
+            })
+            : confirm('Supprimer cet exercice de la séance ?');
+        if (!confirmed) {
             return;
         }
         const index = state.session.exercises.findIndex((item) => item.exercise_id === state.exerciseId);

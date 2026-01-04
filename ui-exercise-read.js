@@ -172,7 +172,13 @@
             return;
         }
         if (action === 'delete') {
-            if (!confirm('Supprimer cet exercice ?')) {
+            const confirmed = A.components?.confirmDialog?.confirm
+                ? await A.components.confirmDialog.confirm({
+                    title: 'Supprimer un exercice',
+                    message: 'Supprimer cet exercice ?'
+                })
+                : confirm('Supprimer cet exercice ?');
+            if (!confirmed) {
                 return;
             }
             await db.del('exercises', state.currentId);

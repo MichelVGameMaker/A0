@@ -303,6 +303,14 @@ header .header-left .btn{
     border-top: 1px solid var(--panelBord);
     background: var(--panelBack);
 }
+.modal-actions{
+    display:flex;
+    align-items:center;
+    gap:var(--gap);
+}
+.modal-actions .btn{
+    flex:1 1 0;
+}
 /* =========================================================
    5) Timer
    ========================================================= */
