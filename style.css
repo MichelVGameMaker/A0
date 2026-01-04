@@ -1404,17 +1404,29 @@ input[type="number"]{ -moz-appearance:textfield; }
 
 .stats-chart-svg .stats-axis-tick {
     font-size: 12px;
-    fill: var(--black);
+    fill: var(--labelColor);
 }
 
 .stats-chart-svg .stats-grid-line {
-    stroke: var(--black);
+    stroke: var(--labelColor);
     stroke-width: 1;
 }
 
 .stats-chart-svg .stats-axis-tick-line {
-    stroke: #d4d4d4;
+    stroke: var(--labelColor);
     stroke-width: 1.5;
+}
+
+.stats-chart-svg .stats-axis-line {
+    stroke: var(--labelColor);
+    stroke-width: 2;
+}
+
+.stats-chart-line {
+    stroke: var(--black);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .stats-chart-focus {
@@ -1422,14 +1434,8 @@ input[type="number"]{ -moz-appearance:textfield; }
 }
 
 .stats-chart-focus-line {
-    stroke: var(--black);
-    stroke-width: 1;
-}
-
-.stats-chart-focus-value {
-    fill: var(--black);
-    font-size: 12px;
-    font-weight: var(--fw-strong);
+    stroke: var(--emphase);
+    stroke-width: 2;
 }
 
 .stats-chart-focus[data-visible="false"] {
@@ -1438,11 +1444,31 @@ input[type="number"]{ -moz-appearance:textfield; }
 
 .stats-chart-point {
     cursor: pointer;
+    fill: var(--white);
+    stroke: var(--black);
+    stroke-width: 2;
+}
+
+.stats-chart-point.is-active {
+    fill: var(--emphase);
+    stroke: var(--emphase);
 }
 
 .stats-goal-line {
     stroke-width: 2;
     stroke-dasharray: 6 4;
+}
+
+.stats-goal-zone {
+    opacity: 0.6;
+}
+
+.stats-goal-zone-min {
+    fill: var(--rpe-5-bg);
+}
+
+.stats-goal-zone-max {
+    fill: var(--rpe-9-bg);
 }
 
 .stats-goal-line-min {

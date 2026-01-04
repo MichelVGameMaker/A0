@@ -173,6 +173,7 @@
         refs.statsGoalRepsMax = document.getElementById('statsGoalRepsMax');
         refs.statsGoalOrmStart = document.getElementById('statsGoalOrmStart');
         refs.statsGoalOrmStartPick = document.getElementById('statsGoalOrmStartPick');
+        refs.statsGoalOrmStartValue = document.getElementById('statsGoalOrmStartValue');
         refs.statsGoalOrmTargetDate = document.getElementById('statsGoalOrmTargetDate');
         refs.statsGoalOrmTargetDatePick = document.getElementById('statsGoalOrmTargetDatePick');
         refs.statsGoalOrmTargetValue = document.getElementById('statsGoalOrmTargetValue');
@@ -399,7 +400,8 @@
             statsGoalCancel,
             statsGoalSave,
             statsGoalOrmStartPick,
-            statsGoalOrmTargetDatePick
+            statsGoalOrmTargetDatePick,
+            statsGoalOrmStartValue
         } = ensureRefs();
         if (!dlgStatsGoal) {
             return;
@@ -417,13 +419,26 @@
         }
         if (statsGoalOrmStartPick) {
             statsGoalOrmStartPick.addEventListener('click', () => {
-                openGoalDatePicker(refs.statsGoalOrmStart, A.today());
+                openGoalDatePicker(refs.statsGoalOrmStart, A.today(), (date) => {
+                    updateGoalStartValueFromDate(date);
+                });
             });
         }
         if (statsGoalOrmTargetDatePick) {
             statsGoalOrmTargetDatePick.addEventListener('click', () => {
                 const fallback = addMonths(A.today(), 3);
                 openGoalDatePicker(refs.statsGoalOrmTargetDate, fallback);
+            });
+        }
+        if (statsGoalOrmStartValue) {
+            statsGoalOrmStartValue.addEventListener('input', () => {
+                if (!statsGoalOrmStartValue.value) {
+                    delete statsGoalOrmStartValue.dataset.userEdited;
+                    const startDate = getGoalDateInput(refs.statsGoalOrmStart);
+                    updateGoalStartValueFromDate(startDate, { force: true });
+                    return;
+                }
+                statsGoalOrmStartValue.dataset.userEdited = 'true';
             });
         }
     }
@@ -447,6 +462,7 @@
             statsGoalRepsMin,
             statsGoalRepsMax,
             statsGoalOrmStart,
+            statsGoalOrmStartValue,
             statsGoalOrmTargetDate,
             statsGoalOrmTargetValue
         } = ensureRefs();
@@ -458,6 +474,15 @@
         setGoalInputValue(statsGoalRepsMin, goals.reps?.min);
         setGoalInputValue(statsGoalRepsMax, goals.reps?.max);
         setGoalDateInput(statsGoalOrmStart, goals.orm?.startDate);
+        setGoalInputValue(statsGoalOrmStartValue, goals.orm?.startValue);
+        if (statsGoalOrmStartValue) {
+            if (Number.isFinite(goals.orm?.startValue)) {
+                statsGoalOrmStartValue.dataset.userEdited = 'true';
+            } else {
+                delete statsGoalOrmStartValue.dataset.userEdited;
+                updateGoalStartValueFromDate(goals.orm?.startDate, { force: true });
+            }
+        }
         setGoalDateInput(statsGoalOrmTargetDate, goals.orm?.targetDate);
         setGoalInputValue(statsGoalOrmTargetValue, goals.orm?.targetValue);
     }
@@ -483,7 +508,7 @@
         renderExerciseDetail();
     }
 
-    function openGoalDatePicker(input, fallbackDate) {
+    function openGoalDatePicker(input, fallbackDate, onSelect) {
         if (!input) {
             return;
         }
@@ -494,6 +519,9 @@
                 resetMonth: true,
                 onSelect: (date) => {
                     setGoalDateInput(input, date);
+                    if (typeof onSelect === 'function') {
+                        onSelect(date);
+                    }
                 }
             });
         }
@@ -511,6 +539,7 @@
             orm: {
                 startDate,
                 targetDate,
+                startValue: normalizeGoalNumber(goals?.orm?.startValue),
                 targetValue: normalizeGoalNumber(goals?.orm?.targetValue)
             }
         };
@@ -542,11 +571,13 @@
             statsGoalRepsMin,
             statsGoalRepsMax,
             statsGoalOrmStart,
+            statsGoalOrmStartValue,
             statsGoalOrmTargetDate,
             statsGoalOrmTargetValue
         } = ensureRefs();
         const ormStart = getGoalDateInput(statsGoalOrmStart);
         const ormTargetDate = getGoalDateInput(statsGoalOrmTargetDate);
+        const ormStartValue = toGoalNumber(statsGoalOrmStartValue?.value);
         const ormTargetValue = toGoalNumber(statsGoalOrmTargetValue?.value);
         return {
             setsWeek: buildGoalRange(statsGoalSetsMin?.value, statsGoalSetsMax?.value),
@@ -555,6 +586,7 @@
             orm: {
                 startDate: ormStart && typeof A.ymd === 'function' ? A.ymd(ormStart) : null,
                 targetDate: ormTargetDate && typeof A.ymd === 'function' ? A.ymd(ormTargetDate) : null,
+                startValue: Number.isFinite(ormStartValue) ? ormStartValue : null,
                 targetValue: Number.isFinite(ormTargetValue) ? ormTargetValue : null
             }
         };
@@ -608,6 +640,25 @@
             return null;
         }
         return parseDate(key);
+    }
+
+    function updateGoalStartValueFromDate(startDate, options = {}) {
+        const { statsGoalOrmStartValue } = ensureRefs();
+        if (!statsGoalOrmStartValue) {
+            return;
+        }
+        if (statsGoalOrmStartValue.dataset.userEdited === 'true' && !options.force) {
+            return;
+        }
+        if (!(startDate instanceof Date)) {
+            setGoalInputValue(statsGoalOrmStartValue, null);
+            return;
+        }
+        const exercise = state.activeExercise;
+        const usage = exercise ? state.usageByExercise.get(exercise.id) || [] : [];
+        const entry = findGoalStartEntry(usage, startDate);
+        const value = entry?.metrics?.orm;
+        setGoalInputValue(statsGoalOrmStartValue, Number.isFinite(value) ? value : null);
     }
 
     function parseGoalDate(value) {
@@ -697,18 +748,6 @@
         const count = usage.length;
         const sessionLabel = count > 1 ? 'séances' : 'séance';
         element.textContent = `${count} ${sessionLabel}`;
-    }
-
-    function getCssVariable(name, fallback) {
-        if (!name) {
-            return fallback;
-        }
-        const root = document.documentElement;
-        if (!root || typeof window.getComputedStyle !== 'function') {
-            return fallback;
-        }
-        const value = window.getComputedStyle(root).getPropertyValue(name);
-        return value ? value.trim() : fallback;
     }
 
     function renderChart() {
@@ -829,8 +868,7 @@
         axisX.setAttribute('y1', String(yAxisPosition));
         axisX.setAttribute('x2', String(width - padding.right));
         axisX.setAttribute('y2', String(yAxisPosition));
-        axisX.setAttribute('stroke', getCssVariable('--darkGrayB', '#ccc'));
-        axisX.setAttribute('stroke-width', '2');
+        axisX.setAttribute('class', 'stats-axis-line');
         svg.appendChild(axisX);
 
         svg.appendChild(yAxisLabelsGroup);
@@ -861,11 +899,7 @@
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', pathData);
         path.setAttribute('fill', 'none');
-        const emphasisColor = getCssVariable('--emphase', A.EMPHASIS || '#0f62fe');
-        path.setAttribute('stroke', emphasisColor);
-        path.setAttribute('stroke-width', '3');
-        path.setAttribute('stroke-linecap', 'round');
-        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('class', 'stats-chart-line');
         svg.appendChild(path);
 
         const focusGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -874,12 +908,6 @@
         const focusLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         focusLine.setAttribute('class', 'stats-chart-focus-line');
         focusGroup.appendChild(focusLine);
-
-        const focusValue = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        focusValue.setAttribute('class', 'stats-chart-focus-value');
-        focusValue.setAttribute('text-anchor', 'middle');
-        focusValue.setAttribute('dominant-baseline', 'baseline');
-        focusGroup.appendChild(focusValue);
 
         focusGroup.setAttribute('data-visible', 'false');
         svg.appendChild(focusGroup);
@@ -900,10 +928,10 @@
             focusLine.setAttribute('x2', point.x.toFixed(2));
             focusLine.setAttribute('y1', padding.top.toFixed(2));
             focusLine.setAttribute('y2', yAxisPosition.toFixed(2));
-            const labelY = Math.max(padding.top + 12, point.y - 10);
-            focusValue.textContent = formatMetricValue(point.value, state.activeMetric);
-            focusValue.setAttribute('x', point.x.toFixed(2));
-            focusValue.setAttribute('y', labelY.toFixed(2));
+            if (point.element) {
+                points.forEach((item) => item.element?.classList.remove('is-active'));
+                point.element.classList.add('is-active');
+            }
             updateSubtitleForPoint(point);
         };
 
@@ -937,10 +965,8 @@
             circle.setAttribute('cx', point.x.toFixed(2));
             circle.setAttribute('cy', point.y.toFixed(2));
             circle.setAttribute('r', '5');
-            circle.setAttribute('fill', '#ffffff');
-            circle.setAttribute('stroke', emphasisColor);
-            circle.setAttribute('stroke-width', '2');
             circle.setAttribute('class', 'stats-chart-point');
+            point.element = circle;
             svg.appendChild(circle);
         });
 
@@ -963,10 +989,10 @@
         if (metricKey === 'setsWeek') {
             const range = normalizeGoalRange(goals.setsWeek);
             if (Number.isFinite(range.min)) {
-                markers.vertical.push({ value: range.min, variant: 'min' });
+                markers.horizontal.push({ value: range.min, variant: 'min' });
             }
             if (Number.isFinite(range.max)) {
-                markers.vertical.push({ value: range.max, variant: 'max' });
+                markers.horizontal.push({ value: range.max, variant: 'max' });
             }
             return markers;
         }
@@ -994,11 +1020,12 @@
         const startDate = parseGoalDate(ormGoal.startDate);
         const targetDate = parseGoalDate(ormGoal.targetDate);
         const targetValue = normalizeGoalNumber(ormGoal.targetValue);
+        const manualStartValue = normalizeGoalNumber(ormGoal.startValue);
         if (!(startDate instanceof Date) || !(targetDate instanceof Date) || !Number.isFinite(targetValue)) {
             return [];
         }
         const startEntry = findGoalStartEntry(usage, startDate);
-        const startValue = startEntry?.metrics?.orm;
+        const startValue = Number.isFinite(manualStartValue) ? manualStartValue : startEntry?.metrics?.orm;
         if (!startEntry || !Number.isFinite(startValue) || startValue <= 0) {
             return [];
         }
@@ -1054,6 +1081,7 @@
             const ratio = chartMax > 0 ? value / chartMax : 0;
             return padding.top + (1 - ratio) * innerHeight;
         };
+        const clampY = (value) => Math.min(yAxisPosition, Math.max(padding.top, value));
         const getXForDate = (date) => {
             if (!(date instanceof Date)) {
                 return padding.left;
@@ -1070,7 +1098,25 @@
             if (!Number.isFinite(line.value)) {
                 return;
             }
-            const y = getYForValue(line.value);
+            const y = clampY(getYForValue(line.value));
+            if (line.variant === 'min') {
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', String(padding.left));
+                rect.setAttribute('y', y.toFixed(2));
+                rect.setAttribute('width', String(innerWidth));
+                rect.setAttribute('height', Math.max(0, yAxisPosition - y).toFixed(2));
+                rect.setAttribute('class', 'stats-goal-zone stats-goal-zone-min');
+                goalGroup.appendChild(rect);
+            }
+            if (line.variant === 'max') {
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', String(padding.left));
+                rect.setAttribute('y', String(padding.top));
+                rect.setAttribute('width', String(innerWidth));
+                rect.setAttribute('height', Math.max(0, y - padding.top).toFixed(2));
+                rect.setAttribute('class', 'stats-goal-zone stats-goal-zone-max');
+                goalGroup.appendChild(rect);
+            }
             const goalLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             goalLine.setAttribute('x1', String(padding.left));
             goalLine.setAttribute('x2', String(width - padding.right));
