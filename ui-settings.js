@@ -707,7 +707,8 @@
 
     function buildFitHeroUserExerciseName(def, rawId, catalogById) {
         const catalogId = resolveFitHeroUserExerciseCatalogId(def, rawId);
-        const catalogName = catalogId ? catalogById?.get(catalogId) : '';
+        const catalogEntry = catalogId ? catalogById?.get(catalogId) : null;
+        const catalogName = catalogEntry?.name || '';
         if (catalogName) {
             return `(user) ${catalogName}`;
         }
@@ -758,14 +759,78 @@
                         || exercise?.uuid
                         || ''
                 ).trim();
-                const name = typeof exercise?.name === 'string' ? exercise.name.trim() : '';
+                const name = getCatalogName(exercise);
                 if (!id || !name) {
                     return null;
                 }
-                return [id, name];
+                return [id, {
+                    id,
+                    name,
+                    primary: getCatalogPrimary(exercise),
+                    secondary: getCatalogSecondary(exercise),
+                    category: getCatalogCategory(exercise),
+                    notes: getCatalogInstructions(exercise)
+                }];
             })
             .filter(Boolean);
         return new Map(entries);
+    }
+
+    function normalizeCatalogList(value) {
+        if (Array.isArray(value)) {
+            return value
+                .map((entry) => (typeof entry === 'string' ? entry.trim() : String(entry).trim()))
+                .filter(Boolean);
+        }
+        if (typeof value === 'string') {
+            const trimmed = value.trim();
+            return trimmed ? [trimmed] : [];
+        }
+        return [];
+    }
+
+    function normalizeCatalogInstructions(value) {
+        if (Array.isArray(value)) {
+            return value
+                .map((entry) => (typeof entry === 'string' ? entry.trim() : String(entry).trim()))
+                .filter(Boolean);
+        }
+        if (typeof value === 'string') {
+            return value
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter(Boolean);
+        }
+        return [];
+    }
+
+    function getCatalogName(entry) {
+        const name = typeof entry?.name === 'string' ? entry.name.trim() : '';
+        if (name) {
+            return name;
+        }
+        const alt = typeof entry?.Name === 'string' ? entry.Name.trim() : '';
+        if (alt) {
+            return alt;
+        }
+        const label = typeof entry?.exerciseName === 'string' ? entry.exerciseName.trim() : '';
+        return label || '';
+    }
+
+    function getCatalogPrimary(entry) {
+        return normalizeCatalogList(entry?.primary ?? entry?.Primary ?? entry?.targetMuscles);
+    }
+
+    function getCatalogSecondary(entry) {
+        return normalizeCatalogList(entry?.secondary ?? entry?.Secondary ?? entry?.secondaryMuscles);
+    }
+
+    function getCatalogCategory(entry) {
+        return normalizeCatalogList(entry?.category ?? entry?.Category ?? entry?.equipments ?? entry?.equipment);
+    }
+
+    function getCatalogInstructions(entry) {
+        return normalizeCatalogInstructions(entry?.Notes ?? entry?.notes ?? entry?.instructions);
     }
 
     function resolveFitHeroUserExercise(rawId, context) {
@@ -788,6 +853,29 @@
             console.warn(`Missing user exercise definition for id ${rawId}. See root.exercises in backup.`);
         }
 
+        const catalogId = resolveFitHeroUserExerciseCatalogId(def, rawId);
+        const catalogEntry = catalogId ? context?.catalogById?.get(catalogId) : null;
+        const catalogPrimary = Array.isArray(catalogEntry?.primary) ? catalogEntry.primary : [];
+        const catalogSecondary = Array.isArray(catalogEntry?.secondary) ? catalogEntry.secondary : [];
+        const catalogCategory = Array.isArray(catalogEntry?.category) ? catalogEntry.category : [];
+        const catalogInstructions = Array.isArray(catalogEntry?.notes) ? catalogEntry.notes : [];
+        const primaryMuscle = catalogPrimary[0] || (typeof def?.primary === 'string' ? def.primary : null);
+        const secondaryMuscles = catalogSecondary.length
+            ? catalogSecondary
+            : Array.isArray(def?.secondary)
+                ? def.secondary
+                : [];
+        const equipmentList = catalogCategory.length
+            ? catalogCategory
+            : typeof def?.category === 'string'
+                ? [def.category]
+                : [];
+        const instructions = catalogInstructions.length
+            ? catalogInstructions
+            : normalizeCatalogInstructions(def?.notes);
+        const muscleGroups = primaryMuscle && typeof CFG?.decodeMuscle === 'function'
+            ? CFG.decodeMuscle(primaryMuscle)
+            : {};
         const resolvedName = buildFitHeroUserExerciseName(def, rawId, context?.catalogById);
         const technicalName = buildFitHeroUserExerciseTechnicalName(def, rawId);
         const idBase = buildFitHeroUserExerciseId(rawId);
@@ -803,24 +891,24 @@
         const exercise = {
             id,
             name: resolvedName,
-            muscle: null,
-            muscleGroup1: null,
-            muscleGroup2: null,
-            muscleGroup3: null,
-            bodyPart: null,
-            equipment: null,
+            muscle: primaryMuscle,
+            muscleGroup1: muscleGroups?.g1 || null,
+            muscleGroup2: muscleGroups?.g2 || null,
+            muscleGroup3: muscleGroups?.g3 || null,
+            bodyPart: muscleGroups?.g1 || null,
+            equipment: equipmentList.length ? equipmentList : null,
             equipmentGroup1: null,
-            equipmentGroup2: null,
-            secondaryMuscles: Array.isArray(def?.secondary) ? def.secondary : [],
-            instructions: [],
+            equipmentGroup2: equipmentList.length ? equipmentList : null,
+            secondaryMuscles,
+            instructions,
             image: null,
             source: 'FitHero',
             origin: 'user',
             external_source: 'FitHero',
             external_exercise_id: rawId,
-            category: typeof def?.category === 'string' ? def.category : null,
+            category: catalogCategory[0] || (typeof def?.category === 'string' ? def.category : null),
             notes: typeof def?.notes === 'string' ? def.notes : null,
-            primary: typeof def?.primary === 'string' ? def.primary : null,
+            primary: primaryMuscle,
             technical_name: technicalName
         };
 

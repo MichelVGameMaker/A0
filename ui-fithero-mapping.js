@@ -53,16 +53,24 @@
         const allExercises = await db.getAll('exercises');
         const exercises = Array.isArray(allExercises) ? allExercises : [];
         const exerciseById = new Map(exercises.map((exercise) => [exercise.id, exercise]));
+        const exerciseByExternalId = new Map(
+            exercises
+                .filter((exercise) => exercise?.external_source === 'FitHero' && typeof exercise?.external_exercise_id === 'string')
+                .map((exercise) => [exercise.external_exercise_id, exercise])
+        );
 
         slugs.forEach((slug) => {
             const mapping = mappingBySlug.get(slug);
             const mappedExercise = mapping?.exerciseId ? exerciseById.get(mapping.exerciseId) : null;
             const exerciseName = mappedExercise?.name || mapping?.name || '—';
+            const externalExercise = isFitHeroUserExerciseId(slug) ? exerciseByExternalId.get(slug) : null;
+            const slugLabel = externalExercise?.name || slug;
 
             const row = document.createElement('tr');
 
             const slugCell = document.createElement('td');
-            slugCell.textContent = slug;
+            slugCell.textContent = slugLabel;
+            slugCell.title = slug;
 
             const nameCell = document.createElement('td');
             nameCell.textContent = exerciseName;
@@ -80,6 +88,10 @@
             row.append(slugCell, nameCell, actionCell);
             mappingBody.appendChild(row);
         });
+    }
+
+    function isFitHeroUserExerciseId(value) {
+        return typeof value === 'string' && value.startsWith('user-exercise--');
     }
 
     function openExercisePicker(slug) {
