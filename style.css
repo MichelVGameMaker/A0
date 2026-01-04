@@ -156,13 +156,39 @@ body{
     min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
 }
 
+
 /* =========================================================
-   2) Header principal (haut)
+   2) Tab bar (bas)
+   ========================================================= */
+.tabbar{
+    z-index:10;
+    position: fixed; bottom:0; left:0; right:0; 
+    height: var(--tab-h);
+    display:flex; align-items:center; justify-content:space-between;
+    background: var(--panelBack);
+    border-top: 2px solid var(--panelBord);
+}
+.tab{
+    flex: 1 1 25%;
+    height: 100%;
+    box-sizing: border-box;
+    font-size: 32px;
+    padding: 0 var(--pad-x);
+    background: transparent;
+    border:3px solid transparent;
+    cursor:pointer;
+}
+.tab.active{
+    border-top: 3px solid var(--focusedBord);         /* 4.Onglet actif bordure haute noir */
+}
+
+/* =========================================================
+   3) Header principal (haut)
    ========================================================= */
 header{
     z-index:5;
     position: fixed; top: 0; left:0; right:0;
-    height: var(--tab-h);
+    height: var(--header-h);
     display:flex; align-items:center; justify-content:space-between;
     padding: var(--pad-y) var(--pad-x);
     background: var(--panelBack);
@@ -207,31 +233,6 @@ header .header-left .btn{
 }
 
 /* =========================================================
-   3) Tab bar (bas)
-   ========================================================= */
-.tabbar{
-    z-index:10;
-    position: fixed; bottom:0; left:0; right:0; 
-    height: var(--tab-h);
-    display:flex; align-items:center; justify-content:space-between;
-    background: var(--panelBack);
-    border-top: 2px solid var(--panelBord);
-}
-.tab{
-    flex: 1 1 25%;
-    height: 100%;
-    box-sizing: border-box;
-    font-size: 32px;
-    padding: 0 var(--pad-x);
-    background: transparent;
-    border:3px solid transparent;
-    cursor:pointer;
-}
-.tab.active{
-    border-top: 3px solid var(--focusedBord);         /* 4.Onglet actif bordure haute noir */
-}
-
-/* =========================================================
    4) Modale
    ========================================================= */
 .modal{
@@ -244,6 +245,29 @@ header .header-left .btn{
     top: env(safe-area-inset-top, 0);
     left:50%;
     transform: translateX(-50%);
+}
+
+.modal-header{
+    height: var(--header-h);
+    display:flex;  align-items:center; justify-content:space-between;
+    padding: var(--pad-y) var(--pad-x);
+    background: var(--panelBack);
+    border-bottom:2px solid var(--panelBord);
+}
+.modal-fixed .modal-header{
+    flex: 0 0 auto;
+    position: relative;
+    justify-content:center;
+}
+.modal-title{
+    flex: 1 1 auto;
+    text-align:center;
+}
+.modal-close{
+    position:absolute;
+    right: var(--pad-x);
+    top: 50%;
+    transform: translateY(-50%);
 }
 .modal-fixed{
     height: 80vh;
@@ -261,32 +285,13 @@ header .header-left .btn{
 .modal::backdrop{ 
     background: rgba(0,0,0,.25); 
     }
-.modal-header{
-    display:flex;  align-items:center; justify-content:space-between;
-    padding: var(--pad-y) var(--pad-x);
-    border-bottom:1px solid var(--panelBord);
-    background: var(--panelBack);
-}
+
 .modal-fixed .modal-form{
     display:flex;
     flex-direction:column;
     height: 100%;
 }
-.modal-fixed .modal-header{
-    flex: 0 0 auto;
-    position: relative;
-    justify-content:center;
-}
-.modal-title{
-    flex: 1 1 auto;
-    text-align:center;
-}
-.modal-close{
-    position:absolute;
-    right: var(--pad-x);
-    top: 50%;
-    transform: translateY(-50%);
-}
+
 .modal-body{
     flex: 1 1 auto;
     overflow: auto;

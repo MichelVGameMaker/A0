@@ -24,7 +24,7 @@
 
 <div id="appSplash" class="app-splash" aria-hidden="true">KrøM</div>
 
-<!-- ========== 3.4. Séance  ========== -->
+<!-- ========== 1  Séance  ========== -->
 <section id="screenSessions" class="screen">
     
     <!-- En-tête -->
@@ -68,7 +68,190 @@
   </section>
 <!-- ==================== -->
 
-<!-- ========== Routine : liste ========== -->
+<!-- ========== 1.1 Séance > modification des séries  ========== -->
+<section id="screenExecEdit" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="execBack" class="btn ghost" title="Retour">◀︎</button>
+        </div>
+
+        <div class="header-center">
+            <div class="title" id="execTitle">Exercice</div>
+        </div>
+
+        <div class="header-right">
+            <button id="execEditMeta" class="btn primary" title="Éditer" aria-label="Éditer">✎</button>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="exec-date-row">
+            <div class="details" id="execDate">—</div>
+            <button id="execHistoryToggle" class="tag exec-date-tag" type="button" aria-pressed="false">
+                Historique
+            </button>
+        </div>
+
+        <div class="exec-grid exec-head routine-set-grid routine-set-head">
+            <div class="lbl">#</div>
+            <div class="lbl">Reps</div>
+            <div class="lbl">Poids</div>
+            <div class="lbl">RPE</div>
+            <div class="span-two lbl">Repos</div>
+        </div>
+
+        <div id="execSets"></div>
+
+        <div class="add-actions">
+            <button id="execAddSet" class="btn cta full">Ajouter une série</button>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== 2 Bibliothèque d’exercices ========== -->
+<section id="screenExercises" class="screen" hidden>
+    
+    <!-- En-tête de l'écran Bibliothèque d'exercices -->
+    <header class="header">
+        <div class="header-left">
+            <button class="btn" id="exBackList">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title" id="exListTitle">Exercices</div>
+        </div>
+        <div class="header-right">
+            <button class="btn primary" id="exOkList" title="Créer un exercice">＋</button>
+        </div>
+    </header>
+
+    <!-- Corps de l'écran Bibliothèque d'exercices -->
+    <main class="content">
+      
+		<!-- Cartouche haut : Zone de filtre -->
+		<div class="bloque">
+		
+			<div class="row">
+				<input id="exSearch" class="input full" placeholder="Rechercher par nom…" />
+			</div>
+			
+			<div class="row">
+				<select id="exFilterGroup" class="input flex-1">
+					<option value="">Groupe musculaire</option>
+				</select> 
+				<select id="exFilterEquip" class="input flex-1">
+					<option value="">Matériel</option>
+				</select>
+			</div>
+		
+      </div>
+ 
+		<!-- Cartouche bas : Liste déroulante -->
+		<section id="exList" class="bloque" aria-label="Bibliothèque d’exercices"></section>
+      
+	</main>    
+  </section>
+<!-- ==================== -->
+ 
+<!-- ========== 2.1 Fiche d'un exercice ========== -->
+<section id="screenExerciseRead" class="screen" hidden>
+    
+    <!-- En-tête -->
+    <header class="header">
+        <div class="header-left">
+            <button class="btn" id="exReadBack">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title" id="exReadTitle">Exercice</div>
+        </div>
+        <div class="header-right">
+            <button class="btn primary" id="exReadEdit" title="Éditer" aria-label="Éditer">✎</button>
+        </div>
+    </header>
+
+	<!-- Corps de l'écran Consulter un Exercice) -->
+	<main class="content">
+
+		<div class="panel" style="display:flex;flex-direction:column;gap:12px;">
+			<!-- Image / GIF -->
+			<img id="exReadHero" alt="aperçu exercice" class="image_big" />
+
+			<!-- Lignes d’info -->
+			<div id="exReadMuscleMain" class="element"></div>
+			<div id="exReadMuscleSecondary" class="details"></div>
+
+			<!-- Instructions -->
+			<div>
+				<ol id="exReadInstruc" class="listing listing-instructions"></ol>
+			</div>
+		</div>
+ 
+	</main>  
+  </section>
+<!-- ==================== -->
+  
+<!-- ========== 2.2 Modification d'un exercice ========== -->
+<section id="screenExerciseEdit" class="screen" hidden>
+    
+    <!-- En-tête -->
+    <header class="header">
+        <div class="header-left">
+            <button class="btn" id="exEditBack">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title" id="exEditTitle">Ajouter</div>
+        </div>
+        <div class="header-right">
+            <button class="btn" id="exEditOk">OK</button>
+        </div>
+    </header>
+
+	<!-- Corps de l'écran Ajouter / Modifier Exercices) -->
+	<main class="content">
+
+		<!-- Cartouche haut -->
+		<div class="bloque">   		
+			<div class="row">
+				<button id="exEditDelete" class="btn danger full">🗑️ Supprimer</button>
+			</div>
+		</div>
+		
+		<!-- Cartouche bas : Formulaire -->
+		<div class="bloque">
+	  
+			<label class="lbl">Nom</label>
+			<input id="exName" class="input full" placeholder="Nom de l’exercice" />
+	 
+			<label class="lbl">Matériel</label>
+			<div id="exEquip" class="tags"></div>
+			
+			<label class="lbl">Muscle ciblé</label>
+			<select id="exTargetMuscle" class="input full">
+			  <option value="">Choisir…</option>
+			</select>
+			
+			<div id="exGroupInfo" class="details"></div>
+			
+			<label class="lbl">Muscles secondaires</label>
+			<div id="exSecMuscles" class="tags"></div>
+	  
+			<label class="lbl">Image (URL)</label>
+			<input id="exImage" class="input full" type="url" placeholder="https://… ou ./data/media/xxx.gif" />
+
+			<label class="lbl">Instructions (1 par ligne)</label>
+			<textarea id="exInstr" class="input full" rows="8" placeholder="Étape 1…
+Étape 2…"></textarea>
+ 
+		</div>
+
+	   
+	</main>  
+</section>
+<!-- ==================== -->
+
+<!-- ========== 3 Bibliothèque des routines ========== -->
 <section id="screenRoutineList" class="screen" hidden>
 
     <header class="header">
@@ -94,7 +277,7 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== Routine : édition template ========== -->
+<!-- ========== 3.1 Modification d'une routine  ========== -->
 <section id="screenRoutineEdit" class="screen" hidden>
 
     <header class="header">
@@ -124,7 +307,7 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== Routine : édition des séries prévues ========== -->
+<!-- ========== 3.1.1 Routine > modification des séries  ========== -->
 <section id="screenRoutineMoveEdit" class="screen" hidden>
 
     <header class="header">
@@ -316,189 +499,6 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== 3.4.2 Modifier l’exécution (Colonne A uniquement) ========== -->
-<section id="screenExecEdit" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="execBack" class="btn ghost" title="Retour">◀︎</button>
-        </div>
-
-        <div class="header-center">
-            <div class="title" id="execTitle">Exercice</div>
-        </div>
-
-        <div class="header-right">
-            <button id="execEditMeta" class="btn primary" title="Éditer" aria-label="Éditer">✎</button>
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="exec-date-row">
-            <div class="details" id="execDate">—</div>
-            <button id="execHistoryToggle" class="tag exec-date-tag" type="button" aria-pressed="false">
-                Historique
-            </button>
-        </div>
-
-        <div class="exec-grid exec-head routine-set-grid routine-set-head">
-            <div class="lbl">#</div>
-            <div class="lbl">Reps</div>
-            <div class="lbl">Poids</div>
-            <div class="lbl">RPE</div>
-            <div class="span-two lbl">Repos</div>
-        </div>
-
-        <div id="execSets"></div>
-
-        <div class="add-actions">
-            <button id="execAddSet" class="btn cta full">Ajouter une série</button>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== 3.1.1 Bibliothèque d’exercices (liste) ========== -->
-<section id="screenExercises" class="screen" hidden>
-    
-    <!-- En-tête de l'écran Bibliothèque d'exercices -->
-    <header class="header">
-        <div class="header-left">
-            <button class="btn" id="exBackList">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title" id="exListTitle">Exercices</div>
-        </div>
-        <div class="header-right">
-            <button class="btn primary" id="exOkList" title="Créer un exercice">＋</button>
-        </div>
-    </header>
-
-    <!-- Corps de l'écran Bibliothèque d'exercices -->
-    <main class="content">
-      
-		<!-- Cartouche haut : Zone de filtre -->
-		<div class="bloque">
-		
-			<div class="row">
-				<input id="exSearch" class="input full" placeholder="Rechercher par nom…" />
-			</div>
-			
-			<div class="row">
-				<select id="exFilterGroup" class="input flex-1">
-					<option value="">Groupe musculaire</option>
-				</select> 
-				<select id="exFilterEquip" class="input flex-1">
-					<option value="">Matériel</option>
-				</select>
-			</div>
-		
-      </div>
- 
-		<!-- Cartouche bas : Liste déroulante -->
-		<section id="exList" class="bloque" aria-label="Bibliothèque d’exercices"></section>
-      
-	</main>    
-  </section>
-<!-- ==================== -->
- 
-<!-- ========== 3.1.2A Consulter un exercice ========== -->
-<section id="screenExerciseRead" class="screen" hidden>
-    
-    <!-- En-tête -->
-    <header class="header">
-        <div class="header-left">
-            <button class="btn" id="exReadBack">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title" id="exReadTitle">Exercice</div>
-        </div>
-        <div class="header-right">
-            <button class="btn primary" id="exReadEdit" title="Éditer" aria-label="Éditer">✎</button>
-        </div>
-    </header>
-
-	<!-- Corps de l'écran Consulter un Exercice) -->
-	<main class="content">
-
-		<div class="panel" style="display:flex;flex-direction:column;gap:12px;">
-			<!-- Image / GIF -->
-			<img id="exReadHero" alt="aperçu exercice" class="image_big" />
-
-			<!-- Lignes d’info -->
-			<div id="exReadMuscleMain" class="element"></div>
-			<div id="exReadMuscleSecondary" class="details"></div>
-
-			<!-- Instructions -->
-			<div>
-				<ol id="exReadInstruc" class="listing listing-instructions"></ol>
-			</div>
-		</div>
- 
-	</main>  
-  </section>
-<!-- ==================== -->
-  
-<!-- ========== 3.1.2B Ajouter / Modifier un exercice ========== -->
-<section id="screenExerciseEdit" class="screen" hidden>
-    
-    <!-- En-tête -->
-    <header class="header">
-        <div class="header-left">
-            <button class="btn" id="exEditBack">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title" id="exEditTitle">Ajouter</div>
-        </div>
-        <div class="header-right">
-            <button class="btn" id="exEditOk">OK</button>
-        </div>
-    </header>
-
-	<!-- Corps de l'écran Ajouter / Modifier Exercices) -->
-	<main class="content">
-
-		<!-- Cartouche haut -->
-		<div class="bloque">   		
-			<div class="row">
-				<button id="exEditDelete" class="btn danger full">🗑️ Supprimer</button>
-			</div>
-		</div>
-		
-		<!-- Cartouche bas : Formulaire -->
-		<div class="bloque">
-	  
-			<label class="lbl">Nom</label>
-			<input id="exName" class="input full" placeholder="Nom de l’exercice" />
-	 
-			<label class="lbl">Matériel</label>
-			<div id="exEquip" class="tags"></div>
-			
-			<label class="lbl">Muscle ciblé</label>
-			<select id="exTargetMuscle" class="input full">
-			  <option value="">Choisir…</option>
-			</select>
-			
-			<div id="exGroupInfo" class="details"></div>
-			
-			<label class="lbl">Muscles secondaires</label>
-			<div id="exSecMuscles" class="tags"></div>
-	  
-			<label class="lbl">Image (URL)</label>
-			<input id="exImage" class="input full" type="url" placeholder="https://… ou ./data/media/xxx.gif" />
-
-			<label class="lbl">Instructions (1 par ligne)</label>
-			<textarea id="exInstr" class="input full" rows="8" placeholder="Étape 1…
-Étape 2…"></textarea>
- 
-		</div>
-
-	   
-	</main>  
-</section>
-<!-- ==================== -->
-
 <!-- ========== Réglages ========== -->
 <section id="screenSettings" class="screen" hidden>
 
@@ -538,7 +538,7 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== Planning ========== -->
+<!-- ========== Réglages > Planning ========== -->
 <section id="screenPlanning" class="screen" hidden>
 
     <header class="header">
@@ -567,38 +567,7 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== Application ========== -->
-<section id="screenApplication" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="btnApplicationBack" class="btn" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title">Application</div>
-        </div>
-        <div class="header-right">
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <div class="row">
-                <button id="btnSettingsUpdate" class="btn full danger">🧹 Update</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsReset" class="btn full danger">🗑️ Reset</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsAdmin" class="btn full">🛠️ Admin</button>
-            </div>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== Préférences ========== -->
+<!-- ========== Réglages > Préférences ========== -->
 <section id="screenPreferences" class="screen" hidden>
 
     <header class="header">
@@ -630,7 +599,7 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== Données ========== -->
+<!-- ========== Réglages > Données ========== -->
 <section id="screenData" class="screen" hidden>
 
     <header class="header">
@@ -672,35 +641,7 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== Admin ========== -->
-<section id="screenAdmin" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="btnAdminBack" class="btn" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title">Admin</div>
-        </div>
-        <div class="header-right">
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <button id="btnAdminUpdateFitHeroMapping" class="btn full" type="button">
-                Mettre à jour le mapping FitHero
-            </button>
-            <p class="details">
-                Génère un fichier de mapping FitHero à jour depuis les mappings en ligne et personnalisés.
-            </p>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== Mapping FitHero ========== -->
+<!-- ========== Réglages > Données > Mapping FitHero ========== -->
 <section id="screenFitHeroMapping" class="screen" hidden>
 
     <header class="header">
@@ -735,6 +676,66 @@
 
 </section>
 <!-- ==================== -->
+
+<!-- ========== Réglages >  Application ========== -->
+<section id="screenApplication" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnApplicationBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Application</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <div class="row">
+                <button id="btnSettingsUpdate" class="btn full danger">🧹 Update</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsReset" class="btn full danger">🗑️ Reset</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsAdmin" class="btn full">🛠️ Admin</button>
+            </div>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Réglages > Application > Admin ========== -->
+<section id="screenAdmin" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnAdminBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Admin</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <button id="btnAdminUpdateFitHeroMapping" class="btn full" type="button">
+                Mettre à jour le mapping FitHero
+            </button>
+            <p class="details">
+                Génère un fichier de mapping FitHero à jour depuis les mappings en ligne et personnalisés.
+            </p>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
 
 <!-- ✅ Barre de timer collante en bas -->
 <footer id="execTimerBar" class="exec-timer" hidden>
