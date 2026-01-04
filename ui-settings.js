@@ -441,10 +441,11 @@
         }
 
         try {
-            const [payload, mapping, exercises] = await Promise.all([
+            const [payload, mapping, exercises, catalog] = await Promise.all([
                 readJsonFile(file),
                 loadFitHeroMapping(),
-                db.getAll('exercises')
+                db.getAll('exercises'),
+                loadExercisesCatalog()
             ]);
             const workouts = payload?.workouts;
             if (!Array.isArray(workouts)) {
@@ -457,6 +458,7 @@
             );
             const userExerciseById = buildFitHeroUserExerciseIndex(payload?.exercises);
             const exerciseByExternalKey = buildExerciseByExternalKey(exercises);
+            const catalogById = buildExerciseCatalogIndex(catalog);
             const missingExercises = new Set();
             const mappingStats = {
                 official: 0,
@@ -469,7 +471,8 @@
                 await ensureFitHeroUserExercise(rawId, {
                     userExerciseById,
                     exerciseById,
-                    exerciseByExternalKey
+                    exerciseByExternalKey,
+                    catalogById
                 });
             }
 
@@ -482,6 +485,7 @@
                     exerciseById,
                     userExerciseById,
                     exerciseByExternalKey,
+                    catalogById,
                     missingExercises,
                     mappingStats
                 });
@@ -551,6 +555,21 @@
             return data;
         } catch (error) {
             console.warn('Chargement mapping FitHero échoué :', error);
+            return [];
+        }
+    }
+
+    async function loadExercisesCatalog() {
+        try {
+            const url = new URL('data/exercises.json', document.baseURI).href;
+            const response = await fetch(url, { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error('exercises.json introuvable');
+            }
+            const data = await response.json();
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.warn('Chargement catalogue exercices échoué :', error);
             return [];
         }
     }
@@ -632,12 +651,67 @@
         return `fh_${rawId}`;
     }
 
-    function buildFitHeroUserExerciseName(def, rawId) {
+    function buildFitHeroUserExerciseName(def, rawId, catalogById) {
+        const catalogId = resolveFitHeroUserExerciseCatalogId(def, rawId);
+        const catalogName = catalogId ? catalogById?.get(catalogId) : '';
+        if (catalogName) {
+            return `(user) ${catalogName}`;
+        }
         const label = typeof def?.name === 'string' ? def.name.trim() : '';
         if (label) {
             return `(user) ${label}`;
         }
         return `(user) ${rawId}`;
+    }
+
+    function buildFitHeroUserExerciseTechnicalName(def, rawId) {
+        const label = typeof def?.name === 'string' ? def.name.trim() : '';
+        return label || rawId;
+    }
+
+    function resolveFitHeroUserExerciseCatalogId(def, rawId) {
+        if (typeof def?.exerciseId === 'string' && def.exerciseId.trim()) {
+            return def.exerciseId.trim();
+        }
+        if (typeof def?.exercise_id === 'string' && def.exercise_id.trim()) {
+            return def.exercise_id.trim();
+        }
+        if (typeof def?.id === 'string' && def.id.trim() && !isFitHeroUserExerciseId(def.id)) {
+            return def.id.trim();
+        }
+        if (typeof rawId === 'string') {
+            const trimmed = rawId.trim();
+            const prefix = 'user-exercise--';
+            if (trimmed.startsWith(prefix)) {
+                const remainder = trimmed.slice(prefix.length);
+                if (remainder) {
+                    const segment = remainder.split('--')[0].trim();
+                    return segment || remainder;
+                }
+            }
+        }
+        return '';
+    }
+
+    function buildExerciseCatalogIndex(catalog) {
+        const list = Array.isArray(catalog) ? catalog : [];
+        const entries = list
+            .map((exercise) => {
+                const id = String(
+                    exercise?.exerciseId
+                        || exercise?.id
+                        || exercise?._id
+                        || exercise?.uuid
+                        || ''
+                ).trim();
+                const name = typeof exercise?.name === 'string' ? exercise.name.trim() : '';
+                if (!id || !name) {
+                    return null;
+                }
+                return [id, name];
+            })
+            .filter(Boolean);
+        return new Map(entries);
     }
 
     function resolveFitHeroUserExercise(rawId, context) {
@@ -660,7 +734,8 @@
             console.warn(`Missing user exercise definition for id ${rawId}. See root.exercises in backup.`);
         }
 
-        const resolvedName = buildFitHeroUserExerciseName(def, rawId);
+        const resolvedName = buildFitHeroUserExerciseName(def, rawId, context?.catalogById);
+        const technicalName = buildFitHeroUserExerciseTechnicalName(def, rawId);
         const idBase = buildFitHeroUserExerciseId(rawId);
         let id = idBase;
         if (context?.exerciseById?.has(id)) {
@@ -691,7 +766,8 @@
             external_exercise_id: rawId,
             category: typeof def?.category === 'string' ? def.category : null,
             notes: typeof def?.notes === 'string' ? def.notes : null,
-            primary: typeof def?.primary === 'string' ? def.primary : null
+            primary: typeof def?.primary === 'string' ? def.primary : null,
+            technical_name: technicalName
         };
 
         await db.put('exercises', exercise);
@@ -866,7 +942,9 @@
                 : null;
         const fallbackUserId = isUserExercise ? buildFitHeroUserExerciseId(slug) : '';
         const exerciseId = mappedExercise?.id || mappedId || fallbackUserId || slug;
-        const resolvedUserName = isUserExercise ? buildFitHeroUserExerciseName(userDef, slug) : '';
+        const resolvedUserName = isUserExercise
+            ? buildFitHeroUserExerciseName(userDef, slug, context?.catalogById)
+            : '';
         const name = mappedExercise?.name
             || resolvedUserName
             || mapping?.name
