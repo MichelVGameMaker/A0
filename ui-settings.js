@@ -455,12 +455,23 @@
             const exerciseById = new Map(
                 (Array.isArray(exercises) ? exercises : []).map((exercise) => [exercise.id, exercise])
             );
+            const userExerciseById = buildFitHeroUserExerciseIndex(payload?.exercises);
+            const exerciseByExternalKey = buildExerciseByExternalKey(exercises);
             const missingExercises = new Set();
             const mappingStats = {
                 official: 0,
                 user: 0,
                 missing: 0
             };
+
+            const userExerciseIds = collectFitHeroUserExerciseIds(workouts);
+            for (const rawId of userExerciseIds) {
+                await ensureFitHeroUserExercise(rawId, {
+                    userExerciseById,
+                    exerciseById,
+                    exerciseByExternalKey
+                });
+            }
 
             await clearAllSessions();
 
@@ -469,6 +480,8 @@
                 const session = toFitHeroSession(workout, {
                     mappingBySlug,
                     exerciseById,
+                    userExerciseById,
+                    exerciseByExternalKey,
                     missingExercises,
                     mappingStats
                 });
@@ -570,6 +583,142 @@
         );
     }
 
+    function buildFitHeroUserExerciseIndex(exercises) {
+        const entries = Array.isArray(exercises) ? exercises : [];
+        return new Map(
+            entries
+                .filter((exercise) => typeof exercise?.id === 'string' && isFitHeroUserExerciseId(exercise.id))
+                .map((exercise) => [exercise.id, exercise])
+        );
+    }
+
+    function collectFitHeroUserExerciseIds(workouts) {
+        const ids = new Set();
+        const sessions = Array.isArray(workouts) ? workouts : [];
+        sessions.forEach((workout) => {
+            const exercises = Array.isArray(workout?.exercises) ? workout.exercises : [];
+            exercises.forEach((exercise) => {
+                const slug = getFitHeroExerciseSlug(exercise);
+                if (isFitHeroUserExerciseId(slug)) {
+                    ids.add(slug);
+                }
+            });
+        });
+        return ids;
+    }
+
+    function buildExerciseByExternalKey(exercises) {
+        const list = Array.isArray(exercises) ? exercises : [];
+        const entries = list
+            .map((exercise) => {
+                const source = typeof exercise?.external_source === 'string' ? exercise.external_source : '';
+                const externalId = typeof exercise?.external_exercise_id === 'string'
+                    ? exercise.external_exercise_id
+                    : '';
+                if (!source || !externalId) {
+                    return null;
+                }
+                return [buildExternalExerciseKey(source, externalId), exercise];
+            })
+            .filter(Boolean);
+        return new Map(entries);
+    }
+
+    function buildExternalExerciseKey(source, id) {
+        return `${source}::${id}`;
+    }
+
+    function buildFitHeroUserExerciseId(rawId) {
+        return `fh_${rawId}`;
+    }
+
+    function buildFitHeroUserExerciseName(def, rawId) {
+        const label = typeof def?.name === 'string' ? def.name.trim() : '';
+        if (label) {
+            return `(user) ${label}`;
+        }
+        return `(user) ${rawId}`;
+    }
+
+    function resolveFitHeroUserExercise(rawId, context) {
+        const key = buildExternalExerciseKey('FitHero', rawId);
+        return context?.exerciseByExternalKey?.get(key) || null;
+    }
+
+    async function ensureFitHeroUserExercise(rawId, context) {
+        if (!isFitHeroUserExerciseId(rawId)) {
+            return null;
+        }
+        const key = buildExternalExerciseKey('FitHero', rawId);
+        const existing = context?.exerciseByExternalKey?.get(key);
+        if (existing) {
+            return existing;
+        }
+
+        const def = context?.userExerciseById?.get(rawId) || null;
+        if (!def) {
+            console.warn(`Missing user exercise definition for id ${rawId}. See root.exercises in backup.`);
+        }
+
+        const resolvedName = buildFitHeroUserExerciseName(def, rawId);
+        const idBase = buildFitHeroUserExerciseId(rawId);
+        let id = idBase;
+        if (context?.exerciseById?.has(id)) {
+            let counter = 1;
+            while (context.exerciseById.has(`${idBase}_${counter}`)) {
+                counter += 1;
+            }
+            id = `${idBase}_${counter}`;
+        }
+
+        const exercise = {
+            id,
+            name: resolvedName,
+            muscle: null,
+            muscleGroup1: null,
+            muscleGroup2: null,
+            muscleGroup3: null,
+            bodyPart: null,
+            equipment: null,
+            equipmentGroup1: null,
+            equipmentGroup2: null,
+            secondaryMuscles: Array.isArray(def?.secondary) ? def.secondary : [],
+            instructions: [],
+            image: null,
+            source: 'FitHero',
+            origin: 'user',
+            external_source: 'FitHero',
+            external_exercise_id: rawId,
+            category: typeof def?.category === 'string' ? def.category : null,
+            notes: typeof def?.notes === 'string' ? def.notes : null,
+            primary: typeof def?.primary === 'string' ? def.primary : null
+        };
+
+        await db.put('exercises', exercise);
+        context?.exerciseById?.set(exercise.id, exercise);
+        context?.exerciseByExternalKey?.set(key, exercise);
+        return exercise;
+    }
+
+    function getFitHeroExerciseSlug(exercise) {
+        if (!exercise || typeof exercise !== 'object') {
+            return '';
+        }
+        const rawExerciseId = typeof exercise.exercise_id === 'string' ? exercise.exercise_id.trim() : '';
+        if (rawExerciseId) {
+            return rawExerciseId;
+        }
+        const type = typeof exercise.type === 'string' ? exercise.type.trim() : '';
+        if (type) {
+            return type;
+        }
+        return typeof exercise.id === 'string' ? exercise.id.trim() : '';
+    }
+
+    function isFitHeroUserExerciseId(value) {
+        return typeof value === 'string' && value.startsWith('user-exercise--');
+    }
+
     function updateMissingFitHeroExercises(missingExercises) {
         if (!missingExercises || missingExercises.size === 0) {
             return;
@@ -649,16 +798,22 @@
 
         const sessionId = context?.sessionId || '';
         const sessionDate = context?.sessionDate || null;
-        const type = typeof exercise.type === 'string' ? exercise.type.trim() : '';
-        const fallbackId = typeof exercise.id === 'string' ? exercise.id.trim() : '';
-        const slug = type || fallbackId;
-        const mapping = slug && context?.mappingBySlug ? context.mappingBySlug.get(slug) : null;
+        const slug = getFitHeroExerciseSlug(exercise);
+        const isUserExercise = isFitHeroUserExerciseId(slug);
+        const userExercise = isUserExercise ? resolveFitHeroUserExercise(slug, context) : null;
+        const userDef = isUserExercise ? context?.userExerciseById?.get(slug) : null;
+        const mapping = !isUserExercise && slug && context?.mappingBySlug ? context.mappingBySlug.get(slug) : null;
         const mappedId = mapping?.exerciseId || '';
-        const mappedExercise = mappedId && context?.exerciseById
-            ? context.exerciseById.get(mappedId)
-            : null;
-        const exerciseId = mappedExercise?.id || mappedId || slug;
+        const mappedExercise = isUserExercise
+            ? userExercise
+            : mappedId && context?.exerciseById
+                ? context.exerciseById.get(mappedId)
+                : null;
+        const fallbackUserId = isUserExercise ? buildFitHeroUserExerciseId(slug) : '';
+        const exerciseId = mappedExercise?.id || mappedId || fallbackUserId || slug;
+        const resolvedUserName = isUserExercise ? buildFitHeroUserExerciseName(userDef, slug) : '';
         const name = mappedExercise?.name
+            || resolvedUserName
             || mapping?.name
             || (typeof exercise.name === 'string' ? exercise.name : '')
             || exerciseId
@@ -668,7 +823,7 @@
             ? Number(exercise.sort)
             : context?.position || 1;
 
-        if (slug) {
+        if (slug && !isUserExercise) {
             if (mapping?.exerciseId) {
                 if (mapping.source === 'user') {
                     context?.mappingStats && (context.mappingStats.user += 1);
