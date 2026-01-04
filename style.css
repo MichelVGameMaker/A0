@@ -1372,6 +1372,7 @@ input[type="number"]{ -moz-appearance:textfield; }
 
 .stats-subtitle {
     color: var(--selectedBord);
+    text-align: center;
 }
 
 .stats-chart-card {
