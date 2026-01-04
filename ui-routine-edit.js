@@ -176,7 +176,13 @@
         if (!state.routineId) {
             return;
         }
-        if (!confirm('Supprimer cette routine de la liste des routines ?')) {
+        const confirmed = A.components?.confirmDialog?.confirm
+            ? await A.components.confirmDialog.confirm({
+                title: 'Supprimer la routine',
+                message: 'Supprimer cette routine de la liste des routines ?'
+            })
+            : confirm('Supprimer cette routine de la liste des routines ?');
+        if (!confirmed) {
             return;
         }
         await db.del('routines', state.routineId);

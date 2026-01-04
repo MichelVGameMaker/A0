@@ -141,10 +141,24 @@
             ]);
             const merged = mergeMappings(baseMapping, customMapping);
             downloadMapping(merged);
-            alert('Fichier de mapping FitHero généré.');
+            if (A.components?.confirmDialog?.alert) {
+                await A.components.confirmDialog.alert({
+                    title: 'Mapping FitHero',
+                    message: 'Fichier de mapping FitHero généré.'
+                });
+            } else {
+                alert('Fichier de mapping FitHero généré.');
+            }
         } catch (error) {
             console.warn('Génération mapping FitHero échouée :', error);
-            alert('La génération du mapping FitHero a échoué.');
+            if (A.components?.confirmDialog?.alert) {
+                await A.components.confirmDialog.alert({
+                    title: 'Mapping FitHero',
+                    message: 'La génération du mapping FitHero a échoué.'
+                });
+            } else {
+                alert('La génération du mapping FitHero a échoué.');
+            }
         } finally {
             if (button) {
                 button.disabled = false;

@@ -551,7 +551,13 @@
         if (!state.routine) {
             return;
         }
-        if (!confirm('Supprimer cet exercice de la routine ?')) {
+        const confirmed = A.components?.confirmDialog?.confirm
+            ? await A.components.confirmDialog.confirm({
+                title: 'Supprimer un exercice',
+                message: 'Supprimer cet exercice de la routine ?'
+            })
+            : confirm('Supprimer cet exercice de la routine ?');
+        if (!confirmed) {
             return;
         }
         const moves = state.routine.moves || [];
