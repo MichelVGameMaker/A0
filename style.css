@@ -1440,6 +1440,45 @@ input[type="number"]{ -moz-appearance:textfield; }
     cursor: pointer;
 }
 
+.stats-goal-line {
+    stroke-width: 2;
+    stroke-dasharray: 6 4;
+}
+
+.stats-goal-line-min {
+    stroke: var(--rpe-5-bord);
+}
+
+.stats-goal-line-max {
+    stroke: var(--rpe-10-bord);
+}
+
+.stats-goal-trend {
+    stroke-width: 2.5;
+    stroke-dasharray: 8 6;
+    fill: none;
+}
+
+.stats-goal-trend-min {
+    stroke: var(--rpe-5-bord);
+}
+
+.stats-goal-trend-max {
+    stroke: var(--rpe-10-bord);
+}
+
+.stats-goal-range {
+    gap: 8px;
+}
+
+.stats-goal-date-row {
+    align-items: center;
+}
+
+.stats-goal-date {
+    flex: 1;
+}
+
 .stats-chart-empty {
     padding: 24px 0;
     text-align: center;

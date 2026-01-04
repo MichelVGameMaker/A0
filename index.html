@@ -859,6 +859,56 @@
     </form>
 </dialog>
 
+<!-- ========== Statistiques : objectifs ========== -->
+<dialog id="dlgStatsGoal" class="modal modal-fixed modal-centered">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Éditer</div>
+            <button id="statsGoalCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <label class="lbl">Séries / semaine</label>
+                <div class="row stats-goal-range">
+                    <input id="statsGoalSetsMin" class="input" type="number" min="0" step="1" inputmode="numeric" placeholder="Min" aria-label="Objectif minimum séries par semaine" />
+                    <input id="statsGoalSetsMax" class="input" type="number" min="0" step="1" inputmode="numeric" placeholder="Max" aria-label="Objectif maximum séries par semaine" />
+                </div>
+            </div>
+            <div class="bloque">
+                <label class="lbl">Volume</label>
+                <div class="row stats-goal-range">
+                    <input id="statsGoalVolumeMin" class="input" type="number" min="0" step="1" inputmode="numeric" placeholder="Min" aria-label="Objectif minimum volume" />
+                    <input id="statsGoalVolumeMax" class="input" type="number" min="0" step="1" inputmode="numeric" placeholder="Max" aria-label="Objectif maximum volume" />
+                </div>
+            </div>
+            <div class="bloque">
+                <label class="lbl">Répétitions</label>
+                <div class="row stats-goal-range">
+                    <input id="statsGoalRepsMin" class="input" type="number" min="0" step="1" inputmode="numeric" placeholder="Min" aria-label="Objectif minimum répétitions" />
+                    <input id="statsGoalRepsMax" class="input" type="number" min="0" step="1" inputmode="numeric" placeholder="Max" aria-label="Objectif maximum répétitions" />
+                </div>
+            </div>
+            <div class="bloque">
+                <label class="lbl">1RM estimé</label>
+                <div class="vstack">
+                    <div class="row stats-goal-date-row">
+                        <input id="statsGoalOrmStart" class="input stats-goal-date" type="text" placeholder="Date de départ" readonly aria-label="Date de départ pour l'objectif 1RM" />
+                        <button id="statsGoalOrmStartPick" class="btn ghost" type="button" aria-label="Choisir la date de départ">📅</button>
+                    </div>
+                    <div class="row stats-goal-date-row">
+                        <input id="statsGoalOrmTargetDate" class="input stats-goal-date" type="text" placeholder="Date cible" readonly aria-label="Date cible pour l'objectif 1RM" />
+                        <button id="statsGoalOrmTargetDatePick" class="btn ghost" type="button" aria-label="Choisir la date cible">📅</button>
+                    </div>
+                    <input id="statsGoalOrmTargetValue" class="input" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Valeur cible" aria-label="Valeur cible 1RM estimé" />
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="statsGoalSave" class="btn cta full" type="button">ok</button>
+        </div>
+    </form>
+</dialog>
+
 <!-- ========== Routine : modale méta ========== -->
 <dialog id="dlgRoutineEditor" class="modal modal-fixed modal-centered">
     <form method="dialog" class="modal-form">

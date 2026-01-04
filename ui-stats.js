@@ -16,6 +16,9 @@
         usageByExercise: new Map(),
         activeExercise: null
     };
+    const goalDialog = {
+        wired: false
+    };
 
     const METRIC_DEFINITIONS = [
         {
@@ -159,6 +162,20 @@
         refs.statsGoal = document.getElementById('statsGoal');
         refs.tabStats = document.getElementById('tabStats');
         refs.tabSessions = document.getElementById('tabSessions');
+        refs.dlgStatsGoal = document.getElementById('dlgStatsGoal');
+        refs.statsGoalCancel = document.getElementById('statsGoalCancel');
+        refs.statsGoalSave = document.getElementById('statsGoalSave');
+        refs.statsGoalSetsMin = document.getElementById('statsGoalSetsMin');
+        refs.statsGoalSetsMax = document.getElementById('statsGoalSetsMax');
+        refs.statsGoalVolumeMin = document.getElementById('statsGoalVolumeMin');
+        refs.statsGoalVolumeMax = document.getElementById('statsGoalVolumeMax');
+        refs.statsGoalRepsMin = document.getElementById('statsGoalRepsMin');
+        refs.statsGoalRepsMax = document.getElementById('statsGoalRepsMax');
+        refs.statsGoalOrmStart = document.getElementById('statsGoalOrmStart');
+        refs.statsGoalOrmStartPick = document.getElementById('statsGoalOrmStartPick');
+        refs.statsGoalOrmTargetDate = document.getElementById('statsGoalOrmTargetDate');
+        refs.statsGoalOrmTargetDatePick = document.getElementById('statsGoalOrmTargetDatePick');
+        refs.statsGoalOrmTargetValue = document.getElementById('statsGoalOrmTargetValue');
         refsResolved = true;
         return refs;
     }
@@ -177,7 +194,8 @@
             'statsRangeTags',
             'statsTimeline',
             'statsTimelineTitle',
-            'statsBack'
+            'statsBack',
+            'statsGoal'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -187,13 +205,18 @@
     }
 
     function wireEvents() {
-        const { statsBack, statsMetricTags, statsRangeTags } = assertStatsRefs();
+        const { statsBack, statsMetricTags, statsRangeTags, statsGoal } = assertStatsRefs();
         statsBack.addEventListener('click', () => {
             highlightStatsTab();
             state.activeExercise = null;
             renderExerciseList();
             switchScreen('screenStatExercises');
         });
+        if (statsGoal) {
+            statsGoal.addEventListener('click', () => {
+                openGoalDialog();
+            });
+        }
         if (statsMetricTags) {
             statsMetricTags.addEventListener('click', (event) => {
                 const target = event.target.closest('[data-metric]');
@@ -222,6 +245,7 @@
                 renderExerciseDetail();
             });
         }
+        wireGoalDialogEvents();
     }
 
     async function loadData(force = false) {
@@ -366,6 +390,241 @@
         renderTimeline();
     }
 
+    function wireGoalDialogEvents() {
+        if (goalDialog.wired) {
+            return;
+        }
+        const {
+            dlgStatsGoal,
+            statsGoalCancel,
+            statsGoalSave,
+            statsGoalOrmStartPick,
+            statsGoalOrmTargetDatePick
+        } = ensureRefs();
+        if (!dlgStatsGoal) {
+            return;
+        }
+        goalDialog.wired = true;
+        if (statsGoalCancel) {
+            statsGoalCancel.addEventListener('click', () => {
+                dlgStatsGoal.close();
+            });
+        }
+        if (statsGoalSave) {
+            statsGoalSave.addEventListener('click', () => {
+                void saveGoalDialog();
+            });
+        }
+        if (statsGoalOrmStartPick) {
+            statsGoalOrmStartPick.addEventListener('click', () => {
+                openGoalDatePicker(refs.statsGoalOrmStart, A.today());
+            });
+        }
+        if (statsGoalOrmTargetDatePick) {
+            statsGoalOrmTargetDatePick.addEventListener('click', () => {
+                const fallback = addMonths(A.today(), 3);
+                openGoalDatePicker(refs.statsGoalOrmTargetDate, fallback);
+            });
+        }
+    }
+
+    function openGoalDialog() {
+        const { dlgStatsGoal } = ensureRefs();
+        const exercise = state.activeExercise;
+        if (!dlgStatsGoal || !exercise) {
+            return;
+        }
+        fillGoalDialog(exercise);
+        dlgStatsGoal.showModal();
+    }
+
+    function fillGoalDialog(exercise) {
+        const {
+            statsGoalSetsMin,
+            statsGoalSetsMax,
+            statsGoalVolumeMin,
+            statsGoalVolumeMax,
+            statsGoalRepsMin,
+            statsGoalRepsMax,
+            statsGoalOrmStart,
+            statsGoalOrmTargetDate,
+            statsGoalOrmTargetValue
+        } = ensureRefs();
+        const goals = normalizeGoalData(exercise);
+        setGoalInputValue(statsGoalSetsMin, goals.setsWeek?.min);
+        setGoalInputValue(statsGoalSetsMax, goals.setsWeek?.max);
+        setGoalInputValue(statsGoalVolumeMin, goals.volume?.min);
+        setGoalInputValue(statsGoalVolumeMax, goals.volume?.max);
+        setGoalInputValue(statsGoalRepsMin, goals.reps?.min);
+        setGoalInputValue(statsGoalRepsMax, goals.reps?.max);
+        setGoalDateInput(statsGoalOrmStart, goals.orm?.startDate);
+        setGoalDateInput(statsGoalOrmTargetDate, goals.orm?.targetDate);
+        setGoalInputValue(statsGoalOrmTargetValue, goals.orm?.targetValue);
+    }
+
+    async function saveGoalDialog() {
+        const { dlgStatsGoal } = ensureRefs();
+        const exercise = state.activeExercise;
+        if (!dlgStatsGoal || !exercise) {
+            return;
+        }
+        const goals = buildGoalDataFromInputs();
+        const updated = {
+            ...exercise,
+            goals
+        };
+        await db.put('exercises', updated);
+        state.activeExercise = updated;
+        const index = state.exercises.findIndex((item) => item.id === updated.id);
+        if (index >= 0) {
+            state.exercises[index] = updated;
+        }
+        dlgStatsGoal.close();
+        renderExerciseDetail();
+    }
+
+    function openGoalDatePicker(input, fallbackDate) {
+        if (!input) {
+            return;
+        }
+        const selectedDate = getGoalDateInput(input) || fallbackDate || A.today();
+        if (typeof A.openCalendarPicker === 'function') {
+            void A.openCalendarPicker({
+                selectedDate,
+                resetMonth: true,
+                onSelect: (date) => {
+                    setGoalDateInput(input, date);
+                }
+            });
+        }
+    }
+
+    function normalizeGoalData(exercise) {
+        const goals = exercise?.goals || {};
+        const today = A.today();
+        const startDate = parseGoalDate(goals?.orm?.startDate) || today;
+        const targetDate = parseGoalDate(goals?.orm?.targetDate) || addMonths(today, 3);
+        return {
+            setsWeek: normalizeGoalRange(goals.setsWeek),
+            volume: normalizeGoalRange(goals.volume),
+            reps: normalizeGoalRange(goals.reps),
+            orm: {
+                startDate,
+                targetDate,
+                targetValue: normalizeGoalNumber(goals?.orm?.targetValue)
+            }
+        };
+    }
+
+    function normalizeGoalRange(range) {
+        if (!range) {
+            return { min: null, max: null };
+        }
+        return {
+            min: normalizeGoalNumber(range.min),
+            max: normalizeGoalNumber(range.max)
+        };
+    }
+
+    function normalizeGoalNumber(value) {
+        if (!Number.isFinite(value)) {
+            return null;
+        }
+        return Math.round(value * 10) / 10;
+    }
+
+    function buildGoalDataFromInputs() {
+        const {
+            statsGoalSetsMin,
+            statsGoalSetsMax,
+            statsGoalVolumeMin,
+            statsGoalVolumeMax,
+            statsGoalRepsMin,
+            statsGoalRepsMax,
+            statsGoalOrmStart,
+            statsGoalOrmTargetDate,
+            statsGoalOrmTargetValue
+        } = ensureRefs();
+        const ormStart = getGoalDateInput(statsGoalOrmStart);
+        const ormTargetDate = getGoalDateInput(statsGoalOrmTargetDate);
+        const ormTargetValue = toGoalNumber(statsGoalOrmTargetValue?.value);
+        return {
+            setsWeek: buildGoalRange(statsGoalSetsMin?.value, statsGoalSetsMax?.value),
+            volume: buildGoalRange(statsGoalVolumeMin?.value, statsGoalVolumeMax?.value),
+            reps: buildGoalRange(statsGoalRepsMin?.value, statsGoalRepsMax?.value),
+            orm: {
+                startDate: ormStart && typeof A.ymd === 'function' ? A.ymd(ormStart) : null,
+                targetDate: ormTargetDate && typeof A.ymd === 'function' ? A.ymd(ormTargetDate) : null,
+                targetValue: Number.isFinite(ormTargetValue) ? ormTargetValue : null
+            }
+        };
+    }
+
+    function buildGoalRange(minValue, maxValue) {
+        const min = toGoalNumber(minValue);
+        const max = toGoalNumber(maxValue);
+        if (!Number.isFinite(min) && !Number.isFinite(max)) {
+            return null;
+        }
+        return {
+            min: Number.isFinite(min) ? min : null,
+            max: Number.isFinite(max) ? max : null
+        };
+    }
+
+    function toGoalNumber(value) {
+        const number = parseNumber(value);
+        return Number.isFinite(number) ? number : NaN;
+    }
+
+    function setGoalInputValue(input, value) {
+        if (!input) {
+            return;
+        }
+        if (!Number.isFinite(value)) {
+            input.value = '';
+            return;
+        }
+        const rounded = Math.round(value * 10) / 10;
+        input.value = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+    }
+
+    function setGoalDateInput(input, dateObj) {
+        if (!input) {
+            return;
+        }
+        if (!(dateObj instanceof Date)) {
+            input.value = '';
+            delete input.dataset.date;
+            return;
+        }
+        input.dataset.date = typeof A.ymd === 'function' ? A.ymd(dateObj) : '';
+        input.value = typeof A.fmtUI === 'function' ? A.fmtUI(dateObj) : dateObj.toLocaleDateString('fr-FR');
+    }
+
+    function getGoalDateInput(input) {
+        const key = input?.dataset?.date;
+        if (!key) {
+            return null;
+        }
+        return parseDate(key);
+    }
+
+    function parseGoalDate(value) {
+        if (!value || typeof value !== 'string') {
+            return null;
+        }
+        const iso = value.includes('T') ? value : `${value}T00:00:00`;
+        const parsed = new Date(iso);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function addMonths(date, delta) {
+        const base = date instanceof Date ? new Date(date) : A.today();
+        base.setMonth(base.getMonth() + delta);
+        return base;
+    }
+
     function renderMetricTags() {
         const { statsMetricTags } = assertStatsRefs();
         if (!statsMetricTags) {
@@ -494,7 +753,9 @@
         }
         statsChartEmpty.hidden = true;
         statsChartEmpty.textContent = 'Aucune donnée enregistrée.';
-        const maxValue = Math.max(...data.map((item) => item.value), 0);
+        const goalMarkers = buildGoalMarkers(state.activeMetric, exercise, usage);
+        const goalValues = collectGoalValues(goalMarkers);
+        const maxValue = Math.max(...data.map((item) => item.value), ...goalValues, 0);
         const yTicks = computeYAxisTicks(maxValue);
         const chartMax = yTicks[yTicks.length - 1] || maxValue || 1;
         const width = Math.max(statsChart.clientWidth || 0, 640);
@@ -550,6 +811,18 @@
         });
 
         svg.appendChild(gridGroup);
+        appendGoalLines(svg, goalMarkers, {
+            chartMax,
+            chartMin: 0,
+            padding,
+            width,
+            height,
+            innerWidth,
+            innerHeight,
+            firstDate,
+            lastDate,
+            duration
+        });
 
         const axisX = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         axisX.setAttribute('x1', String(padding.left));
@@ -678,6 +951,198 @@
             })`
         );
         statsChart.appendChild(svg);
+    }
+
+    function buildGoalMarkers(metricKey, exercise, usage) {
+        const markers = {
+            horizontal: [],
+            vertical: [],
+            trends: []
+        };
+        const goals = exercise?.goals || {};
+        if (metricKey === 'setsWeek') {
+            const range = normalizeGoalRange(goals.setsWeek);
+            if (Number.isFinite(range.min)) {
+                markers.vertical.push({ value: range.min, variant: 'min' });
+            }
+            if (Number.isFinite(range.max)) {
+                markers.vertical.push({ value: range.max, variant: 'max' });
+            }
+            return markers;
+        }
+        if (metricKey === 'volume' || metricKey === 'reps') {
+            const range = normalizeGoalRange(goals[metricKey]);
+            if (Number.isFinite(range.min)) {
+                markers.horizontal.push({ value: range.min, variant: 'min' });
+            }
+            if (Number.isFinite(range.max)) {
+                markers.horizontal.push({ value: range.max, variant: 'max' });
+            }
+            return markers;
+        }
+        if (metricKey === 'orm') {
+            const trendLines = buildOrmGoalTrends(usage, goals.orm);
+            markers.trends = trendLines;
+        }
+        return markers;
+    }
+
+    function buildOrmGoalTrends(usage, ormGoal) {
+        if (!ormGoal) {
+            return [];
+        }
+        const startDate = parseGoalDate(ormGoal.startDate);
+        const targetDate = parseGoalDate(ormGoal.targetDate);
+        const targetValue = normalizeGoalNumber(ormGoal.targetValue);
+        if (!(startDate instanceof Date) || !(targetDate instanceof Date) || !Number.isFinite(targetValue)) {
+            return [];
+        }
+        const startEntry = findGoalStartEntry(usage, startDate);
+        const startValue = startEntry?.metrics?.orm;
+        if (!startEntry || !Number.isFinite(startValue) || startValue <= 0) {
+            return [];
+        }
+        if (targetDate.getTime() <= startEntry.dateObj.getTime()) {
+            return [];
+        }
+        const delta = targetValue - startValue;
+        const lowerTarget = startValue + delta * 0.98;
+        const upperTarget = startValue + delta * 1.02;
+        return [
+            {
+                startDate: startEntry.dateObj,
+                startValue,
+                endDate: targetDate,
+                endValue: lowerTarget,
+                variant: 'min'
+            },
+            {
+                startDate: startEntry.dateObj,
+                startValue,
+                endDate: targetDate,
+                endValue: upperTarget,
+                variant: 'max'
+            }
+        ];
+    }
+
+    function findGoalStartEntry(usage, startDate) {
+        if (!Array.isArray(usage) || !usage.length) {
+            return null;
+        }
+        const startTime = startDate.getTime();
+        return usage.find((entry) => entry?.dateObj && entry.dateObj.getTime() >= startTime) || null;
+    }
+
+    function collectGoalValues(markers) {
+        const values = [];
+        markers.horizontal.forEach((line) => values.push(line.value));
+        markers.vertical.forEach((line) => values.push(line.value));
+        markers.trends.forEach((line) => {
+            values.push(line.startValue, line.endValue);
+        });
+        return values.filter((value) => Number.isFinite(value));
+    }
+
+    function appendGoalLines(svg, markers, chart) {
+        const { chartMax, padding, width, height, innerWidth, innerHeight, firstDate, lastDate, duration } = chart;
+        if (!svg || !markers) {
+            return;
+        }
+        const yAxisPosition = height - padding.bottom;
+        const getYForValue = (value) => {
+            const ratio = chartMax > 0 ? value / chartMax : 0;
+            return padding.top + (1 - ratio) * innerHeight;
+        };
+        const getXForDate = (date) => {
+            if (!(date instanceof Date)) {
+                return padding.left;
+            }
+            const ratioX =
+                duration === 0 ? 0.5 : (date.getTime() - firstDate.getTime()) / duration;
+            return padding.left + ratioX * innerWidth;
+        };
+
+        const goalGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        goalGroup.setAttribute('class', 'stats-goal-lines');
+
+        markers.horizontal.forEach((line) => {
+            if (!Number.isFinite(line.value)) {
+                return;
+            }
+            const y = getYForValue(line.value);
+            const goalLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            goalLine.setAttribute('x1', String(padding.left));
+            goalLine.setAttribute('x2', String(width - padding.right));
+            goalLine.setAttribute('y1', y.toFixed(2));
+            goalLine.setAttribute('y2', y.toFixed(2));
+            goalLine.setAttribute('class', `stats-goal-line stats-goal-line-${line.variant}`);
+            goalGroup.appendChild(goalLine);
+        });
+
+        markers.vertical.forEach((line) => {
+            if (!Number.isFinite(line.value)) {
+                return;
+            }
+            const ratio = chartMax > 0 ? line.value / chartMax : 0;
+            const x = padding.left + ratio * innerWidth;
+            const goalLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            goalLine.setAttribute('x1', x.toFixed(2));
+            goalLine.setAttribute('x2', x.toFixed(2));
+            goalLine.setAttribute('y1', padding.top.toFixed(2));
+            goalLine.setAttribute('y2', yAxisPosition.toFixed(2));
+            goalLine.setAttribute('class', `stats-goal-line stats-goal-line-${line.variant}`);
+            goalGroup.appendChild(goalLine);
+        });
+
+        markers.trends.forEach((trend) => {
+            const segment = computeTrendSegment(trend, firstDate, lastDate);
+            if (!segment) {
+                return;
+            }
+            const x1 = getXForDate(segment.startDate);
+            const x2 = getXForDate(segment.endDate);
+            const y1 = getYForValue(segment.startValue);
+            const y2 = getYForValue(segment.endValue);
+            const trendLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            trendLine.setAttribute('x1', x1.toFixed(2));
+            trendLine.setAttribute('x2', x2.toFixed(2));
+            trendLine.setAttribute('y1', y1.toFixed(2));
+            trendLine.setAttribute('y2', y2.toFixed(2));
+            trendLine.setAttribute('class', `stats-goal-trend stats-goal-trend-${trend.variant}`);
+            goalGroup.appendChild(trendLine);
+        });
+
+        if (goalGroup.childNodes.length) {
+            svg.appendChild(goalGroup);
+        }
+    }
+
+    function computeTrendSegment(trend, rangeStart, rangeEnd) {
+        if (!trend?.startDate || !trend?.endDate) {
+            return null;
+        }
+        const startTime = trend.startDate.getTime();
+        const endTime = trend.endDate.getTime();
+        if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || endTime <= startTime) {
+            return null;
+        }
+        const rangeStartTime = rangeStart.getTime();
+        const rangeEndTime = rangeEnd.getTime();
+        if (rangeEndTime < startTime || rangeStartTime > endTime) {
+            return null;
+        }
+        const visibleStartTime = Math.max(startTime, rangeStartTime);
+        const visibleEndTime = Math.min(endTime, rangeEndTime);
+        const slope = (trend.endValue - trend.startValue) / (endTime - startTime);
+        const startValue = trend.startValue + slope * (visibleStartTime - startTime);
+        const endValue = trend.startValue + slope * (visibleEndTime - startTime);
+        return {
+            startDate: new Date(visibleStartTime),
+            endDate: new Date(visibleEndTime),
+            startValue,
+            endValue
+        };
     }
 
     function computeYAxisTicks(maxValue) {
