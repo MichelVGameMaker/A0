@@ -174,7 +174,6 @@ header{
     display:flex;
     align-items:center;
     gap: var(--gap);
-    flex: 0 0 60pt;
     width: 60pt;
     min-width: 60pt;
     max-width: 60pt;
