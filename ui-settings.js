@@ -726,9 +726,26 @@
             time: set.time ?? null,
             distance: set.distance ?? null,
             setType: set.setType ?? null,
-            rpe: set.rpe ?? null,
+            rpe: normalizeFitHeroRpe(set.rpe),
             done: true
         };
+    }
+
+    function normalizeFitHeroRpe(value) {
+        if (value == null || value === '') {
+            return null;
+        }
+        const numeric = Number.parseFloat(String(value).replace(',', '.'));
+        if (!Number.isFinite(numeric) || numeric === 0) {
+            return null;
+        }
+        const allowed = [5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+        return allowed.reduce((closest, option) => {
+            if (closest == null) {
+                return option;
+            }
+            return Math.abs(option - numeric) < Math.abs(closest - numeric) ? option : closest;
+        }, null);
     }
 
     function switchScreen(target) {
