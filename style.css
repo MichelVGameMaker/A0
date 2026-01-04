@@ -1403,7 +1403,7 @@ input[type="number"]{ -moz-appearance:textfield; }
 
 .stats-chart-svg .stats-axis-tick {
     font-size: 12px;
-    fill: var(--selectedBord);
+    fill: var(--black);
 }
 
 .stats-chart-svg .stats-grid-line {
@@ -1414,6 +1414,29 @@ input[type="number"]{ -moz-appearance:textfield; }
 .stats-chart-svg .stats-axis-tick-line {
     stroke: #d4d4d4;
     stroke-width: 1.5;
+}
+
+.stats-chart-focus {
+    pointer-events: none;
+}
+
+.stats-chart-focus-line {
+    stroke: var(--black);
+    stroke-width: 1;
+}
+
+.stats-chart-focus-value {
+    fill: var(--black);
+    font-size: 12px;
+    font-weight: var(--fw-strong);
+}
+
+.stats-chart-focus[data-visible="false"] {
+    opacity: 0;
+}
+
+.stats-chart-point {
+    cursor: pointer;
 }
 
 .stats-chart-empty {
