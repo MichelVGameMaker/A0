@@ -154,6 +154,7 @@
         refs.statsMetricTags = document.getElementById('statsMetricTags');
         refs.statsRangeTags = document.getElementById('statsRangeTags');
         refs.statsTimeline = document.getElementById('statsTimeline');
+        refs.statsTimelineTitle = document.getElementById('statsTimelineTitle');
         refs.statsBack = document.getElementById('statsBack');
         refs.statsGoal = document.getElementById('statsGoal');
         refs.tabStats = document.getElementById('tabStats');
@@ -175,6 +176,7 @@
             'statsMetricTags',
             'statsRangeTags',
             'statsTimeline',
+            'statsTimelineTitle',
             'statsBack'
         ];
         const missing = required.filter((key) => !refs[key]);
@@ -353,12 +355,13 @@
     }
 
     function renderExerciseDetail() {
-        const { statsExerciseTitle, statsExerciseSubtitle } = assertStatsRefs();
+        const { statsExerciseTitle, statsExerciseSubtitle, statsTimelineTitle } = assertStatsRefs();
         const exercise = state.activeExercise;
         statsExerciseTitle.textContent = exercise?.name || 'Exercice';
         renderMetricTags();
         renderRangeTags();
         updateExerciseSummary(statsExerciseSubtitle);
+        updateExerciseHistoryTitle(statsTimelineTitle);
         renderChart();
         renderTimeline();
     }
@@ -416,10 +419,22 @@
         const definition = METRIC_MAP[state.activeMetric] || METRIC_DEFINITIONS[0];
         const metricValue = getMetricValue(last, state.activeMetric, weeklySets);
         const metricText = formatMetricValue(metricValue, state.activeMetric);
+        element.textContent = `${definition.label} : ${metricText}`;
+    }
+
+    function updateExerciseHistoryTitle(element) {
+        if (!element) {
+            return;
+        }
+        const exercise = state.activeExercise;
+        if (!exercise) {
+            element.textContent = 'Historique';
+            return;
+        }
+        const usage = state.usageByExercise.get(exercise.id) || [];
         const count = usage.length;
         const sessionLabel = count > 1 ? 'séances' : 'séance';
-        const lastLabel = last?.dateObj ? A.fmtUI(last.dateObj) : '—';
-        element.textContent = `${count} ${sessionLabel} • Dernière : ${lastLabel} • ${definition.label} : ${metricText}`;
+        element.textContent = `${count} ${sessionLabel}`;
     }
 
     function getCssVariable(name, fallback) {
@@ -561,11 +576,28 @@
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', pathData);
         path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', A.EMPHASIS || '#0f62fe');
+        const emphasisColor = getCssVariable('--emphase', A.EMPHASIS || '#0f62fe');
+        path.setAttribute('stroke', emphasisColor);
         path.setAttribute('stroke-width', '3');
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('stroke-linejoin', 'round');
         svg.appendChild(path);
+
+        const focusGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        focusGroup.setAttribute('class', 'stats-chart-focus');
+
+        const focusLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        focusLine.setAttribute('class', 'stats-chart-focus-line');
+        focusGroup.appendChild(focusLine);
+
+        const focusValue = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        focusValue.setAttribute('class', 'stats-chart-focus-value');
+        focusValue.setAttribute('text-anchor', 'middle');
+        focusValue.setAttribute('dominant-baseline', 'baseline');
+        focusGroup.appendChild(focusValue);
+
+        focusGroup.setAttribute('data-visible', 'false');
+        svg.appendChild(focusGroup);
 
         points.forEach((point) => {
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -573,8 +605,21 @@
             circle.setAttribute('cy', point.y.toFixed(2));
             circle.setAttribute('r', '5');
             circle.setAttribute('fill', '#ffffff');
-            circle.setAttribute('stroke', A.EMPHASIS || '#0f62fe');
+            circle.setAttribute('stroke', emphasisColor);
             circle.setAttribute('stroke-width', '2');
+            circle.setAttribute('class', 'stats-chart-point');
+            circle.addEventListener('pointerdown', (event) => {
+                event.preventDefault();
+                focusGroup.setAttribute('data-visible', 'true');
+                focusLine.setAttribute('x1', point.x.toFixed(2));
+                focusLine.setAttribute('x2', point.x.toFixed(2));
+                focusLine.setAttribute('y1', point.y.toFixed(2));
+                focusLine.setAttribute('y2', yAxisPosition.toFixed(2));
+                const labelY = Math.max(padding.top + 12, point.y - 10);
+                focusValue.textContent = formatMetricValue(point.value, state.activeMetric);
+                focusValue.setAttribute('x', point.x.toFixed(2));
+                focusValue.setAttribute('y', labelY.toFixed(2));
+            });
             svg.appendChild(circle);
         });
 
