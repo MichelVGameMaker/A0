@@ -756,15 +756,18 @@
         }
 
         const rawId = typeof workout.id === 'string' ? workout.id.trim() : '';
+        const sessionDateKey = getFitHeroSessionDateKey(workout);
         const rawDate = typeof workout.date === 'string' ? workout.date : '';
         const parsedDate = rawDate ? new Date(rawDate) : null;
         const isoDate = parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : null;
-        const dateKey = !isoDate && rawId && typeof A.sessionDateKeyFromId === 'function'
+        const dateKey = sessionDateKey || (!isoDate && rawId && typeof A.sessionDateKeyFromId === 'function'
             ? A.sessionDateKeyFromId(rawId)
-            : null;
-        const derivedIso = dateKey ? new Date(`${dateKey}T00:00:00`).toISOString() : null;
-        const sessionDate = isoDate || derivedIso;
-        const sessionId = rawId || (sessionDate ? A.sessionId(new Date(sessionDate)) : '');
+            : null);
+        const derivedIso = !dateKey || sessionDateKey ? null : new Date(`${dateKey}T00:00:00`).toISOString();
+        const sessionDate = sessionDateKey || isoDate || derivedIso;
+        const sessionId = rawId
+            || (dateKey ? dateKey.replace(/-/g, '') : '')
+            || (sessionDate ? A.sessionId(new Date(sessionDate)) : '');
 
         if (!sessionId || !sessionDate) {
             return null;
@@ -789,6 +792,58 @@
             comments: typeof workout.comments === 'string' ? workout.comments : '',
             exercises
         };
+    }
+
+    function getFitHeroSessionDateKey(workout) {
+        if (!workout || typeof workout !== 'object') {
+            return null;
+        }
+        const exercises = Array.isArray(workout.exercises) ? workout.exercises : [];
+        let earliest = null;
+        exercises.forEach((exercise) => {
+            const sets = Array.isArray(exercise?.sets) ? exercise.sets : [];
+            sets.forEach((set) => {
+                const raw = typeof set?.date === 'string' ? set.date : null;
+                if (!raw) {
+                    return;
+                }
+                const parsed = new Date(raw);
+                if (Number.isNaN(parsed.getTime())) {
+                    return;
+                }
+                const time = parsed.getTime();
+                if (earliest == null || time < earliest) {
+                    earliest = time;
+                }
+            });
+        });
+        if (earliest == null) {
+            return null;
+        }
+        return formatParisDateKey(new Date(earliest));
+    }
+
+    function formatParisDateKey(date) {
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+            return null;
+        }
+        const formatter = new Intl.DateTimeFormat('fr-FR', {
+            timeZone: 'Europe/Paris',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        const parts = formatter.formatToParts(date);
+        const values = parts.reduce((acc, part) => {
+            if (part.type !== 'literal') {
+                acc[part.type] = part.value;
+            }
+            return acc;
+        }, {});
+        if (!values.year || !values.month || !values.day) {
+            return null;
+        }
+        return `${values.year}-${values.month}-${values.day}`;
     }
 
     function toFitHeroExercise(exercise, context) {
