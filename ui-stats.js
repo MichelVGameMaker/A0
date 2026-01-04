@@ -35,28 +35,28 @@
         {
             key: 'avgRpe',
             tagLabel: 'RPE moyen',
-            label: 'RPE moyen sur la séance',
+            label: 'RPE moyen',
             axisUnit: 'RPE',
             format: formatRpe
         },
         {
             key: 'tenrmReal',
             tagLabel: '10RM réel',
-            label: '10RM réel (charge sur 10 répétitions)',
+            label: '10RM réel',
             axisUnit: 'kg',
             format: formatKilograms
         },
         {
             key: 'reps',
             tagLabel: 'Répétitions',
-            label: 'Répétitions totales du jour',
+            label: 'Répétitions totales',
             axisUnit: 'répétitions',
             format: formatRepetitions
         },
         {
             key: 'weight',
             tagLabel: 'Charge max',
-            label: 'Charge maximale du jour',
+            label: 'Charge maximale',
             axisUnit: 'kg',
             format: formatKilograms
         },
@@ -70,7 +70,7 @@
         {
             key: 'setsWeek',
             tagLabel: 'Séries/sem.',
-            label: 'Nombre de séries sur la semaine',
+            label: 'Série semaine',
             axisUnit: 'séries',
             format: formatSeries
         }
@@ -414,12 +414,15 @@
             element.textContent = 'Aucune séance enregistrée pour cet exercice.';
             return;
         }
-        const last = usage[usage.length - 1];
+        const last = getLatestEntryForMetric(usage, state.activeMetric);
+        if (!last) {
+            element.textContent = 'Aucune séance enregistrée pour cet exercice.';
+            return;
+        }
         const weeklySets = state.activeMetric === 'setsWeek' ? computeWeeklySetCounts(usage) : null;
         const definition = METRIC_MAP[state.activeMetric] || METRIC_DEFINITIONS[0];
         const metricValue = getMetricValue(last, state.activeMetric, weeklySets);
-        const metricText = formatMetricValue(metricValue, state.activeMetric);
-        element.textContent = `${definition.label} : ${metricText}`;
+        element.textContent = buildSummaryText(definition, metricValue, last.dateObj);
     }
 
     function updateExerciseHistoryTitle(element) {
@@ -450,7 +453,7 @@
     }
 
     function renderChart() {
-        const { statsChart, statsChartEmpty } = assertStatsRefs();
+        const { statsChart, statsChartEmpty, statsExerciseSubtitle } = assertStatsRefs();
         statsChart.innerHTML = '';
         statsChart.removeAttribute('aria-label');
         const exercise = state.activeExercise;
@@ -478,10 +481,19 @@
         }
         statsChartEmpty.hidden = true;
         statsChartEmpty.textContent = 'Aucune donnée enregistrée.';
-        const data = aggregated.map((entry) => ({
-            date: entry.date,
-            value: entry.metrics[state.activeMetric] || 0
-        }));
+        const data = aggregated
+            .map((entry) => ({
+                date: entry.date,
+                value: getChartMetricValue(entry, state.activeMetric)
+            }))
+            .filter((entry) => Number.isFinite(entry.value));
+        if (!data.length) {
+            statsChartEmpty.hidden = false;
+            statsChartEmpty.textContent = 'Aucune donnée sur la période sélectionnée.';
+            return;
+        }
+        statsChartEmpty.hidden = true;
+        statsChartEmpty.textContent = 'Aucune donnée enregistrée.';
         const maxValue = Math.max(...data.map((item) => item.value), 0);
         const yTicks = computeYAxisTicks(maxValue);
         const chartMax = yTicks[yTicks.length - 1] || maxValue || 1;
@@ -599,6 +611,54 @@
         focusGroup.setAttribute('data-visible', 'false');
         svg.appendChild(focusGroup);
 
+        const updateSubtitleForPoint = (point) => {
+            if (!statsExerciseSubtitle) {
+                return;
+            }
+            statsExerciseSubtitle.textContent = buildSummaryText(metricDefinition, point.value, point.date);
+        };
+
+        const updateFocusAtPoint = (point) => {
+            if (!point) {
+                return;
+            }
+            focusGroup.setAttribute('data-visible', 'true');
+            focusLine.setAttribute('x1', point.x.toFixed(2));
+            focusLine.setAttribute('x2', point.x.toFixed(2));
+            focusLine.setAttribute('y1', padding.top.toFixed(2));
+            focusLine.setAttribute('y2', yAxisPosition.toFixed(2));
+            const labelY = Math.max(padding.top + 12, point.y - 10);
+            focusValue.textContent = formatMetricValue(point.value, state.activeMetric);
+            focusValue.setAttribute('x', point.x.toFixed(2));
+            focusValue.setAttribute('y', labelY.toFixed(2));
+            updateSubtitleForPoint(point);
+        };
+
+        const handlePointerDown = (event) => {
+            if (!points.length) {
+                return;
+            }
+            event.preventDefault();
+            const rect = svg.getBoundingClientRect();
+            if (!rect.width) {
+                return;
+            }
+            const chartX = ((event.clientX - rect.left) / rect.width) * width;
+            let closest = points[0];
+            let minDistance = Math.abs(points[0].x - chartX);
+            for (let i = 1; i < points.length; i += 1) {
+                const candidate = points[i];
+                const distance = Math.abs(candidate.x - chartX);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closest = candidate;
+                }
+            }
+            updateFocusAtPoint(closest);
+        };
+
+        svg.addEventListener('pointerdown', handlePointerDown);
+
         points.forEach((point) => {
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             circle.setAttribute('cx', point.x.toFixed(2));
@@ -608,18 +668,6 @@
             circle.setAttribute('stroke', emphasisColor);
             circle.setAttribute('stroke-width', '2');
             circle.setAttribute('class', 'stats-chart-point');
-            circle.addEventListener('pointerdown', (event) => {
-                event.preventDefault();
-                focusGroup.setAttribute('data-visible', 'true');
-                focusLine.setAttribute('x1', point.x.toFixed(2));
-                focusLine.setAttribute('x2', point.x.toFixed(2));
-                focusLine.setAttribute('y1', point.y.toFixed(2));
-                focusLine.setAttribute('y2', yAxisPosition.toFixed(2));
-                const labelY = Math.max(padding.top + 12, point.y - 10);
-                focusValue.textContent = formatMetricValue(point.value, state.activeMetric);
-                focusValue.setAttribute('x', point.x.toFixed(2));
-                focusValue.setAttribute('y', labelY.toFixed(2));
-            });
             svg.appendChild(circle);
         });
 
@@ -685,6 +733,9 @@
 
     function formatYAxisTick(value, metric) {
         const normalized = Number.isFinite(value) ? value : 0;
+        if (metric === 'volume') {
+            return formatNumberWithSpaces(Math.round(normalized));
+        }
         if (metric === 'reps') {
             return String(Math.round(normalized));
         }
@@ -817,7 +868,7 @@
                         weight: 0,
                         orm: 0,
                         tenrm: 0,
-                        tenrmReal: 0,
+                        tenrmReal: null,
                         volume: 0,
                         setCount: 0,
                         avgRpe: 0,
@@ -832,7 +883,11 @@
             target.metrics.weight = Math.max(target.metrics.weight, metrics.weight || 0);
             target.metrics.orm = Math.max(target.metrics.orm, metrics.orm || 0);
             target.metrics.tenrm = Math.max(target.metrics.tenrm, metrics.tenrm || 0);
-            target.metrics.tenrmReal = Math.max(target.metrics.tenrmReal, metrics.tenrmReal || 0);
+            if (Number.isFinite(metrics.tenrmReal)) {
+                target.metrics.tenrmReal = Number.isFinite(target.metrics.tenrmReal)
+                    ? Math.max(target.metrics.tenrmReal, metrics.tenrmReal)
+                    : metrics.tenrmReal;
+            }
             target.metrics.volume += metrics.volume || 0;
             target.metrics.setCount += metrics.setCount || 0;
             target.metrics.rpeSum += metrics.rpeSum || 0;
@@ -866,7 +921,7 @@
                         weight: 0,
                         orm: 0,
                         tenrm: 0,
-                        tenrmReal: 0,
+                        tenrmReal: null,
                         volume: 0,
                         setCount: 0,
                         avgRpe: 0,
@@ -881,7 +936,11 @@
             target.metrics.weight = Math.max(target.metrics.weight, metrics.weight || 0);
             target.metrics.orm = Math.max(target.metrics.orm, metrics.orm || 0);
             target.metrics.tenrm = Math.max(target.metrics.tenrm, metrics.tenrm || 0);
-            target.metrics.tenrmReal = Math.max(target.metrics.tenrmReal, metrics.tenrmReal || 0);
+            if (Number.isFinite(metrics.tenrmReal)) {
+                target.metrics.tenrmReal = Number.isFinite(target.metrics.tenrmReal)
+                    ? Math.max(target.metrics.tenrmReal, metrics.tenrmReal)
+                    : metrics.tenrmReal;
+            }
             target.metrics.volume += metrics.volume || 0;
             target.metrics.setCount += metrics.setCount || 0;
             target.metrics.rpeSum += metrics.rpeSum || 0;
@@ -919,6 +978,10 @@
         if (metricKey === 'setsWeek') {
             const key = getWeekKey(entry.dateObj);
             return weeklySets?.get(key) || 0;
+        }
+        if (metricKey === 'tenrmReal') {
+            const tenrmReal = entry?.metrics?.tenrmReal;
+            return Number.isFinite(tenrmReal) ? tenrmReal : null;
         }
         const metrics = entry?.metrics || {};
         return metrics[metricKey] || 0;
@@ -964,7 +1027,7 @@
         let maxWeight = 0;
         let maxOrm = 0;
         let maxTenRm = 0;
-        let maxTenRmReal = 0;
+        let maxTenRmReal = null;
         let totalVolume = 0;
         let setCount = 0;
         let rpeSum = 0;
@@ -991,7 +1054,7 @@
                 hasData = true;
             }
             if (Number.isFinite(weight) && weight > 0 && Number.isFinite(reps) && reps === 10) {
-                maxTenRmReal = Math.max(maxTenRmReal, weight);
+                maxTenRmReal = Number.isFinite(maxTenRmReal) ? Math.max(maxTenRmReal, weight) : weight;
                 hasData = true;
             }
             if (Number.isFinite(weight) && weight > 0 && Number.isFinite(reps) && reps > 0) {
@@ -1068,6 +1131,9 @@
     }
 
     function formatMetricValue(value, metric) {
+        if (!Number.isFinite(value)) {
+            return '—';
+        }
         const definition = METRIC_MAP[metric] || METRIC_DEFINITIONS[0];
         if (typeof definition.format === 'function') {
             return definition.format(Number.isFinite(value) ? value : 0);
@@ -1084,7 +1150,7 @@
     function formatVolume(value) {
         const normalized = Number.isFinite(value) ? value : 0;
         const rounded = Math.round(normalized);
-        return `${rounded} kg`;
+        return `${formatNumberWithSpaces(rounded)} kg`;
     }
 
     function formatRepetitions(value) {
@@ -1103,6 +1169,55 @@
         const normalized = Number.isFinite(value) ? value : 0;
         const rounded = Math.round(normalized * 10) / 10;
         return `RPE ${rounded}`;
+    }
+
+    function formatNumberWithSpaces(value) {
+        const normalized = Number.isFinite(value) ? value : 0;
+        return new Intl.NumberFormat('fr-FR')
+            .format(normalized)
+            .replace(/\u202f/g, ' ')
+            .replace(/\u00a0/g, ' ');
+    }
+
+    function formatSummaryDate(dateObj) {
+        if (!(dateObj instanceof Date)) {
+            return '—';
+        }
+        return dateObj
+            .toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })
+            .replace(/\./g, '')
+            .replace(/\u00a0/g, ' ');
+    }
+
+    function buildSummaryText(definition, metricValue, dateObj) {
+        const metricText = formatMetricValue(metricValue, state.activeMetric);
+        const dateText = formatSummaryDate(dateObj);
+        return `${definition.label} : ${metricText} - ${dateText}`;
+    }
+
+    function getLatestEntryForMetric(usage, metricKey) {
+        if (!usage.length) {
+            return null;
+        }
+        if (metricKey !== 'tenrmReal') {
+            return usage[usage.length - 1];
+        }
+        for (let index = usage.length - 1; index >= 0; index -= 1) {
+            const metrics = usage[index]?.metrics;
+            if (Number.isFinite(metrics?.tenrmReal)) {
+                return usage[index];
+            }
+        }
+        return null;
+    }
+
+    function getChartMetricValue(entry, metricKey) {
+        const metrics = entry?.metrics || {};
+        if (metricKey === 'tenrmReal') {
+            return Number.isFinite(metrics.tenrmReal) && metrics.tenrmReal > 0 ? metrics.tenrmReal : null;
+        }
+        const value = metrics[metricKey];
+        return Number.isFinite(value) ? value : 0;
     }
 
     function highlightStatsTab() {
