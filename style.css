@@ -15,6 +15,7 @@
   --dark_grey:     #ccc;
   --darker_grey:   #bbb;
   --black:         #000000;  
+  --alert:         #f5a623;
   /* --- Styles --- */
   --bodyBack:      #8b0000;
   --contentBack:   var(--emphase_white);
@@ -318,6 +319,24 @@ header .header-left .btn{
 }
 .modal-actions .btn{
     flex:1 1 0;
+}
+.confirm-dialog{
+    --confirm-bord: transparent;
+    --confirm-accent: var(--confirm-bord);
+    border: 2px solid var(--confirm-bord);
+}
+.confirm-dialog--alert{
+    --confirm-bord: var(--alert);
+}
+.confirm-dialog--error{
+    --confirm-bord: var(--red);
+}
+.confirm-status{
+    font-weight: var(--fw-strong);
+    color: var(--confirm-accent);
+    margin: 0 0 var(--gap);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 /* =========================================================
    5) Timer

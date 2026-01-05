@@ -6,8 +6,10 @@
         dialog: null,
         title: null,
         message: null,
+        status: null,
         confirmActions: null,
-        okActions: null
+        confirmButton: null,
+        cancelButton: null
     };
     let refsResolved = false;
     let currentMode = 'confirm';
@@ -22,8 +24,10 @@
         }
         refs.title = refs.dialog.querySelector('[data-role="confirm-title"]');
         refs.message = refs.dialog.querySelector('[data-role="confirm-message"]');
+        refs.status = refs.dialog.querySelector('[data-role="confirm-status"]');
         refs.confirmActions = refs.dialog.querySelector('[data-role="confirm-actions"]');
-        refs.okActions = refs.dialog.querySelector('[data-role="ok-actions"]');
+        refs.confirmButton = refs.confirmActions?.querySelector('[data-action="confirm"]');
+        refs.cancelButton = refs.confirmActions?.querySelector('[data-action="cancel"]');
         refs.dialog.addEventListener('cancel', (event) => {
             event.preventDefault();
             closeWith('cancel');
@@ -50,10 +54,6 @@
         if (!refs.dialog?.open) {
             return;
         }
-        if (currentMode === 'ok') {
-            refs.dialog.close('ok');
-            return;
-        }
         if (action === 'confirm') {
             refs.dialog.close('confirm');
             return;
@@ -62,12 +62,9 @@
     }
 
     function setMode(mode) {
-        currentMode = mode === 'ok' ? 'ok' : 'confirm';
-        if (refs.confirmActions) {
-            refs.confirmActions.hidden = currentMode !== 'confirm';
-        }
-        if (refs.okActions) {
-            refs.okActions.hidden = currentMode !== 'ok';
+        currentMode = mode === 'confirm-only' ? 'confirm-only' : 'confirm';
+        if (refs.cancelButton) {
+            refs.cancelButton.hidden = currentMode === 'confirm-only';
         }
     }
 
@@ -80,18 +77,32 @@
         }
     }
 
-    function updateLabels({ confirmLabel, cancelLabel, okLabel }) {
-        const confirmButton = refs.confirmActions?.querySelector('[data-action="confirm"]');
-        const cancelButton = refs.confirmActions?.querySelector('[data-action="cancel"]');
-        const okButton = refs.okActions?.querySelector('[data-action="ok"]');
-        if (confirmButton) {
-            confirmButton.textContent = confirmLabel || 'confirmer';
+    function updateLabels({ confirmLabel, cancelLabel }) {
+        if (refs.confirmButton) {
+            refs.confirmButton.textContent = confirmLabel || 'confirmer';
         }
-        if (cancelButton) {
-            cancelButton.textContent = cancelLabel || 'annuler';
+        if (refs.cancelButton) {
+            refs.cancelButton.textContent = cancelLabel || 'annuler';
         }
-        if (okButton) {
-            okButton.textContent = okLabel || 'ok';
+    }
+
+    function updateVariant(variant) {
+        const allowed = ['info', 'alert', 'error'];
+        const safeVariant = allowed.includes(variant) ? variant : 'info';
+        refs.dialog?.classList.remove('confirm-dialog--info', 'confirm-dialog--alert', 'confirm-dialog--error');
+        refs.dialog?.classList.add(`confirm-dialog--${safeVariant}`);
+        if (!refs.status) {
+            return;
+        }
+        if (safeVariant === 'alert') {
+            refs.status.textContent = 'Alerte';
+            refs.status.hidden = false;
+        } else if (safeVariant === 'error') {
+            refs.status.textContent = 'Erreur';
+            refs.status.hidden = false;
+        } else {
+            refs.status.textContent = '';
+            refs.status.hidden = true;
         }
     }
 
@@ -103,14 +114,15 @@
             mode,
             confirmLabel,
             cancelLabel,
-            okLabel
+            variant
         } = options;
         if (refs.dialog.open) {
             refs.dialog.close('cancel');
         }
         setMode(mode);
         updateContent({ title, message });
-        updateLabels({ confirmLabel, cancelLabel, okLabel });
+        updateLabels({ confirmLabel, cancelLabel });
+        updateVariant(variant);
         return new Promise((resolve) => {
             const onClose = () => {
                 refs.dialog.removeEventListener('close', onClose);
@@ -127,7 +139,7 @@
     }
 
     async function alert(options = {}) {
-        await openDialog({ ...options, mode: 'ok' });
+        await openDialog({ ...options, mode: 'confirm-only' });
         return true;
     }
 
