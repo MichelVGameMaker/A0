@@ -1,12 +1,15 @@
-/* db.js — IndexedDB helpers (stores: exercises, routines, plans, sessions) */
+/* db.js — IndexedDB helpers (stores: exercises_native, exercises_user, exercises_import, exercises_overrides, routines, plans, sessions) */
 const db = (() => {
     /* STATE */
     const DB_NAME = 'A0-db';
-    const DB_VER = 2;
+    const DB_VER = 3;
     let handle;
     let memoryMode = false;
     const memoryStores = {
-        exercises: new Map(),
+        exercises_native: new Map(),
+        exercises_overrides: new Map(),
+        exercises_user: new Map(),
+        exercises_import: new Map(),
         routines: new Map(),
         plans: new Map(),
         sessions: new Map()
@@ -37,14 +40,10 @@ const db = (() => {
      * @returns {Promise<unknown>} Valeur trouvée ou `null`.
      */
     async function get(store, key) {
-        if (memoryMode) {
-            return memoryGet(store, key);
+        if (store === 'exercises') {
+            return getExercise(key);
         }
-        return new Promise((resolve, reject) => {
-            const request = transaction(store).get(key);
-            request.onsuccess = () => resolve(request.result || null);
-            request.onerror = () => reject(request.error);
-        });
+        return rawGet(store, key);
     }
 
     /**
@@ -54,14 +53,10 @@ const db = (() => {
      * @returns {Promise<boolean>} `true` une fois l'opération terminée.
      */
     async function put(store, value) {
-        if (memoryMode) {
-            return memoryPut(store, value);
+        if (store === 'exercises') {
+            return putExercise(value);
         }
-        return new Promise((resolve, reject) => {
-            const request = transaction(store, 'readwrite').put(value);
-            request.onsuccess = () => resolve(true);
-            request.onerror = () => reject(request.error);
-        });
+        return rawPut(store, value);
     }
 
     /**
@@ -70,21 +65,10 @@ const db = (() => {
      * @returns {Promise<unknown[]>} Valeurs présentes.
      */
     async function getAll(store) {
-        if (memoryMode) {
-            return memoryGetAll(store);
+        if (store === 'exercises') {
+            return getAllExercises();
         }
-        return new Promise((resolve, reject) => {
-            const request = transaction(store).getAll();
-            request.onsuccess = () => {
-                const result = request.result || [];
-                if (store === 'sessions') {
-                    resolve(result.map((session) => ensureSession(session)));
-                    return;
-                }
-                resolve(result);
-            };
-            request.onerror = () => reject(request.error);
-        });
+        return rawGetAll(store);
     }
 
     /**
@@ -93,14 +77,10 @@ const db = (() => {
      * @returns {Promise<number>} Nombre d'entrées.
      */
     async function count(store) {
-        if (memoryMode) {
-            return memoryCount(store);
+        if (store === 'exercises') {
+            return countExercises();
         }
-        return new Promise((resolve, reject) => {
-            const request = transaction(store).count();
-            request.onsuccess = () => resolve(request.result || 0);
-            request.onerror = () => reject(request.error);
-        });
+        return rawCount(store);
     }
 
     /**
@@ -110,14 +90,10 @@ const db = (() => {
      * @returns {Promise<boolean>} `true` une fois l'opération réalisée.
      */
     async function del(store, key) {
-        if (memoryMode) {
-            return memoryDelete(store, key);
+        if (store === 'exercises') {
+            return deleteExercise(key);
         }
-        return new Promise((resolve, reject) => {
-            const request = transaction(store, 'readwrite').delete(key);
-            request.onsuccess = () => resolve(true);
-            request.onerror = () => reject(request.error);
-        });
+        return rawDelete(store, key);
     }
 
     /**
@@ -171,17 +147,9 @@ const db = (() => {
      */
     async function importExternalExercisesIfNeeded(options = {}) {
         const { force = false } = options;
-        const currentCount = await countStore('exercises');
+        const currentCount = await rawCount('exercises_native');
         if (!force && currentCount > 0) {
-            if (currentCount > 3) {
-                return;
-            }
-            const seededIds = new Set(['push_up', 'pull_up', 'squat']);
-            const seededExercises = await getAll('exercises');
-            const onlySeeds = seededExercises.every((exercise) => seededIds.has(exercise.id));
-            if (!onlySeeds) {
-                return;
-            }
+            return;
         }
 
         try {
@@ -202,13 +170,17 @@ const db = (() => {
                 return;
             }
 
+            if (force) {
+                await rawClear('exercises_native');
+            }
+
             const BATCH = 200;
             for (let index = 0; index < data.length; index += BATCH) {
                 const slice = data.slice(index, index + BATCH);
                 const rows = await Promise.all(slice.map(normalizeExercise));
                 for (const row of rows) {
                     if (row) {
-                        await put('exercises', row);
+                        await rawPut('exercises_native', row);
                     }
                 }
             }
@@ -336,8 +308,17 @@ const db = (() => {
             const request = indexedDB.open(DB_NAME, DB_VER);
             request.onupgradeneeded = (event) => {
                 const database = event.target.result;
-                if (!database.objectStoreNames.contains('exercises')) {
-                    database.createObjectStore('exercises', { keyPath: 'id' });
+                if (!database.objectStoreNames.contains('exercises_native')) {
+                    database.createObjectStore('exercises_native', { keyPath: 'id' });
+                }
+                if (!database.objectStoreNames.contains('exercises_overrides')) {
+                    database.createObjectStore('exercises_overrides', { keyPath: 'id' });
+                }
+                if (!database.objectStoreNames.contains('exercises_user')) {
+                    database.createObjectStore('exercises_user', { keyPath: 'id' });
+                }
+                if (!database.objectStoreNames.contains('exercises_import')) {
+                    database.createObjectStore('exercises_import', { keyPath: 'id' });
                 }
                 if (!database.objectStoreNames.contains('routines')) {
                     database.createObjectStore('routines', { keyPath: 'id' });
@@ -364,10 +345,230 @@ const db = (() => {
                         };
                     }
                 }
+
+                if (database.objectStoreNames.contains('exercises')) {
+                    const legacyStore = event.target.transaction.objectStore('exercises');
+                    const userStore = event.target.transaction.objectStore('exercises_user');
+                    const existingRequest = legacyStore.getAll();
+                    existingRequest.onsuccess = () => {
+                        const legacyExercises = existingRequest.result || [];
+                        legacyExercises.forEach((exercise) => {
+                            if (exercise?.id) {
+                                const migrated = { ...exercise, origin: exercise.origin || 'user' };
+                                userStore.put(migrated);
+                            }
+                        });
+                    };
+                }
             };
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
+    }
+
+    async function rawGet(store, key) {
+        if (memoryMode) {
+            return memoryGet(store, key);
+        }
+        return new Promise((resolve, reject) => {
+            const request = transaction(store).get(key);
+            request.onsuccess = () => resolve(request.result || null);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function rawPut(store, value) {
+        if (memoryMode) {
+            return memoryPut(store, value);
+        }
+        return new Promise((resolve, reject) => {
+            const request = transaction(store, 'readwrite').put(value);
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function rawGetAll(store) {
+        if (memoryMode) {
+            return memoryGetAll(store);
+        }
+        return new Promise((resolve, reject) => {
+            const request = transaction(store).getAll();
+            request.onsuccess = () => {
+                const result = request.result || [];
+                if (store === 'sessions') {
+                    resolve(result.map((session) => ensureSession(session)));
+                    return;
+                }
+                resolve(result);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function rawCount(store) {
+        if (memoryMode) {
+            return memoryCount(store);
+        }
+        return new Promise((resolve, reject) => {
+            const request = transaction(store).count();
+            request.onsuccess = () => resolve(request.result || 0);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function rawDelete(store, key) {
+        if (memoryMode) {
+            return memoryDelete(store, key);
+        }
+        return new Promise((resolve, reject) => {
+            const request = transaction(store, 'readwrite').delete(key);
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function rawClear(store) {
+        if (memoryMode) {
+            const map = memoryStore(store);
+            map.clear();
+            return true;
+        }
+        return new Promise((resolve, reject) => {
+            const request = transaction(store, 'readwrite').clear();
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function getExercise(id) {
+        if (!id) {
+            return null;
+        }
+        const native = await rawGet('exercises_native', id);
+        if (native) {
+            const override = await rawGet('exercises_overrides', id);
+            return mergeExercise(native, override);
+        }
+        const user = await rawGet('exercises_user', id);
+        if (user) {
+            return normalizeStoredExercise(user, user.origin || 'user');
+        }
+        const imported = await rawGet('exercises_import', id);
+        if (imported) {
+            return normalizeStoredExercise(imported, imported.origin || 'import');
+        }
+        return null;
+    }
+
+    async function getAllExercises() {
+        const [native, overrides, user, imported] = await Promise.all([
+            rawGetAll('exercises_native'),
+            rawGetAll('exercises_overrides'),
+            rawGetAll('exercises_user'),
+            rawGetAll('exercises_import')
+        ]);
+        const overridesById = new Map(overrides.map((entry) => [entry.id, entry]));
+        const mergedNative = native.map((exercise) => mergeExercise(exercise, overridesById.get(exercise.id)));
+        const mergedUser = user.map((exercise) => normalizeStoredExercise(exercise, exercise.origin || 'user'));
+        const mergedImport = imported.map((exercise) => normalizeStoredExercise(exercise, exercise.origin || 'import'));
+        return [...mergedNative, ...mergedUser, ...mergedImport];
+    }
+
+    async function countExercises() {
+        const [nativeCount, userCount, importCount] = await Promise.all([
+            rawCount('exercises_native'),
+            rawCount('exercises_user'),
+            rawCount('exercises_import')
+        ]);
+        return nativeCount + userCount + importCount;
+    }
+
+    async function putExercise(exercise) {
+        if (!exercise || typeof exercise !== 'object') {
+            return false;
+        }
+        const origin = exercise.origin;
+        if (origin === 'native') {
+            return rawPut('exercises_native', exercise);
+        }
+        if (origin === 'import') {
+            return rawPut('exercises_import', exercise);
+        }
+        if (origin === 'user') {
+            return rawPut('exercises_user', exercise);
+        }
+
+        const id = exercise.id;
+        const isUser = isUserExerciseId(id);
+        const isImport = isImportExerciseId(id);
+        if (isUser) {
+            return rawPut('exercises_user', { ...exercise, origin: 'user' });
+        }
+        if (isImport) {
+            return rawPut('exercises_import', { ...exercise, origin: 'import' });
+        }
+        const native = await rawGet('exercises_native', id);
+        if (native) {
+            const sanitized = { ...exercise };
+            delete sanitized.origin;
+            delete sanitized.native_id;
+            return rawPut('exercises_overrides', sanitized);
+        }
+        return rawPut('exercises_user', { ...exercise, origin: exercise.origin || 'user' });
+    }
+
+    async function deleteExercise(id) {
+        if (!id) {
+            return false;
+        }
+        const native = await rawGet('exercises_native', id);
+        if (native) {
+            return rawDelete('exercises_overrides', id);
+        }
+        if (isImportExerciseId(id)) {
+            return rawDelete('exercises_import', id);
+        }
+        if (isUserExerciseId(id)) {
+            return rawDelete('exercises_user', id);
+        }
+        const storedUser = await rawGet('exercises_user', id);
+        if (storedUser) {
+            return rawDelete('exercises_user', id);
+        }
+        return rawDelete('exercises_import', id);
+    }
+
+    function mergeExercise(native, override) {
+        const base = { ...native, origin: 'native', native_id: native.id };
+        if (!override) {
+            return base;
+        }
+        return {
+            ...base,
+            ...override,
+            id: native.id,
+            origin: 'modified',
+            native_id: native.id
+        };
+    }
+
+    function normalizeStoredExercise(exercise, fallbackOrigin) {
+        if (!exercise || typeof exercise !== 'object') {
+            return exercise;
+        }
+        return {
+            ...exercise,
+            origin: exercise.origin || fallbackOrigin || null
+        };
+    }
+
+    function isUserExerciseId(id) {
+        return typeof id === 'string' && id.startsWith('user--');
+    }
+
+    function isImportExerciseId(id) {
+        return typeof id === 'string' && id.startsWith('import--');
     }
 
     async function fileExists(url) {
@@ -425,7 +626,8 @@ const db = (() => {
             bodyPart: muscle.g1 || rawBody || null,
             image,
             secondaryMuscles: exercise.secondaryMuscles || [],
-            instructions: exercise.instructions || []
+            instructions: exercise.instructions || [],
+            origin: 'native'
         };
     }
 
@@ -461,7 +663,12 @@ const db = (() => {
         const key =
             store === 'sessions'
                 ? value?.id
-                : store === 'plans' || store === 'routines' || store === 'exercises'
+                : store === 'plans'
+                    || store === 'routines'
+                    || store === 'exercises_native'
+                    || store === 'exercises_overrides'
+                    || store === 'exercises_user'
+                    || store === 'exercises_import'
                     ? value?.id
                     : null;
         if (!key) {

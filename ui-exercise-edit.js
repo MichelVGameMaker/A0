@@ -188,9 +188,12 @@
 
         const existing = state.currentId ? await db.get('exercises', state.currentId) : null;
         const muscle = CFG.muscleTranscode[String(targetRaw).trim().toLowerCase()] || {};
+        const shouldOverrideNative = existing?.origin === 'native' || existing?.origin === 'modified';
+        const origin = shouldOverrideNative ? 'modified' : existing?.origin || 'user';
         const exercise = {
             ...(existing || {}),
-            id: state.currentId || `ex_${Date.now()}`,
+            id: state.currentId || buildUserExerciseId(name),
+            origin,
             name,
             muscle: targetRaw,
             muscleGroup1: muscle.g1 || null,
@@ -216,6 +219,16 @@
         const value = refs.exTargetMuscle.value;
         const muscle = CFG.decodeMuscle(value);
         refs.exGroupInfo.textContent = [muscle.g1, muscle.g2, muscle.g3].filter(Boolean).join(' • ');
+    }
+
+    function buildUserExerciseId(name) {
+        const base = String(name || '')
+            .trim()
+            .toLowerCase()
+            .replace(/['’]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '') || 'exercise';
+        return `user--${base}--${Date.now()}`;
     }
 
     function fillSelect(select, items, placeholder) {

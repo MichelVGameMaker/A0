@@ -279,6 +279,7 @@
             await db.put('exercises', {
                 id,
                 name,
+                origin: 'native',
                 equipment: equipmentKey,
                 equipmentGroup1: equipment.g1,
                 equipmentGroup2: equipment.g2,

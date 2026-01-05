@@ -37,6 +37,7 @@
         }
 
         refs.exReadTitle.textContent = exercise.name || 'Exercice';
+        refs.exReadOrigin.textContent = formatExerciseOrigin(exercise);
         updateHero(exercise);
         updateMuscles(exercise);
         updateInstructions(exercise);
@@ -64,6 +65,7 @@
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.exReadTitle = document.getElementById('exReadTitle');
+        refs.exReadOrigin = document.getElementById('exReadOrigin');
         refs.exReadHero = document.getElementById('exReadHero');
         refs.exReadMuscleMain = document.getElementById('exReadMuscleMain');
         refs.exReadMuscleSecondary = document.getElementById('exReadMuscleSecondary');
@@ -84,6 +86,7 @@
         const required = [
             'screenExerciseRead',
             'exReadTitle',
+            'exReadOrigin',
             'exReadHero',
             'exReadMuscleMain',
             'exReadMuscleSecondary',
@@ -165,7 +168,12 @@
                 alert('Exercice introuvable.');
                 return;
             }
-            const copy = { ...exercise, id: `ex_${Date.now()}` };
+            const copy = {
+                ...exercise,
+                id: buildUserExerciseId(exercise.name),
+                origin: 'user',
+                native_id: null
+            };
             await db.put('exercises', copy);
             dlgExerciseActions.close();
             await A.openExerciseEdit({ currentId: copy.id, callerScreen: 'screenExerciseRead' });
@@ -222,6 +230,33 @@
             li.textContent = '—';
             exReadInstruc.appendChild(li);
         }
+    }
+
+    function formatExerciseOrigin(exercise) {
+        const origin = exercise?.origin;
+        if (origin === 'modified') {
+            return 'Modifié';
+        }
+        if (origin === 'native') {
+            return 'Natif';
+        }
+        if (origin === 'import') {
+            return 'Importé';
+        }
+        if (origin === 'user') {
+            return 'Créé';
+        }
+        return 'Exercice';
+    }
+
+    function buildUserExerciseId(name) {
+        const base = String(name || '')
+            .trim()
+            .toLowerCase()
+            .replace(/['’]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '') || 'exercise';
+        return `user--${base}--${Date.now()}`;
     }
 
     function switchScreen(target) {

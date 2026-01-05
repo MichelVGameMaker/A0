@@ -214,6 +214,8 @@ header{
     flex:1;
     display:flex;
     justify-content:center;
+    flex-direction: column;
+    align-items: center;
 }
 header .title{
     flex:1;
@@ -223,6 +225,12 @@ header .title{
     text-overflow:ellipsis;
     white-space:nowrap;
     max-width: min(260px, 72vw);
+}
+header .subtitle{
+    font-size: 0.78em;
+    color: var(--muted);
+    margin-top: 2px;
+    text-align: center;
 }
 header .header-left .btn{
     width: 100%;
