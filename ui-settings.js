@@ -861,7 +861,8 @@
         }
 
         const def = context?.fitHeroExercisesById?.get(rawId) || null;
-        if (isFitHeroUserExerciseId(rawId) && !def) {
+        const isUserExercise = isFitHeroUserExerciseId(rawId);
+        if (isUserExercise && !def) {
             console.warn(`Missing user exercise definition for id ${rawId}. See root.exercises in backup.`);
         }
 
@@ -879,8 +880,15 @@
             ? catalogEntry.notes
             : normalizeCatalogInstructions(def?.notes);
 
-        const primaryMuscle = normalizeMuscleValue(primaryRaw, { exerciseName: name, field: 'primary' });
-        const secondaryMuscles = normalizeMuscleList(secondaryRaw, { exerciseName: name, field: 'secondary' });
+        let primaryMuscle = null;
+        let secondaryMuscles = [];
+        if (isUserExercise) {
+            primaryMuscle = normalizeMuscleValue(primaryRaw, { exerciseName: name, field: 'primary' });
+            secondaryMuscles = normalizeMuscleList(secondaryRaw, { exerciseName: name, field: 'secondary' });
+        } else {
+            primaryMuscle = 'biceps';
+            secondaryMuscles = [];
+        }
         const muscleGroups = CFG.decodeMuscle(primaryMuscle);
         const equipment = deriveEquipmentFromName(name, { exerciseName: name });
         const equipmentGroups = CFG.decodeEquipment(equipment);
@@ -1013,7 +1021,7 @@
         ];
         const matched = rules.find((rule) => raw.includes(rule.key));
         if (!matched) {
-            throwFitHeroValueError(context?.exerciseName || name, 'equipment', name);
+            return 'barbell';
         }
         if (!CFG?.equipmentTranscode?.[matched.value]) {
             throwFitHeroValueError(context?.exerciseName || name, 'equipment', matched.value);
