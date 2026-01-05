@@ -29,10 +29,13 @@
             return;
         }
 
-        const missingSlugs = loadMissingSlugs();
+        const missingEntries = loadMissingEntries();
         const userMappings = loadUserMappings();
         const mappingBySlug = new Map(userMappings.map((entry) => [entry.slug, entry]));
-        const slugs = [...missingSlugs];
+        const missingBySlug = new Map(
+            missingEntries.filter((entry) => entry?.slug).map((entry) => [entry.slug, entry])
+        );
+        const slugs = [...missingBySlug.keys()];
         userMappings.forEach((entry) => {
             if (entry?.slug && !slugs.includes(entry.slug)) {
                 slugs.push(entry.slug);
@@ -62,9 +65,10 @@
         slugs.forEach((slug) => {
             const mapping = mappingBySlug.get(slug);
             const mappedExercise = mapping?.exerciseId ? exerciseById.get(mapping.exerciseId) : null;
-            const exerciseName = mappedExercise?.name || mapping?.name || '—';
+            const missingEntry = missingBySlug.get(slug) || null;
+            const exerciseName = mappedExercise?.name || mapping?.name || missingEntry?.name || '—';
             const externalExercise = isFitHeroUserExerciseId(slug) ? exerciseByExternalId.get(slug) : null;
-            const slugLabel = externalExercise?.name || slug;
+            const slugLabel = externalExercise?.name || missingEntry?.name || slug;
 
             const row = document.createElement('tr');
 
@@ -131,16 +135,27 @@
             mappings.push(entry);
         }
         localStorage.setItem(FIT_HERO_USER_MAPPING_KEY, JSON.stringify(mappings));
+        updateMissingEntry(slug, exerciseId, exercise?.name || '');
     }
 
-    function loadMissingSlugs() {
+    function loadMissingEntries() {
         const raw = localStorage.getItem(FIT_HERO_MISSING_STORAGE_KEY);
         if (!raw) {
             return [];
         }
         try {
             const parsed = JSON.parse(raw);
-            return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+            return parsed
+                .map((entry) => {
+                    if (typeof entry === 'string') {
+                        return { slug: entry, exerciseId: null };
+                    }
+                    return entry;
+                })
+                .filter((entry) => entry?.slug);
         } catch (error) {
             console.warn('Slugs FitHero inconnus invalides :', error);
             return [];
@@ -159,6 +174,23 @@
             console.warn('Mapping FitHero utilisateur invalide :', error);
             return [];
         }
+    }
+
+    function updateMissingEntry(slug, exerciseId, name) {
+        if (!slug) {
+            return;
+        }
+        const entries = loadMissingEntries();
+        const index = entries.findIndex((entry) => entry?.slug === slug);
+        if (index === -1) {
+            return;
+        }
+        entries[index] = {
+            ...entries[index],
+            exerciseId,
+            name: name || entries[index].name || null
+        };
+        localStorage.setItem(FIT_HERO_MISSING_STORAGE_KEY, JSON.stringify(entries));
     }
 
     function ensureRefs() {
