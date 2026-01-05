@@ -144,7 +144,8 @@
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Mapping FitHero',
-                    message: 'Fichier de mapping FitHero généré.'
+                    message: 'Fichier de mapping FitHero généré.',
+                    variant: 'info'
                 });
             } else {
                 alert('Fichier de mapping FitHero généré.');
@@ -154,7 +155,8 @@
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Mapping FitHero',
-                    message: 'La génération du mapping FitHero a échoué.'
+                    message: 'La génération du mapping FitHero a échoué.',
+                    variant: 'error'
                 });
             } else {
                 alert('La génération du mapping FitHero a échoué.');

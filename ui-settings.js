@@ -215,7 +215,8 @@
         const confirmed = A.components?.confirmDialog?.confirm
             ? await A.components.confirmDialog.confirm({
                 title: 'Update',
-                message: 'Update : cette action recharge l’application sans effacer vos données. Continuer ?'
+                message: 'Update : cette action recharge l’application sans effacer vos données. Continuer ?',
+                variant: 'alert'
             })
             : window.confirm('Update : cette action recharge l’application sans effacer vos données. Continuer ?');
         if (!confirmed) {
@@ -240,7 +241,8 @@
         const confirmed = A.components?.confirmDialog?.confirm
             ? await A.components.confirmDialog.confirm({
                 title: 'Reset',
-                message: 'Reset : cette action supprime toutes les données locales et le cache. Continuer ?'
+                message: 'Reset : cette action supprime toutes les données locales et le cache. Continuer ?',
+                variant: 'alert'
             })
             : window.confirm('Reset : cette action supprime toutes les données locales et le cache. Continuer ?');
         if (!confirmed) {
@@ -349,7 +351,8 @@
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Import',
-                    message: 'Le chargement des séances est indisponible.'
+                    message: 'Le chargement des séances est indisponible.',
+                    variant: 'error'
                 });
             } else {
                 alert('Le chargement des séances est indisponible.');
@@ -381,7 +384,8 @@
             const confirmed = A.components?.confirmDialog?.confirm
                 ? await A.components.confirmDialog.confirm({
                     title: 'Import des séances',
-                    message: confirmMessage
+                    message: confirmMessage,
+                    variant: 'alert'
                 })
                 : window.confirm(confirmMessage);
             if (!confirmed) {
@@ -399,7 +403,8 @@
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Import terminé',
-                    message: successMessage
+                    message: successMessage,
+                    variant: 'info'
                 });
             } else {
                 alert(successMessage);
@@ -416,7 +421,8 @@
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Import',
-                    message: 'Le chargement des séances a échoué.'
+                    message: 'Le chargement des séances a échoué.',
+                    variant: 'error'
                 });
             } else {
                 alert('Le chargement des séances a échoué.');
@@ -467,7 +473,8 @@
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Import FitHero',
-                    message: 'Le chargement des séances est indisponible.'
+                    message: 'Le chargement des séances est indisponible.',
+                    variant: 'error'
                 });
             } else {
                 alert('Le chargement des séances est indisponible.');
@@ -540,7 +547,8 @@
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Import FitHero terminé',
-                    message: summaryMessage
+                    message: summaryMessage,
+                    variant: 'info'
                 });
             } else {
                 alert(summaryMessage);
@@ -562,7 +570,8 @@
                 if (A.components?.confirmDialog?.alert) {
                     await A.components.confirmDialog.alert({
                         title: 'Import FitHero',
-                        message
+                        message,
+                        variant: 'error'
                     });
                 } else {
                     alert(message);
@@ -572,7 +581,8 @@
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Import FitHero',
-                    message: 'Le chargement des séances FitHero a échoué.'
+                    message: 'Le chargement des séances FitHero a échoué.',
+                    variant: 'error'
                 });
             } else {
                 alert('Le chargement des séances FitHero a échoué.');

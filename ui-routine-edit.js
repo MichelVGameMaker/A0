@@ -179,7 +179,8 @@
         const confirmed = A.components?.confirmDialog?.confirm
             ? await A.components.confirmDialog.confirm({
                 title: 'Supprimer la routine',
-                message: 'Supprimer cette routine de la liste des routines ?'
+                message: 'Supprimer cette routine de la liste des routines ?',
+                variant: 'alert'
             })
             : confirm('Supprimer cette routine de la liste des routines ?');
         if (!confirmed) {

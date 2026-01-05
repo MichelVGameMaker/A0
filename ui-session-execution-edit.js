@@ -700,7 +700,8 @@
         const confirmed = A.components?.confirmDialog?.confirm
             ? await A.components.confirmDialog.confirm({
                 title: 'Supprimer un exercice',
-                message: 'Supprimer cet exercice de la séance ?'
+                message: 'Supprimer cet exercice de la séance ?',
+                variant: 'alert'
             })
             : confirm('Supprimer cet exercice de la séance ?');
         if (!confirmed) {
