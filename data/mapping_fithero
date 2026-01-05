@@ -300,6 +300,11 @@
     "name": "dumbbell straight arm pullover"
   },
   {
+    "slug": "straight-arm-push-down",
+    "exerciseId": "x69MAlq",
+    "name": "cable straight arm pulldown"
+  },
+  {
     "slug": "thigh-abductor",
     "exerciseId": "CHpahtl",
     "name": "lever seated hip abduction"
@@ -315,8 +320,18 @@
     "name": "cable triceps pushdown (v-bar) (with arm blaster)"
   },
   {
+    "slug": "upright-cable-row",
+    "exerciseId": "cALKspW",
+    "name": "cable upright row"
+  },
+  {
     "slug": "v-bar-pull-down",
     "exerciseId": "pwt0pnM",
     "name": "cable seated high row (v-bar)"
+  },
+  {
+    "slug": "wide-grip-lat-pull-down",
+    "exerciseId": "qdRxqCj",
+    "name": "cable pulldown (pro lat bar)"
   }
 ]
