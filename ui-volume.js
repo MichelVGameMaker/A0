@@ -60,7 +60,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
         wireEvents();
-        renderVolumeScreen();
+        void A.renderVolumeScreen();
     });
 
     /* ACTIONS */
