@@ -165,7 +165,6 @@
         </div>
         <div class="header-center">
             <div class="title" id="exReadTitle">Exercice</div>
-            <div class="subtitle" id="exReadOrigin"></div>
         </div>
         <div class="header-right">
             <button class="btn primary" id="exReadEdit" title="Éditer" aria-label="Éditer">✎</button>
@@ -175,20 +174,89 @@
 	<!-- Corps de l'écran Consulter un Exercice) -->
 	<main class="content">
 
-		<div class="panel" style="display:flex;flex-direction:column;gap:12px;">
-			<!-- Image / GIF -->
-			<img id="exReadHero" alt="aperçu exercice" class="image_big" />
+        <div id="exReadTabs" class="tags exercise-read-tabs" role="tablist">
+            <button type="button" class="tag selected" data-tab="exec" role="tab" aria-selected="true">Exécution</button>
+            <button type="button" class="tag" data-tab="history" role="tab" aria-selected="false">Historique</button>
+            <button type="button" class="tag" data-tab="stats" role="tab" aria-selected="false">Statistiques</button>
+        </div>
 
-			<!-- Lignes d’info -->
-			<div id="exReadMuscleMain" class="element"></div>
-			<div id="exReadMuscleSecondary" class="details"></div>
+        <section id="exReadTabExec" class="exercise-read-tab" data-tab-panel="exec">
+            <div class="panel exercise-read-panel">
+                <!-- Image / GIF -->
+                <img id="exReadHero" alt="aperçu exercice" class="image_big" />
 
-			<!-- Instructions -->
-			<div>
-				<ol id="exReadInstruc" class="listing listing-instructions"></ol>
-			</div>
-		</div>
- 
+                <!-- Lignes d’info -->
+                <div id="exReadMuscleMain" class="lbl"></div>
+                <div id="exReadMuscleSecondary" class="lbl"></div>
+                <div id="exReadOrigin" class="details"></div>
+
+                <!-- Instructions -->
+                <div>
+                    <ol id="exReadInstruc" class="listing listing-instructions"></ol>
+                </div>
+            </div>
+        </section>
+
+        <section id="exReadTabHistory" class="exercise-read-tab" data-tab-panel="history" hidden>
+            <div class="panel exercise-read-panel">
+                <div id="exReadHistoryList" class="exercise-history-list"></div>
+            </div>
+        </section>
+
+        <section id="exReadTabStats" class="exercise-read-tab" data-tab-panel="stats" hidden>
+            <div class="panel exercise-read-panel">
+                <div class="row between">
+                    <div id="statsExerciseTitle" class="sr-only">Exercice</div>
+                    <button id="statsGoal" class="btn primary" type="button" title="Objectif">obj</button>
+                </div>
+
+                <div class="bloque stats-header">
+                    <div class="stats-subtitle" id="statsExerciseSubtitle"></div>
+                </div>
+
+                <div class="bloque stats-tags-group">
+                    <div
+                        id="statsMetricTags"
+                        class="tags mono"
+                        role="group"
+                        aria-label="Choisir la statistique"
+                    >
+                        <button type="button" class="tag" data-metric="orm">1RM est</button>
+                        <button type="button" class="tag" data-metric="tenrm">10RM est</button>
+                        <button type="button" class="tag" data-metric="avgRpe">RPE moyen</button>
+                        <button type="button" class="tag" data-metric="weight">Charge max</button>
+                        <button type="button" class="tag" data-metric="reps">Répétitions</button>
+                        <button type="button" class="tag" data-metric="tenrmReal">10RM réel</button>
+                        <button type="button" class="tag" data-metric="volume">Volume</button>
+                        <button type="button" class="tag" data-metric="setsWeek">Séries/sem.</button>
+                    </div>
+                </div>
+
+                <div class="stats-chart-card">
+                    <div id="statsChart" class="stats-chart" role="img" aria-label="Évolution dans le temps"></div>
+                    <div id="statsChartEmpty" class="stats-chart-empty" hidden>Aucune donnée enregistrée.</div>
+                </div>
+
+                <div class="bloque stats-tags-group">
+                    <div
+                        id="statsRangeTags"
+                        class="tags mono"
+                        role="group"
+                        aria-label="Choisir la période"
+                    >
+                        <button type="button" class="tag" data-range="1M">1 m.</button>
+                        <button type="button" class="tag" data-range="3M">3 m.</button>
+                        <button type="button" class="tag" data-range="6M">6 m.</button>
+                        <button type="button" class="tag" data-range="12M">12 m.</button>
+                    </div>
+                </div>
+
+                <section>
+                    <h2 class="stats-section-title" id="statsTimelineTitle">Historique</h2>
+                    <ul id="statsTimeline" class="stats-timeline" aria-live="polite"></ul>
+                </section>
+            </div>
+        </section>
 	</main>  
   </section>
 <!-- ==================== -->
@@ -364,69 +432,7 @@
 <!-- ==================== -->
 
 <!-- ========== Statistiques : détail exercice ========== -->
-<section id="screenStatExercisesDetail" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="statsBack" class="btn ghost" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title" id="statsExerciseTitle">Exercice</div>
-        </div>
-        <div class="header-right">
-            <button id="statsGoal" class="btn primary" type="button" title="Objectif">obj</button>
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque stats-header">
-            <div class="stats-subtitle" id="statsExerciseSubtitle"></div>
-        </div>
-
-        <div class="bloque stats-tags-group">
-            <div
-                id="statsMetricTags"
-                class="tags mono"
-                role="group"
-                aria-label="Choisir la statistique"
-            >
-                <button type="button" class="tag" data-metric="orm">1RM est</button>
-                <button type="button" class="tag" data-metric="tenrm">10RM est</button>
-                <button type="button" class="tag" data-metric="avgRpe">RPE moyen</button>
-                <button type="button" class="tag" data-metric="weight">Charge max</button>
-                <button type="button" class="tag" data-metric="reps">Répétitions</button>
-                <button type="button" class="tag" data-metric="tenrmReal">10RM réel</button>
-                <button type="button" class="tag" data-metric="volume">Volume</button>
-                <button type="button" class="tag" data-metric="setsWeek">Séries/sem.</button>
-            </div>
-        </div>
-
-        <div class="stats-chart-card">
-            <div id="statsChart" class="stats-chart" role="img" aria-label="Évolution dans le temps"></div>
-            <div id="statsChartEmpty" class="stats-chart-empty" hidden>Aucune donnée enregistrée.</div>
-        </div>
-
-        <div class="bloque stats-tags-group">
-            <div
-                id="statsRangeTags"
-                class="tags mono"
-                role="group"
-                aria-label="Choisir la période"
-            >
-                <button type="button" class="tag" data-range="1M">1 m.</button>
-                <button type="button" class="tag" data-range="3M">3 m.</button>
-                <button type="button" class="tag" data-range="6M">6 m.</button>
-                <button type="button" class="tag" data-range="12M">12 m.</button>
-            </div>
-        </div>
-
-        <section>
-            <h2 class="stats-section-title" id="statsTimelineTitle">Historique</h2>
-            <ul id="statsTimeline" class="stats-timeline" aria-live="polite"></ul>
-        </section>
-    </main>
-
-</section>
+<section id="screenStatExercisesDetail" class="screen" hidden></section>
 <!-- ==================== -->
 
 <!-- ========== Statistiques : volume muscles ========== -->

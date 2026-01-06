@@ -117,16 +117,20 @@
     A.openExerciseStats = async function openExerciseStats(exerciseId) {
         ensureRefs();
         highlightStatsTab();
-        await loadData(true);
-        const exercise = state.exercises.find((item) => item.id === exerciseId) || (await db.get('exercises', exerciseId));
-        state.activeExercise = exercise || null;
-        renderExerciseDetail();
-        switchScreen('screenStatExercisesDetail');
+        await A.openExerciseRead({ currentId: exerciseId, callerScreen: 'screenStatExercises', tab: 'stats' });
     };
 
     A.invalidateStatsCache = function invalidateStatsCache() {
         state.exercises = [];
         state.usageByExercise.clear();
+    };
+
+    A.renderExerciseStatsEmbedded = async function renderExerciseStatsEmbedded(exerciseId) {
+        ensureRefs();
+        await loadData(true);
+        const exercise = state.exercises.find((item) => item.id === exerciseId) || (await db.get('exercises', exerciseId));
+        state.activeExercise = exercise || null;
+        renderExerciseDetail();
     };
 
     /* UTILS */
@@ -186,7 +190,6 @@
         const required = [
             'screenStatExercises',
             'statsExerciseList',
-            'screenStatExercisesDetail',
             'statsExerciseTitle',
             'statsExerciseSubtitle',
             'statsChart',
@@ -195,7 +198,6 @@
             'statsRangeTags',
             'statsTimeline',
             'statsTimelineTitle',
-            'statsBack',
             'statsGoal'
         ];
         const missing = required.filter((key) => !refs[key]);
@@ -206,13 +208,7 @@
     }
 
     function wireEvents() {
-        const { statsBack, statsMetricTags, statsRangeTags, statsGoal } = assertStatsRefs();
-        statsBack.addEventListener('click', () => {
-            highlightStatsTab();
-            state.activeExercise = null;
-            renderExerciseList();
-            switchScreen('screenStatExercises');
-        });
+        const { statsMetricTags, statsRangeTags, statsGoal } = assertStatsRefs();
         if (statsGoal) {
             statsGoal.addEventListener('click', () => {
                 openGoalDialog();

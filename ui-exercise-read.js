@@ -5,12 +5,18 @@
     /* STATE */
     const refs = {};
     let refsResolved = false;
-    const state = { currentId: null, callerScreen: 'screenExercises' };
+    const state = {
+        currentId: null,
+        callerScreen: 'screenExercises',
+        activeTab: 'exec',
+        exercise: null
+    };
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
         wireNavigation();
+        wireTabs();
     });
 
     /* ACTIONS */
@@ -20,7 +26,7 @@
      * @returns {Promise<void>} Promesse résolue après rendu.
      */
     A.openExerciseRead = async function openExerciseRead(options) {
-        const { currentId, callerScreen = 'screenExercises' } = options || {};
+        const { currentId, callerScreen = 'screenExercises', tab = 'exec' } = options || {};
         if (!currentId) {
             return;
         }
@@ -36,11 +42,14 @@
             return;
         }
 
+        state.exercise = exercise;
         refs.exReadTitle.textContent = exercise.name || 'Exercice';
         refs.exReadOrigin.textContent = formatExerciseOrigin(exercise);
         updateHero(exercise);
         updateMuscles(exercise);
         updateInstructions(exercise);
+        await updateHistory(exercise);
+        setActiveTab(tab);
 
         switchScreen('screenExerciseRead');
     };
@@ -72,6 +81,11 @@
         refs.exReadInstruc = document.getElementById('exReadInstruc');
         refs.exReadBack = document.getElementById('exReadBack');
         refs.exReadEdit = document.getElementById('exReadEdit');
+        refs.exReadTabs = document.getElementById('exReadTabs');
+        refs.exReadTabExec = document.getElementById('exReadTabExec');
+        refs.exReadTabHistory = document.getElementById('exReadTabHistory');
+        refs.exReadTabStats = document.getElementById('exReadTabStats');
+        refs.exReadHistoryList = document.getElementById('exReadHistoryList');
         refs.dlgExerciseActions = document.getElementById('dlgExerciseActions');
         refs.exerciseActionsClose = document.getElementById('exerciseActionsClose');
         refs.exerciseActionEdit = document.getElementById('exerciseActionEdit');
@@ -93,6 +107,11 @@
             'exReadInstruc',
             'exReadBack',
             'exReadEdit',
+            'exReadTabs',
+            'exReadTabExec',
+            'exReadTabHistory',
+            'exReadTabStats',
+            'exReadHistoryList',
             'dlgExerciseActions',
             'exerciseActionsClose',
             'exerciseActionEdit',
@@ -137,6 +156,54 @@
         });
         exerciseActionDelete?.addEventListener('click', () => {
             void handleExerciseAction('delete');
+        });
+    }
+
+    function wireTabs() {
+        const { exReadTabs, exReadTabExec, exReadTabHistory, exReadTabStats } = assertRefs();
+        if (!exReadTabs) {
+            return;
+        }
+        exReadTabs.addEventListener('click', (event) => {
+            const target = event.target.closest('[data-tab]');
+            if (!target) {
+                return;
+            }
+            const next = target.getAttribute('data-tab');
+            if (!next) {
+                return;
+            }
+            setActiveTab(next);
+        });
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const handleTouchStart = (event) => {
+            const touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        };
+        const handleTouchEnd = (event) => {
+            const touch = event.changedTouches[0];
+            const deltaX = touch.clientX - touchStartX;
+            const deltaY = touch.clientY - touchStartY;
+            if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY)) {
+                return;
+            }
+            const tabs = ['exec', 'history', 'stats'];
+            const currentIndex = Math.max(0, tabs.indexOf(state.activeTab));
+            const nextIndex = deltaX < 0 ? currentIndex + 1 : currentIndex - 1;
+            const nextTab = tabs[nextIndex];
+            if (nextTab) {
+                setActiveTab(nextTab);
+            }
+        };
+        [exReadTabExec, exReadTabHistory, exReadTabStats].forEach((panel) => {
+            if (!panel) {
+                return;
+            }
+            panel.addEventListener('touchstart', handleTouchStart, { passive: true });
+            panel.addEventListener('touchend', handleTouchEnd);
         });
     }
 
@@ -223,7 +290,12 @@
         if (steps.length) {
             steps.forEach((step) => {
                 const li = document.createElement('li');
-                li.textContent = String(step).replace(/^Step:\d+\s*/i, '');
+                const cleaned = String(step)
+                    .replace(/^Step:\s*\d+\s*/i, '')
+                    .replace(/^\s*\d+\s*[\).:-]\s*/, '')
+                    .replace(/^\s*\d+\s+/, '')
+                    .trim();
+                li.textContent = cleaned || '—';
                 exReadInstruc.appendChild(li);
             });
         } else {
@@ -231,6 +303,132 @@
             li.textContent = '—';
             exReadInstruc.appendChild(li);
         }
+    }
+
+    function setActiveTab(nextTab) {
+        const { exReadTabs, exReadTabExec, exReadTabHistory, exReadTabStats } = assertRefs();
+        const allowed = ['exec', 'history', 'stats'];
+        const tab = allowed.includes(nextTab) ? nextTab : 'exec';
+        state.activeTab = tab;
+        exReadTabs.querySelectorAll('[data-tab]').forEach((button) => {
+            const isActive = button.getAttribute('data-tab') === tab;
+            button.classList.toggle('selected', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        exReadTabExec.hidden = tab !== 'exec';
+        exReadTabHistory.hidden = tab !== 'history';
+        exReadTabStats.hidden = tab !== 'stats';
+        if (tab === 'history') {
+            void updateHistory(state.exercise);
+        }
+        if (tab === 'stats' && state.currentId && typeof A.renderExerciseStatsEmbedded === 'function') {
+            void A.renderExerciseStatsEmbedded(state.currentId);
+        }
+    }
+
+    async function updateHistory(exercise) {
+        const { exReadHistoryList } = assertRefs();
+        if (!state.currentId || !exReadHistoryList) {
+            return;
+        }
+        const sessionsRaw = await db.getAll('sessions');
+        const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : [];
+        const items = sessions
+            .map((session) => {
+                const exercises = Array.isArray(session?.exercises) ? session.exercises : [];
+                const match = exercises.find((item) => item?.exercise_id === state.currentId);
+                if (!match || !Array.isArray(match.sets) || match.sets.length === 0) {
+                    return null;
+                }
+                return {
+                    session,
+                    sets: match.sets.filter((set) => set && (set.reps || set.weight || set.rpe || set.rest))
+                };
+            })
+            .filter(Boolean);
+
+        items.sort((a, b) => {
+            const timeA = new Date(a.session?.date || a.session?.id || 0).getTime();
+            const timeB = new Date(b.session?.date || b.session?.id || 0).getTime();
+            return timeB - timeA;
+        });
+
+        exReadHistoryList.innerHTML = '';
+        if (!items.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty';
+            empty.textContent = 'Aucune séance enregistrée.';
+            exReadHistoryList.appendChild(empty);
+            return;
+        }
+
+        const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
+        items.forEach(({ session, sets }) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'exercise-history-session';
+
+            const dateLabel = document.createElement('div');
+            dateLabel.className = 'lbl';
+            dateLabel.textContent = formatSessionDate(session);
+            wrapper.appendChild(dateLabel);
+
+            if (!sets.length) {
+                const emptyLine = document.createElement('div');
+                emptyLine.className = 'details';
+                emptyLine.textContent = '—';
+                wrapper.appendChild(emptyLine);
+            } else {
+                sets.forEach((set) => {
+                    const line = document.createElement('div');
+                    line.className = 'details';
+                    line.textContent = formatSetLine(set, weightUnit);
+                    wrapper.appendChild(line);
+                });
+            }
+
+            exReadHistoryList.appendChild(wrapper);
+        });
+    }
+
+    function formatSessionDate(session) {
+        const dateValue = session?.date || session?.id;
+        const date = dateValue ? new Date(dateValue) : null;
+        if (!date || Number.isNaN(date.getTime())) {
+            return '—';
+        }
+        return typeof A.fmtUI === 'function' ? A.fmtUI(date) : date.toLocaleDateString('fr-FR');
+    }
+
+    function formatSetLine(set, weightUnit) {
+        const reps = Number.isFinite(set?.reps) ? set.reps : null;
+        const weight = set?.weight != null ? Number(set.weight) : null;
+        const rpe = set?.rpe != null ? set.rpe : null;
+        const rest = Number.isFinite(set?.rest) ? set.rest : null;
+        const parts = [];
+        if (reps != null) {
+            parts.push(`${reps}x`);
+        }
+        if (weight != null && !Number.isNaN(weight)) {
+            parts.push(`${formatNumber(weight)}${weightUnit}`);
+        }
+        if (rpe != null && rpe !== '') {
+            parts.push(`@rpe${rpe}`);
+        }
+        if (rest != null && rest > 0) {
+            parts.push(`- rest ${formatRest(rest)}`);
+        }
+        return parts.length ? parts.join(' ') : '—';
+    }
+
+    function formatRest(seconds) {
+        const total = Math.max(0, Math.round(seconds));
+        const minutes = Math.floor(total / 60);
+        const remaining = total % 60;
+        return `${minutes}:${String(remaining).padStart(2, '0')}`;
+    }
+
+    function formatNumber(value) {
+        return Number.isFinite(value) ? value.toLocaleString('fr-FR') : '—';
     }
 
     function formatExerciseOrigin(exercise) {
