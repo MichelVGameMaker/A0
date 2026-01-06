@@ -1679,25 +1679,21 @@ input[type="number"]{ -moz-appearance:textfield; }
     color: var(--emphase);
 }
 
-.mapping-table {
-    width: 100%;
-    border-collapse: collapse;
+.mapping-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.mapping-table th,
-.mapping-table td {
-    padding: 8px;
-    text-align: left;
-    vertical-align: middle;
+.mapping-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
 }
 
-.mapping-table th {
-    color: var(--labelColor);
-    font-size: var(--fs-small);
-}
-
-.mapping-table tbody tr + tr td {
-    border-top: 1px solid var(--panelBord);
+.mapping-card__actions .btn {
+    min-height: 32px;
 }
 
 .volume-gauge {

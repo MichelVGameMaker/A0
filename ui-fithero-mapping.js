@@ -24,8 +24,8 @@
     };
 
     async function renderMappingList() {
-        const { mappingBody, mappingEmpty, mappingTable } = ensureRefs();
-        if (!mappingBody) {
+        const { mappingList, mappingEmpty } = ensureRefs();
+        if (!mappingList) {
             return;
         }
 
@@ -42,16 +42,16 @@
             }
         });
 
-        mappingBody.innerHTML = '';
+        mappingList.innerHTML = '';
 
         if (!slugs.length) {
             mappingEmpty?.removeAttribute('hidden');
-            mappingTable?.setAttribute('hidden', 'true');
+            mappingList?.setAttribute('hidden', 'true');
             return;
         }
 
         mappingEmpty?.setAttribute('hidden', 'true');
-        mappingTable?.removeAttribute('hidden');
+        mappingList?.removeAttribute('hidden');
 
         const allExercises = await db.getAll('exercises');
         const exercises = Array.isArray(allExercises) ? allExercises : [];
@@ -63,6 +63,7 @@
         );
         const fitHeroExerciseBySlug = exerciseByExternalId;
 
+        const listCard = A.components?.listCard;
         slugs.forEach((slug) => {
             const mapping = mappingBySlug.get(slug);
             const mappedExercise = mapping?.exerciseId ? exerciseById.get(mapping.exerciseId) : null;
@@ -72,16 +73,23 @@
             const slugLabel = externalExercise?.name || missingEntry?.name || slug;
             const sourceExercise = fitHeroExerciseBySlug.get(slug) || null;
 
-            const row = document.createElement('tr');
+            const { card, body } = listCard?.createStructure({ cardClass: 'mapping-card' }) || {};
+            if (!card || !body) {
+                return;
+            }
 
-            const slugCell = document.createElement('td');
-            slugCell.textContent = slugLabel;
-            slugCell.title = slug;
+            const slugLine = document.createElement('div');
+            slugLine.className = 'element mapping-card__slug';
+            slugLine.textContent = slugLabel;
+            slugLine.title = slug;
 
-            const nameCell = document.createElement('td');
-            nameCell.textContent = exerciseName;
+            const detailLine = document.createElement('div');
+            detailLine.className = 'details mapping-card__details';
+            detailLine.textContent = `vers ${exerciseName}`;
+            detailLine.title = exerciseName;
 
-            const actionCell = document.createElement('td');
+            const actionRow = document.createElement('div');
+            actionRow.className = 'mapping-card__actions';
             const editButton = document.createElement('button');
             editButton.type = 'button';
             editButton.className = 'btn';
@@ -89,9 +97,8 @@
             editButton.addEventListener('click', () => {
                 openExercisePicker(slug);
             });
-            actionCell.appendChild(editButton);
+            actionRow.appendChild(editButton);
 
-            const applyCell = document.createElement('td');
             if (sourceExercise && mappedExercise) {
                 const applyButton = document.createElement('button');
                 applyButton.type = 'button';
@@ -104,11 +111,11 @@
                         targetExercise: mappedExercise
                     });
                 });
-                applyCell.appendChild(applyButton);
+                actionRow.appendChild(applyButton);
             }
 
-            row.append(slugCell, nameCell, actionCell, applyCell);
-            mappingBody.appendChild(row);
+            body.append(slugLine, detailLine, actionRow);
+            mappingList.appendChild(card);
         });
     }
 
@@ -515,9 +522,8 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.btnFitHeroMappingBack = document.getElementById('btnFitHeroMappingBack');
-        refs.mappingBody = document.getElementById('fitHeroMappingBody');
+        refs.mappingList = document.getElementById('fitHeroMappingList');
         refs.mappingEmpty = document.getElementById('fitHeroMappingEmpty');
-        refs.mappingTable = document.querySelector('#screenFitHeroMapping .mapping-table');
         refsResolved = true;
         return refs;
     }
