@@ -201,9 +201,15 @@
     }
 
     function wireNavigation() {
-        const { execBack } = assertRefs();
+        const { execBack, execTitle } = assertRefs();
         execBack.addEventListener('click', () => {
             backToCaller();
+        });
+        execTitle.addEventListener('click', () => {
+            if (!state.exerciseId) {
+                return;
+            }
+            void A.openExerciseRead({ currentId: state.exerciseId, callerScreen: 'screenExecEdit' });
         });
     }
 

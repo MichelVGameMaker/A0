@@ -123,12 +123,19 @@
     }
 
     function wireNavigation() {
-        const { routineMoveBack, routineMoveDone } = assertRefs();
+        const { routineMoveBack, routineMoveDone, routineMoveTitle } = assertRefs();
         routineMoveBack.addEventListener('click', () => {
             returnToCaller();
         });
         routineMoveDone?.addEventListener('click', () => {
             returnToCaller();
+        });
+        routineMoveTitle.addEventListener('click', () => {
+            const move = findMove();
+            if (!move?.exerciseId) {
+                return;
+            }
+            void A.openExerciseRead({ currentId: move.exerciseId, callerScreen: 'screenRoutineMoveEdit' });
         });
     }
 
