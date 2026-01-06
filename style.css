@@ -190,7 +190,9 @@ header{
     z-index:5;
     position: fixed; top: 0; left:0; right:0;
     height: var(--header-h);
-    display:flex; align-items:center; justify-content:space-between;
+    display:grid;
+    grid-template-columns: 60pt 1fr 60pt;
+    align-items:center;
     padding: var(--pad-y) var(--pad-x);
     background: var(--panelBack);
     border-bottom: 2px solid var(--panelBord);
@@ -201,9 +203,7 @@ header{
     display:flex;
     align-items:center;
     gap: var(--gap);
-    width: 60pt;
-    min-width: 60pt;
-    max-width: 60pt;
+    width: 100%;
 }
 .header-left{
     justify-content: flex-start;
@@ -212,11 +212,11 @@ header{
     justify-content: flex-end;
 }
 .header-center{
-    flex:1;
     display:flex;
     justify-content:center;
     flex-direction: column;
     align-items: center;
+    min-width: 0;
 }
 header .title{
     flex:1;
@@ -226,12 +226,19 @@ header .title{
     text-overflow:ellipsis;
     white-space:nowrap;
     max-width: min(260px, 72vw);
+    width: 100%;
 }
 header .subtitle{
     font-size: 0.78em;
     color: var(--muted);
     margin-top: 2px;
     text-align: center;
+}
+header #exReadTitle{
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 header .header-left .btn{
     width: 100%;
@@ -524,7 +531,7 @@ textarea:focus{
 .exercise-read-tabs{
     --tag-columns: 3;
     position: sticky;
-    top: 0;
+    top: var(--header-total-h);
     z-index: 2;
     background: var(--contentBack);
     padding: 8px 0;
