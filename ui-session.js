@@ -833,7 +833,7 @@
             ? await A.components.confirmDialog.confirm({
                 title: 'Supprimer la séance',
                 message: 'Supprimer la séance ?',
-                variant: 'alert'
+                variant: 'danger'
             })
             : confirm('Supprimer la séance ?');
         if (!confirmed) {

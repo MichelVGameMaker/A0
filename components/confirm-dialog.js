@@ -79,7 +79,8 @@
 
     function updateLabels({ confirmLabel, cancelLabel }) {
         if (refs.confirmButton) {
-            refs.confirmButton.textContent = confirmLabel || 'confirmer';
+            const fallback = currentMode === 'confirm-only' ? 'ok' : 'confirmer';
+            refs.confirmButton.textContent = confirmLabel || fallback;
         }
         if (refs.cancelButton) {
             refs.cancelButton.textContent = cancelLabel || 'annuler';
@@ -87,17 +88,14 @@
     }
 
     function updateVariant(variant) {
-        const allowed = ['info', 'alert', 'error'];
+        const allowed = ['info', 'danger', 'error'];
         const safeVariant = allowed.includes(variant) ? variant : 'info';
-        refs.dialog?.classList.remove('confirm-dialog--info', 'confirm-dialog--alert', 'confirm-dialog--error');
+        refs.dialog?.classList.remove('confirm-dialog--info', 'confirm-dialog--danger', 'confirm-dialog--error');
         refs.dialog?.classList.add(`confirm-dialog--${safeVariant}`);
         if (!refs.status) {
             return;
         }
-        if (safeVariant === 'alert') {
-            refs.status.textContent = 'Alerte';
-            refs.status.hidden = false;
-        } else if (safeVariant === 'error') {
+        if (safeVariant === 'error') {
             refs.status.textContent = 'Erreur';
             refs.status.hidden = false;
         } else {

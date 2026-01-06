@@ -184,7 +184,7 @@
                 ? await A.components.confirmDialog.confirm({
                     title: 'Supprimer un exercice',
                     message: 'Supprimer cet exercice ?',
-                    variant: 'alert'
+                    variant: 'danger'
                 })
                 : confirm('Supprimer cet exercice ?');
             if (!confirmed) {
