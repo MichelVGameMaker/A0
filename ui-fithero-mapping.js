@@ -144,12 +144,12 @@
         });
     }
 
-    async function applyFitHeroMapping({ slug, sourceExercise, targetExercise }) {
+    async function applyFitHeroMapping({ slug, sourceExercise, targetExercise, skipRender = false }) {
         if (!slug || !sourceExercise || !targetExercise) {
-            return;
+            return false;
         }
         if (sourceExercise.id === targetExercise.id) {
-            return;
+            return false;
         }
         const message = `Remplacer l’exercice ${slug} par ${targetExercise.name || '—'} `
             + `dans toutes les séances et supprimer ${slug} de la bibliothèque d’exercices ?`;
@@ -161,7 +161,7 @@
             })
             : confirm(message);
         if (!confirmed) {
-            return;
+            return false;
         }
 
         await replaceFitHeroExerciseReferences({
@@ -169,8 +169,13 @@
             targetExercise
         });
         await db.del('exercises', sourceExercise.id);
-        await renderMappingList();
+        if (!skipRender) {
+            await renderMappingList();
+        }
+        return true;
     }
+
+    A.applyFitHeroMapping = applyFitHeroMapping;
 
     async function replaceFitHeroExerciseReferences({ sourceExercise, targetExercise }) {
         const sourceId = sourceExercise?.id;
