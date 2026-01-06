@@ -36,11 +36,6 @@
             missingEntries.filter((entry) => entry?.slug).map((entry) => [entry.slug, entry])
         );
         const slugs = [...missingBySlug.keys()];
-        userMappings.forEach((entry) => {
-            if (entry?.slug && !slugs.includes(entry.slug)) {
-                slugs.push(entry.slug);
-            }
-        });
 
         mappingList.innerHTML = '';
 
@@ -164,11 +159,13 @@
             return false;
         }
 
+        await saveUserMapping(slug, targetExercise.id);
         await replaceFitHeroExerciseReferences({
             sourceExercise,
             targetExercise
         });
         await db.del('exercises', sourceExercise.id);
+        removeMissingEntry(slug);
         if (!skipRender) {
             await renderMappingList();
         }
@@ -503,6 +500,18 @@
             name: name || entries[index].name || null
         };
         localStorage.setItem(FIT_HERO_MISSING_STORAGE_KEY, JSON.stringify(entries));
+    }
+
+    function removeMissingEntry(slug) {
+        if (!slug) {
+            return;
+        }
+        const entries = loadMissingEntries();
+        const next = entries.filter((entry) => entry?.slug && entry.slug !== slug);
+        if (next.length === entries.length) {
+            return;
+        }
+        localStorage.setItem(FIT_HERO_MISSING_STORAGE_KEY, JSON.stringify(next));
     }
 
     function ensureRefs() {
