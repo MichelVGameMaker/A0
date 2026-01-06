@@ -191,7 +191,8 @@ header{
     position: fixed; top: 0; left:0; right:0;
     height: var(--header-h);
     display:grid;
-    grid-template-columns: 60pt 1fr 60pt;
+    --header-side-w: 60px;
+    grid-template-columns: var(--header-side-w) minmax(0, 1fr) var(--header-side-w);
     align-items:center;
     padding: var(--pad-y) var(--pad-x);
     background: var(--panelBack);
@@ -225,7 +226,7 @@ header .title{
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
-    max-width: min(260px, 72vw);
+    max-width: min(260px, calc(100vw - (var(--header-side-w) * 2) - (var(--pad-x) * 2)));
     width: 100%;
 }
 header .subtitle{
