@@ -194,7 +194,7 @@ header{
     --header-side-w: 60px;
     grid-template-columns: var(--header-side-w) minmax(0, 1fr) var(--header-side-w);
     align-items:center;
-    padding: var(--pad-y) var(--pad-x);
+    padding: 0 var(--pad-x);
     background: var(--panelBack);
     border-bottom: 2px solid var(--panelBord);
 }
