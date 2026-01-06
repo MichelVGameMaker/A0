@@ -88,7 +88,9 @@
         refs.exReadHistoryList = document.getElementById('exReadHistoryList');
         refs.dlgExerciseActions = document.getElementById('dlgExerciseActions');
         refs.exerciseActionsClose = document.getElementById('exerciseActionsClose');
+        refs.exerciseActionName = document.getElementById('exerciseActionName');
         refs.exerciseActionEdit = document.getElementById('exerciseActionEdit');
+        refs.exerciseActionConvert = document.getElementById('exerciseActionConvert');
         refs.exerciseActionDuplicate = document.getElementById('exerciseActionDuplicate');
         refs.exerciseActionDelete = document.getElementById('exerciseActionDelete');
         refsResolved = true;
@@ -114,7 +116,9 @@
             'exReadHistoryList',
             'dlgExerciseActions',
             'exerciseActionsClose',
+            'exerciseActionName',
             'exerciseActionEdit',
+            'exerciseActionConvert',
             'exerciseActionDuplicate',
             'exerciseActionDelete'
         ];
@@ -131,6 +135,7 @@
             exReadEdit,
             dlgExerciseActions,
             exerciseActionsClose,
+            exerciseActionConvert,
             exerciseActionEdit,
             exerciseActionDuplicate,
             exerciseActionDelete
@@ -150,6 +155,9 @@
         });
         exerciseActionEdit?.addEventListener('click', () => {
             void handleExerciseAction('edit');
+        });
+        exerciseActionConvert?.addEventListener('click', () => {
+            void handleExerciseAction('convert');
         });
         exerciseActionDuplicate?.addEventListener('click', () => {
             void handleExerciseAction('duplicate');
@@ -213,6 +221,7 @@
             alert('Aucun exercice sélectionné.');
             return;
         }
+        updateExerciseActionsView();
         if (!dlgExerciseActions.open) {
             dlgExerciseActions.showModal();
         }
@@ -227,6 +236,11 @@
         if (action === 'edit') {
             dlgExerciseActions.close();
             await A.openExerciseEdit({ currentId: state.currentId, callerScreen: 'screenExerciseRead' });
+            return;
+        }
+        if (action === 'convert') {
+            dlgExerciseActions.close();
+            await handleExerciseConversion();
             return;
         }
         if (action === 'duplicate') {
@@ -260,6 +274,58 @@
             await db.del('exercises', state.currentId);
             dlgExerciseActions.close();
             await A.openExercises({ callerScreen: 'screenExerciseRead' });
+        }
+    }
+
+    function updateExerciseActionsView() {
+        const { exerciseActionName, exerciseActionConvert } = assertRefs();
+        const name = state.exercise?.name || '—';
+        exerciseActionName.textContent = name;
+        const isImported = state.exercise?.origin === 'import';
+        if (exerciseActionConvert) {
+            exerciseActionConvert.hidden = !isImported;
+        }
+    }
+
+    async function handleExerciseConversion() {
+        if (!state.exercise) {
+            alert('Exercice introuvable.');
+            return;
+        }
+        const sourceExercise = state.exercise;
+        A.openExercises?.({
+            mode: 'add',
+            callerScreen: 'screenExerciseRead',
+            selectionLimit: 1,
+            onAdd: (ids) => {
+                const exerciseId = Array.isArray(ids) ? ids[0] : null;
+                if (!exerciseId) {
+                    return;
+                }
+                void finalizeExerciseConversion(sourceExercise, exerciseId);
+            }
+        });
+    }
+
+    async function finalizeExerciseConversion(sourceExercise, exerciseId) {
+        const targetExercise = await db.get('exercises', exerciseId);
+        if (!targetExercise) {
+            alert('Exercice introuvable.');
+            return;
+        }
+        if (typeof A.applyFitHeroMapping !== 'function') {
+            alert('Mapping FitHero indisponible.');
+            return;
+        }
+        const slug = sourceExercise?.external_exercise_id || sourceExercise?.id || sourceExercise?.name || '—';
+        const applied = await A.applyFitHeroMapping({
+            slug,
+            sourceExercise,
+            targetExercise,
+            skipRender: true
+        });
+        if (applied) {
+            await A.openExerciseRead({ currentId: targetExercise.id, callerScreen: state.callerScreen });
         }
     }
 
