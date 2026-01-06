@@ -511,7 +511,14 @@
                 mapping: 0,
                 native: 0,
                 user: 0,
-                created: 0
+                created: 0,
+                unique: new Set(),
+                uniqueBySource: {
+                    mapping: new Set(),
+                    native: new Set(),
+                    user: new Set(),
+                    created: new Set()
+                }
             };
 
             await clearAllSessions();
@@ -539,11 +546,13 @@
             updateMissingFitHeroExercises(missingEntries);
 
             const label = imported > 1 ? 'séances' : 'séance';
-            const summaryMessage = `${imported} ${label} FitHero chargée${imported > 1 ? 's' : ''}.\n`
-                + `Exercices : ${mappingStats.native} trouvés (liste native), `
-                + `${mappingStats.user} trouvés (créés utilisateur), `
-                + `${mappingStats.mapping} via mapping FitHero, `
-                + `${mappingStats.created} créés par l’import.`;
+            const uniqueExercises = mappingStats.unique?.size ?? 0;
+            const exerciseLabel = uniqueExercises > 1 ? 'exercices' : 'exercice';
+            const summaryMessage = `${imported} ${label} et ${uniqueExercises} ${exerciseLabel} :\n\n`
+                + `Exercices trouvés dans la bibliothèque native : ${mappingStats.native}\n\n`
+                + `Exercices trouvés dans le mapping FitHero : ${mappingStats.mapping}\n\n`
+                + `Exercices trouvés dans les exercices créés par l’utilisateur : ${mappingStats.user}\n\n`
+                + `Exercices non trouvés et créés : ${mappingStats.created}`;
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Import FitHero terminé',
@@ -1221,22 +1230,20 @@
             matchSource = resolvedExercise ? 'created' : matchSource;
         }
 
-        if (matchSource === 'mapping') {
-            context?.mappingStats && (context.mappingStats.mapping += 1);
-        } else if (matchSource === 'native') {
-            context?.mappingStats && (context.mappingStats.native += 1);
-        } else if (matchSource === 'user') {
-            context?.mappingStats && (context.mappingStats.user += 1);
-        } else if (matchSource === 'created') {
-            context?.mappingStats && (context.mappingStats.created += 1);
-        }
-
         const exerciseId = resolvedExercise?.id || mappedId || slug;
         const name = resolvedExercise?.name || candidateName || exerciseId || 'Exercice';
         const exerciseDate = typeof exercise.date === 'string' ? exercise.date : sessionDate;
         const sortValue = Number.isFinite(Number(exercise.sort))
             ? Number(exercise.sort)
             : context?.position || 1;
+
+        const stats = context?.mappingStats;
+        if (stats?.unique && stats?.uniqueBySource && matchSource && stats.uniqueBySource[matchSource] && exerciseId) {
+            stats.unique.add(exerciseId);
+            const sourceSet = stats.uniqueBySource[matchSource];
+            sourceSet.add(exerciseId);
+            stats[matchSource] = sourceSet.size;
+        }
 
         const sets = Array.isArray(exercise.sets)
             ? exercise.sets.map((set, index) => toFitHeroSet(set, {
