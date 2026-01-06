@@ -180,7 +180,7 @@
             ? await A.components.confirmDialog.confirm({
                 title: 'Supprimer la routine',
                 message: 'Supprimer cette routine de la liste des routines ?',
-                variant: 'alert'
+                variant: 'danger'
             })
             : confirm('Supprimer cette routine de la liste des routines ?');
         if (!confirmed) {

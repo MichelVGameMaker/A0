@@ -325,8 +325,7 @@ header .header-left .btn{
     --confirm-accent: var(--confirm-bord);
     border: 2px solid var(--confirm-bord);
 }
-.confirm-dialog--alert{
-    --confirm-bord: var(--alert);
+.confirm-dialog--danger{
 }
 .confirm-dialog--error{
     --confirm-bord: var(--red);

@@ -216,7 +216,7 @@
             ? await A.components.confirmDialog.confirm({
                 title: 'Update',
                 message: 'Update : cette action recharge l’application sans effacer vos données. Continuer ?',
-                variant: 'alert'
+                variant: 'danger'
             })
             : window.confirm('Update : cette action recharge l’application sans effacer vos données. Continuer ?');
         if (!confirmed) {
@@ -242,7 +242,7 @@
             ? await A.components.confirmDialog.confirm({
                 title: 'Reset',
                 message: 'Reset : cette action supprime toutes les données locales et le cache. Continuer ?',
-                variant: 'alert'
+                variant: 'danger'
             })
             : window.confirm('Reset : cette action supprime toutes les données locales et le cache. Continuer ?');
         if (!confirmed) {
@@ -385,7 +385,7 @@
                 ? await A.components.confirmDialog.confirm({
                     title: 'Import des séances',
                     message: confirmMessage,
-                    variant: 'alert'
+                    variant: 'danger'
                 })
                 : window.confirm(confirmMessage);
             if (!confirmed) {

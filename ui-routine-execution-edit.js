@@ -555,7 +555,7 @@
             ? await A.components.confirmDialog.confirm({
                 title: 'Supprimer un exercice',
                 message: 'Supprimer cet exercice de la routine ?',
-                variant: 'alert'
+                variant: 'danger'
             })
             : confirm('Supprimer cet exercice de la routine ?');
         if (!confirmed) {
