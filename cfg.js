@@ -58,6 +58,7 @@
         'cardiovascular system': { muscle: 'cardio', g1: 'waist', g2: 'core', g3: 'Core' },
         glutes: { muscle: 'glutes', g1: 'upper legs', g2: 'legs', g3: 'Lower Body' },
         quads: { muscle: 'quads', g1: 'upper legs', g2: 'legs', g3: 'Lower Body' },
+        quadriceps: { muscle: 'quads', g1: 'upper legs', g2: 'legs', g3: 'Lower Body' },
         hamstrings: { muscle: 'hamstrings', g1: 'upper legs', g2: 'legs', g3: 'Lower Body' },
         abductors: { muscle: 'abductors', g1: 'upper legs', g2: 'legs', g3: 'Lower Body' },
         adductors: { muscle: 'adductors', g1: 'upper legs', g2: 'legs', g3: 'Lower Body' },
