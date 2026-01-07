@@ -352,14 +352,33 @@
         ensureInlineEditor()?.close();
         inlineKeyboard?.detach?.();
         execSets.innerHTML = '';
+        const resetPanel = (panel) => {
+            if (!panel) {
+                return;
+            }
+            const header = panel.querySelector('.exec-history-header');
+            const table = panel.querySelector('.exec-history-table');
+            if (header) {
+                header.textContent = '';
+            }
+            if (table) {
+                table.innerHTML = '';
+            }
+        };
         if (execSetsLayout) {
             execSetsLayout.classList.toggle('with-side-panel', state.historySelected || state.goalsSelected);
         }
         if (execHistoryPanel) {
             execHistoryPanel.hidden = !state.historySelected;
+            if (!state.historySelected) {
+                resetPanel(execHistoryPanel);
+            }
         }
         if (execGoalsPanel) {
             execGoalsPanel.hidden = !state.goalsSelected;
+            if (!state.goalsSelected) {
+                resetPanel(execGoalsPanel);
+            }
         }
         if (!exercise) {
             return;
