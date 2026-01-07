@@ -266,6 +266,8 @@
         const { config: rangeConfig, monthLength } = getRangeWindow(selectedRange);
         const isMonthRange = rangeConfig?.type === 'month';
         const shouldScaleToWeek = rangeConfig?.type !== 'week' && !isMonthRange;
+        const isDayRange = Boolean(rangeConfig?.days) && !isMonthRange;
+        const weeksInRange = isDayRange ? (rangeConfig?.days || 7) / 7 : 1;
         const weeklyScale = shouldScaleToWeek ? 7 / (rangeConfig?.days || 7) : 1;
         const monthScale = isMonthRange ? monthLength / 7 : 1;
 
@@ -280,6 +282,18 @@
             const scaledTargetSets = entry.targetSets > 0
                 ? (isMonthRange ? entry.targetSets * monthScale : entry.targetSets)
                 : 0;
+            const totals = isDayRange
+                ? {
+                    sessions: {
+                        current: stats.sessions,
+                        target: entry.targetSessions * weeksInRange
+                    },
+                    sets: {
+                        current: stats.sets,
+                        target: entry.targetSets * weeksInRange
+                    }
+                }
+                : null;
             const row = document.createElement('tr');
             makeRowClickable(row, () => {
                 void A.openVolumeMuscle?.(entry.key);
@@ -287,8 +301,12 @@
             const muscleCell = document.createElement('td');
             muscleCell.textContent = formatLabel(entry.key);
             row.appendChild(muscleCell);
-            row.appendChild(createGaugeCell(scaledSessions, scaledTargetSessions, 'séances'));
-            row.appendChild(createGaugeCell(scaledSets, scaledTargetSets, 'séries'));
+            row.appendChild(createGaugeCell(scaledSessions, scaledTargetSessions, 'séances', {
+                totals: totals?.sessions || null
+            }));
+            row.appendChild(createGaugeCell(scaledSets, scaledTargetSets, 'séries', {
+                totals: totals?.sets || null
+            }));
             volumeTableBody.appendChild(row);
         });
     }
@@ -383,6 +401,8 @@
 
         const isMonthRange = rangeConfig?.type === 'month';
         const shouldScaleToWeek = rangeConfig?.type !== 'week' && !isMonthRange;
+        const isDayRange = Boolean(rangeConfig?.days) && !isMonthRange;
+        const weeksInRange = isDayRange ? (rangeConfig?.days || 7) / 7 : 1;
         const weeklyScale = shouldScaleToWeek ? 7 / (rangeConfig?.days || 7) : 1;
         const monthScale = isMonthRange ? monthLength / 7 : 1;
 
@@ -421,7 +441,10 @@
             shouldScaleToWeek,
             weeklyScale,
             scaledTargetSessions,
-            scaledTargetSets
+            scaledTargetSets,
+            isDayRange ? weeksInRange : null,
+            targetSessions,
+            targetSets
         );
 
         appendExerciseSection(
@@ -430,7 +453,8 @@
             filteredPrimary,
             statsByExercise,
             shouldScaleToWeek,
-            weeklyScale
+            weeklyScale,
+            isDayRange ? weeksInRange : null
         );
 
         appendExerciseSection(
@@ -439,7 +463,8 @@
             filteredSecondary,
             statsByExercise,
             shouldScaleToWeek,
-            weeklyScale
+            weeklyScale,
+            isDayRange ? weeksInRange : null
         );
     }
 
@@ -450,7 +475,10 @@
         shouldScaleToWeek,
         weeklyScale,
         targetSessions,
-        targetSets
+        targetSets,
+        weeksInRange,
+        weeklyTargetSessions,
+        weeklyTargetSets
     ) {
         const row = document.createElement('tr');
         row.className = 'volume-muscle-row';
@@ -459,8 +487,24 @@
         row.appendChild(nameCell);
         const scaledSessions = shouldScaleToWeek ? stats.sessions * weeklyScale : stats.sessions;
         const scaledSets = shouldScaleToWeek ? stats.sets * weeklyScale : stats.sets;
-        row.appendChild(createGaugeCell(scaledSessions, targetSessions, 'séances'));
-        row.appendChild(createGaugeCell(scaledSets, targetSets, 'séries'));
+        const totals = weeksInRange
+            ? {
+                sessions: {
+                    current: stats.sessions,
+                    target: weeklyTargetSessions * weeksInRange
+                },
+                sets: {
+                    current: stats.sets,
+                    target: weeklyTargetSets * weeksInRange
+                }
+            }
+            : null;
+        row.appendChild(createGaugeCell(scaledSessions, targetSessions, 'séances', {
+            totals: totals?.sessions || null
+        }));
+        row.appendChild(createGaugeCell(scaledSets, targetSets, 'séries', {
+            totals: totals?.sets || null
+        }));
         tableBody.appendChild(row);
     }
 
@@ -470,7 +514,8 @@
         exercises,
         statsByExercise,
         shouldScaleToWeek,
-        weeklyScale
+        weeklyScale,
+        weeksInRange
     ) {
         const headerRow = document.createElement('tr');
         headerRow.className = 'volume-section-row';
@@ -504,6 +549,16 @@
             const stats = statsByExercise.get(exercise.id) || { sessions: 0, sets: 0 };
             const scaledSessions = shouldScaleToWeek ? stats.sessions * weeklyScale : stats.sessions;
             const scaledSets = shouldScaleToWeek ? stats.sets * weeklyScale : stats.sets;
+            const totals = weeksInRange
+                ? {
+                    sessions: {
+                        current: stats.sessions
+                    },
+                    sets: {
+                        current: stats.sets
+                    }
+                }
+                : null;
             const row = document.createElement('tr');
             row.className = 'volume-exercise-row';
             makeRowClickable(row, () => {
@@ -512,8 +567,14 @@
             const nameCell = document.createElement('td');
             nameCell.textContent = exercise.name || '—';
             row.appendChild(nameCell);
-            row.appendChild(createGaugeCell(scaledSessions, 0, 'séances', { showTarget: false }));
-            row.appendChild(createGaugeCell(scaledSets, 0, 'séries', { showTarget: false }));
+            row.appendChild(createGaugeCell(scaledSessions, 0, 'séances', {
+                showTarget: false,
+                totals: totals?.sessions || null
+            }));
+            row.appendChild(createGaugeCell(scaledSets, 0, 'séries', {
+                showTarget: false,
+                totals: totals?.sets || null
+            }));
             tableBody.appendChild(row);
         });
     }
@@ -527,7 +588,7 @@
     }
 
     function createGaugeCell(current, target, label, options = {}) {
-        const { showTarget = true } = options;
+        const { showTarget = true, totals = null } = options;
         const cell = document.createElement('td');
         const gauge = document.createElement('div');
         gauge.className = 'volume-gauge';
@@ -543,7 +604,15 @@
         const text = document.createElement('div');
         text.className = 'volume-gauge-label';
         const formattedCurrent = formatVolumeValue(safeCurrent);
-        if (showTarget) {
+        if (totals && typeof totals === 'object') {
+            const totalCurrent = formatTotalValue(totals.current);
+            if (showTarget) {
+                const totalTarget = totals.target > 0 ? formatTotalValue(totals.target) : '—';
+                text.textContent = `${formattedCurrent} - ${totalCurrent} / ${totalTarget}`;
+            } else {
+                text.textContent = `${formattedCurrent} - ${totalCurrent}`;
+            }
+        } else if (showTarget) {
             text.textContent = safeTarget > 0 ? `${formattedCurrent}/${formatVolumeValue(safeTarget)}` : `${formattedCurrent}/—`;
         } else {
             text.textContent = formattedCurrent;
@@ -680,6 +749,11 @@
     function formatVolumeValue(value) {
         const rounded = Math.round((Number.isFinite(value) ? value : 0) * 10) / 10;
         return rounded.toFixed(1);
+    }
+
+    function formatTotalValue(value) {
+        const rounded = Math.round(Number.isFinite(value) ? value : 0);
+        return String(rounded);
     }
 
     function getRangeLabel(value) {
