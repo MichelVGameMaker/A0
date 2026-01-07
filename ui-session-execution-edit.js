@@ -30,6 +30,7 @@
 
     const defaultTimerVisibility = () => ({
         forcedHidden: true,
+        forceVisible: false,
         reason: null
     });
 
@@ -49,6 +50,7 @@
         timerVisibility = defaultTimerVisibility();
     } else {
         timerVisibility.forcedHidden = Boolean(timerVisibility.forcedHidden);
+        timerVisibility.forceVisible = Boolean(timerVisibility.forceVisible);
         timerVisibility.reason = timerVisibility.reason || null;
     }
     A.timerVisibility = timerVisibility;
@@ -1335,8 +1337,11 @@
         if (!timerVisibility) {
             return;
         }
-        const forcedHidden = Boolean(options?.forcedHidden);
+        const forcedHidden = options?.forcedHidden != null ? Boolean(options.forcedHidden) : timerVisibility.forcedHidden;
         timerVisibility.forcedHidden = forcedHidden;
+        if (options?.forceVisible != null) {
+            timerVisibility.forceVisible = Boolean(options.forceVisible);
+        }
         timerVisibility.reason = forcedHidden ? options.reason || null : null;
         updateTimerUI();
     }
@@ -1378,7 +1383,7 @@
         timer.remainSec = seconds;
         timer.running = true;
         timer.intervalId = window.setInterval(runTick, 1000);
-        setTimerVisibility({ forcedHidden: false, reason: null });
+        setTimerVisibility({ forcedHidden: false, forceVisible: true, reason: null });
         updateTimerUI();
     }
 
@@ -1445,7 +1450,8 @@
         }
         ensureTimerPlacement(execTimerBar);
         const baseHidden = !timer.intervalId && !timer.running && timer.startSec === 0;
-        const shouldHide = baseHidden || isTimerForcedHidden();
+        const forceVisible = Boolean(timerVisibility?.forceVisible);
+        const shouldHide = (baseHidden && !forceVisible) || isTimerForcedHidden();
         execTimerBar.hidden = shouldHide;
         if (tabTimer) {
             tabTimer.setAttribute('aria-pressed', String(!shouldHide));

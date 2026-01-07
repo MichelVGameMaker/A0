@@ -79,11 +79,14 @@
             const timer = A.execTimer;
             const baseHidden = !timer?.intervalId && !timer?.running && safeNumber(timer?.startSec) === 0;
             const forcedHidden = Boolean(A.timerVisibility?.forcedHidden);
-            const shouldShow = baseHidden || forcedHidden;
-            if (shouldShow) {
-                A.resetTimerToDefault?.();
-            }
-            A.setTimerVisibility?.({ forcedHidden: !shouldShow, reason: !shouldShow ? 'manual' : null });
+            const forceVisible = Boolean(A.timerVisibility?.forceVisible);
+            const isHidden = (baseHidden && !forceVisible) || forcedHidden;
+            const shouldShow = isHidden;
+            A.setTimerVisibility?.({
+                forcedHidden: !shouldShow,
+                forceVisible: shouldShow,
+                reason: !shouldShow ? 'manual' : null
+            });
         });
 
         screenSessions?.setAttribute('data-screen', 'sessions');
