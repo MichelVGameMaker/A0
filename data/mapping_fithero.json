@@ -1,0 +1,337 @@
+[
+  {
+    "slug": "alternating-biceps-curl-with-dumbbell",
+    "exerciseId": "BU15nH4",
+    "name": "dumbbell alternate biceps curl"
+  },
+  {
+    "slug": "alternating-hammer-curl-with-dumbbell",
+    "exerciseId": "79AmJsI",
+    "name": "dumbbell hammer curl with traditional"
+  },
+  {
+    "slug": "arnold-press",
+    "exerciseId": "Xy4jlWA",
+    "name": "dumbbell arnold press"
+  },
+  {
+    "slug": "barbell-bench-press",
+    "exerciseId": "EIeI8Vf",
+    "name": "barbell bench press"
+  },
+  {
+    "slug": "barbell-bent-over-row",
+    "exerciseId": "eZyBC3j",
+    "name": "barbell bent over row"
+  },
+  {
+    "slug": "barbell-deadlift",
+    "exerciseId": "2Ty4idJ",
+    "name": "advanced dumbbell stiff leg deadlift"
+  },
+  {
+    "slug": "barbell-squat",
+    "exerciseId": "Gnfo4FM",
+    "name": "barbell high bar squat"
+  },
+  {
+    "slug": "bench-press",
+    "exerciseId": "EIeI8Vf",
+    "name": "barbell bench press"
+  },
+  {
+    "slug": "bent-over-reverse-fly-dumbbell",
+    "exerciseId": "EAs3xL9",
+    "name": "dumbbell reverse fly"
+  },
+  {
+    "slug": "biceps-hammer-curl-with-dumbbell",
+    "exerciseId": "79AmJsI",
+    "name": "dumbbell hammer curl with traditional"
+  },
+  {
+    "slug": "bridging",
+    "exerciseId": "rmEukuS",
+    "name": "single leg bridge with outstretched leg"
+  },
+  {
+    "slug": "butterfly-machine",
+    "exerciseId": "v3xmPAR",
+    "name": "lever seated fly"
+  },
+  {
+    "slug": "cable-one-arm-lateral-raise",
+    "exerciseId": "wEulIzp",
+    "name": "cable one arm lateral raise"
+  },
+  {
+    "slug": "calf-raises-with-band",
+    "exerciseId": "jl6uxZV",
+    "name": "band two legs calf raise - (band under both legs) v. 2"
+  },
+  {
+    "slug": "concentration-curl-with-dumbbell",
+    "exerciseId": "gvsWLQw",
+    "name": "dumbbell concentration curl"
+  },
+  {
+    "slug": "crunches",
+    "exerciseId": "BMMolZ3",
+    "name": "tuck crunch"
+  },
+  {
+    "slug": "custom--bulgarian-split-squat",
+    "exerciseId": "qx4fgX7",
+    "name": "dumbbell single leg split squat"
+  },
+  {
+    "slug": "custom--cycling-indoor",
+    "exerciseId": "XSCHmiI",
+    "name": "cycle cross trainer"
+  },
+  {
+    "slug": "custom--diamond-push-up",
+    "exerciseId": "soIB2rj",
+    "name": "diamond push-up"
+  },
+  {
+    "slug": "custom--dumbbell-romanian-deadlift",
+    "exerciseId": "rR0LJzx",
+    "name": "dumbbell romanian deadlift"
+  },
+  {
+    "slug": "custom--dumbbell-single-leg-deadlift",
+    "exerciseId": "gKozT8X",
+    "name": "dumbbell single leg deadlift"
+  },
+  {
+    "slug": "custom--elliptical-machine",
+    "exerciseId": "rjtuP6X",
+    "name": "walk elliptical cross trainer"
+  },
+  {
+    "slug": "custom--one-arm-dumbbell-row",
+    "exerciseId": "C0MA9bC",
+    "name": "dumbbell one arm bent-over row"
+  },
+  {
+    "slug": "custom--side-plank",
+    "exerciseId": "VBAWRPG",
+    "name": "weighted front plank"
+  },
+  {
+    "slug": "donkey-kickback-weight",
+    "exerciseId": "wSScovH",
+    "name": "band bent-over hip extension"
+  },
+  {
+    "slug": "dumbbell-incline-bench-press",
+    "exerciseId": "ns0SIbU",
+    "name": "dumbbell incline bench press"
+  },
+  {
+    "slug": "dumbbell-lunges",
+    "exerciseId": "RRWFUcw",
+    "name": "dumbbell lunge"
+  },
+  {
+    "slug": "dumbbell-shoulder-press",
+    "exerciseId": "1TkiAFK",
+    "name": "dumbbell one arm shoulder press v. 2"
+  },
+  {
+    "slug": "dumbbell-upright-rows",
+    "exerciseId": "ainizkb",
+    "name": "dumbbell upright row"
+  },
+  {
+    "slug": "external-rotator-band",
+    "exerciseId": "FWdVhcW",
+    "name": "cable standing shoulder external rotation"
+  },
+  {
+    "slug": "front-cable-raises",
+    "exerciseId": "hvHhCv8",
+    "name": "cable forward raise"
+  },
+  {
+    "slug": "front-dumbbell-raise",
+    "exerciseId": "SxHteRW",
+    "name": "dumbbell standing alternate raise"
+  },
+  {
+    "slug": "lateral-dumbbell-raises",
+    "exerciseId": "DsgkuIt",
+    "name": "dumbbell lateral raise"
+  },
+  {
+    "slug": "lateral-shoulder-machine",
+    "exerciseId": "dRTfGZT",
+    "name": "lever lateral raise"
+  },
+  {
+    "slug": "leg-extensions",
+    "exerciseId": "my33uHU",
+    "name": "lever leg extension"
+  },
+  {
+    "slug": "leg-press",
+    "exerciseId": "10Z2DXU",
+    "name": "sled 45в° leg press"
+  },
+  {
+    "slug": "lying-hip-abduction",
+    "exerciseId": "7WaDzyL",
+    "name": "side hip abduction"
+  },
+  {
+    "slug": "lying-leg-curl-machine",
+    "exerciseId": "17lJ1kr",
+    "name": "lever lying leg curl"
+  },
+  {
+    "slug": "lying-triceps-extension-with-dumbbells",
+    "exerciseId": "mpKZGWz",
+    "name": "dumbbell lying triceps extension"
+  },
+  {
+    "slug": "machine-bench-press",
+    "exerciseId": "T0yTjgW",
+    "name": "lever chest press"
+  },
+  {
+    "slug": "monster-walk",
+    "exerciseId": "O95afRA",
+    "name": "monster walk"
+  },
+  {
+    "slug": "one-arm-dumbbel-straight-row",
+    "exerciseId": "C0MA9bC",
+    "name": "dumbbell one arm bent-over row"
+  },
+  {
+    "slug": "one-arm-dumbbell-shoulder-press",
+    "exerciseId": "1TkiAFK",
+    "name": "dumbbell one arm shoulder press v. 2"
+  },
+  {
+    "slug": "one-arm-preacher-curl-with-dumbbell",
+    "exerciseId": "jivWf8n",
+    "name": "dumbbell preacher curl"
+  },
+  {
+    "slug": "one-arm-tricep-extension-with-cable",
+    "exerciseId": "sYCcnon",
+    "name": "cable standing one arm triceps extension"
+  },
+  {
+    "slug": "one-arm-upright-row",
+    "exerciseId": "6cKQC5E",
+    "name": "dumbbell one arm upright row"
+  },
+  {
+    "slug": "preacher-curl-with-machine",
+    "exerciseId": "b6hQYMb",
+    "name": "lever preacher curl"
+  },
+  {
+    "slug": "push-up-feet-elevated",
+    "exerciseId": "i5cEhka",
+    "name": "decline push-up"
+  },
+  {
+    "slug": "push-ups",
+    "exerciseId": "I4hDWkc",
+    "name": "push-up"
+  },
+  {
+    "slug": "push-ups-close-and-wide-hand-versions",
+    "exerciseId": "I4hDWkc",
+    "name": "push-up"
+  },
+  {
+    "slug": "reverse-fly-machine",
+    "exerciseId": "myfUsKf",
+    "name": "lever seated reverse fly"
+  },
+  {
+    "slug": "seated-cable-rows",
+    "exerciseId": "hvV79Si",
+    "name": "cable low seated row"
+  },
+  {
+    "slug": "seated-calf-raise-using-machine",
+    "exerciseId": "bOOdeyc",
+    "name": "lever seated calf raise"
+  },
+  {
+    "slug": "seated-leg-curl",
+    "exerciseId": "Zg3XY7P",
+    "name": "lever seated leg curl"
+  },
+  {
+    "slug": "seated-shoulder-press-machine",
+    "exerciseId": "dNFYIU1",
+    "name": "lever shoulder press v. 3"
+  },
+  {
+    "slug": "shoulder-press-deck",
+    "exerciseId": "CggQhII",
+    "name": "lever military press"
+  },
+  {
+    "slug": "shoulder-shrugs",
+    "exerciseId": "NJzBsGJ",
+    "name": "dumbbell shrug"
+  },
+  {
+    "slug": "single-arm-triceps-extension-with-dumbbell",
+    "exerciseId": "wyaqzOS",
+    "name": "dumbbell lying one arm pronated triceps extension"
+  },
+  {
+    "slug": "standing-calf-raise-with-dumbbell",
+    "exerciseId": "1kB3Wmk",
+    "name": "dumbbell single leg calf raise"
+  },
+  {
+    "slug": "straight-arm-dumbbell-pullover",
+    "exerciseId": "i8BdLTK",
+    "name": "dumbbell straight arm pullover"
+  },
+  {
+    "slug": "straight-arm-push-down",
+    "exerciseId": "x69MAlq",
+    "name": "cable straight arm pulldown"
+  },
+  {
+    "slug": "thigh-abductor",
+    "exerciseId": "CHpahtl",
+    "name": "lever seated hip abduction"
+  },
+  {
+    "slug": "thigh-adductor",
+    "exerciseId": "oHsrypV",
+    "name": "lever seated hip adduction"
+  },
+  {
+    "slug": "triceps-pushdown-with-cable",
+    "exerciseId": "OxJk1fg",
+    "name": "cable triceps pushdown (v-bar) (with arm blaster)"
+  },
+  {
+    "slug": "upright-cable-row",
+    "exerciseId": "cALKspW",
+    "name": "cable upright row"
+  },
+  {
+    "slug": "v-bar-pull-down",
+    "exerciseId": "pwt0pnM",
+    "name": "cable seated high row (v-bar)"
+  },
+  {
+    "slug": "wide-grip-lat-pull-down",
+    "exerciseId": "qdRxqCj",
+    "name": "cable pulldown (pro lat bar)"
+  }
+]
