@@ -389,7 +389,7 @@ header .header-left .btn{
     top:50%;
     left:50%;
     transform: translate(-50%, -50%);
-    font-size: clamp(2.5rem, 10vw, 5rem);
+    font-size: clamp(3.5rem, 14vw, 7rem);
     line-height:1;
     min-width:0;
     text-align:center;
@@ -397,6 +397,8 @@ header .header-left .btn{
 }
 .tmr-center{ display:flex; align-items:center; justify-content:center; gap:12px; }
 .tmr-display{ font-weight: var(--fw-strong); min-width:76px; text-align:center; }
+.tmr-display--warning{ color: var(--alert); }
+.tmr-display--negative{ color: var(--red); }
 .exec-timer-spacer{
     height: calc(var(--control-h) + 22px);
     background: transparent;

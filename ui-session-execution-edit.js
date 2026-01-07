@@ -29,7 +29,7 @@
     });
 
     const defaultTimerVisibility = () => ({
-        forcedHidden: false,
+        forcedHidden: true,
         reason: null
     });
 
@@ -91,8 +91,6 @@
         state.exerciseId = currentId;
         state.callerScreen = callerScreen;
         state.session = session;
-        setTimerVisibility({ forcedHidden: false, reason: null });
-
         const { execTitle, execDate, execRoutineInstructions, execMoveNote } = assertRefs();
         execTitle.textContent = exercise.exercise_name || 'Exercice';
         execDate.textContent = A.fmtUI(date);
@@ -1380,6 +1378,7 @@
         timer.remainSec = seconds;
         timer.running = true;
         timer.intervalId = window.setInterval(runTick, 1000);
+        setTimerVisibility({ forcedHidden: false, reason: null });
         updateTimerUI();
     }
 
@@ -1453,6 +1452,7 @@
             tabTimer.classList.toggle('is-on', !shouldHide);
         }
         if (shouldHide) {
+            timerDisplay.classList.remove('tmr-display--warning', 'tmr-display--negative');
             return;
         }
         const remaining = timer.remainSec;
@@ -1460,6 +1460,10 @@
         const abs = Math.abs(remaining);
         const minutes = Math.floor(abs / 60);
         const seconds = abs % 60;
+        const isNegative = remaining < 0;
+        const isWarning = !isNegative && remaining <= 10;
+        timerDisplay.classList.toggle('tmr-display--warning', isWarning);
+        timerDisplay.classList.toggle('tmr-display--negative', isNegative);
         timerDisplay.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
         timerToggle.textContent = timer.running ? '⏸' : '▶︎';
     }
