@@ -258,6 +258,11 @@
             });
         };
 
+        const syncRowTone = () => {
+            applyRpeTone(repsInput, value.rpe);
+            applyRpeTone(weightInput, value.rpe);
+        };
+
         const updatePreview = (source) => {
             if (!source) {
                 return;
@@ -273,6 +278,7 @@
                 value.rest = Math.max(0, minutes * 60 + seconds);
             }
             inputs.forEach((input) => input?._update?.());
+            syncRowTone();
         };
 
         const buildKeyboardActions = () => [
@@ -432,6 +438,7 @@
         const restMinutesInput = createInput(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell');
         const restSecondsInput = createInput(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell');
         collectInputs(repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
+        syncRowTone();
 
         row.append(order, repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
         return row;
