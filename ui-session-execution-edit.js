@@ -376,11 +376,12 @@
             });
         }
         if (state.historySelected) {
-            await renderHistoryPanel(exercise);
+            await renderHistoryPanel(exercise, sets);
         }
         if (state.goalsSelected) {
             await renderGoalsPanel(exercise, sets);
         }
+        requestAnimationFrame(syncSidePanelRows);
     }
 
     function renderSetRow(set, index, totalSets) {
@@ -606,7 +607,7 @@
         return row;
     }
 
-    async function renderHistoryPanel(exercise) {
+    async function renderHistoryPanel(exercise, currentSets = []) {
         const { execHistoryPanel } = assertRefs();
         if (!execHistoryPanel) {
             return;
@@ -618,30 +619,28 @@
         }
         table.innerHTML = '';
         const previous = await findPreviousSessionForHistory(exercise?.exercise_id);
+        const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
+        const previousSets = Array.isArray(previous?.exercise?.sets) ? [...previous.exercise.sets] : [];
+        previousSets.sort((a, b) => safeInt(a?.pos, 0) - safeInt(b?.pos, 0));
         if (!previous) {
             header.textContent = 'Aucune séance précédente';
+        } else {
+            header.textContent = formatHistoryDate(previous.date);
+        }
+        if (!currentSets.length) {
             const empty = document.createElement('div');
             empty.className = 'exec-history-empty';
             empty.textContent = '—';
             table.appendChild(empty);
             return;
         }
-        header.textContent = formatHistoryDate(previous.date);
-        const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
-        const sets = Array.isArray(previous.exercise?.sets) ? [...previous.exercise.sets] : [];
-        sets.sort((a, b) => safeInt(a?.pos, 0) - safeInt(b?.pos, 0));
-        if (!sets.length) {
-            const empty = document.createElement('div');
-            empty.className = 'exec-history-empty';
-            empty.textContent = '—';
-            table.appendChild(empty);
-            return;
-        }
-        sets.forEach((set) => {
+        currentSets.forEach((set, index) => {
+            const targetPos = safeInt(set?.pos, index + 1);
+            const match = previousSets.find((item) => safeInt(item?.pos, 0) === targetPos);
             const item = document.createElement('div');
             item.className = 'exec-history-set rpe-chip';
-            item.textContent = formatHistorySetLine(set, weightUnit);
-            applyRpeTone(item, set?.rpe);
+            item.textContent = match ? formatHistorySetLine(match, weightUnit) : '—';
+            applyRpeTone(item, match?.rpe);
             table.appendChild(item);
         });
     }
@@ -660,15 +659,11 @@
         const previous = await findPreviousSessionForHistory(exercise?.exercise_id);
         if (!previous) {
             header.textContent = 'Aucune séance précédente';
-            const empty = document.createElement('div');
-            empty.className = 'exec-history-empty';
-            empty.textContent = '—';
-            table.appendChild(empty);
-            return;
+        } else {
+            header.textContent = 'Objectifs';
         }
-        header.textContent = 'Objectifs';
         const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
-        const previousSets = Array.isArray(previous.exercise?.sets) ? [...previous.exercise.sets] : [];
+        const previousSets = Array.isArray(previous?.exercise?.sets) ? [...previous.exercise.sets] : [];
         previousSets.sort((a, b) => safeInt(a?.pos, 0) - safeInt(b?.pos, 0));
         if (!currentSets.length) {
             const empty = document.createElement('div');
@@ -729,6 +724,54 @@
             parts.push(`${formatNumber(weight)}${weightUnit}`);
         }
         return parts.length ? parts.join(' ') : '—';
+    }
+
+    function syncSidePanelRows() {
+        const { execSets, execSetsLayout, execHistoryPanel, execGoalsPanel } = assertRefs();
+        const panel = state.historySelected ? execHistoryPanel : state.goalsSelected ? execGoalsPanel : null;
+        const resetPanelStyles = (target) => {
+            if (!target) {
+                return;
+            }
+            const header = target.querySelector('.exec-history-header');
+            if (header) {
+                header.style.height = '';
+                header.style.marginTop = '';
+            }
+            const items = target.querySelectorAll('.exec-history-set, .exec-history-empty');
+            items.forEach((item) => {
+                item.style.height = '';
+                item.style.marginTop = '';
+            });
+        };
+        if (!panel || !execSetsLayout) {
+            resetPanelStyles(execHistoryPanel);
+            resetPanelStyles(execGoalsPanel);
+            return;
+        }
+        const headRow = execSetsLayout.querySelector('.routine-set-head');
+        const header = panel.querySelector('.exec-history-header');
+        if (headRow && header) {
+            const headStyles = getComputedStyle(headRow);
+            const headMarginTop = parseFloat(headStyles.marginTop) || 0;
+            const headHeight = headRow.getBoundingClientRect().height;
+            header.style.height = headHeight ? `${headHeight}px` : '';
+            header.style.marginTop = headMarginTop ? `${headMarginTop}px` : '';
+        }
+        const setRows = Array.from(execSets.querySelectorAll('.exec-set-row'));
+        const items = Array.from(panel.querySelectorAll('.exec-history-set, .exec-history-empty'));
+        const firstRow = setRows[0];
+        const rowMarginTop = firstRow ? parseFloat(getComputedStyle(firstRow).marginTop) || 0 : 0;
+        items.forEach((item, index) => {
+            const row = setRows[index];
+            if (row) {
+                const height = row.getBoundingClientRect().height;
+                item.style.height = height ? `${height}px` : '';
+            } else {
+                item.style.height = '';
+            }
+            item.style.marginTop = rowMarginTop ? `${rowMarginTop}px` : '';
+        });
     }
 
     async function addSet() {
