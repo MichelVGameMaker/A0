@@ -281,9 +281,9 @@
         const { exerciseActionName, exerciseActionConvert } = assertRefs();
         const name = state.exercise?.name || '—';
         exerciseActionName.textContent = name;
-        const isImported = state.exercise?.origin === 'import';
+        const isConvertible = isExerciseConvertible(state.exercise);
         if (exerciseActionConvert) {
-            exerciseActionConvert.hidden = !isImported;
+            exerciseActionConvert.hidden = !isConvertible;
         }
     }
 
@@ -326,6 +326,57 @@
         });
         if (applied) {
             await A.openExerciseRead({ currentId: targetExercise.id, callerScreen: state.callerScreen });
+        }
+    }
+
+    function isExerciseConvertible(exercise) {
+        if (!exercise || exercise.origin !== 'import') {
+            return false;
+        }
+        const missingEntries = loadFitHeroMissingEntries();
+        if (!missingEntries.length) {
+            return false;
+        }
+        const slug = typeof exercise.external_exercise_id === 'string'
+            ? exercise.external_exercise_id
+            : null;
+        const entry = missingEntries.find((item) => {
+            if (!item) {
+                return false;
+            }
+            if (slug && item.slug === slug) {
+                return true;
+            }
+            if (exercise.id && item.sourceExerciseId === exercise.id) {
+                return true;
+            }
+            return false;
+        });
+        return Boolean(entry);
+    }
+
+    function loadFitHeroMissingEntries() {
+        const storageKey = A.fitHeroMissingStorageKey || 'fithero_missing_exercises';
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) {
+            return [];
+        }
+        try {
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+            return parsed
+                .map((entry) => {
+                    if (typeof entry === 'string') {
+                        return { slug: entry, exerciseId: null };
+                    }
+                    return entry;
+                })
+                .filter((entry) => entry?.slug || entry?.sourceExerciseId);
+        } catch (error) {
+            console.warn('Slugs FitHero inconnus invalides :', error);
+            return [];
         }
     }
 
