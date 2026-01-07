@@ -32,7 +32,7 @@
 
         setActiveTab('tabSessions');
         showOnly('sessions');
-        A.setTimerVisibility?.({ forcedHidden: false, reason: null });
+        A.setTimerVisibility?.({ forcedHidden: true, reason: 'initial' });
         await A.renderWeek();
         await A.renderSession();
         hideSplash();
@@ -60,7 +60,6 @@
 
         tabSessions?.addEventListener('click', async () => {
             setActiveTab('tabSessions');
-            A.setTimerVisibility?.({ forcedHidden: false, reason: null });
             showOnly('sessions');
             await A.renderWeek();
             await A.renderSession();
@@ -68,7 +67,6 @@
 
         tabStats?.addEventListener('click', async () => {
             setActiveTab('tabStats');
-            A.setTimerVisibility?.({ forcedHidden: false, reason: null });
             await A.openVolume?.();
         });
 
