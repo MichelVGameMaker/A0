@@ -25,6 +25,12 @@
         ['12m', '12 m.'],
         ['1an', '12 m.']
     ]);
+    const STATS_RANGE_KEY_BY_LABEL = new Map([
+        ['1 m.', '1M'],
+        ['3 m.', '3M'],
+        ['6 m.', '6M'],
+        ['12 m.', '12M']
+    ]);
     const DEFAULT_SELECTED_MUSCLES = [
         'biceps',
         'triceps',
@@ -454,7 +460,8 @@
             statsByExercise,
             shouldScaleToWeek,
             weeklyScale,
-            isDayRange ? weeksInRange : null
+            isDayRange ? weeksInRange : null,
+            getStatsRangeKey(selectedRange)
         );
 
         appendExerciseSection(
@@ -464,7 +471,8 @@
             statsByExercise,
             shouldScaleToWeek,
             weeklyScale,
-            isDayRange ? weeksInRange : null
+            isDayRange ? weeksInRange : null,
+            getStatsRangeKey(selectedRange)
         );
     }
 
@@ -515,7 +523,8 @@
         statsByExercise,
         shouldScaleToWeek,
         weeklyScale,
-        weeksInRange
+        weeksInRange,
+        statsRangeKey
     ) {
         const headerRow = document.createElement('tr');
         headerRow.className = 'volume-section-row';
@@ -562,7 +571,10 @@
             const row = document.createElement('tr');
             row.className = 'volume-exercise-row';
             makeRowClickable(row, () => {
-                A.openExerciseStats?.(exercise.id);
+                A.openExerciseStats?.(exercise.id, {
+                    callerScreen: 'screenStatMusclesDetail',
+                    rangeKey: statsRangeKey
+                });
             });
             const nameCell = document.createElement('td');
             nameCell.textContent = exercise.name || '—';
@@ -767,6 +779,11 @@
             return alias;
         }
         return DEFAULT_RANGE_LABEL;
+    }
+
+    function getStatsRangeKey(rangeLabel) {
+        const normalized = getRangeLabel(rangeLabel);
+        return STATS_RANGE_KEY_BY_LABEL.get(normalized) || null;
     }
 
     function getRangeDays(rangeLabel) {

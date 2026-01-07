@@ -114,10 +114,17 @@
         switchScreen('screenStatExercises');
     };
 
-    A.openExerciseStats = async function openExerciseStats(exerciseId) {
+    A.openExerciseStats = async function openExerciseStats(exerciseId, options = {}) {
+        const { callerScreen = 'screenStatExercises', rangeKey } = options || {};
+        if (!exerciseId) {
+            return;
+        }
+        if (rangeKey && RANGE_MAP[rangeKey]) {
+            state.activeRange = rangeKey;
+        }
         ensureRefs();
         highlightStatsTab();
-        await A.openExerciseRead({ currentId: exerciseId, callerScreen: 'screenStatExercises', tab: 'stats' });
+        await A.openExerciseRead({ currentId: exerciseId, callerScreen, tab: 'stats' });
     };
 
     A.invalidateStatsCache = function invalidateStatsCache() {
