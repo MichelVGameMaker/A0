@@ -532,7 +532,7 @@ textarea:focus{
 .exercise-read-tabs{
     --tag-columns: 3;
     position: sticky;
-    top: var(--header-total-h);
+    top: 0;
     z-index: 2;
     background: var(--contentBack);
     padding: 8px 0;
