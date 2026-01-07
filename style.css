@@ -1157,7 +1157,7 @@ textarea:focus{
   gap: var(--gap);
 }
 
-.exec-sets-layout.with-history{
+.exec-sets-layout.with-side-panel{
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: start;
 }
