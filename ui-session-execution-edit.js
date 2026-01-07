@@ -112,7 +112,7 @@
         timer.exerciseKey = timerKey;
         updateTimerUI();
 
-        renderSets();
+        void renderSets();
         switchScreen('screenExecEdit');
     };
 
@@ -142,6 +142,8 @@
         refs.execDelete = document.getElementById('execDelete');
         refs.execAddSet = document.getElementById('execAddSet');
         refs.execSets = document.getElementById('execSets');
+        refs.execSetsLayout = document.getElementById('execSetsLayout');
+        refs.execHistoryPanel = document.getElementById('execHistoryPanel');
         refs.execTimerBar = document.getElementById('execTimerBar');
         refs.timerDisplay = document.getElementById('tmrDisplay');
         refs.timerToggle = document.getElementById('tmrToggle');
@@ -297,6 +299,7 @@
         state.historySelected = Boolean(selected);
         execHistoryToggle.classList.toggle('selected', state.historySelected);
         execHistoryToggle.setAttribute('aria-pressed', state.historySelected ? 'true' : 'false');
+        void renderSets();
     }
 
     function normalizeExerciseSets(exercise) {
@@ -324,12 +327,18 @@
         exercise.sets = normalized;
     }
 
-    function renderSets() {
+    async function renderSets() {
         const exercise = getExercise();
-        const { execSets } = assertRefs();
+        const { execSets, execSetsLayout, execHistoryPanel } = assertRefs();
         ensureInlineEditor()?.close();
         inlineKeyboard?.detach?.();
         execSets.innerHTML = '';
+        if (execSetsLayout) {
+            execSetsLayout.classList.toggle('with-history', state.historySelected);
+        }
+        if (execHistoryPanel) {
+            execHistoryPanel.hidden = !state.historySelected;
+        }
         if (!exercise) {
             return;
         }
@@ -339,11 +348,14 @@
             empty.className = 'empty';
             empty.textContent = 'Aucune série prévue.';
             execSets.appendChild(empty);
-            return;
+        } else {
+            sets.forEach((set, index) => {
+                execSets.appendChild(renderSetRow(set, index, sets.length));
+            });
         }
-        sets.forEach((set, index) => {
-            execSets.appendChild(renderSetRow(set, index, sets.length));
-        });
+        if (state.historySelected) {
+            await renderHistoryPanel(exercise);
+        }
     }
 
     function renderSetRow(set, index, totalSets) {
@@ -569,6 +581,89 @@
         return row;
     }
 
+    async function renderHistoryPanel(exercise) {
+        const { execHistoryPanel } = assertRefs();
+        if (!execHistoryPanel) {
+            return;
+        }
+        const header = execHistoryPanel.querySelector('.exec-history-header');
+        const table = execHistoryPanel.querySelector('.exec-history-table');
+        if (!header || !table) {
+            return;
+        }
+        table.innerHTML = '';
+        const previous = await findPreviousSessionForHistory(exercise?.exercise_id);
+        if (!previous) {
+            header.textContent = 'Aucune séance précédente';
+            const empty = document.createElement('div');
+            empty.className = 'exec-history-empty';
+            empty.textContent = '—';
+            table.appendChild(empty);
+            return;
+        }
+        header.textContent = formatHistoryDate(previous.date);
+        const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
+        const sets = Array.isArray(previous.exercise?.sets) ? [...previous.exercise.sets] : [];
+        sets.sort((a, b) => safeInt(a?.pos, 0) - safeInt(b?.pos, 0));
+        if (!sets.length) {
+            const empty = document.createElement('div');
+            empty.className = 'exec-history-empty';
+            empty.textContent = '—';
+            table.appendChild(empty);
+            return;
+        }
+        sets.forEach((set) => {
+            const item = document.createElement('div');
+            item.className = 'exec-history-set rpe-chip';
+            item.textContent = formatHistorySetLine(set, weightUnit);
+            applyRpeTone(item, set?.rpe);
+            table.appendChild(item);
+        });
+    }
+
+    async function findPreviousSessionForHistory(exerciseId) {
+        const dateKey = state.dateKey;
+        if (!exerciseId || !dateKey) {
+            return null;
+        }
+        const sessions = await db.listSessionDates();
+        const previousDates = sessions
+            .map((entry) => entry.date)
+            .filter((date) => date && date < dateKey)
+            .sort((a, b) => b.localeCompare(a));
+        for (const date of previousDates) {
+            const session = await db.getSession(date);
+            const exercise = Array.isArray(session?.exercises)
+                ? session.exercises.find((item) => item.exercise_id === exerciseId)
+                : null;
+            if (exercise && Array.isArray(exercise.sets) && exercise.sets.length) {
+                return { date, session, exercise };
+            }
+        }
+        return null;
+    }
+
+    function formatHistoryDate(dateValue) {
+        const date = dateValue ? new Date(dateValue) : null;
+        if (!date || Number.isNaN(date.getTime())) {
+            return '—';
+        }
+        return typeof A.fmtUI === 'function' ? A.fmtUI(date) : date.toLocaleDateString('fr-FR');
+    }
+
+    function formatHistorySetLine(set, weightUnit) {
+        const reps = Number.isFinite(set?.reps) ? set.reps : null;
+        const weight = set?.weight != null ? Number(set.weight) : null;
+        const parts = [];
+        if (reps != null) {
+            parts.push(`${reps}x`);
+        }
+        if (weight != null && !Number.isNaN(weight)) {
+            parts.push(`${formatNumber(weight)}${weightUnit}`);
+        }
+        return parts.length ? parts.join(' ') : '—';
+    }
+
     async function addSet() {
         const exercise = getExercise();
         if (!exercise) {
@@ -690,7 +785,7 @@
         }
         await db.saveSession(state.session);
         if (shouldRender) {
-            renderSets();
+            void renderSets();
         }
     }
 

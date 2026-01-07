@@ -1152,6 +1152,52 @@ textarea:focus{
   color: var(--panelBord);
 }
 
+.exec-sets-layout{
+  display: grid;
+  gap: var(--gap);
+}
+
+.exec-sets-layout.with-history{
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.exec-sets-column{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.exec-history-header{
+  text-align: center;
+  font-weight: var(--fw-strong);
+  color: var(--selectedBord);
+}
+
+.exec-history-table{
+  display: grid;
+  gap: 6px;
+}
+
+.exec-history-set{
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: var(--fs-small);
+  font-weight: var(--fw-strong);
+  border: 1px solid var(--panelBord);
+  background: var(--panelBack);
+}
+
+.exec-history-empty{
+  text-align: center;
+  color: var(--selectedBord);
+  font-size: var(--fs-small);
+}
+
 .rpe-chip-muted{
   background: transparent;
   border: 1px solid currentColor;
