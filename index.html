@@ -618,6 +618,12 @@
             </div>
             <p id="prefNewSetSummary" class="details"></p>
         </div>
+        <div class="bloque">
+            <div class="row">
+                <button id="btnPreferencesTimerSize" class="btn full">⏲️ Taille du timer</button>
+            </div>
+            <p id="prefTimerSizeSummary" class="details"></p>
+        </div>
     </main>
 
 </section>
@@ -830,6 +836,33 @@
         </div>
         <div class="modal-footer">
             <button id="prefNewSetSave" class="btn cta full" type="button">ok</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="dlgPreferencesTimerSize" class="modal modal-fixed modal-centered">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Taille du timer</div>
+            <button id="prefTimerSizeCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <label class="lbl">Taille du timer</label>
+                <div class="vstack">
+                    <label class="row" for="prefTimerSizeFull">
+                        <input id="prefTimerSizeFull" class="app-check" type="radio" name="prefTimerSize" value="full" />
+                        <span class="details">Full</span>
+                    </label>
+                    <label class="row" for="prefTimerSizeReduced">
+                        <input id="prefTimerSizeReduced" class="app-check" type="radio" name="prefTimerSize" value="reduced" />
+                        <span class="details">Réduit</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="prefTimerSizeSave" class="btn cta full" type="button">ok</button>
         </div>
     </form>
 </dialog>

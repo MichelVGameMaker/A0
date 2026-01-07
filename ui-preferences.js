@@ -10,6 +10,8 @@
         wireEvents();
         renderRestSummary();
         renderNewSetSummary();
+        renderTimerSizeSummary();
+        applyTimerSizeState();
     });
 
     function ensureRefs() {
@@ -31,6 +33,13 @@
         refs.prefNewSetLastSession = document.getElementById('prefNewSetLastSession');
         refs.prefNewSetSave = document.getElementById('prefNewSetSave');
         refs.prefNewSetCancel = document.getElementById('prefNewSetCancel');
+        refs.btnPreferencesTimerSize = document.getElementById('btnPreferencesTimerSize');
+        refs.prefTimerSizeSummary = document.getElementById('prefTimerSizeSummary');
+        refs.dlgPreferencesTimerSize = document.getElementById('dlgPreferencesTimerSize');
+        refs.prefTimerSizeFull = document.getElementById('prefTimerSizeFull');
+        refs.prefTimerSizeReduced = document.getElementById('prefTimerSizeReduced');
+        refs.prefTimerSizeSave = document.getElementById('prefTimerSizeSave');
+        refs.prefTimerSizeCancel = document.getElementById('prefTimerSizeCancel');
         refsResolved = true;
         return refs;
     }
@@ -44,7 +53,11 @@
             btnPreferencesNewSet,
             dlgPreferencesNewSet,
             prefNewSetSave,
-            prefNewSetCancel
+            prefNewSetCancel,
+            btnPreferencesTimerSize,
+            dlgPreferencesTimerSize,
+            prefTimerSizeSave,
+            prefTimerSizeCancel
         } = ensureRefs();
 
         btnPreferencesRest?.addEventListener('click', () => {
@@ -83,6 +96,26 @@
 
         dlgPreferencesNewSet?.addEventListener('close', () => {
             renderNewSetSummary();
+        });
+
+        btnPreferencesTimerSize?.addEventListener('click', () => {
+            openTimerSizeDialog();
+        });
+
+        prefTimerSizeSave?.addEventListener('click', (event) => {
+            event.preventDefault();
+            saveTimerSizePreferences();
+            dlgPreferencesTimerSize?.close();
+        });
+
+        prefTimerSizeCancel?.addEventListener('click', (event) => {
+            event.preventDefault();
+            dlgPreferencesTimerSize?.close();
+        });
+
+        dlgPreferencesTimerSize?.addEventListener('close', () => {
+            renderTimerSizeSummary();
+            applyTimerSizeState();
         });
     }
 
@@ -159,6 +192,47 @@
         const source = A.preferences?.getNewSetValueSource?.() ?? 'last_set';
         const label = source === 'last_session' ? 'Dernière séance' : 'Dernière série';
         prefNewSetSummary.textContent = label;
+    }
+
+    function openTimerSizeDialog() {
+        const { dlgPreferencesTimerSize, prefTimerSizeFull, prefTimerSizeReduced } = ensureRefs();
+        if (!dlgPreferencesTimerSize || !prefTimerSizeFull || !prefTimerSizeReduced) {
+            return;
+        }
+        const size = A.preferences?.getTimerSize?.() ?? 'full';
+        prefTimerSizeFull.checked = size !== 'reduced';
+        prefTimerSizeReduced.checked = size === 'reduced';
+        if (typeof dlgPreferencesTimerSize.showModal === 'function') {
+            dlgPreferencesTimerSize.showModal();
+        }
+    }
+
+    function saveTimerSizePreferences() {
+        const { prefTimerSizeFull, prefTimerSizeReduced } = ensureRefs();
+        if (!prefTimerSizeFull || !prefTimerSizeReduced) {
+            return;
+        }
+        const next = prefTimerSizeReduced.checked ? 'reduced' : 'full';
+        A.preferences?.setTimerSize?.(next);
+        applyTimerSizeState();
+    }
+
+    function renderTimerSizeSummary() {
+        const { prefTimerSizeSummary } = ensureRefs();
+        if (!prefTimerSizeSummary) {
+            return;
+        }
+        const size = A.preferences?.getTimerSize?.() ?? 'full';
+        prefTimerSizeSummary.textContent = size === 'reduced' ? 'Réduit' : 'Full';
+    }
+
+    function applyTimerSizeState() {
+        const size = A.preferences?.getTimerSize?.() ?? 'full';
+        document.body.classList.toggle('timer-size-full', size !== 'reduced');
+        const execTimerBar = document.getElementById('execTimerBar');
+        if (execTimerBar) {
+            execTimerBar.classList.toggle('exec-timer--full', size !== 'reduced');
+        }
     }
 
     function splitDuration(totalSeconds) {
