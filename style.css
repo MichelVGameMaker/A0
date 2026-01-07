@@ -1158,7 +1158,7 @@ textarea:focus{
 }
 
 .exec-sets-layout.with-side-panel{
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 20%);
   align-items: start;
 }
 
@@ -1176,8 +1176,9 @@ textarea:focus{
 }
 
 .exec-history-table{
-  display: grid;
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .exec-history-set{
