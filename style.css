@@ -17,8 +17,8 @@
   --black:         #000000;  
   --alert:         #f5a623;
   /* --- Styles --- */
-  --bodyBack:      #8b0000;
-  --contentBack:   var(--emphase_white);
+  --bodyBack:      var(--red);
+  --contentBack:   var(--almost_white);
   --panelBack:     var(--white);
   --panelBord:     var(--almost_white);
 
