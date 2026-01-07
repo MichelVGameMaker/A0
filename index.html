@@ -88,6 +88,9 @@
     <main class="content">
         <div class="exec-date-row">
             <div class="details" id="execDate">—</div>
+            <button id="execGoalsToggle" class="tag exec-date-tag" type="button" aria-pressed="false">
+                Objectifs
+            </button>
             <button id="execHistoryToggle" class="tag exec-date-tag" type="button" aria-pressed="false">
                 Historique
             </button>
@@ -108,6 +111,11 @@
 
             <div id="execHistoryPanel" class="exec-sets-column exec-sets-history" hidden>
                 <div class="exec-history-header lbl">—</div>
+                <div class="exec-history-table"></div>
+            </div>
+
+            <div id="execGoalsPanel" class="exec-sets-column exec-sets-history" hidden>
+                <div class="exec-history-header lbl">Objectifs</div>
                 <div class="exec-history-table"></div>
             </div>
         </div>

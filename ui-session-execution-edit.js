@@ -11,7 +11,8 @@
         exerciseId: null,
         callerScreen: 'screenSessions',
         session: null,
-        historySelected: false
+        historySelected: false,
+        goalsSelected: false
     };
     let inlineEditor = null;
     const inlineKeyboard = A.components?.inlineKeyboard || A.components?.createInlineKeyboard?.();
@@ -102,7 +103,7 @@
             execMoveNote.value = exercise.exercise_note || '';
         }
         refreshValueStates();
-        setHistorySelected(false);
+        setSidePanelSelection({ historySelected: false, goalsSelected: false });
 
         const timerKey = `${dateKey}::${currentId}`;
         const timer = ensureSharedTimer();
@@ -158,6 +159,8 @@
         refs.execMoveEditorClose = document.getElementById('execMoveEditorClose');
         refs.execMoveEditorCancel = document.getElementById('execMoveEditorCancel');
         refs.execHistoryToggle = document.getElementById('execHistoryToggle');
+        refs.execGoalsToggle = document.getElementById('execGoalsToggle');
+        refs.execGoalsPanel = document.getElementById('execGoalsPanel');
         refsResolved = true;
         return refs;
     }
@@ -193,7 +196,9 @@
             'execReplaceExercise',
             'execMoveEditorClose',
             'execMoveEditorCancel',
-            'execHistoryToggle'
+            'execHistoryToggle',
+            'execGoalsToggle',
+            'execGoalsPanel'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -216,7 +221,7 @@
     }
 
     function wireActions() {
-        const { execAddSet, execDelete, execReplaceExercise, execHistoryToggle } = assertRefs();
+        const { execAddSet, execDelete, execReplaceExercise, execHistoryToggle, execGoalsToggle } = assertRefs();
         execAddSet.addEventListener('click', () => {
             void addSet();
         });
@@ -227,7 +232,16 @@
             void replaceExercise();
         });
         execHistoryToggle.addEventListener('click', () => {
-            setHistorySelected(!state.historySelected);
+            setSidePanelSelection({
+                historySelected: !state.historySelected,
+                goalsSelected: false
+            });
+        });
+        execGoalsToggle.addEventListener('click', () => {
+            setSidePanelSelection({
+                historySelected: false,
+                goalsSelected: !state.goalsSelected
+            });
         });
     }
 
@@ -294,11 +308,16 @@
         });
     }
 
-    function setHistorySelected(selected) {
-        const { execHistoryToggle } = assertRefs();
-        state.historySelected = Boolean(selected);
+    function setSidePanelSelection(next) {
+        const { execHistoryToggle, execGoalsToggle } = assertRefs();
+        const historySelected = Boolean(next?.historySelected);
+        const goalsSelected = Boolean(next?.goalsSelected);
+        state.historySelected = historySelected;
+        state.goalsSelected = goalsSelected && !historySelected;
         execHistoryToggle.classList.toggle('selected', state.historySelected);
         execHistoryToggle.setAttribute('aria-pressed', state.historySelected ? 'true' : 'false');
+        execGoalsToggle.classList.toggle('selected', state.goalsSelected);
+        execGoalsToggle.setAttribute('aria-pressed', state.goalsSelected ? 'true' : 'false');
         void renderSets();
     }
 
@@ -329,15 +348,18 @@
 
     async function renderSets() {
         const exercise = getExercise();
-        const { execSets, execSetsLayout, execHistoryPanel } = assertRefs();
+        const { execSets, execSetsLayout, execHistoryPanel, execGoalsPanel } = assertRefs();
         ensureInlineEditor()?.close();
         inlineKeyboard?.detach?.();
         execSets.innerHTML = '';
         if (execSetsLayout) {
-            execSetsLayout.classList.toggle('with-history', state.historySelected);
+            execSetsLayout.classList.toggle('with-side-panel', state.historySelected || state.goalsSelected);
         }
         if (execHistoryPanel) {
             execHistoryPanel.hidden = !state.historySelected;
+        }
+        if (execGoalsPanel) {
+            execGoalsPanel.hidden = !state.goalsSelected;
         }
         if (!exercise) {
             return;
@@ -355,6 +377,9 @@
         }
         if (state.historySelected) {
             await renderHistoryPanel(exercise);
+        }
+        if (state.goalsSelected) {
+            await renderGoalsPanel(exercise, sets);
         }
     }
 
@@ -617,6 +642,48 @@
             item.className = 'exec-history-set rpe-chip';
             item.textContent = formatHistorySetLine(set, weightUnit);
             applyRpeTone(item, set?.rpe);
+            table.appendChild(item);
+        });
+    }
+
+    async function renderGoalsPanel(exercise, currentSets = []) {
+        const { execGoalsPanel } = assertRefs();
+        if (!execGoalsPanel) {
+            return;
+        }
+        const header = execGoalsPanel.querySelector('.exec-history-header');
+        const table = execGoalsPanel.querySelector('.exec-history-table');
+        if (!header || !table) {
+            return;
+        }
+        table.innerHTML = '';
+        const previous = await findPreviousSessionForHistory(exercise?.exercise_id);
+        if (!previous) {
+            header.textContent = 'Aucune séance précédente';
+            const empty = document.createElement('div');
+            empty.className = 'exec-history-empty';
+            empty.textContent = '—';
+            table.appendChild(empty);
+            return;
+        }
+        header.textContent = 'Objectifs';
+        const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
+        const previousSets = Array.isArray(previous.exercise?.sets) ? [...previous.exercise.sets] : [];
+        previousSets.sort((a, b) => safeInt(a?.pos, 0) - safeInt(b?.pos, 0));
+        if (!currentSets.length) {
+            const empty = document.createElement('div');
+            empty.className = 'exec-history-empty';
+            empty.textContent = '—';
+            table.appendChild(empty);
+            return;
+        }
+        currentSets.forEach((set, index) => {
+            const targetPos = safeInt(set?.pos, index + 1);
+            const match = previousSets.find((item) => safeInt(item?.pos, 0) === targetPos);
+            const item = document.createElement('div');
+            item.className = 'exec-history-set rpe-chip';
+            item.textContent = match ? formatHistorySetLine(match, weightUnit) : '—';
+            applyRpeTone(item, match?.rpe);
             table.appendChild(item);
         });
     }
