@@ -280,8 +280,7 @@
                 const entry = {
                     date,
                     dateObj,
-                    metrics,
-                    sets
+                    metrics
                 };
                 const key = item?.exercise_id;
                 if (!key) {
@@ -678,45 +677,6 @@
         const base = date instanceof Date ? new Date(date) : A.today();
         base.setMonth(base.getMonth() + delta);
         return base;
-    }
-
-    function getRpeDatasetValue(value) {
-        const numeric = Number.parseFloat(value);
-        if (!Number.isFinite(numeric)) {
-            return null;
-        }
-        const bounded = Math.min(10, Math.max(5, numeric));
-        const rounded = Math.round(bounded * 2) / 2;
-        return String(rounded).replace(/\.0$/, '');
-    }
-
-    function formatSetSynopsis(reps, weight) {
-        const repsDisplay = formatSynopsisReps(reps);
-        const weightDisplay = formatSynopsisWeight(weight);
-        return `${repsDisplay}x ${weightDisplay}`;
-    }
-
-    function formatSynopsisReps(value) {
-        const numeric = Number.parseInt(value, 10);
-        return Number.isFinite(numeric) ? String(numeric) : '—';
-    }
-
-    function formatSynopsisWeight(value) {
-        const numeric = Number.parseFloat(value);
-        if (!Number.isFinite(numeric)) {
-            return '—kg';
-        }
-        return `${formatSynopsisNumber(numeric)}kg`;
-    }
-
-    function formatSynopsisNumber(value) {
-        if (Number.isInteger(value)) {
-            return String(value);
-        }
-        return value
-            .toFixed(2)
-            .replace(/\.0+$/, '')
-            .replace(/(\.\d*?)0+$/, '$1');
     }
 
     function renderMetricTags() {
@@ -1355,8 +1315,9 @@
             return;
         }
         const ordered = filtered.sort((a, b) => b.date.localeCompare(a.date));
+        const weeklySets = state.activeMetric === 'setsWeek' ? computeWeeklySetCounts(filtered) : null;
         ordered.forEach((entry) => {
-            statsTimeline.appendChild(renderTimelineItem(entry));
+            statsTimeline.appendChild(renderTimelineItem(entry, weeklySets));
         });
     }
 
@@ -1367,80 +1328,42 @@
         return empty;
     }
 
-    function renderTimelineItem(entry) {
+    function renderTimelineItem(entry, weeklySets) {
         const item = document.createElement('li');
         item.className = 'stats-timeline-item';
 
-        const structure = listCard.createStructure({ clickable: true, role: 'button' });
-        const { card, start, body, end } = structure;
-        card.tabIndex = 0;
-
-        const handle = listCard.createHandle();
-        start.insertBefore(handle, body);
-
-        const date = document.createElement('div');
-        date.className = 'element';
+        const date = document.createElement('span');
+        date.className = 'stats-timeline-date';
         date.textContent = entry?.dateObj ? A.fmtUI(entry.dateObj) : '—';
 
-        const setsWrapper = document.createElement('div');
-        setsWrapper.className = 'session-card-sets';
-        const sets = Array.isArray(entry?.sets) ? entry.sets : [];
-        const MAX_LINES = 2;
-        const BLOCKS_PER_LINE = 3;
-        const MAX_BLOCKS = MAX_LINES * BLOCKS_PER_LINE;
-        if (sets.length) {
-            const hasOverflow = sets.length > MAX_BLOCKS;
-            const displayedSets = hasOverflow ? sets.slice(0, MAX_BLOCKS - 1) : sets.slice(0, MAX_BLOCKS);
-            const blocks = displayedSets.map((set) => {
-                const block = document.createElement('span');
-                block.className = 'session-card-set';
-                const rpeDatasetValue = getRpeDatasetValue(set.rpe);
-                if (rpeDatasetValue) {
-                    block.dataset.rpe = rpeDatasetValue;
-                }
-                block.textContent = formatSetSynopsis(set.reps, set.weight);
-                return block;
-            });
-            if (hasOverflow) {
-                const ellipsis = document.createElement('span');
-                ellipsis.className = 'session-card-set session-card-set--ellipsis';
-                ellipsis.textContent = '…';
-                ellipsis.setAttribute('title', 'Autres séries');
-                blocks.push(ellipsis);
-            }
-            for (let lineIndex = 0; lineIndex < MAX_LINES; lineIndex += 1) {
-                const startIndex = lineIndex * BLOCKS_PER_LINE;
-                const lineBlocks = blocks.slice(startIndex, startIndex + BLOCKS_PER_LINE);
-                if (!lineBlocks.length) {
-                    break;
-                }
-                const line = document.createElement('div');
-                line.className = 'session-card-sets-row';
-                lineBlocks.forEach((block) => {
-                    line.appendChild(block);
-                });
-                setsWrapper.appendChild(line);
-            }
-        }
+        const middle = document.createElement('span');
+        middle.className = 'stats-timeline-middle';
+        const middleMetric = state.activeMetric === 'setsWeek' ? 'volume' : 'setCount';
+        const middleValue =
+            middleMetric === 'volume' ? entry?.metrics?.volume || 0 : entry?.metrics?.setCount || 0;
+        middle.textContent =
+            middleMetric === 'volume' ? formatVolume(middleValue) : formatSeries(middleValue);
 
-        body.append(date, setsWrapper);
-
-        const chevron = listCard.createIcon('▶︎');
-        end.appendChild(chevron);
+        const value = document.createElement('span');
+        value.className = 'stats-timeline-value';
+        const metricValue = getMetricValue(entry, state.activeMetric, weeklySets);
+        value.textContent = formatMetricValue(metricValue, state.activeMetric);
 
         const goToSession = () => {
             void openSessionFromEntry(entry);
         };
 
-        card.addEventListener('click', goToSession);
-        card.addEventListener('keydown', (event) => {
+        item.setAttribute('role', 'button');
+        item.tabIndex = 0;
+        item.addEventListener('click', goToSession);
+        item.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
                 goToSession();
             }
         });
 
-        item.appendChild(card);
+        item.append(date, middle, value);
         return item;
     }
 
