@@ -76,7 +76,7 @@
   --tabbar-h: calc(var(--tab-h) + 2px);      /* 2px = border-top de .tabbar */
   --header-total-h: calc(var(--header-h) + 2px); /* 2px = border-bottom du header/subheader */
   --inline-keyboard-h: calc(232px + env(safe-area-inset-bottom, 0));
-  --timer-bar-h: var(--inline-keyboard-h);
+  --timer-bar-h: 0px;
 }
 
 
@@ -402,7 +402,7 @@ header .header-left .btn{
     padding: 12px;
     background: var(--panelBack);
     border-top:1px solid var(--panelBord);
-    height: var(--timer-bar-h);
+    height: auto;
 }
 .exec-timer[hidden]{
     display:none;
@@ -418,7 +418,7 @@ header .header-left .btn{
     font-weight: var(--fw-strong);
     min-width:76px;
     text-align:center;
-    font-size: clamp(2.5rem, 10vw, 5rem);
+    font-size: clamp(2.3rem, 9.2vw, 4.6rem);
     line-height:1;
     font-variant-numeric: tabular-nums;
 }
