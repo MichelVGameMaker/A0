@@ -182,6 +182,17 @@ body{
 .tab.active{
     border-top: 3px solid var(--focusedBord);         /* 4.Onglet actif bordure haute noir */
 }
+#tabTimer.tab--countdown{
+    font-size: 20px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+}
+#tabTimer.tab--warning{
+    color: var(--alert);
+}
+#tabTimer.tab--negative{
+    color: var(--red);
+}
 
 /* =========================================================
    3) Header principal (haut)
