@@ -377,6 +377,9 @@ header .header-left .btn{
     border-top:1px solid var(--panelBord);
     height: var(--timer-bar-h);
 }
+.exec-timer[hidden]{
+    display:none;
+}
 .tmr-controls{
     display:grid;
     grid-template-columns: auto minmax(0, 1fr) auto auto;
