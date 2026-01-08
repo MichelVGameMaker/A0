@@ -16,35 +16,30 @@
     A.openSettings = async function openSettings() {
         ensureRefs();
         highlightSettingsTab();
-        hideTimerForSettings();
         switchScreen('screenSettings');
     };
 
     A.openPreferences = function openPreferences() {
         ensureRefs();
         highlightSettingsTab();
-        hideTimerForSettings();
         switchScreen('screenPreferences');
     };
 
     A.openData = function openData() {
         ensureRefs();
         highlightSettingsTab();
-        hideTimerForSettings();
         switchScreen('screenData');
     };
 
     A.openApplication = function openApplication() {
         ensureRefs();
         highlightSettingsTab();
-        hideTimerForSettings();
         switchScreen('screenApplication');
     };
 
     A.openVolume = function openVolume() {
         ensureRefs();
         highlightStatsTab();
-        showTimerForStats();
         A.renderVolumeScreen?.();
         switchScreen('screenStatMuscles');
     };
@@ -120,17 +115,14 @@
 
         btnSettingsExercises?.addEventListener('click', () => {
             highlightSettingsTab();
-            hideTimerForSettings();
             void A.openExercises({ callerScreen: 'screenSettings' });
         });
         btnSettingsRoutines?.addEventListener('click', () => {
             highlightSettingsTab();
-            hideTimerForSettings();
             void A.openRoutineList();
         });
         btnSettingsPlanning?.addEventListener('click', () => {
             highlightSettingsTab();
-            hideTimerForSettings();
             A.openPlanning?.();
         });
         btnSettingsPreferences?.addEventListener('click', () => {
@@ -196,18 +188,6 @@
     function highlightStatsTab() {
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
         document.getElementById('tabStats')?.classList.add('active');
-    }
-
-    function hideTimerForSettings() {
-        if (typeof A.setTimerVisibility === 'function') {
-            A.setTimerVisibility({ forcedHidden: true, reason: 'settings' });
-        }
-    }
-
-    function showTimerForStats() {
-        if (typeof A.setTimerVisibility === 'function') {
-            A.setTimerVisibility({ forcedHidden: false, reason: null });
-        }
     }
 
     async function handleUpdateRefresh() {

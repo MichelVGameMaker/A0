@@ -140,7 +140,6 @@
             state.callerScreen = callerScreen;
         }
         state.fromSettings = derivedFromSettings;
-        applyTimerVisibilityForCaller(state.callerScreen, state.fromSettings);
 
         if (modeProvided) {
             state.listMode = mode === 'add' ? 'add' : 'view';
@@ -280,13 +279,6 @@
         refs.exOkList = document.getElementById('exOkList');
         refsResolved = true;
         return refs;
-    }
-
-    function applyTimerVisibilityForCaller(callerScreen, fromSettings) {
-        const hideForSettings = fromSettings || isSettingsScreen(callerScreen);
-        if (typeof A.setTimerVisibility === 'function') {
-            A.setTimerVisibility({ forcedHidden: hideForSettings, reason: hideForSettings ? 'settings' : null });
-        }
     }
 
     function isSettingsScreen(name) {

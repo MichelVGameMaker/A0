@@ -18,7 +18,6 @@
     A.openAdmin = function openAdmin() {
         ensureRefs();
         highlightSettingsTab();
-        hideTimerForSettings();
         switchScreen('screenAdmin');
     };
 
@@ -72,12 +71,6 @@
         const tabSettings = document.getElementById('tabSettings');
         if (tabSettings) {
             tabSettings.classList.add('active');
-        }
-    }
-
-    function hideTimerForSettings() {
-        if (typeof A.setTimerVisibility === 'function') {
-            A.setTimerVisibility({ forcedHidden: true, reason: 'settings' });
         }
     }
 

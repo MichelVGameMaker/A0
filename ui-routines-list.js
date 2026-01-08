@@ -44,7 +44,6 @@
         state.selection.clear();
         state.callerScreen = callerScreen;
         highlightCallerTab(callerScreen);
-        applyTimerVisibilityForCaller(callerScreen);
         await loadRoutines(true);
         renderList();
         ensureSelectionBar();
@@ -89,22 +88,6 @@
         refs.content = document.querySelector('#screenRoutineList .content');
         refsResolved = true;
         return refs;
-    }
-
-    function applyTimerVisibilityForCaller(callerScreen) {
-        const hideForSettings = isSettingsScreen(callerScreen);
-        if (typeof A.setTimerVisibility === 'function') {
-            A.setTimerVisibility({ forcedHidden: hideForSettings, reason: hideForSettings ? 'settings' : null });
-        }
-    }
-
-    function isSettingsScreen(name) {
-        return (
-            name === 'screenSettings' ||
-            name === 'screenPreferences' ||
-            name === 'screenData' ||
-            name === 'screenPlanning'
-        );
     }
 
     function assertRefs() {
@@ -383,7 +366,6 @@
 
     function returnToCaller() {
         const target = state.callerScreen || 'screenSettings';
-        applyTimerVisibilityForCaller(target);
         highlightCallerTab(target);
         switchScreen(target);
     }

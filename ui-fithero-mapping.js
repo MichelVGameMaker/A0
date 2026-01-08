@@ -18,7 +18,6 @@
     A.openFitHeroMapping = async function openFitHeroMapping() {
         ensureRefs();
         highlightSettingsTab();
-        hideTimerForSettings();
         switchScreen('screenFitHeroMapping');
         await renderMappingList();
     };
@@ -554,12 +553,6 @@
         const tabSettings = document.getElementById('tabSettings');
         if (tabSettings) {
             tabSettings.classList.add('active');
-        }
-    }
-
-    function hideTimerForSettings() {
-        if (typeof A.setTimerVisibility === 'function') {
-            A.setTimerVisibility({ forcedHidden: true, reason: 'settings' });
         }
     }
 

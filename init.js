@@ -32,7 +32,6 @@
 
         setActiveTab('tabSessions');
         showOnly('sessions');
-        A.setTimerVisibility?.({ forcedHidden: true, reason: 'initial' });
         await A.renderWeek();
         await A.renderSession();
         hideSplash();
@@ -76,17 +75,10 @@
         });
 
         tabTimer?.addEventListener('click', () => {
-            const timer = A.execTimer;
-            const baseHidden = !timer?.intervalId && !timer?.running && safeNumber(timer?.startSec) === 0;
-            const forcedHidden = Boolean(A.timerVisibility?.forcedHidden);
-            const forceVisible = Boolean(A.timerVisibility?.forceVisible);
-            const isHidden = (baseHidden && !forceVisible) || forcedHidden;
-            const shouldShow = isHidden;
-            A.setTimerVisibility?.({
-                forcedHidden: !shouldShow,
-                forceVisible: shouldShow,
-                reason: !shouldShow ? 'manual' : null
-            });
+            if (!A.timerVisibility || A.timerVisibility.hidden) {
+                return;
+            }
+            A.setTimerVisibility?.({ hidden: true });
         });
 
         screenSessions?.setAttribute('data-screen', 'sessions');
@@ -260,10 +252,6 @@
         if (screenPlanning) {
             screenPlanning.hidden = which !== 'planning';
         }
-    }
-
-    function safeNumber(value, fallback = 0) {
-        return Number.isFinite(value) ? value : fallback;
     }
 
     async function ensureSeed() {
