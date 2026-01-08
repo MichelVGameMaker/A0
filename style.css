@@ -1134,6 +1134,7 @@ textarea:focus{
   pointer-events: none;
   align-self: center;
   justify-self: end;
+  grid-row: 1;
   transform: translateX(calc(var(--exec-gap) / 2));
   color: inherit;
   font-weight: var(--fw-strong);
