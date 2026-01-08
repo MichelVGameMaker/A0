@@ -45,7 +45,6 @@
         state.routineId = routineId;
         state.callerScreen = callerScreen;
         state.active = true;
-        applyTimerVisibilityForCaller(callerScreen);
         await loadRoutine(true);
         renderRoutine();
         switchScreen('screenRoutineEdit');
@@ -98,13 +97,6 @@
         refs.routineEditEdit = document.getElementById('routineEditEdit');
         refsResolved = true;
         return refs;
-    }
-
-    function applyTimerVisibilityForCaller(callerScreen) {
-        const hideForSettings = isSettingsScreen(callerScreen);
-        if (typeof A.setTimerVisibility === 'function') {
-            A.setTimerVisibility({ forcedHidden: hideForSettings, reason: hideForSettings ? 'settings' : null });
-        }
     }
 
     function isSettingsScreen(name) {

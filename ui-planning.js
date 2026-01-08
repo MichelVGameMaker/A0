@@ -23,7 +23,6 @@
     A.openPlanning = async function openPlanning() {
         ensureRefs();
         highlightSettingsTab();
-        hideTimerForSettings();
         await renderPlanning();
         switchScreen('screenPlanning');
     };
@@ -276,12 +275,6 @@
     function highlightSettingsTab() {
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
         refs.tabSettings?.classList.add('active');
-    }
-
-    function hideTimerForSettings() {
-        if (typeof A.setTimerVisibility === 'function') {
-            A.setTimerVisibility({ forcedHidden: true, reason: 'settings' });
-        }
     }
 
     function switchScreen(target) {

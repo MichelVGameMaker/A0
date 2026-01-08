@@ -25,13 +25,11 @@
         startSec: 0,
         remainSec: 0,
         intervalId: null,
-        exerciseKey: null
+        attachment: null
     });
 
     const defaultTimerVisibility = () => ({
-        forcedHidden: true,
-        forceVisible: false,
-        reason: null
+        hidden: true
     });
 
     let execTimer = A.execTimer;
@@ -42,16 +40,14 @@
         execTimer.startSec = safeInt(execTimer.startSec, 0);
         execTimer.remainSec = safeInt(execTimer.remainSec, 0);
         execTimer.intervalId = execTimer.intervalId ?? null;
-        execTimer.exerciseKey = execTimer.exerciseKey ?? null;
+        execTimer.attachment = execTimer.attachment ?? null;
     }
     A.execTimer = execTimer;
     let timerVisibility = A.timerVisibility;
     if (!timerVisibility) {
         timerVisibility = defaultTimerVisibility();
     } else {
-        timerVisibility.forcedHidden = Boolean(timerVisibility.forcedHidden);
-        timerVisibility.forceVisible = Boolean(timerVisibility.forceVisible);
-        timerVisibility.reason = timerVisibility.reason || null;
+        timerVisibility.hidden = Boolean(timerVisibility.hidden);
     }
     A.timerVisibility = timerVisibility;
 
@@ -105,12 +101,6 @@
         refreshValueStates();
         setSidePanelSelection({ historySelected: false, goalsSelected: false });
 
-        const timerKey = `${dateKey}::${currentId}`;
-        const timer = ensureSharedTimer();
-        if (timer.exerciseKey && timer.exerciseKey !== timerKey) {
-            resetTimerState();
-        }
-        timer.exerciseKey = timerKey;
         updateTimerUI();
 
         void renderSets();
@@ -146,11 +136,13 @@
         refs.execSetsLayout = document.getElementById('execSetsLayout');
         refs.execHistoryPanel = document.getElementById('execHistoryPanel');
         refs.execTimerBar = document.getElementById('execTimerBar');
+        refs.timerDetails = document.getElementById('tmrDetails');
         refs.timerDisplay = document.getElementById('tmrDisplay');
         refs.timerToggle = document.getElementById('tmrToggle');
         refs.timerMinus = document.getElementById('tmrMinus');
         refs.timerPlus = document.getElementById('tmrPlus');
         refs.timerReset = document.getElementById('tmrReset');
+        refs.timerReduce = document.getElementById('tmrReduce');
         refs.tabTimer = document.getElementById('tabTimer');
         refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
         refs.execRoutineInstructions = document.getElementById('execRoutineInstructions');
@@ -185,11 +177,13 @@
             'execAddSet',
             'execSets',
             'execTimerBar',
+            'timerDetails',
             'timerDisplay',
             'timerToggle',
             'timerMinus',
             'timerPlus',
             'timerReset',
+            'timerReduce',
             'dlgExecMoveEditor',
             'execRoutineInstructions',
             'execMoveNote',
@@ -288,7 +282,7 @@
     }
 
     function wireTimerControls() {
-        const { execTimerBar, timerToggle, timerMinus, timerPlus, timerReset } = assertRefs();
+        const { execTimerBar, timerToggle, timerMinus, timerPlus, timerReset, timerReduce } = assertRefs();
         timerToggle.addEventListener('click', () => {
             const timer = ensureSharedTimer();
             if (timer.running) {
@@ -305,6 +299,9 @@
         });
         timerReset.addEventListener('click', () => {
             resetTimerToDefault();
+        });
+        timerReduce.addEventListener('click', () => {
+            setTimerVisibility({ hidden: true });
         });
     }
 
@@ -486,7 +483,7 @@
                         { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest },
                         { done: true }
                     );
-                    startTimer(value.rest);
+                    startTimer(value.rest, { setId: set.id, setIndex: currentIndex });
                 }
             }
         ];
@@ -525,7 +522,7 @@
                     const markDone = actionId === 'save';
                     await applySetEditorResult(currentIndex, sanitized, { done: markDone });
                     if (markDone) {
-                        startTimer(sanitized.rest);
+                        startTimer(sanitized.rest, { setId: set.id, setIndex: currentIndex });
                     }
                 },
                 onDelete: () => removeSet(currentIndex),
@@ -1012,8 +1009,9 @@
         const { execTitle } = assertRefs();
         execTitle.textContent = nextName || 'Exercice';
         const timer = ensureSharedTimer();
-        timer.exerciseKey = `${state.dateKey}::${nextId}`;
-        resetTimerState();
+        if (timer.attachment?.exerciseId === state.exerciseId) {
+            resetTimerState();
+        }
         await persistSession(false);
         await refreshSessionViews();
     }
@@ -1341,39 +1339,104 @@
         return A.execTimer;
     }
 
+    function buildTimerAttachment(options = {}) {
+        const exercise = options.exercise || getExercise();
+        if (!exercise || !Array.isArray(exercise.sets)) {
+            return null;
+        }
+        const set = resolveAttachmentSet(exercise, options);
+        if (!set) {
+            return null;
+        }
+        return {
+            dateKey: state.dateKey,
+            exerciseId: exercise.exercise_id,
+            exerciseName: exercise.exercise_name || exercise.exercise_id || 'Exercice',
+            setId: set.id ?? null,
+            setPos: safeInt(set.pos, null),
+            reps: safePositiveInt(set.reps),
+            weight: sanitizeWeight(set.weight)
+        };
+    }
+
+    function resolveAttachmentSet(exercise, options = {}) {
+        if (!exercise || !Array.isArray(exercise.sets)) {
+            return null;
+        }
+        if (options?.setId) {
+            return findSetById(exercise.sets, options.setId);
+        }
+        if (Number.isInteger(options?.setIndex)) {
+            return exercise.sets[options.setIndex] ?? null;
+        }
+        return null;
+    }
+
+    function formatTimerAttachment(attachment) {
+        if (!attachment?.exerciseName || !attachment?.setPos) {
+            return '';
+        }
+        const reps = safePositiveInt(attachment.reps);
+        const weight = attachment.weight;
+        const weightLabel = weight != null ? ` ${formatNumber(weight)}kg` : '';
+        return `${attachment.exerciseName} #${attachment.setPos} ${reps}x${weightLabel}`;
+    }
+
+    async function applyAttachmentRestDelta(delta) {
+        const timer = ensureSharedTimer();
+        const attachment = timer.attachment;
+        if (!attachment?.dateKey || !attachment?.exerciseId || !attachment?.setId) {
+            return;
+        }
+        const session =
+            attachment.dateKey === state.dateKey && state.session ? state.session : await db.getSession(attachment.dateKey);
+        if (!session) {
+            return;
+        }
+        const exercise = Array.isArray(session.exercises)
+            ? session.exercises.find((item) => item.exercise_id === attachment.exerciseId)
+            : null;
+        if (!exercise || !Array.isArray(exercise.sets)) {
+            return;
+        }
+        const set = findSetById(exercise.sets, attachment.setId);
+        if (!set) {
+            return;
+        }
+        set.rest = Math.max(0, safeInt(set.rest, 0) + delta);
+        updateLastRestDuration(set.rest);
+        if (session === state.session) {
+            await persistSession();
+        } else {
+            await db.saveSession(session);
+        }
+    }
+
     function setTimerVisibility(options = {}) {
         if (!timerVisibility) {
             return;
         }
-        const forcedHidden = options?.forcedHidden != null ? Boolean(options.forcedHidden) : timerVisibility.forcedHidden;
-        timerVisibility.forcedHidden = forcedHidden;
-        if (options?.forceVisible != null) {
-            timerVisibility.forceVisible = Boolean(options.forceVisible);
-        }
-        timerVisibility.reason = forcedHidden ? options.reason || null : null;
+        timerVisibility.hidden = options?.hidden != null ? Boolean(options.hidden) : timerVisibility.hidden;
         updateTimerUI();
     }
     A.setTimerVisibility = setTimerVisibility;
 
-    function isTimerForcedHidden() {
-        return Boolean(timerVisibility?.forcedHidden);
+    function isTimerHidden() {
+        return Boolean(timerVisibility?.hidden);
     }
 
     function resetTimerState() {
         const timer = ensureSharedTimer();
-        const currentExerciseKey = timer.exerciseKey;
         stopTimer();
-        Object.assign(timer, defaultTimerState(), { exerciseKey: currentExerciseKey });
+        Object.assign(timer, defaultTimerState());
         updateTimerUI();
     }
 
     function resetTimerToDefault() {
         const timer = ensureSharedTimer();
-        const currentExerciseKey = timer.exerciseKey;
         stopTimer();
         const defaultRest = getDefaultRest();
         Object.assign(timer, defaultTimerState(), {
-            exerciseKey: currentExerciseKey,
             startSec: defaultRest,
             remainSec: defaultRest
         });
@@ -1381,7 +1444,7 @@
     }
     A.resetTimerToDefault = resetTimerToDefault;
 
-    function startTimer(duration) {
+    function startTimer(duration, options = {}) {
         const timer = ensureSharedTimer();
         const seconds = Math.max(0, safeInt(duration, getDefaultRest()));
         if (timer.intervalId) {
@@ -1391,7 +1454,8 @@
         timer.remainSec = seconds;
         timer.running = true;
         timer.intervalId = window.setInterval(runTick, 1000);
-        setTimerVisibility({ forcedHidden: false, forceVisible: true, reason: null });
+        timer.attachment = buildTimerAttachment(options);
+        setTimerVisibility({ hidden: false });
         updateTimerUI();
     }
 
@@ -1439,56 +1503,49 @@
         const timer = ensureSharedTimer();
         timer.startSec += delta;
         timer.remainSec += delta;
-        const exercise = getExercise();
-        if (exercise && Array.isArray(exercise.sets) && exercise.sets.length) {
-            const last = exercise.sets[exercise.sets.length - 1];
-            last.rest = Math.max(0, safeInt(last.rest, 0) + delta);
-            updateLastRestDuration(last.rest);
-            await persistSession();
-        }
+        await applyAttachmentRestDelta(delta);
         updateTimerUI();
     }
 
     function updateTimerUI() {
         const timer = ensureSharedTimer();
-        const { execTimerBar, timerDisplay, timerToggle } = assertRefs();
+        const { execTimerBar, timerDetails, timerDisplay, timerToggle } = assertRefs();
         const { tabTimer } = refs;
         if (!execTimerBar) {
             return;
         }
         ensureTimerPlacement(execTimerBar);
-        const baseHidden = !timer.intervalId && !timer.running && timer.startSec === 0;
-        const forceVisible = Boolean(timerVisibility?.forceVisible);
-        const shouldHide = (baseHidden && !forceVisible) || isTimerForcedHidden();
+        const shouldHide = isTimerHidden();
         execTimerBar.hidden = shouldHide;
-        updateTabTimerDisplay(tabTimer, timer, baseHidden, shouldHide);
+        updateTabTimerDisplay(tabTimer, timer, shouldHide);
         if (shouldHide) {
             timerDisplay.classList.remove('tmr-display--warning', 'tmr-display--negative');
             return;
         }
+        const detailText = formatTimerAttachment(timer.attachment);
+        timerDetails.textContent = detailText;
+        timerDetails.hidden = !detailText;
         const remaining = timer.remainSec;
         const sign = remaining < 0 ? '-' : '';
         const abs = Math.abs(remaining);
         const minutes = Math.floor(abs / 60);
         const seconds = abs % 60;
-        const isNegative = remaining < 0;
-        const isWarning = !isNegative && remaining <= 10;
+        const isNegative = remaining <= 0;
+        const isWarning = remaining > 0 && remaining <= 10;
         timerDisplay.classList.toggle('tmr-display--warning', isWarning);
         timerDisplay.classList.toggle('tmr-display--negative', isNegative);
         timerDisplay.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
         timerToggle.textContent = timer.running ? '⏸' : '▶︎';
     }
 
-    function updateTabTimerDisplay(tabTimer, timer, baseHidden, shouldHide) {
+    function updateTabTimerDisplay(tabTimer, timer, shouldHide) {
         if (!tabTimer) {
             return;
         }
         tabTimer.setAttribute('aria-pressed', String(!shouldHide));
         tabTimer.classList.toggle('is-on', !shouldHide);
-
-        const showCountdown = !timer.running && !baseHidden && !isTimerForcedHidden();
-        tabTimer.classList.toggle('tab--countdown', showCountdown);
-        if (!showCountdown) {
+        tabTimer.classList.toggle('tab--countdown', shouldHide);
+        if (!shouldHide) {
             tabTimer.classList.remove('tab--warning', 'tab--negative');
             tabTimer.textContent = '⏱️';
             return;
@@ -1499,8 +1556,8 @@
         const abs = Math.abs(remaining);
         const minutes = Math.floor(abs / 60);
         const seconds = abs % 60;
-        const isNegative = remaining < 0;
-        const isWarning = !isNegative && remaining <= 10;
+        const isNegative = remaining <= 0;
+        const isWarning = remaining > 0 && remaining <= 10;
         tabTimer.classList.toggle('tab--warning', isWarning);
         tabTimer.classList.toggle('tab--negative', isNegative);
         tabTimer.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
@@ -1512,6 +1569,13 @@
             return;
         }
         target.appendChild(execTimerBar);
+    }
+
+    function findSetById(sets, setId) {
+        if (!Array.isArray(sets) || !setId) {
+            return null;
+        }
+        return sets.find((set) => set.id === setId) || null;
     }
 
     function safeInt(value, fallback = 0) {

@@ -7,8 +7,7 @@
         restDefaultEnabled: true,
         restDefaultDuration: 80,
         lastRestDuration: 80,
-        newSetValueSource: 'last_set',
-        timerSize: 'full'
+        newSetValueSource: 'last_set'
     };
     let cache = null;
 
@@ -38,7 +37,6 @@
         cache.restDefaultDuration = sanitizeDuration(cache.restDefaultDuration);
         cache.lastRestDuration = sanitizeDuration(cache.lastRestDuration, cache.restDefaultDuration);
         cache.newSetValueSource = normalizeNewSetValueSource(cache.newSetValueSource);
-        cache.timerSize = normalizeTimerSize(cache.timerSize);
         return cache;
     }
 
@@ -125,18 +123,6 @@
         return data.newSetValueSource;
     };
 
-    preferences.getTimerSize = function getTimerSize() {
-        const data = ensureLoaded();
-        return normalizeTimerSize(data.timerSize);
-    };
-
-    preferences.setTimerSize = function setTimerSize(value) {
-        const data = ensureLoaded();
-        data.timerSize = normalizeTimerSize(value);
-        persist();
-        return data.timerSize;
-    };
-
     preferences.getDefaultTimerDuration = function getDefaultTimerDuration() {
         return preferences.getRestDefaultDuration();
     };
@@ -152,10 +138,6 @@
 
     function normalizeNewSetValueSource(value) {
         return value === 'last_session' ? 'last_session' : 'last_set';
-    }
-
-    function normalizeTimerSize(value) {
-        return value === 'reduced' ? 'reduced' : 'full';
     }
 
     existing.preferences = preferences;
