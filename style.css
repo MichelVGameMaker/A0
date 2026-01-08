@@ -1128,7 +1128,7 @@ textarea:focus{
   text-align:center; align-items:center;
 }
 .exec-grid.routine-set-grid{
-  grid-template-columns: minmax(32px, 0.4fr) 1fr 1fr .8fr .8fr .8fr; /* # | Reps | Poids | RPE | Repos mn | Repos sec */
+  grid-template-columns: minmax(32px, 0.4fr) 1fr minmax(16px, 0.2fr) 1fr .8fr .8fr minmax(16px, 0.2fr) .8fr; /* # | Reps | x | Poids | RPE | Repos mn | : | Repos sec */
 }
 .routine-set-grid > *{ min-width:0; }
 .exec-head{ font-weight: var(--fw-strong); }
@@ -1136,6 +1136,21 @@ textarea:focus{
 .routine-set-head{
   font-size: var(--fs-small);
   color: var(--selectedBord);
+}
+.routine-set-head .lbl:nth-child(1){
+  grid-column: 1;
+}
+.routine-set-head .lbl:nth-child(2){
+  grid-column: 2;
+}
+.routine-set-head .lbl:nth-child(3){
+  grid-column: 4;
+}
+.routine-set-head .lbl:nth-child(4){
+  grid-column: 5;
+}
+.routine-set-head .lbl:nth-child(5){
+  grid-column: 6 / span 3;
 }
 .routine-set-head .set-editor-label{
   font-weight: var(--fw-strong);
@@ -1162,19 +1177,19 @@ textarea:focus{
 }
 
 .exec-row .exec-weight-cell{
-  grid-column: 3;
-}
-
-.exec-row .exec-rpe-cell{
   grid-column: 4;
 }
 
-.exec-row .exec-rest-minutes{
+.exec-row .exec-rpe-cell{
   grid-column: 5;
 }
 
-.exec-row .exec-rest-seconds{
+.exec-row .exec-rest-minutes{
   grid-column: 6;
+}
+
+.exec-row .exec-rest-seconds{
+  grid-column: 8;
 }
 
 .exec-joiner{
@@ -1197,11 +1212,11 @@ textarea:focus{
 }
 
 .exec-joiner-reps{
-  grid-column: 2;
+  grid-column: 3;
 }
 
 .exec-joiner-rest{
-  grid-column: 5;
+  grid-column: 7;
 }
 
 
@@ -1239,6 +1254,25 @@ textarea:focus{
 }
 .routine-set-grid .set-edit-input{
   color: var(--black);
+}
+
+.inline-set-editor-row > :nth-child(1){
+  grid-column: 1;
+}
+.inline-set-editor-row > :nth-child(2){
+  grid-column: 2;
+}
+.inline-set-editor-row > :nth-child(3){
+  grid-column: 4;
+}
+.inline-set-editor-row > :nth-child(4){
+  grid-column: 5;
+}
+.inline-set-editor-row > :nth-child(5){
+  grid-column: 6;
+}
+.inline-set-editor-row > :nth-child(6){
+  grid-column: 8;
 }
 
 .exec-set-row{
