@@ -142,7 +142,6 @@
         refs.timerMinus = document.getElementById('tmrMinus');
         refs.timerPlus = document.getElementById('tmrPlus');
         refs.timerReset = document.getElementById('tmrReset');
-        refs.timerReduce = document.getElementById('tmrReduce');
         refs.tabTimer = document.getElementById('tabTimer');
         refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
         refs.execRoutineInstructions = document.getElementById('execRoutineInstructions');
@@ -183,7 +182,6 @@
             'timerMinus',
             'timerPlus',
             'timerReset',
-            'timerReduce',
             'dlgExecMoveEditor',
             'execRoutineInstructions',
             'execMoveNote',
@@ -282,7 +280,7 @@
     }
 
     function wireTimerControls() {
-        const { execTimerBar, timerToggle, timerMinus, timerPlus, timerReset, timerReduce } = assertRefs();
+        const { execTimerBar, timerToggle, timerMinus, timerPlus, timerReset } = assertRefs();
         timerToggle.addEventListener('click', () => {
             const timer = ensureSharedTimer();
             if (timer.running) {
@@ -299,9 +297,6 @@
         });
         timerReset.addEventListener('click', () => {
             resetTimerToDefault();
-        });
-        timerReduce.addEventListener('click', () => {
-            setTimerVisibility({ hidden: true });
         });
     }
 
@@ -1545,9 +1540,10 @@
         tabTimer.setAttribute('aria-pressed', String(!shouldHide));
         tabTimer.classList.toggle('is-on', !shouldHide);
         tabTimer.classList.toggle('tab--countdown', shouldHide);
+        tabTimer.classList.toggle('tab--collapse', !shouldHide);
         if (!shouldHide) {
             tabTimer.classList.remove('tab--warning', 'tab--negative');
-            tabTimer.textContent = '⏱️';
+            tabTimer.textContent = '⏱';
             return;
         }
 
@@ -1560,7 +1556,9 @@
         const isWarning = remaining > 0 && remaining <= 10;
         tabTimer.classList.toggle('tab--warning', isWarning);
         tabTimer.classList.toggle('tab--negative', isNegative);
-        tabTimer.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
+        tabTimer.innerHTML = `<span class="tab-timer-arrow">▲</span><span class="tab-timer-time">${sign}${minutes}:${String(
+            seconds
+        ).padStart(2, '0')}</span>`;
     }
 
     function ensureTimerPlacement(execTimerBar) {
