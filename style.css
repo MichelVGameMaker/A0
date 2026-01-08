@@ -1179,13 +1179,17 @@ textarea:focus{
 
 .exec-joiner{
   pointer-events: none;
-  align-self: center;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   justify-self: end;
   grid-row: 1;
   transform: translateX(calc(var(--exec-gap) / 2));
   color: inherit;
   font-weight: var(--fw-strong);
   line-height: 1;
+  height: var(--control-h);
 }
 
 .exec-joiner[data-rpe]{
