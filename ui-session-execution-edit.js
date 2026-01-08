@@ -1461,10 +1461,7 @@
         const forceVisible = Boolean(timerVisibility?.forceVisible);
         const shouldHide = (baseHidden && !forceVisible) || isTimerForcedHidden();
         execTimerBar.hidden = shouldHide;
-        if (tabTimer) {
-            tabTimer.setAttribute('aria-pressed', String(!shouldHide));
-            tabTimer.classList.toggle('is-on', !shouldHide);
-        }
+        updateTabTimerDisplay(tabTimer, timer, baseHidden, shouldHide);
         if (shouldHide) {
             timerDisplay.classList.remove('tmr-display--warning', 'tmr-display--negative');
             return;
@@ -1480,6 +1477,33 @@
         timerDisplay.classList.toggle('tmr-display--negative', isNegative);
         timerDisplay.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
         timerToggle.textContent = timer.running ? '⏸' : '▶︎';
+    }
+
+    function updateTabTimerDisplay(tabTimer, timer, baseHidden, shouldHide) {
+        if (!tabTimer) {
+            return;
+        }
+        tabTimer.setAttribute('aria-pressed', String(!shouldHide));
+        tabTimer.classList.toggle('is-on', !shouldHide);
+
+        const showCountdown = !timer.running && !baseHidden && !isTimerForcedHidden();
+        tabTimer.classList.toggle('tab--countdown', showCountdown);
+        if (!showCountdown) {
+            tabTimer.classList.remove('tab--warning', 'tab--negative');
+            tabTimer.textContent = '⏱️';
+            return;
+        }
+
+        const remaining = timer.remainSec;
+        const sign = remaining < 0 ? '-' : '';
+        const abs = Math.abs(remaining);
+        const minutes = Math.floor(abs / 60);
+        const seconds = abs % 60;
+        const isNegative = remaining < 0;
+        const isWarning = !isNegative && remaining <= 10;
+        tabTimer.classList.toggle('tab--warning', isWarning);
+        tabTimer.classList.toggle('tab--negative', isNegative);
+        tabTimer.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
     }
 
     function ensureTimerPlacement(execTimerBar) {
