@@ -1512,6 +1512,7 @@
         ensureTimerPlacement(execTimerBar);
         const shouldHide = isTimerHidden();
         execTimerBar.hidden = shouldHide;
+        syncTimerBarSpacer(execTimerBar, shouldHide);
         updateTabTimerDisplay(tabTimer, timer, shouldHide);
         if (shouldHide) {
             timerDisplay.classList.remove('tmr-display--warning', 'tmr-display--negative');
@@ -1531,6 +1532,7 @@
         timerDisplay.classList.toggle('tmr-display--negative', isNegative);
         timerDisplay.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
         timerToggle.textContent = timer.running ? '⏸' : '▶︎';
+        syncTimerBarSpacer(execTimerBar, false);
     }
 
     function updateTabTimerDisplay(tabTimer, timer, shouldHide) {
@@ -1567,6 +1569,20 @@
             return;
         }
         target.appendChild(execTimerBar);
+    }
+
+    function syncTimerBarSpacer(execTimerBar, shouldHide) {
+        const root = document.documentElement;
+        if (shouldHide) {
+            root.style.setProperty('--timer-bar-h', '0px');
+            return;
+        }
+        requestAnimationFrame(() => {
+            const height = execTimerBar.offsetHeight;
+            if (height) {
+                root.style.setProperty('--timer-bar-h', `${height}px`);
+            }
+        });
     }
 
     function findSetById(sets, setId) {
