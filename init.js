@@ -78,7 +78,8 @@
             if (!A.timerVisibility) {
                 return;
             }
-            A.setTimerVisibility?.({ hidden: false });
+            const nextHidden = !A.timerVisibility.hidden;
+            A.setTimerVisibility?.({ hidden: nextHidden });
         });
 
         screenSessions?.setAttribute('data-screen', 'sessions');
