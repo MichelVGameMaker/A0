@@ -528,11 +528,11 @@
             const label = imported > 1 ? 'séances' : 'séance';
             const uniqueExercises = mappingStats.unique?.size ?? 0;
             const exerciseLabel = uniqueExercises > 1 ? 'exercices' : 'exercice';
-            const summaryMessage = `${imported} ${label} et ${uniqueExercises} ${exerciseLabel} :\n\n`
-                + `Exercices trouvés dans la bibliothèque native : ${mappingStats.native}\n\n`
-                + `Exercices trouvés dans le mapping FitHero : ${mappingStats.mapping}\n\n`
-                + `Exercices trouvés dans les exercices créés par l’utilisateur : ${mappingStats.user}\n\n`
-                + `Exercices non trouvés et créés : ${mappingStats.created}`;
+            const summaryMessage = `${imported} ${label} et ${uniqueExercises} ${exerciseLabel} :\n`
+                + `- ${mappingStats.native} trouvé/s dans la liste native\n`
+                + `- ${mappingStats.mapping} trouvé/s dans le mapping\n`
+                + `- ${mappingStats.user} trouvé/s dans les créations\n`
+                + `- ${mappingStats.created} non trouvés`;
             if (A.components?.confirmDialog?.alert) {
                 await A.components.confirmDialog.alert({
                     title: 'Import FitHero terminé',
