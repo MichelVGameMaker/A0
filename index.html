@@ -607,16 +607,34 @@
 
     <main class="content">
         <div class="bloque">
-            <div class="row">
-                <button id="btnPreferencesRest" class="btn full">⏱️ Durée de repos</button>
-            </div>
-            <p id="prefRestSummary" class="details"></p>
+            <button id="btnPreferencesRest" class="list-card clickable full" type="button">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">⏱️ Durée de repos</div>
+                            <div id="prefRestSummary" class="details"></div>
+                        </div>
+                    </div>
+                    <div class="list-card__end">
+                        <span class="list-card__icon" aria-hidden="true">›</span>
+                    </div>
+                </div>
+            </button>
         </div>
         <div class="bloque">
-            <div class="row">
-                <button id="btnPreferencesNewSet" class="btn full">🧮 Valeur pour nouvelle série</button>
-            </div>
-            <p id="prefNewSetSummary" class="details"></p>
+            <button id="btnPreferencesNewSet" class="list-card clickable full" type="button">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">🧮 Valeurs pour une nouvelle série</div>
+                            <div id="prefNewSetSummary" class="details"></div>
+                        </div>
+                    </div>
+                    <div class="list-card__end">
+                        <span class="list-card__icon" aria-hidden="true">›</span>
+                    </div>
+                </div>
+            </button>
         </div>
     </main>
 
@@ -639,26 +657,78 @@
 
     <main class="content">
         <div class="bloque">
-            <button id="btnDataExportSessions" class="btn full" type="button">Sauvegarder séances</button>
-            <p class="details">Génère un fichier JSON des séances enregistrées.</p>
+            <button id="btnDataExportSessions" class="list-card clickable full" type="button">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">Sauvegarder séances</div>
+                            <div class="details">Génère un fichier des séances enregistrées.</div>
+                        </div>
+                    </div>
+                    <div class="list-card__end">
+                        <span class="list-card__icon" aria-hidden="true">›</span>
+                    </div>
+                </div>
+            </button>
         </div>
         <div class="bloque">
-            <button id="btnDataImportSessions" class="btn full" type="button">Charger séances</button>
+            <button id="btnDataImportSessions" class="list-card clickable full" type="button">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">Charger séances</div>
+                            <div class="details">Charge les séances depuis un fichier.</div>
+                        </div>
+                    </div>
+                    <div class="list-card__end">
+                        <span class="list-card__icon" aria-hidden="true">›</span>
+                    </div>
+                </div>
+            </button>
             <input id="inputDataImportSessions" type="file" accept="application/json,.json" hidden>
-            <p class="details">Remplace toutes les séances par celles du fichier JSON.</p>
         </div>
         <div class="bloque">
-            <button id="btnDataImportFitHero" class="btn full" type="button">Charger séances depuis FitHero</button>
+            <button id="btnDataImportFitHero" class="list-card clickable full" type="button">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">Charger séances depuis FitHero</div>
+                            <div class="details">Charge les séances depuis un fichier FitHero.</div>
+                        </div>
+                    </div>
+                    <div class="list-card__end">
+                        <span class="list-card__icon" aria-hidden="true">›</span>
+                    </div>
+                </div>
+            </button>
             <input id="inputDataImportFitHero" type="file" accept="application/json,.json" hidden>
-            <p class="details">Remplace toutes les séances enregistrées par celles du fichier JSON, au format FitHero.</p>
         </div>
         <div class="bloque">
-            <button id="btnDataFitHeroMapping" class="btn full" type="button">Gérer mapping FitHero</button>
-            <p class="details">Gère les associations des exercices FitHero inconnus vers ceux de votre bibliothèque.</p>
+            <button id="btnDataFitHeroMapping" class="list-card full" type="button">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">Gérer le mapping FitHero</div>
+                            <div class="details">Gérer les conversions d'exercices FitHero vers ceux de votre bibliothèque.</div>
+                        </div>
+                    </div>
+                </div>
+            </button>
         </div>
         <div class="bloque">
-            <button id="btnDataReloadExercises" class="btn full" type="button">Charger bibliothèque d’exercices</button>
-            <p class="details">Relance le chargement de la Bibliothèque d'exercices depuis internet.</p>
+            <button id="btnDataReloadExercises" class="list-card clickable full" type="button">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">Synchroniser la bibliothèque d'exercices</div>
+                            <div class="details">Mettre à jour la bibliothèque d'exercices depuis Internet.</div>
+                        </div>
+                    </div>
+                    <div class="list-card__end">
+                        <span class="list-card__icon" aria-hidden="true">›</span>
+                    </div>
+                </div>
+            </button>
         </div>
     </main>
 
