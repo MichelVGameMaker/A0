@@ -434,6 +434,8 @@
         const syncRowTone = () => {
             applyRpeTone(repsInput, value.rpe);
             applyRpeTone(weightInput, value.rpe);
+            applyRpeTone(repsJoiner, value.rpe);
+            applyRpeTone(restJoiner, value.rpe);
         };
 
         const updatePreview = (source) => {
@@ -616,20 +618,26 @@
             return input;
         };
 
-        const repsInput = createInput(() => formatRepsDisplay(value.reps), 'reps');
+        const repsInput = createInput(() => formatRepsDisplay(value.reps), 'reps', 'exec-reps-cell');
         const weightInput = createInput(
             () => (value.weight == null ? '' : formatNumber(value.weight)),
             'weight',
-            '',
+            'exec-weight-cell',
             { inputMode: 'decimal', type: 'text' }
         );
         const rpeInput = createInput(() => (value.rpe == null ? '' : String(value.rpe)), 'rpe');
-        const restMinutesInput = createInput(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell');
-        const restSecondsInput = createInput(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell');
+        const restMinutesInput = createInput(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell exec-rest-minutes');
+        const restSecondsInput = createInput(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell exec-rest-seconds');
+        const repsJoiner = document.createElement('span');
+        repsJoiner.className = 'exec-joiner exec-joiner-reps';
+        repsJoiner.textContent = 'x';
+        const restJoiner = document.createElement('span');
+        restJoiner.className = 'exec-joiner exec-joiner-rest';
+        restJoiner.textContent = ':';
         collectInputs(repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
         syncRowTone();
 
-        row.append(order, repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
+        row.append(order, repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput, repsJoiner, restJoiner);
         return row;
     }
 
