@@ -1179,16 +1179,16 @@ textarea:focus{
 
 .exec-joiner{
   pointer-events: none;
-  align-self: stretch;
+  align-self: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  justify-self: end;
+  justify-self: center;
   grid-row: 1;
-  transform: translateX(calc(var(--exec-gap) / 2));
+  transform: none;
   color: inherit;
   font-weight: var(--fw-strong);
-  line-height: 1;
+  line-height: var(--control-h);
   height: var(--control-h);
 }
 
@@ -1211,6 +1211,10 @@ textarea:focus{
 
 .routine-set-order{
   font-weight: var(--fw-strong);
+  min-height: var(--control-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .set-edit-button{
