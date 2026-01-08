@@ -1124,10 +1124,30 @@ textarea:focus{
   border-bottom-right-radius: 0;
 }
 
+.exec-row .exec-reps-cell{
+  grid-column: 2;
+}
+
 .exec-row .exec-weight-cell,
 .exec-row .exec-rest-seconds{
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
+}
+
+.exec-row .exec-weight-cell{
+  grid-column: 3;
+}
+
+.exec-row .exec-rpe-cell{
+  grid-column: 4;
+}
+
+.exec-row .exec-rest-minutes{
+  grid-column: 5;
+}
+
+.exec-row .exec-rest-seconds{
+  grid-column: 6;
 }
 
 .exec-joiner{
