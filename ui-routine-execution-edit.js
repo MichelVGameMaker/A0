@@ -436,7 +436,7 @@
             'exec-weight-cell',
             { inputMode: 'decimal', type: 'text' }
         );
-        const rpeInput = createInput(() => (value.rpe == null ? '' : String(value.rpe)), 'rpe');
+        const rpeInput = createInput(() => (value.rpe == null ? '' : String(value.rpe)), 'rpe', 'exec-rpe-cell');
         const restMinutesInput = createInput(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell exec-rest-minutes');
         const restSecondsInput = createInput(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell exec-rest-seconds');
         const repsJoiner = document.createElement('span');
