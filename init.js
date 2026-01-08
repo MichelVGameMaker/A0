@@ -75,10 +75,10 @@
         });
 
         tabTimer?.addEventListener('click', () => {
-            if (!A.timerVisibility || A.timerVisibility.hidden) {
+            if (!A.timerVisibility) {
                 return;
             }
-            A.setTimerVisibility?.({ hidden: true });
+            A.setTimerVisibility?.({ hidden: false });
         });
 
         screenSessions?.setAttribute('data-screen', 'sessions');

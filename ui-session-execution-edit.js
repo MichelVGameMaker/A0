@@ -1544,8 +1544,8 @@
         }
         tabTimer.setAttribute('aria-pressed', String(!shouldHide));
         tabTimer.classList.toggle('is-on', !shouldHide);
-        tabTimer.classList.toggle('tab--countdown', shouldHide);
-        if (!shouldHide) {
+        tabTimer.classList.toggle('tab--countdown', !shouldHide);
+        if (shouldHide) {
             tabTimer.classList.remove('tab--warning', 'tab--negative');
             tabTimer.textContent = '⏱️';
             return;
