@@ -1097,7 +1097,8 @@ textarea:focus{
    9) Édition exécution (Colonne A) & Timer
    ========================================================= */
 .exec-grid{
-  display:grid; gap:4px; margin-top:8px;
+  --exec-gap: 4px;
+  display:grid; gap: var(--exec-gap); margin-top:8px;
   grid-template-columns: 1.2fr 1.2fr .8fr .8fr .8fr; /* Reps | Poids | RPE | Repos mn | Repos sec */
   text-align:center; align-items:center;
 }
@@ -1117,6 +1118,40 @@ textarea:focus{
 .exec-row .input{
   height: var(--control-h); width:100%;
   text-align:center; margin:0; padding:0 8px;
+}
+
+.exec-row .exec-reps-cell,
+.exec-row .exec-rest-minutes{
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.exec-row .exec-weight-cell,
+.exec-row .exec-rest-seconds{
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.exec-joiner{
+  pointer-events: none;
+  align-self: center;
+  justify-self: end;
+  transform: translateX(calc(var(--exec-gap) / 2));
+  color: inherit;
+  font-weight: var(--fw-strong);
+  line-height: 1;
+}
+
+.exec-joiner[data-rpe]{
+  color: var(--rpe-ink);
+}
+
+.exec-joiner-reps{
+  grid-column: 2;
+}
+
+.exec-joiner-rest{
+  grid-column: 5;
 }
 
 
