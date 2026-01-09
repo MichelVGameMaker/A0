@@ -712,17 +712,37 @@
                 }
             }
         });
+        const normalizedCurrentSets = Array.isArray(currentSets) ? currentSets : [];
+        let bestWeightSet = null;
+        let bestOrmSet = null;
+        normalizedCurrentSets.forEach((set, index) => {
+            const weight = sanitizeWeight(set?.weight);
+            const reps = safePositiveInt(set?.reps);
+            if (weight != null) {
+                if (
+                    !bestWeightSet ||
+                    weight > bestWeightSet.weight ||
+                    (weight === bestWeightSet.weight && reps > bestWeightSet.reps)
+                ) {
+                    bestWeightSet = { index, weight, reps };
+                }
+            }
+            const orm = estimateOrm(weight, reps);
+            if (orm != null && (!bestOrmSet || orm > bestOrmSet.value)) {
+                bestOrmSet = { index, value: orm };
+            }
+        });
         const medalsByPos = new Map();
         (Array.isArray(currentSets) ? currentSets : []).forEach((set, index) => {
             const pos = safeInt(set?.pos, index + 1);
             const weight = sanitizeWeight(set?.weight);
             const reps = safePositiveInt(set?.reps);
             const medals = [];
-            if (weight != null && weight > maxWeight) {
+            if (bestWeightSet && index === bestWeightSet.index && weight != null && weight > maxWeight) {
                 medals.push('⭐️kg');
             }
             const orm = estimateOrm(weight, reps);
-            if (orm != null && orm > maxOrm) {
+            if (bestOrmSet && index === bestOrmSet.index && orm != null && orm > maxOrm) {
                 medals.push('⭐️RM');
             }
             if (weight != null && reps > 0) {

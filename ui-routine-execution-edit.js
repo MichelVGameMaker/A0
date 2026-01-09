@@ -412,21 +412,7 @@
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
                     layout: field === 'rpe' ? 'rpe' : field === 'rest' ? 'time' : 'default',
-                    closeOnOutside: false,
-                    actions: buildKeyboardActions,
-                    edit: {
-                        onMove: (direction) => {
-                            const delta = direction === 'up' ? -1 : 1;
-                            const nextIndex = moveSet(currentIndex, delta, row);
-                            if (nextIndex === null || nextIndex === undefined) {
-                                return;
-                            }
-                            currentIndex = nextIndex;
-                        },
-                        onDelete: () => {
-                            removeSet(currentIndex);
-                        }
-                    },
+                    actions: buildKeyboardActions(),
                     getValue: () => input.value,
                     onChange: (next) => {
                         input.value = next;
