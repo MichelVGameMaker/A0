@@ -261,8 +261,6 @@
         const syncRowTone = () => {
             applyRpeTone(repsInput, value.rpe);
             applyRpeTone(weightInput, value.rpe);
-            applyRpeTone(repsJoiner, value.rpe);
-            applyRpeTone(restJoiner, value.rpe);
         };
 
         const updatePreview = (source) => {
@@ -439,16 +437,10 @@
         const rpeInput = createInput(() => (value.rpe == null ? '' : String(value.rpe)), 'rpe', 'exec-rpe-cell');
         const restMinutesInput = createInput(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell exec-rest-minutes');
         const restSecondsInput = createInput(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell exec-rest-seconds');
-        const repsJoiner = document.createElement('span');
-        repsJoiner.className = 'exec-joiner exec-joiner-reps';
-        repsJoiner.textContent = 'x';
-        const restJoiner = document.createElement('span');
-        restJoiner.className = 'exec-joiner exec-joiner-rest';
-        restJoiner.textContent = ':';
         collectInputs(repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
         syncRowTone();
 
-        row.append(order, repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput, repsJoiner, restJoiner);
+        row.append(order, repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
         return row;
     }
 
