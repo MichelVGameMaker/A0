@@ -1002,12 +1002,17 @@
         exercise.sets = sets;
         const { execSets } = assertRefs();
         if (row && execSets?.contains(row)) {
-            const sibling = delta < 0 ? row.previousElementSibling : row.nextElementSibling;
-            if (sibling) {
-                if (delta < 0) {
-                    execSets.insertBefore(row, sibling);
+            const rows = Array.from(execSets.querySelectorAll('.exec-set-row'));
+            const targetRow = rows[target];
+            if (targetRow && targetRow !== row) {
+                if (rows.indexOf(row) < target) {
+                    if (targetRow.nextSibling) {
+                        execSets.insertBefore(row, targetRow.nextSibling);
+                    } else {
+                        execSets.appendChild(row);
+                    }
                 } else {
-                    execSets.insertBefore(sibling, row);
+                    execSets.insertBefore(row, targetRow);
                 }
             }
         }

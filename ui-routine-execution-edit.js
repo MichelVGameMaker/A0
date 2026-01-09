@@ -551,12 +551,17 @@
         move.sets = sets;
         const { routineMoveSets } = assertRefs();
         if (row && routineMoveSets?.contains(row)) {
-            const sibling = delta < 0 ? row.previousElementSibling : row.nextElementSibling;
-            if (sibling) {
-                if (delta < 0) {
-                    routineMoveSets.insertBefore(row, sibling);
+            const rows = Array.from(routineMoveSets.querySelectorAll('.routine-set-row'));
+            const targetRow = rows[target];
+            if (targetRow && targetRow !== row) {
+                if (rows.indexOf(row) < target) {
+                    if (targetRow.nextSibling) {
+                        routineMoveSets.insertBefore(row, targetRow.nextSibling);
+                    } else {
+                        routineMoveSets.appendChild(row);
+                    }
                 } else {
-                    routineMoveSets.insertBefore(sibling, row);
+                    routineMoveSets.insertBefore(row, targetRow);
                 }
             }
         }
