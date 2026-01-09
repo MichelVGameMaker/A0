@@ -1192,14 +1192,14 @@ textarea:focus{
 }
 
 .exec-medal{
-  font-size: 11px;
+  font-size: 10px;
   font-weight: var(--fw-strong);
   color: inherit;
 }
 
 .exec-meta-chip{
   width: 100%;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 
@@ -1468,6 +1468,12 @@ textarea:focus{
   font-weight: var(--fw-strong);
   color: var(--black);
   transition: background-color 120ms ease, border-color 120ms ease, filter 80ms ease, transform 80ms ease;
+}
+
+.inline-keyboard-key--empty{
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .inline-keyboard-key[data-wide="true"]{

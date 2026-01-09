@@ -606,6 +606,7 @@
 
         let active = null;
         let currentLayout = 'default';
+        let currentMode = 'input';
 
         const keyboard = document.createElement('div');
         keyboard.className = 'inline-keyboard';
@@ -626,17 +627,33 @@
         const layouts = {
             default: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'],
             rpe: ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', 'del'],
-            time: ['1', '2', '3', '4', '5', '6', '7', '8', '9', ':', '0', 'del']
+            time: ['1', '2', '3', '4', '5', '6', '7', '8', '9', ':', '0', 'del'],
+            edit: ['up', null, null, null, null, null, null, null, null, 'down', null, 'trash']
         };
 
-        const renderKeys = (layout) => {
+        const resolveLayout = (layout, mode) => (mode === 'edit' ? 'edit' : layout || 'default');
+
+        const renderKeys = (layout, mode) => {
             grid.innerHTML = '';
             const keys = layouts[layout] || layouts.default;
             keys.forEach((key) => {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'inline-keyboard-key';
-                button.textContent = key === 'del' ? '⌫' : key;
+                if (!key) {
+                    button.disabled = true;
+                    button.classList.add('inline-keyboard-key--empty');
+                    button.setAttribute('aria-hidden', 'true');
+                    grid.appendChild(button);
+                    return;
+                }
+                const labelMap = {
+                    del: '⌫',
+                    up: '⬆️',
+                    down: '⬇️',
+                    trash: '🗑️'
+                };
+                button.textContent = labelMap[key] || key;
                 button.dataset.key = key;
                 if (layout === 'rpe' && key !== 'del') {
                     button.dataset.rpe = key;
@@ -688,7 +705,7 @@
             });
         };
 
-        renderKeys(currentLayout);
+        renderKeys(currentLayout, currentMode);
 
         const handleClose = () => {
             keyboard.hidden = true;
@@ -743,6 +760,22 @@
             if (!active) {
                 return;
             }
+            if (active.mode === 'edit') {
+                const edit = active.edit || {};
+                if (key === 'up') {
+                    edit.onMove?.('up');
+                } else if (key === 'down') {
+                    edit.onMove?.('down');
+                } else if (key === 'trash') {
+                    const result = edit.onDelete?.();
+                    if (result && typeof result.then === 'function') {
+                        result.then(() => handleClose()).catch(() => handleClose());
+                    } else {
+                        handleClose();
+                    }
+                }
+                return;
+            }
             const current = String(active.getValue?.() ?? '');
             const layout = active.layout || 'default';
             const shouldReplace = active.replaceOnInput || hasFullSelection(current);
@@ -778,21 +811,62 @@
             return keyboard.contains(target);
         };
 
+        const resolveActions = () => {
+            if (!active) {
+                return [];
+            }
+            if (typeof active.actions === 'function') {
+                return active.actions(active.mode);
+            }
+            return active.actions || [];
+        };
+
+        const applyLayout = (layout, mode) => {
+            const resolved = resolveLayout(layout, mode);
+            if (resolved !== currentLayout || mode !== currentMode) {
+                currentLayout = resolved;
+                currentMode = mode;
+                renderKeys(currentLayout, currentMode);
+            }
+        };
+
+        const setMode = (mode) => {
+            if (!active) {
+                return;
+            }
+            const nextMode = mode || (active.mode === 'edit' ? 'input' : 'edit');
+            if (active.mode === nextMode) {
+                return;
+            }
+            active.mode = nextMode;
+            applyLayout(active.layout, active.mode);
+            renderActions(resolveActions());
+            if (active.mode === 'input') {
+                selectTarget(active.target);
+            }
+        };
+
         const attach = (target, handlers = {}) => {
             const layout = handlers.layout || 'default';
-            if (layout !== currentLayout) {
-                currentLayout = layout;
-                renderKeys(currentLayout);
-            }
-            renderActions(handlers.actions || []);
-            active = { target, ...handlers, layout };
+            const mode = handlers.mode || 'input';
+            active = { target, ...handlers, layout, mode };
+            applyLayout(layout, mode);
+            renderActions(resolveActions());
             keyboard.hidden = false;
             keyboard.setAttribute('data-visible', 'true');
             document.addEventListener('pointerdown', handleOutside, true);
             selectTarget(target);
         };
 
-        const api = { attach, detach: handleClose, isOpen: () => Boolean(active), contains, selectTarget };
+        const api = {
+            attach,
+            detach: handleClose,
+            isOpen: () => Boolean(active),
+            contains,
+            selectTarget,
+            setMode,
+            getMode: () => active?.mode || 'input'
+        };
         components.inlineKeyboard = api;
         return api;
     };

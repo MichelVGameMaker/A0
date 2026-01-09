@@ -281,27 +281,35 @@
             syncRowTone();
         };
 
-        const buildKeyboardActions = () => [
-            {
-                icon: '🗑️',
-                ariaLabel: 'Supprimer la série',
-                className: 'inline-keyboard-action--danger inline-keyboard-action--icon',
-                onClick: () => removeSet(currentIndex)
-            },
-            {
-                label: 'prévu',
-                className: 'inline-keyboard-action--span-3',
-                span: 3,
-                onClick: () => {
-                    applySetEditorResult(currentIndex, {
-                        reps: value.reps,
-                        weight: value.weight,
-                        rpe: value.rpe,
-                        rest: value.rest
-                    });
-                }
+        const buildKeyboardActions = (mode = 'input') => {
+            const isEdit = mode === 'edit';
+            const toggleAction = {
+                icon: isEdit ? '🔢' : '✏️',
+                ariaLabel: isEdit ? 'Basculer en mode saisie' : 'Basculer en mode édition',
+                className: 'inline-keyboard-action--icon',
+                close: false,
+                onClick: () => inlineKeyboard?.setMode?.(isEdit ? 'input' : 'edit')
+            };
+            if (isEdit) {
+                return [toggleAction];
             }
-        ];
+            return [
+                toggleAction,
+                {
+                    label: 'prévu',
+                    className: 'inline-keyboard-action--span-3',
+                    span: 3,
+                    onClick: () => {
+                        applySetEditorResult(currentIndex, {
+                            reps: value.reps,
+                            weight: value.weight,
+                            rpe: value.rpe,
+                            rest: value.rest
+                        });
+                    }
+                }
+            ];
+        };
 
         const openEditor = (focusField) => {
             const editor = ensureInlineEditor();

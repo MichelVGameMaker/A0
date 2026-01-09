@@ -458,40 +458,46 @@
             syncRowTone();
         };
 
-        const buildKeyboardActions = () => [
-            {
-                icon: '🗑️',
-                ariaLabel: 'Supprimer la série',
-                className: 'inline-keyboard-action--danger inline-keyboard-action--icon',
-                onClick: async () => {
-                    await removeSet(currentIndex);
-                }
-            },
-            {
-                label: 'prévu',
-                className: 'inline-keyboard-action--muted',
-                onClick: async () => {
-                    await applySetEditorResult(
-                        currentIndex,
-                        { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest },
-                        { done: false }
-                    );
-                }
-            },
-            {
-                label: 'fait',
-                className: 'inline-keyboard-action--emphase inline-keyboard-action--span-2',
-                span: 2,
-                onClick: async () => {
-                    await applySetEditorResult(
-                        currentIndex,
-                        { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest },
-                        { done: true }
-                    );
-                    startTimer(value.rest, { setId: set.id, setIndex: currentIndex });
-                }
+        const buildKeyboardActions = (mode = 'input') => {
+            const isEdit = mode === 'edit';
+            const toggleAction = {
+                icon: isEdit ? '🔢' : '✏️',
+                ariaLabel: isEdit ? 'Basculer en mode saisie' : 'Basculer en mode édition',
+                className: 'inline-keyboard-action--icon',
+                close: false,
+                onClick: () => inlineKeyboard?.setMode?.(isEdit ? 'input' : 'edit')
+            };
+            if (isEdit) {
+                return [toggleAction];
             }
-        ];
+            return [
+                toggleAction,
+                {
+                    label: 'prévu',
+                    className: 'inline-keyboard-action--muted',
+                    onClick: async () => {
+                        await applySetEditorResult(
+                            currentIndex,
+                            { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest },
+                            { done: false }
+                        );
+                    }
+                },
+                {
+                    label: 'fait',
+                    className: 'inline-keyboard-action--emphase inline-keyboard-action--span-2',
+                    span: 2,
+                    onClick: async () => {
+                        await applySetEditorResult(
+                            currentIndex,
+                            { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest },
+                            { done: true }
+                        );
+                        startTimer(value.rest, { setId: set.id, setIndex: currentIndex });
+                    }
+                }
+            ];
+        };
 
         const openEditor = (focusField) => {
             const editor = ensureInlineEditor();
@@ -597,7 +603,20 @@
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
                     layout: field === 'rpe' ? 'rpe' : field === 'rest' ? 'time' : 'default',
-                    actions: buildKeyboardActions(),
+                    actions: buildKeyboardActions,
+                    edit: {
+                        onMove: async (direction) => {
+                            const delta = direction === 'up' ? -1 : 1;
+                            const nextIndex = await moveSet(currentIndex, delta, row);
+                            if (nextIndex === null || nextIndex === undefined) {
+                                return;
+                            }
+                            currentIndex = nextIndex;
+                        },
+                        onDelete: async () => {
+                            await removeSet(currentIndex);
+                        }
+                    },
                     getValue: () => input.value,
                     onChange: (next) => {
                         input.value = next;
@@ -710,7 +729,7 @@
             }
         });
         const medalsByPos = new Map();
-        normalizedCurrentSets.forEach((set, index) => {
+        (Array.isArray(currentSets) ? currentSets : []).forEach((set, index) => {
             const pos = safeInt(set?.pos, index + 1);
             const weight = sanitizeWeight(set?.weight);
             const reps = safePositiveInt(set?.reps);
