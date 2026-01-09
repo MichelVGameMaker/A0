@@ -730,6 +730,7 @@
         const handleClose = () => {
             keyboard.hidden = true;
             keyboard.removeAttribute('data-visible');
+            document.body?.classList.remove('inline-keyboard-visible');
             document.removeEventListener('pointerdown', handleOutside, true);
             clearPendingOutside();
             active?.onClose?.();
@@ -933,6 +934,7 @@
             renderActions(resolveActions());
             keyboard.hidden = false;
             keyboard.setAttribute('data-visible', 'true');
+            document.body?.classList.add('inline-keyboard-visible');
             document.addEventListener('pointerdown', handleOutside, true);
             selectTarget(target);
         };
