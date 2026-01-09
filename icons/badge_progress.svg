@@ -1,6 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title">
-  <title>Progression</title>
-  <circle cx="12" cy="12" r="10"/>
-  <path d="M8 12l4-4 4 4"/>
-  <path d="M12 16V8"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true">
+  <!-- Flèche : tête + fût raccourci -->
+  <path fill="currentColor"
+    d="
+      M8 1
+      L13 7
+      H10
+      V12
+      H6
+      V7
+      H3
+      Z
+    "/>
+
+  <!-- Texte -->
+  <text
+    x="8" y="11"
+    text-anchor="middle"
+    font-size="5"
+    font-weight="700"
+    font-family="system-ui, sans-serif"
+    fill="#fff"
+  >#</text>
 </svg>
