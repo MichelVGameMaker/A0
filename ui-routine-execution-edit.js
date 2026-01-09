@@ -552,11 +552,17 @@
         const { routineMoveSets } = assertRefs();
         if (row && routineMoveSets?.contains(row)) {
             const rows = Array.from(routineMoveSets.querySelectorAll('.routine-set-row'));
-            const currentPosition = rows.indexOf(row);
-            if (currentPosition !== -1) {
-                const [moved] = rows.splice(currentPosition, 1);
-                rows.splice(target, 0, moved);
-                rows.forEach((node) => routineMoveSets.appendChild(node));
+            const targetRow = rows[target];
+            if (targetRow && targetRow !== row) {
+                if (rows.indexOf(row) < target) {
+                    if (targetRow.nextSibling) {
+                        routineMoveSets.insertBefore(row, targetRow.nextSibling);
+                    } else {
+                        routineMoveSets.appendChild(row);
+                    }
+                } else {
+                    routineMoveSets.insertBefore(row, targetRow);
+                }
             }
         }
         refreshRoutineSetOrderUI(routineMoveSets);

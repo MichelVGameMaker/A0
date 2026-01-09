@@ -1003,11 +1003,17 @@
         const { execSets } = assertRefs();
         if (row && execSets?.contains(row)) {
             const rows = Array.from(execSets.querySelectorAll('.exec-set-row'));
-            const currentPosition = rows.indexOf(row);
-            if (currentPosition !== -1) {
-                const [moved] = rows.splice(currentPosition, 1);
-                rows.splice(target, 0, moved);
-                rows.forEach((node) => execSets.appendChild(node));
+            const targetRow = rows[target];
+            if (targetRow && targetRow !== row) {
+                if (rows.indexOf(row) < target) {
+                    if (targetRow.nextSibling) {
+                        execSets.insertBefore(row, targetRow.nextSibling);
+                    } else {
+                        execSets.appendChild(row);
+                    }
+                } else {
+                    execSets.insertBefore(row, targetRow);
+                }
             }
         }
         refreshExecSetOrderUI(execSets);
