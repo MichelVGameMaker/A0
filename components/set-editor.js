@@ -628,7 +628,7 @@
             default: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'],
             rpe: ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', 'del'],
             time: ['1', '2', '3', '4', '5', '6', '7', '8', '9', ':', '0', 'del'],
-            edit: ['up', null, null, null, null, null, null, null, null, 'down', null, 'trash']
+            edit: ['up', null, null, null, null, null, 'down', null, 'trash', null, null, null]
         };
 
         const resolveLayout = (layout, mode) => (mode === 'edit' ? 'edit' : layout || 'default');
@@ -655,6 +655,14 @@
                 };
                 button.textContent = labelMap[key] || key;
                 button.dataset.key = key;
+                if (key === 'up' || key === 'down') {
+                    button.dataset.wide = 'true';
+                    button.dataset.tall = 'true';
+                }
+                if (key === 'trash') {
+                    button.dataset.tall = 'true';
+                    button.classList.add('inline-keyboard-key--danger');
+                }
                 if (layout === 'rpe' && key !== 'del') {
                     button.dataset.rpe = key;
                 }
