@@ -1188,7 +1188,7 @@ textarea:focus{
 
 .exec-meta-medals{
   display: inline-flex;
-  gap: 6px;
+  gap: 2px;
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -1197,14 +1197,14 @@ textarea:focus{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
+  width: 40x;
   height: 40px;
   color: inherit;
 }
 
 .exec-medal-icon{
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: block;
 }
 
