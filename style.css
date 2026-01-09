@@ -1437,6 +1437,7 @@ textarea:focus{
 .inline-keyboard-grid{
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 45px;
   gap: 10px;
 }
 
@@ -1499,6 +1500,11 @@ textarea:focus{
   transition: background-color 120ms ease, border-color 120ms ease, filter 80ms ease, transform 80ms ease;
 }
 
+.inline-keyboard-key--danger{
+  border-color: var(--red);
+  color: var(--red);
+}
+
 .inline-keyboard-key--empty{
   background: transparent;
   border-color: transparent;
@@ -1507,6 +1513,11 @@ textarea:focus{
 
 .inline-keyboard-key[data-wide="true"]{
   grid-column: span 2;
+}
+
+.inline-keyboard-key[data-tall="true"]{
+  grid-row: span 2;
+  height: auto;
 }
 
 .inline-keyboard-key:active{

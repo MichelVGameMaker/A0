@@ -501,9 +501,6 @@
                 close: false,
                 onClick: () => inlineKeyboard?.setMode?.(isEdit ? 'input' : 'edit')
             };
-            if (isEdit) {
-                return [toggleAction];
-            }
             return [
                 toggleAction,
                 {
