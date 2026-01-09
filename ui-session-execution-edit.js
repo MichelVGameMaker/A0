@@ -11,8 +11,7 @@
         exerciseId: null,
         callerScreen: 'screenSessions',
         session: null,
-        historySelected: false,
-        goalsSelected: false
+        metaMode: 'history'
     };
     let inlineEditor = null;
     const inlineKeyboard = A.components?.inlineKeyboard || A.components?.createInlineKeyboard?.();
@@ -99,7 +98,7 @@
             execMoveNote.value = exercise.exercise_note || '';
         }
         refreshValueStates();
-        setSidePanelSelection({ historySelected: false, goalsSelected: false });
+        setMetaMode('history');
 
         updateTimerUI();
 
@@ -149,8 +148,7 @@
         refs.execReplaceExercise = document.getElementById('execReplaceExercise');
         refs.execMoveEditorClose = document.getElementById('execMoveEditorClose');
         refs.execMoveEditorCancel = document.getElementById('execMoveEditorCancel');
-        refs.execHistoryToggle = document.getElementById('execHistoryToggle');
-        refs.execGoalsToggle = document.getElementById('execGoalsToggle');
+        refs.execMetaToggle = document.getElementById('execMetaToggle');
         refsResolved = true;
         return refs;
     }
@@ -187,8 +185,7 @@
             'execReplaceExercise',
             'execMoveEditorClose',
             'execMoveEditorCancel',
-            'execHistoryToggle',
-            'execGoalsToggle',
+            'execMetaToggle',
             'execMetaHeader'
         ];
         const missing = required.filter((key) => !refs[key]);
@@ -212,7 +209,7 @@
     }
 
     function wireActions() {
-        const { execAddSet, execDelete, execReplaceExercise, execHistoryToggle, execGoalsToggle } = assertRefs();
+        const { execAddSet, execDelete, execReplaceExercise, execMetaToggle } = assertRefs();
         execAddSet.addEventListener('click', () => {
             void addSet();
         });
@@ -222,17 +219,9 @@
         execReplaceExercise.addEventListener('click', () => {
             void replaceExercise();
         });
-        execHistoryToggle.addEventListener('click', () => {
-            setSidePanelSelection({
-                historySelected: !state.historySelected,
-                goalsSelected: false
-            });
-        });
-        execGoalsToggle.addEventListener('click', () => {
-            setSidePanelSelection({
-                historySelected: false,
-                goalsSelected: !state.goalsSelected
-            });
+        execMetaToggle.addEventListener('click', () => {
+            const nextMode = getNextMetaMode();
+            setMetaMode(nextMode);
         });
     }
 
@@ -299,16 +288,36 @@
         });
     }
 
-    function setSidePanelSelection(next) {
-        const { execHistoryToggle, execGoalsToggle } = assertRefs();
-        const historySelected = Boolean(next?.historySelected);
-        const goalsSelected = Boolean(next?.goalsSelected);
-        state.historySelected = historySelected;
-        state.goalsSelected = goalsSelected && !historySelected;
-        execHistoryToggle.classList.toggle('selected', state.historySelected);
-        execHistoryToggle.setAttribute('aria-pressed', state.historySelected ? 'true' : 'false');
-        execGoalsToggle.classList.toggle('selected', state.goalsSelected);
-        execGoalsToggle.setAttribute('aria-pressed', state.goalsSelected ? 'true' : 'false');
+    function getMetaModeLabel(mode = state.metaMode) {
+        switch (mode) {
+            case 'goals':
+                return 'Objectifs';
+            case 'medals':
+                return 'Médailles';
+            default:
+                return 'Historique';
+        }
+    }
+
+    function getMetaTagLabel(mode = state.metaMode) {
+        return `Mode : ${getMetaModeLabel(mode)}`;
+    }
+
+    function getNextMetaMode() {
+        const order = ['history', 'goals', 'medals'];
+        const currentIndex = order.indexOf(state.metaMode);
+        const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % order.length;
+        return order[nextIndex];
+    }
+
+    function setMetaMode(nextMode) {
+        const { execMetaToggle } = assertRefs();
+        const mode = nextMode || 'history';
+        state.metaMode = mode;
+        execMetaToggle.textContent = getMetaTagLabel(mode);
+        execMetaToggle.classList.toggle('selected', true);
+        execMetaToggle.setAttribute('aria-pressed', 'true');
+        execMetaToggle.setAttribute('aria-label', getMetaTagLabel(mode));
         void renderSets();
     }
 
@@ -367,21 +376,15 @@
     }
 
     function getMetaHeaderLabel() {
-        if (state.historySelected) {
-            return 'Historique';
-        }
-        if (state.goalsSelected) {
-            return 'Objectif';
-        }
-        return 'Médailles';
+        return getMetaModeLabel(state.metaMode);
     }
 
     function buildMetaCell(set, index, meta) {
         const cell = document.createElement('div');
         cell.className = 'exec-meta-cell';
         const pos = safeInt(set?.pos, index + 1);
-        if (state.historySelected || state.goalsSelected) {
-            const map = state.historySelected ? meta?.historyByPos : meta?.goalsByPos;
+        if (state.metaMode === 'history' || state.metaMode === 'goals') {
+            const map = state.metaMode === 'history' ? meta?.historyByPos : meta?.goalsByPos;
             const info = map?.get?.(pos) || null;
             const chip = document.createElement('div');
             chip.className = 'exec-history-set rpe-chip exec-meta-chip';
@@ -603,6 +606,7 @@
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
                     layout: field === 'rpe' ? 'rpe' : field === 'rest' ? 'time' : 'default',
+                    closeOnOutside: false,
                     actions: buildKeyboardActions,
                     edit: {
                         onMove: async (direction) => {

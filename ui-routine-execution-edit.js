@@ -412,6 +412,7 @@
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
                     layout: field === 'rpe' ? 'rpe' : field === 'rest' ? 'time' : 'default',
+                    closeOnOutside: false,
                     actions: buildKeyboardActions,
                     edit: {
                         onMove: (direction) => {
