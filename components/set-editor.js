@@ -723,6 +723,20 @@
             active = null;
         };
 
+        const isInteractiveTarget = (target) => {
+            if (!target) {
+                return false;
+            }
+            if (target.isContentEditable) {
+                return true;
+            }
+            return Boolean(
+                target.closest?.(
+                    'button, input, select, textarea, [role="button"], [role="tab"], [data-interactive="true"]'
+                )
+            );
+        };
+
         const handleOutside = (event) => {
             if (!active) {
                 return;
@@ -735,7 +749,8 @@
             const isInsideKeyboard = path.includes(keyboard) || keyboard.contains(target);
             const isInsideTarget = path.includes(active.target) || active.target?.contains?.(target);
             const isInsideInlineSetEditor = path.some((node) => node?.classList?.contains?.('inline-set-editor-row'));
-            if (isInsideKeyboard || isInsideTarget || isInsideInlineSetEditor) {
+            const allowInlineSetEditor = isInsideInlineSetEditor && isInteractiveTarget(target);
+            if (isInsideKeyboard || isInsideTarget || allowInlineSetEditor) {
                 return;
             }
             handleClose();

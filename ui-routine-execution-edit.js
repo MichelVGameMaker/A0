@@ -125,9 +125,11 @@
     function wireNavigation() {
         const { routineMoveBack, routineMoveDone, routineMoveTitle } = assertRefs();
         routineMoveBack.addEventListener('click', () => {
+            inlineKeyboard?.detach?.();
             returnToCaller();
         });
         routineMoveDone?.addEventListener('click', () => {
+            inlineKeyboard?.detach?.();
             returnToCaller();
         });
         routineMoveTitle.addEventListener('click', () => {
@@ -135,6 +137,7 @@
             if (!move?.exerciseId) {
                 return;
             }
+            inlineKeyboard?.detach?.();
             void A.openExerciseRead({ currentId: move.exerciseId, callerScreen: 'screenRoutineMoveEdit' });
         });
     }
@@ -168,6 +171,7 @@
                 routineMoveInstructions.value = routineMoveSnapshot.instructions;
                 refreshValueStates();
             }
+            inlineKeyboard?.detach?.();
             dlgRoutineMoveEditor?.showModal();
         });
         routineMoveEditorClose.addEventListener('click', () => {
@@ -722,6 +726,7 @@
     }
 
     function switchScreen(target) {
+        inlineKeyboard?.detach?.();
         const {
             screenSessions,
             screenExercises,
