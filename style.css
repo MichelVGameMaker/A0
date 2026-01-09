@@ -530,7 +530,7 @@ textarea{
   gap: var(--tag-gap);
 }
 .tags.mono .tag{
-  font-family: "SFMono-Regular","Roboto Mono","Menlo","Courier New",monospace;
+  font-family: var(--font);
   font-weight: var(--fw-base);
 }
 .tag{
