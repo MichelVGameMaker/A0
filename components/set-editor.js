@@ -1056,6 +1056,21 @@
             attachNodes();
         };
 
+        const reposition = (row, order) => {
+            if (!active) {
+                return;
+            }
+            if (row instanceof HTMLElement) {
+                updateActiveRow(row);
+            } else {
+                attachNodes();
+            }
+            if (order) {
+                active.order = normalizeOrder({ ...(active.order || {}), ...order });
+                updateMoveButtons();
+            }
+        };
+
         const handleMoveResult = (result, direction) => {
             if (!active) {
                 return;
@@ -1226,6 +1241,6 @@
             document.addEventListener('pointerdown', handleOutside);
         };
 
-        return { open, close, isOpen: () => Boolean(active) };
+        return { open, close, isOpen: () => Boolean(active), reposition };
     };
 })();
