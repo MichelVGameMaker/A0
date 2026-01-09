@@ -771,15 +771,18 @@
             return false;
         };
 
-        const selectTarget = (target = active?.target) => {
+        const selectTarget = (target = active?.target, options = {}) => {
             if (!target || target !== active?.target) {
                 return;
             }
+            const { select = true } = options || {};
             if (typeof target.focus === 'function') {
                 target.focus({ preventScroll: true });
             }
-            target.select?.();
-            active.replaceOnInput = true;
+            if (select) {
+                target.select?.();
+            }
+            active.replaceOnInput = Boolean(select);
         };
 
         const handleInput = (key) => {
@@ -1128,7 +1131,7 @@
         };
 
         const adjustState = (state, field, delta, config) => {
-            inlineKeyboard?.selectTarget?.();
+            inlineKeyboard?.selectTarget?.(undefined, { select: false });
             switch (field) {
                 case 'reps': {
                     const current = Math.max(0, parseIntSafe(state.reps, 0));
