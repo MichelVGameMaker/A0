@@ -220,12 +220,14 @@
     function wireNavigation() {
         const { execBack, execTitle } = assertRefs();
         execBack.addEventListener('click', () => {
+            inlineKeyboard?.detach?.();
             backToCaller();
         });
         execTitle.addEventListener('click', () => {
             if (!state.exerciseId) {
                 return;
             }
+            inlineKeyboard?.detach?.();
             void A.openExerciseRead({ currentId: state.exerciseId, callerScreen: 'screenExecEdit' });
         });
     }
@@ -257,6 +259,7 @@
                 execMoveNote.value = execMoveSnapshot.note;
                 refreshValueStates();
             }
+            inlineKeyboard?.detach?.();
             dlgExecMoveEditor?.showModal();
         });
         execMoveEditorClose.addEventListener('click', () => {
@@ -663,7 +666,6 @@
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
                     layout: field === 'rpe' ? 'rpe' : field === 'rest' ? 'time' : 'default',
-                    closeOnOutside: false,
                     actions: buildKeyboardActions,
                     edit: {
                         onMove: async (direction) => {
@@ -1187,6 +1189,7 @@
     }
 
     function switchScreen(target) {
+        inlineKeyboard?.detach?.();
         const {
             screenSessions,
             screenExercises,
