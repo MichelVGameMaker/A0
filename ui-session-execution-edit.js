@@ -397,6 +397,32 @@
         }
     }
 
+    async function refreshSetMetaFrom(startIndex = 0) {
+        const exercise = getExercise();
+        if (!exercise) {
+            return;
+        }
+        const { execSets } = assertRefs();
+        const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+        if (!sets.length) {
+            return;
+        }
+        const meta = await buildSetMeta(exercise, sets);
+        const rows = Array.from(execSets.querySelectorAll('.exec-set-row'));
+        rows.forEach((row, index) => {
+            if (index < startIndex || !sets[index]) {
+                return;
+            }
+            const metaCell = row.querySelector('.exec-meta-cell');
+            const nextMeta = buildMetaCell(sets[index], index, meta);
+            if (metaCell) {
+                row.replaceChild(nextMeta, metaCell);
+            } else {
+                row.appendChild(nextMeta);
+            }
+        });
+    }
+
     function getMetaHeaderLabel() {
         return getMetaModeLabel(state.metaMode);
     }
@@ -596,6 +622,9 @@
             const markDone = rawValue !== '' ? true : currentDone;
             await applySetEditorResult(currentIndex, next, { done: markDone, render: false });
             updatePreview(next);
+            row.classList.toggle('exec-set-executed', markDone);
+            row.classList.toggle('exec-set-planned', !markDone);
+            await refreshSetMetaFrom(currentIndex);
         };
 
         const createInput = (getValue, field, extraClass = '', options = {}) => {
@@ -644,6 +673,10 @@
                                 return;
                             }
                             currentIndex = nextIndex;
+                            ensureInlineEditor()?.reposition?.(row, {
+                                position: currentIndex + 1,
+                                total: getExercise()?.sets?.length ?? totalSets
+                            });
                         },
                         onDelete: async () => {
                             await removeSet(currentIndex);
@@ -740,44 +773,35 @@
                 }
             }
         });
-        const normalizedCurrentSets = Array.isArray(currentSets) ? currentSets : [];
-        let bestWeightSet = null;
-        let bestOrmSet = null;
-        normalizedCurrentSets.forEach((set, index) => {
-            const weight = sanitizeWeight(set?.weight);
-            const reps = safePositiveInt(set?.reps);
-            if (weight != null) {
-                if (
-                    !bestWeightSet ||
-                    weight > bestWeightSet.weight ||
-                    (weight === bestWeightSet.weight && reps > bestWeightSet.reps)
-                ) {
-                    bestWeightSet = { index, weight, reps };
-                }
-            }
-            const orm = estimateOrm(weight, reps);
-            if (orm != null && (!bestOrmSet || orm > bestOrmSet.value)) {
-                bestOrmSet = { index, value: orm };
-            }
-        });
+        let weightRecordAssigned = false;
+        let ormRecordAssigned = false;
+        let repsRecordAssigned = false;
         const medalsByPos = new Map();
         (Array.isArray(currentSets) ? currentSets : []).forEach((set, index) => {
             const pos = safeInt(set?.pos, index + 1);
+            const done = set?.done === true;
             const weight = sanitizeWeight(set?.weight);
             const reps = safePositiveInt(set?.reps);
             const medals = [];
-            if (bestWeightSet && index === bestWeightSet.index && weight != null && weight > maxWeight) {
+            if (!done) {
+                medalsByPos.set(pos, medals);
+                return;
+            }
+            if (!weightRecordAssigned && weight != null && weight > maxWeight) {
                 medals.push('weight');
+                weightRecordAssigned = true;
             }
             const orm = estimateOrm(weight, reps);
-            if (bestOrmSet && index === bestOrmSet.index && orm != null && orm > maxOrm) {
+            if (!ormRecordAssigned && orm != null && orm > maxOrm) {
                 medals.push('orm');
+                ormRecordAssigned = true;
             }
-            if (weight != null && reps > 0) {
+            if (!repsRecordAssigned && weight != null && reps > 0) {
                 const key = normalizeWeightKey(weight);
                 const bestReps = maxRepsByWeight.get(key) ?? 0;
                 if (reps > bestReps) {
                     medals.push('reps');
+                    repsRecordAssigned = true;
                 }
             }
             const bestAtPos = bestByPos.get(pos);
@@ -952,7 +976,9 @@
             }
         }
         refreshExecSetOrderUI(execSets);
+        ensureInlineEditor()?.reposition?.(row, { position: target + 1, total: sets.length });
         await persistSession(false);
+        await refreshSetMetaFrom(Math.min(index, target));
         return target;
     }
 
