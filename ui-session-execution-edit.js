@@ -14,6 +14,28 @@
         historySelected: false,
         goalsSelected: false
     };
+    const medalIconMap = {
+        progress: {
+            icon: 'icons/badge_progress.svg',
+            className: 'exec-medal--progress',
+            label: 'Progression sur la série'
+        },
+        reps: {
+            icon: 'icons/badge_reps.svg',
+            className: 'exec-medal--reps',
+            label: 'Record reps à ce poids'
+        },
+        orm: {
+            icon: 'icons/badge-1rm.svg',
+            className: 'exec-medal--danger',
+            label: 'Record 1RM'
+        },
+        weight: {
+            icon: 'icons/badge-kg.svg',
+            className: 'exec-medal--kg',
+            label: 'Record poids'
+        }
+    };
     let inlineEditor = null;
     const inlineKeyboard = A.components?.inlineKeyboard || A.components?.createInlineKeyboard?.();
     if (inlineKeyboard && !A.components.inlineKeyboard) {
@@ -397,10 +419,19 @@
         }
         const list = document.createElement('div');
         list.className = 'exec-meta-medals';
-        medals.forEach((label) => {
+        medals.forEach((medalKey) => {
+            const medalConfig = medalIconMap[medalKey];
+            if (!medalConfig) {
+                return;
+            }
             const badge = document.createElement('span');
-            badge.className = 'exec-medal';
-            badge.textContent = label;
+            badge.className = `exec-medal ${medalConfig.className}`;
+            badge.title = medalConfig.label;
+            const icon = document.createElement('img');
+            icon.src = medalConfig.icon;
+            icon.alt = medalConfig.label;
+            icon.className = 'exec-medal-icon';
+            badge.appendChild(icon);
             list.appendChild(badge);
         });
         cell.appendChild(list);
@@ -735,17 +766,17 @@
             const reps = safePositiveInt(set?.reps);
             const medals = [];
             if (bestWeightSet && index === bestWeightSet.index && weight != null && weight > maxWeight) {
-                medals.push('⭐️kg');
+                medals.push('weight');
             }
             const orm = estimateOrm(weight, reps);
             if (bestOrmSet && index === bestOrmSet.index && orm != null && orm > maxOrm) {
-                medals.push('⭐️RM');
+                medals.push('orm');
             }
             if (weight != null && reps > 0) {
                 const key = normalizeWeightKey(weight);
                 const bestReps = maxRepsByWeight.get(key) ?? 0;
                 if (reps > bestReps) {
-                    medals.push('⭐️reps');
+                    medals.push('reps');
                 }
             }
             const bestAtPos = bestByPos.get(pos);
@@ -754,7 +785,7 @@
                 weight != null &&
                 (weight > bestAtPos.weight || (weight === bestAtPos.weight && reps > bestAtPos.reps))
             ) {
-                medals.push('#⬆️');
+                medals.push('progress');
             }
             medalsByPos.set(pos, medals.slice(0, 3));
         });

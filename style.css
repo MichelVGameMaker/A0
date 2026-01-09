@@ -1192,9 +1192,34 @@ textarea:focus{
 }
 
 .exec-medal{
-  font-size: 10px;
-  font-weight: var(--fw-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   color: inherit;
+}
+
+.exec-medal-icon{
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.exec-medal--progress{
+  color: var(--emphase);
+}
+
+.exec-medal--reps{
+  color: var(--green);
+}
+
+.exec-medal--danger{
+  color: var(--red);
+}
+
+.exec-medal--kg{
+  color: var(--alert);
 }
 
 .exec-meta-chip{
