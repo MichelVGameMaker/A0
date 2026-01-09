@@ -1195,14 +1195,14 @@ textarea:focus{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 40px;
+  height: 40px;
   color: inherit;
 }
 
 .exec-medal-icon{
-  width: 16px;
-  height: 16px;
+  width: 32px;
+  height: 32px;
   display: block;
 }
 
@@ -1220,6 +1220,10 @@ textarea:focus{
 
 .exec-medal--kg{
   color: var(--alert);
+}
+
+.exec-medal--new{
+  color: var(--emphase);
 }
 
 .exec-meta-chip{
