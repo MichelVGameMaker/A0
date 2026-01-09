@@ -1456,6 +1456,12 @@ textarea:focus{
   transition: background-color 120ms ease, border-color 120ms ease, filter 80ms ease, transform 80ms ease;
 }
 
+.inline-keyboard-key--empty{
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
 .inline-keyboard-key[data-wide="true"]{
   grid-column: span 2;
 }

@@ -281,27 +281,35 @@
             syncRowTone();
         };
 
-        const buildKeyboardActions = () => [
-            {
-                icon: '🗑️',
-                ariaLabel: 'Supprimer la série',
-                className: 'inline-keyboard-action--danger inline-keyboard-action--icon',
-                onClick: () => removeSet(currentIndex)
-            },
-            {
-                label: 'prévu',
-                className: 'inline-keyboard-action--span-3',
-                span: 3,
-                onClick: () => {
-                    applySetEditorResult(currentIndex, {
-                        reps: value.reps,
-                        weight: value.weight,
-                        rpe: value.rpe,
-                        rest: value.rest
-                    });
-                }
+        const buildKeyboardActions = (mode = 'input') => {
+            const isEdit = mode === 'edit';
+            const toggleAction = {
+                icon: isEdit ? '🔢' : '✏️',
+                ariaLabel: isEdit ? 'Basculer en mode saisie' : 'Basculer en mode édition',
+                className: 'inline-keyboard-action--icon',
+                close: false,
+                onClick: () => inlineKeyboard?.setMode?.(isEdit ? 'input' : 'edit')
+            };
+            if (isEdit) {
+                return [toggleAction];
             }
-        ];
+            return [
+                toggleAction,
+                {
+                    label: 'prévu',
+                    className: 'inline-keyboard-action--span-3',
+                    span: 3,
+                    onClick: () => {
+                        applySetEditorResult(currentIndex, {
+                            reps: value.reps,
+                            weight: value.weight,
+                            rpe: value.rpe,
+                            rest: value.rest
+                        });
+                    }
+                }
+            ];
+        };
 
         const openEditor = (focusField) => {
             const editor = ensureInlineEditor();
@@ -404,7 +412,20 @@
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
                     layout: field === 'rpe' ? 'rpe' : field === 'rest' ? 'time' : 'default',
-                    actions: buildKeyboardActions(),
+                    actions: buildKeyboardActions,
+                    edit: {
+                        onMove: (direction) => {
+                            const delta = direction === 'up' ? -1 : 1;
+                            const nextIndex = moveSet(currentIndex, delta, row);
+                            if (nextIndex === null || nextIndex === undefined) {
+                                return;
+                            }
+                            currentIndex = nextIndex;
+                        },
+                        onDelete: () => {
+                            removeSet(currentIndex);
+                        }
+                    },
                     getValue: () => input.value,
                     onChange: (next) => {
                         input.value = next;
