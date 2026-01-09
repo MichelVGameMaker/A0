@@ -625,10 +625,10 @@
         content.appendChild(actionsGrid);
 
         const layouts = {
-            default: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'],
-            rpe: ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', 'del'],
-            time: ['1', '2', '3', '4', '5', '6', '7', '8', '9', ':', '0', 'del'],
-            edit: ['up', null, null, null, null, null, 'down', 'trash', null, null, null, null]
+            default: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     '.',   '0',  'del'],
+            rpe:     ['5',  '5.5', '6', '6.5', '7', '7.5', '8',    '8.5', '9',     '9.5', '10', 'del'],
+            time:    ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     ':',   '0',  'del'],
+            edit:    ['up', null, null, null,  null, null, 'down', null,  'trash', null,   null, null]
         };
 
         const resolveLayout = (layout, mode) => (mode === 'edit' ? 'edit' : layout || 'default');
