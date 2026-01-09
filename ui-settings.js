@@ -195,10 +195,10 @@
         const confirmed = A.components?.confirmDialog?.confirm
             ? await A.components.confirmDialog.confirm({
                 title: 'Update',
-                message: 'Update : cette action recharge l’application sans effacer vos données. Continuer ?',
+                message: 'Recharger l’application sans effacer vos données ?',
                 variant: 'danger'
             })
-            : window.confirm('Update : cette action recharge l’application sans effacer vos données. Continuer ?');
+            : window.confirm('Recharger l’application sans effacer vos données ?');
         if (!confirmed) {
             return;
         }
@@ -221,10 +221,10 @@
         const confirmed = A.components?.confirmDialog?.confirm
             ? await A.components.confirmDialog.confirm({
                 title: 'Reset',
-                message: 'Reset : cette action supprime toutes les données locales et le cache. Continuer ?',
+                message: 'Cette action supprime toutes les données locales et le cache !',
                 variant: 'danger'
             })
-            : window.confirm('Reset : cette action supprime toutes les données locales et le cache. Continuer ?');
+            : window.confirm('Cette action supprime toutes les données locales et le cache !');
         if (!confirmed) {
             return;
         }
