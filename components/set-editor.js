@@ -719,6 +719,9 @@
             if (!active) {
                 return;
             }
+            if (active.closeOnOutside === false) {
+                return;
+            }
             const path = event.composedPath?.() || [];
             const target = event.target;
             const isInsideKeyboard = path.includes(keyboard) || keyboard.contains(target);

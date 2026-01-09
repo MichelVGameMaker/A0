@@ -1129,7 +1129,7 @@ textarea:focus{
   grid-template-columns: minmax(2.4ch, 0.4fr) 1.2fr 1.2fr 1fr 1fr; /* # | Reps | Poids | RPE | Repos */
 }
 .exec-grid.routine-set-grid.routine-set-grid--with-meta{
-  grid-template-columns: minmax(2.4ch, 0.4fr) 1.2fr 1.2fr 1fr 1fr 2fr; /* # | Reps | Poids | RPE | Repos | Infos */
+  grid-template-columns: minmax(2.4ch, 0.4fr) 1.2fr 1.2fr 1fr 1fr 1.8fr; /* # | Reps | Poids | RPE | Repos | Infos */
 }
 .routine-set-grid > *{ min-width:0; }
 .exec-head{ font-weight: var(--fw-strong); }
@@ -1178,7 +1178,7 @@ textarea:focus{
 
 .exec-meta-cell{
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   gap: 6px;
   min-height: var(--control-h);
@@ -1199,6 +1199,10 @@ textarea:focus{
 
 .exec-meta-chip{
   width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 10px;
 }
 
