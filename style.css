@@ -1208,25 +1208,6 @@ textarea:focus{
   display: block;
 }
 
-.exec-medal--progress{
-  color: var(--emphase);
-}
-
-.exec-medal--reps{
-  color: var(--green);
-}
-
-.exec-medal--danger{
-  color: var(--red);
-}
-
-.exec-medal--kg{
-  color: var(--alert);
-}
-
-.exec-medal--new{
-  color: var(--emphase);
-}
 
 .exec-meta-chip{
   width: 100%;

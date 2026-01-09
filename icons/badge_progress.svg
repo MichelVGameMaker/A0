@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true">
   <!-- Flèche : tête + fût raccourci -->
-  <path fill="currentColor"
+  <path fill="#02ccba"
     d="
       M8 1
       L13 7
