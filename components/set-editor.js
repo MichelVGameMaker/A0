@@ -605,6 +605,8 @@
         }
 
         let active = null;
+        let pendingOutside = null;
+        const OUTSIDE_MOVE_THRESHOLD = 8;
         let currentLayout = 'default';
         let currentMode = 'input';
 
@@ -715,10 +717,21 @@
 
         renderKeys(currentLayout, currentMode);
 
+        const clearPendingOutside = () => {
+            if (!pendingOutside) {
+                return;
+            }
+            document.removeEventListener('pointermove', handleOutsideMove, true);
+            document.removeEventListener('pointerup', handleOutsideEnd, true);
+            document.removeEventListener('pointercancel', handleOutsideEnd, true);
+            pendingOutside = null;
+        };
+
         const handleClose = () => {
             keyboard.hidden = true;
             keyboard.removeAttribute('data-visible');
             document.removeEventListener('pointerdown', handleOutside, true);
+            clearPendingOutside();
             active?.onClose?.();
             active = null;
         };
@@ -737,12 +750,12 @@
             );
         };
 
-        const handleOutside = (event) => {
+        const shouldIgnoreOutside = (event) => {
             if (!active) {
-                return;
+                return true;
             }
             if (active.closeOnOutside === false) {
-                return;
+                return true;
             }
             const path = event.composedPath?.() || [];
             const target = event.target;
@@ -750,10 +763,47 @@
             const isInsideTarget = path.includes(active.target) || active.target?.contains?.(target);
             const isInsideInlineSetEditor = path.some((node) => node?.classList?.contains?.('inline-set-editor-row'));
             const allowInlineSetEditor = isInsideInlineSetEditor && isInteractiveTarget(target);
-            if (isInsideKeyboard || isInsideTarget || allowInlineSetEditor) {
+            const isInlineInput = target?.closest?.('.set-edit-input');
+            if (isInsideKeyboard || isInsideTarget || allowInlineSetEditor || isInlineInput) {
+                return true;
+            }
+            return false;
+        };
+
+        const handleOutsideMove = (event) => {
+            if (!pendingOutside) {
                 return;
             }
-            handleClose();
+            const deltaX = Math.abs(event.clientX - pendingOutside.startX);
+            const deltaY = Math.abs(event.clientY - pendingOutside.startY);
+            if (deltaX > OUTSIDE_MOVE_THRESHOLD || deltaY > OUTSIDE_MOVE_THRESHOLD) {
+                pendingOutside.moved = true;
+            }
+        };
+
+        const handleOutsideEnd = () => {
+            if (!pendingOutside) {
+                return;
+            }
+            const { moved } = pendingOutside;
+            clearPendingOutside();
+            if (!moved) {
+                handleClose();
+            }
+        };
+
+        const handleOutside = (event) => {
+            if (shouldIgnoreOutside(event)) {
+                return;
+            }
+            pendingOutside = {
+                startX: event.clientX,
+                startY: event.clientY,
+                moved: false
+            };
+            document.addEventListener('pointermove', handleOutsideMove, true);
+            document.addEventListener('pointerup', handleOutsideEnd, true);
+            document.addEventListener('pointercancel', handleOutsideEnd, true);
         };
 
         const hasFullSelection = (value) => {
@@ -1179,6 +1229,7 @@
                     break;
             }
             emitChange(config, state);
+            config?.onSelectField?.(field);
         };
 
         const createStepperButton = (label, onClick, disabled = false, aria) => {
@@ -1207,21 +1258,21 @@
             const secondsDelta = type === 'plus' ? 10 : -10;
 
             const repsBtn = createStepperButton(
-                type === 'plus' ? '+1' : '−1',
+                type === 'plus' ? '+' : '−',
                 () => adjustState(state, 'reps', delta, config),
                 false,
                 `${type === 'plus' ? 'Augmenter' : 'Diminuer'} les répétitions`
             );
             repsBtn.classList.add('inline-set-editor-reps');
             const weightBtn = createStepperButton(
-                type === 'plus' ? '+1' : '−1',
+                type === 'plus' ? '+' : '−',
                 () => adjustState(state, 'weight', delta, config),
                 false,
                 `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le poids`
             );
             weightBtn.classList.add('inline-set-editor-weight');
             const rpeBtn = createStepperButton(
-                type === 'plus' ? '+1' : '−1',
+                type === 'plus' ? '+' : '−',
                 () => adjustState(state, 'rpe', delta, config),
                 false,
                 `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le RPE`
