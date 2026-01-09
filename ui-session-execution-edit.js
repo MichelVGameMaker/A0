@@ -33,6 +33,11 @@
             icon: 'icons/badge-kg.svg',
             className: 'exec-medal--kg',
             label: 'Record poids'
+        },
+        new: {
+            icon: 'icons/badge-new.svg',
+            className: 'exec-medal--new',
+            label: 'Première séance'
         }
     };
     let inlineEditor = null;
@@ -742,6 +747,18 @@
 
     async function buildMedalMap(exerciseId, currentSets = []) {
         const previousSets = await collectPreviousExerciseSets(exerciseId);
+        if (!previousSets.length) {
+            const medalsByPos = new Map();
+            (Array.isArray(currentSets) ? currentSets : []).forEach((set, index) => {
+                const pos = safeInt(set?.pos, index + 1);
+                const medals = [];
+                if (pos === 1) {
+                    medals.push('new');
+                }
+                medalsByPos.set(pos, medals);
+            });
+            return medalsByPos;
+        }
         let maxWeight = 0;
         let maxOrm = 0;
         const maxRepsByWeight = new Map();
