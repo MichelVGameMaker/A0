@@ -128,8 +128,6 @@
         setMetaMode('history');
 
         updateTimerUI();
-
-        void renderSets();
         switchScreen('screenExecEdit');
     };
 
@@ -451,7 +449,6 @@
         }
         const medals = meta?.medalsByPos?.get?.(pos) || [];
         if (!medals.length) {
-            cell.textContent = '—';
             return cell;
         }
         const list = document.createElement('div');
@@ -564,6 +561,7 @@
             ];
         };
 
+        let selectField = null;
         const openEditor = (focusField) => {
             const editor = ensureInlineEditor();
             if (!editor) {
@@ -575,6 +573,7 @@
                 focus: focusField,
                 tone: 'black',
                 order: { position: set.pos ?? currentIndex + 1, total: totalSets },
+                onSelectField: (field) => selectField?.(field),
                 onMove: async (direction) => {
                     const delta = direction === 'up' ? -1 : 1;
                     const nextIndex = await moveSet(currentIndex, delta, row);
@@ -697,7 +696,10 @@
                         }
                         void applyDirectChange(field, input.value);
                     },
-                    onClose: () => input.blur()
+                    onClose: () => {
+                        input.blur();
+                        ensureInlineEditor()?.close();
+                    }
                 });
                 inlineKeyboard?.selectTarget?.(input);
             });
@@ -715,6 +717,21 @@
         const restInput = createInput(() => formatRestDisplay(value.rest), 'rest', 'exec-rest-cell');
         collectInputs(repsInput, weightInput, rpeInput, restInput);
         syncRowTone();
+        selectField = (field) => {
+            const map = {
+                reps: repsInput,
+                weight: weightInput,
+                rpe: rpeInput,
+                rest: restInput
+            };
+            const target = map[field];
+            if (!target) {
+                return;
+            }
+            target.focus({ preventScroll: true });
+            target.select?.();
+            inlineKeyboard?.selectTarget?.(target);
+        };
 
         const metaCell = buildMetaCell(set, index, meta);
         row.append(order, repsInput, weightInput, rpeInput, restInput, metaCell);
