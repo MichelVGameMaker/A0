@@ -10,6 +10,7 @@
   --white:         #ffffff;
   --pink:          #faebf2;
   --almost_white:  #f8f8f8; 
+  --greyer_white:  #f4f4f4; 
   --light_grey:    #e8e8e8;
   --grey:          #d4d4d4;
   --dark_grey:     #ccc;
@@ -20,7 +21,7 @@
   --bodyBack:      var(--red);
   --contentBack:   var(--almost_white);
   --panelBack:     var(--white);
-  --panelBord:     var(--almost_white);
+  --panelBord:     var(--greyer_white);
 
   --emptyColor:    var(--dark_grey);
   --labelColor:    var(--darker_grey);
