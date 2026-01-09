@@ -28,12 +28,12 @@
   --selectedColor: var(--black);
   --selectedBack:  var(--grey);
   --selectedBord:  var(--emphase);
+  --focusedColor:  var(--black);
   --focusedBack:   var(--grey);
-  --focusedColor:  var(--white);
   --focusedBord:   var(--emphase);
   --clickableBack: var(--light_grey);
-  --clickableBord: var(--almost_white); 
-  --nonClickableBord: var(--emphase);
+  --clickableBord: var(--grey); 
+emphase);
   /* --- RPE styles --- */
   --rpe-ink:       #0f243a;
   --rpe-5-bg:      #e6f1ff;
@@ -1013,22 +1013,25 @@ textarea:focus{
 /* =========================================================
    7) Calendriers
    ========================================================= */
+     
+/* ========= Selecteur Mois - Contenant ========= */
+    .month-grid{ 
+		display:grid; grid-template-columns: repeat(7,1fr); 
+		gap:var(--gap); 
+	}
    
 /* ========= Selecteur Semaine - Contenant ========= */
     .week-strip-wrapper{
       display:flex; 
       align-items:center; 
-      gap:var(--gap);
-      margin-bottom:12px;
     }
     .week-strip{
       display:flex;
       flex:      1;
-	   gap:var(--gap); 
       overflow-x:auto;
-      padding-bottom:8px; 
-      margin-bottom:0;
-      border-bottom:1px dashed var(--panelBord);
+      padding-top: var(--pad-tight); 
+      padding-bottom: var(--pad-tight); 
+      border-bottom:1px var(--emphase);
       -webkit-overflow-scrolling:touch;
       touch-action:pan-x;
       scroll-snap-type:x mandatory;
@@ -1039,25 +1042,21 @@ textarea:focus{
     .week-strip .week-page{
       display:grid; grid-template-columns:repeat(7,minmax(0,1fr));
       gap:var(--gap);
-      flex:0 0 100%; width:100%;
+      flex:0 0 100%; 
+      width:100%;
       scroll-snap-align:start;
       scroll-snap-stop:always;
     }   
-    
-/* ========= Selecteur Mois - Contenant ========= */
-    .month-grid{ 
-		display:grid; grid-template-columns: repeat(7,1fr); 
-		gap:var(--gap); 
-	}
 
+    
 /* ========= Celulles - Contenu ========= */
     .week-strip .day span{ display:block; }
     .week-strip .day-weekday{ font-size: var(--fs-small); text-transform:capitalize; }
-    /* Day cell use Tag style */
+    
     .day-cell{
         /* Dimension pour tous les éléments */
-        height: var(--control-h);  
-        padding: var(--pad-tight);
+        height:        var(--control-h);  
+        padding:       var(--pad-tight);
         border-radius: var(--radius);
         /* Cliquable */
         border: 1px solid var(--clickableBord);
@@ -1068,9 +1067,9 @@ textarea:focus{
         text-align:center;
     }
     .day-cell.placeholder{
-        background: transparent;
+        background:   transparent;
         border-color: transparent;
-        cursor: default;
+        cursor:       default;
         pointer-events: none;
     }
     
