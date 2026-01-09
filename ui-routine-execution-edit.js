@@ -358,16 +358,9 @@
                 case 'rpe':
                     next.rpe = rawValue === '' ? null : clampRpe(rawValue);
                     break;
-                case 'minutes': {
-                    const { seconds } = splitRest(value.rest);
-                    next.rest = Math.max(0, safeInt(rawValue, 0) * 60 + seconds);
+                case 'rest':
+                    next.rest = parseRestInput(rawValue, value.rest);
                     break;
-                }
-                case 'seconds': {
-                    const { minutes } = splitRest(value.rest);
-                    next.rest = Math.max(0, minutes * 60 + safeInt(rawValue, 0));
-                    break;
-                }
                 default:
                     return;
             }
@@ -410,7 +403,7 @@
             input.addEventListener('click', () => {
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
-                    layout: field === 'rpe' ? 'rpe' : 'default',
+                    layout: field === 'rpe' ? 'rpe' : field === 'rest' ? 'time' : 'default',
                     actions: buildKeyboardActions(),
                     getValue: () => input.value,
                     onChange: (next) => {
@@ -435,12 +428,11 @@
             { inputMode: 'decimal', type: 'text' }
         );
         const rpeInput = createInput(() => (value.rpe == null ? '' : String(value.rpe)), 'rpe', 'exec-rpe-cell');
-        const restMinutesInput = createInput(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell exec-rest-minutes');
-        const restSecondsInput = createInput(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell exec-rest-seconds');
-        collectInputs(repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
+        const restInput = createInput(() => formatRestDisplay(value.rest), 'rest', 'exec-rest-cell');
+        collectInputs(repsInput, weightInput, rpeInput, restInput);
         syncRowTone();
 
-        row.append(order, repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
+        row.append(order, repsInput, weightInput, rpeInput, restInput);
         return row;
     }
 
@@ -859,14 +851,9 @@
         return formatNumber(value);
     }
 
-    function formatRestMinutes(value) {
-        const { minutes } = splitRest(value);
-        return String(minutes);
-    }
-
-    function formatRestSeconds(value) {
-        const { seconds } = splitRest(value);
-        return String(seconds).padStart(2, '0');
+    function formatRestDisplay(value) {
+        const { minutes, seconds } = splitRest(value);
+        return `${minutes}:${String(seconds).padStart(2, '0')}`;
     }
 
     function formatNumber(value) {
@@ -881,6 +868,23 @@
             .toFixed(2)
             .replace(/\.0+$/, '')
             .replace(/(\.\d*?)0+$/, '$1');
+    }
+
+    function parseRestInput(rawValue, fallback) {
+        if (rawValue == null) {
+            return Math.max(0, safeInt(fallback, 0));
+        }
+        const text = String(rawValue).trim();
+        if (!text) {
+            return 0;
+        }
+        const parts = text.split(':');
+        if (parts.length === 1) {
+            return Math.max(0, safeInt(parts[0], 0));
+        }
+        const minutes = safeInt(parts[0], 0);
+        const seconds = safeInt(parts[1], 0);
+        return Math.max(0, minutes * 60 + seconds);
     }
 
     function rpeChip(value) {
