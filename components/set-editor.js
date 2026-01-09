@@ -1159,7 +1159,30 @@
             if (container?.closest?.('#screenExecEdit')) {
                 row.classList.add('routine-set-grid--with-meta');
             }
+            const delta = type === 'plus' ? 1 : -1;
             const secondsDelta = type === 'plus' ? 10 : -10;
+
+            const repsBtn = createStepperButton(
+                type === 'plus' ? '+1' : '−1',
+                () => adjustState(state, 'reps', delta, config),
+                false,
+                `${type === 'plus' ? 'Augmenter' : 'Diminuer'} les répétitions`
+            );
+            repsBtn.classList.add('inline-set-editor-reps');
+            const weightBtn = createStepperButton(
+                type === 'plus' ? '+1' : '−1',
+                () => adjustState(state, 'weight', delta, config),
+                false,
+                `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le poids`
+            );
+            weightBtn.classList.add('inline-set-editor-weight');
+            const rpeBtn = createStepperButton(
+                type === 'plus' ? '+1' : '−1',
+                () => adjustState(state, 'rpe', delta, config),
+                false,
+                `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le RPE`
+            );
+            rpeBtn.classList.add('inline-set-editor-rpe');
             const secondsBtn = createStepperButton(
                 type === 'plus' ? '+10s' : '−10s',
                 () => adjustState(state, 'seconds', secondsDelta, config),
@@ -1167,7 +1190,7 @@
                 `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le repos (10 secondes)`
             );
             secondsBtn.classList.add('inline-set-editor-rest');
-            row.append(secondsBtn);
+            row.append(repsBtn, weightBtn, rpeBtn, secondsBtn);
             return row;
         };
 
