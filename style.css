@@ -24,7 +24,7 @@
   --panelBord:     var(--greyer_white);
 
   --emptyColor:    var(--dark_grey);
-  --labelColor:    var(--darker_grey);
+  --labelColor:    rgba(0, 0, 0, 0.6);
   --filledColor:   var(--black);
   --selectedColor: var(--black);
   --selectedBack:  var(--grey);
@@ -36,7 +36,7 @@
   --clickableBord: var(--grey); 
 emphase);
   /* --- RPE styles --- */
-  --rpe-ink:       #0f243a;
+  --rpe-ink:       var(--black);
   --rpe-5-bg:      #e6f1ff;
   --rpe-5-bord:    #c9ddf6;
   --rpe-6-bg:      #ede8ff;
