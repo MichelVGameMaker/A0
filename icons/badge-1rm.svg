@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title">
+  <title>Record 1RM</title>
+  <circle cx="12" cy="12" r="10"/>
+  <path d="M8 15V9"/>
+  <path d="M12 15V9"/>
+  <path d="M12 9h4a2 2 0 0 1 0 4h-4z"/>
+  <path d="M12 13h3a2 2 0 0 1 0 4h-3z"/>
+</svg>

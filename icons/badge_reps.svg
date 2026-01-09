@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title">
+  <title>Record reps</title>
+  <circle cx="12" cy="12" r="10"/>
+  <path d="M8 8h5a3 3 0 0 1 0 6H8z"/>
+  <path d="M8 14h4a3 3 0 0 1 0 6H8z"/>
+</svg>
