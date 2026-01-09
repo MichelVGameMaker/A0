@@ -1454,6 +1454,15 @@ textarea:focus{
   gap: 10px;
 }
 
+.keyboard-spacer{
+  height: 0;
+  pointer-events: none;
+}
+
+body.inline-keyboard-visible .keyboard-spacer{
+  height: var(--inline-keyboard-h);
+}
+
 .inline-keyboard-action{
   border: 1px solid var(--panelBord);
   border-radius: 14px;
