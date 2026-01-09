@@ -134,7 +134,7 @@
         refs.execAddSet = document.getElementById('execAddSet');
         refs.execSets = document.getElementById('execSets');
         refs.execSetsLayout = document.getElementById('execSetsLayout');
-        refs.execHistoryPanel = document.getElementById('execHistoryPanel');
+        refs.execMetaHeader = document.getElementById('execMetaHeader');
         refs.execTimerBar = document.getElementById('execTimerBar');
         refs.timerDetails = document.getElementById('tmrDetails');
         refs.timerDisplay = document.getElementById('tmrDisplay');
@@ -151,7 +151,6 @@
         refs.execMoveEditorCancel = document.getElementById('execMoveEditorCancel');
         refs.execHistoryToggle = document.getElementById('execHistoryToggle');
         refs.execGoalsToggle = document.getElementById('execGoalsToggle');
-        refs.execGoalsPanel = document.getElementById('execGoalsPanel');
         refsResolved = true;
         return refs;
     }
@@ -190,7 +189,7 @@
             'execMoveEditorCancel',
             'execHistoryToggle',
             'execGoalsToggle',
-            'execGoalsPanel'
+            'execMetaHeader'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -340,42 +339,21 @@
 
     async function renderSets() {
         const exercise = getExercise();
-        const { execSets, execSetsLayout, execHistoryPanel, execGoalsPanel } = assertRefs();
+        const { execSets, execMetaHeader } = assertRefs();
         ensureInlineEditor()?.close();
         inlineKeyboard?.detach?.();
         execSets.innerHTML = '';
-        const resetPanel = (panel) => {
-            if (!panel) {
-                return;
-            }
-            const header = panel.querySelector('.exec-history-header');
-            const table = panel.querySelector('.exec-history-table');
-            if (header) {
-                header.textContent = '';
-            }
-            if (table) {
-                table.innerHTML = '';
-            }
-        };
-        if (execSetsLayout) {
-            execSetsLayout.classList.toggle('with-side-panel', state.historySelected || state.goalsSelected);
-        }
-        if (execHistoryPanel) {
-            execHistoryPanel.hidden = !state.historySelected;
-            if (!state.historySelected) {
-                resetPanel(execHistoryPanel);
-            }
-        }
-        if (execGoalsPanel) {
-            execGoalsPanel.hidden = !state.goalsSelected;
-            if (!state.goalsSelected) {
-                resetPanel(execGoalsPanel);
-            }
-        }
         if (!exercise) {
+            if (execMetaHeader) {
+                execMetaHeader.textContent = getMetaHeaderLabel();
+            }
             return;
         }
         const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+        const meta = await buildSetMeta(exercise, sets);
+        if (execMetaHeader) {
+            execMetaHeader.textContent = getMetaHeaderLabel();
+        }
         if (!sets.length) {
             const empty = document.createElement('div');
             empty.className = 'empty';
@@ -383,21 +361,55 @@
             execSets.appendChild(empty);
         } else {
             sets.forEach((set, index) => {
-                execSets.appendChild(renderSetRow(set, index, sets.length));
+                execSets.appendChild(renderSetRow(set, index, sets.length, meta));
             });
         }
-        if (state.historySelected) {
-            await renderHistoryPanel(exercise, sets);
-        }
-        if (state.goalsSelected) {
-            await renderGoalsPanel(exercise, sets);
-        }
-        requestAnimationFrame(syncSidePanelRows);
     }
 
-    function renderSetRow(set, index, totalSets) {
+    function getMetaHeaderLabel() {
+        if (state.historySelected) {
+            return 'Historique';
+        }
+        if (state.goalsSelected) {
+            return 'Objectif';
+        }
+        return 'Médailles';
+    }
+
+    function buildMetaCell(set, index, meta) {
+        const cell = document.createElement('div');
+        cell.className = 'exec-meta-cell';
+        const pos = safeInt(set?.pos, index + 1);
+        if (state.historySelected || state.goalsSelected) {
+            const map = state.historySelected ? meta?.historyByPos : meta?.goalsByPos;
+            const info = map?.get?.(pos) || null;
+            const chip = document.createElement('div');
+            chip.className = 'exec-history-set rpe-chip exec-meta-chip';
+            chip.textContent = info?.text ?? '—';
+            applyRpeTone(chip, info?.rpe);
+            cell.appendChild(chip);
+            return cell;
+        }
+        const medals = meta?.medalsByPos?.get?.(pos) || [];
+        if (!medals.length) {
+            cell.textContent = '—';
+            return cell;
+        }
+        const list = document.createElement('div');
+        list.className = 'exec-meta-medals';
+        medals.forEach((label) => {
+            const badge = document.createElement('span');
+            badge.className = 'exec-medal';
+            badge.textContent = label;
+            list.appendChild(badge);
+        });
+        cell.appendChild(list);
+        return cell;
+    }
+
+    function renderSetRow(set, index, totalSets, meta) {
         const row = document.createElement('div');
-        row.className = 'exec-grid exec-row routine-set-grid exec-set-row';
+        row.className = 'exec-grid exec-row routine-set-grid routine-set-grid--with-meta exec-set-row';
         row.classList.add(set.done === true ? 'exec-set-executed' : 'exec-set-planned');
         row.dataset.index = String(index);
 
@@ -537,16 +549,9 @@
                 case 'rpe':
                     next.rpe = rawValue === '' ? null : clampRpe(rawValue);
                     break;
-                case 'minutes': {
-                    const { seconds } = splitRest(value.rest);
-                    next.rest = Math.max(0, safeInt(rawValue, 0) * 60 + seconds);
+                case 'rest':
+                    next.rest = parseRestInput(rawValue, value.rest);
                     break;
-                }
-                case 'seconds': {
-                    const { minutes } = splitRest(value.rest);
-                    next.rest = Math.max(0, minutes * 60 + safeInt(rawValue, 0));
-                    break;
-                }
                 default:
                     return;
             }
@@ -591,7 +596,7 @@
             input.addEventListener('click', () => {
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
-                    layout: field === 'rpe' ? 'rpe' : 'default',
+                    layout: field === 'rpe' ? 'rpe' : field === 'rest' ? 'time' : 'default',
                     actions: buildKeyboardActions(),
                     getValue: () => input.value,
                     onChange: (next) => {
@@ -616,89 +621,147 @@
             { inputMode: 'decimal', type: 'text' }
         );
         const rpeInput = createInput(() => (value.rpe == null ? '' : String(value.rpe)), 'rpe', 'exec-rpe-cell');
-        const restMinutesInput = createInput(() => formatRestMinutes(value.rest), 'minutes', 'exec-rest-cell exec-rest-minutes');
-        const restSecondsInput = createInput(() => formatRestSeconds(value.rest), 'seconds', 'exec-rest-cell exec-rest-seconds');
-        collectInputs(repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
+        const restInput = createInput(() => formatRestDisplay(value.rest), 'rest', 'exec-rest-cell');
+        collectInputs(repsInput, weightInput, rpeInput, restInput);
         syncRowTone();
 
-        row.append(order, repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
+        const metaCell = buildMetaCell(set, index, meta);
+        row.append(order, repsInput, weightInput, rpeInput, restInput, metaCell);
         return row;
     }
 
-    async function renderHistoryPanel(exercise, currentSets = []) {
-        const { execHistoryPanel } = assertRefs();
-        if (!execHistoryPanel) {
-            return;
-        }
-        const header = execHistoryPanel.querySelector('.exec-history-header');
-        const table = execHistoryPanel.querySelector('.exec-history-table');
-        if (!header || !table) {
-            return;
-        }
-        table.innerHTML = '';
-        const previous = await findPreviousSessionForHistory(exercise?.exercise_id);
+    async function buildSetMeta(exercise, currentSets = []) {
+        const exerciseId = exercise?.exercise_id;
         const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
+        const previous = await findPreviousSessionForHistory(exerciseId);
         const previousSets = Array.isArray(previous?.exercise?.sets) ? [...previous.exercise.sets] : [];
         previousSets.sort((a, b) => safeInt(a?.pos, 0) - safeInt(b?.pos, 0));
-        if (!previous) {
-            header.textContent = 'Aucune séance précédente';
-        } else {
-            header.textContent = formatHistoryDate(previous.date);
-        }
-        if (!currentSets.length) {
-            const empty = document.createElement('div');
-            empty.className = 'exec-history-empty';
-            empty.textContent = '—';
-            table.appendChild(empty);
-            return;
-        }
-        currentSets.forEach((set, index) => {
-            const targetPos = safeInt(set?.pos, index + 1);
-            const match = previousSets.find((item) => safeInt(item?.pos, 0) === targetPos);
-            const item = document.createElement('div');
-            item.className = 'exec-history-set rpe-chip';
-            item.textContent = match ? formatHistorySetLine(match, weightUnit) : '—';
-            applyRpeTone(item, match?.rpe);
-            table.appendChild(item);
-        });
+        const historyByPos = buildHistorySetMap(previousSets, weightUnit);
+        const goalsByPos = buildHistorySetMap(previousSets, weightUnit);
+        const medalsByPos = await buildMedalMap(exerciseId, currentSets);
+        return { historyByPos, goalsByPos, medalsByPos };
     }
 
-    async function renderGoalsPanel(exercise, currentSets = []) {
-        const { execGoalsPanel } = assertRefs();
-        if (!execGoalsPanel) {
-            return;
-        }
-        const header = execGoalsPanel.querySelector('.exec-history-header');
-        const table = execGoalsPanel.querySelector('.exec-history-table');
-        if (!header || !table) {
-            return;
-        }
-        table.innerHTML = '';
-        const previous = await findPreviousSessionForHistory(exercise?.exercise_id);
-        if (!previous) {
-            header.textContent = 'Aucune séance précédente';
-        } else {
-            header.textContent = 'Objectifs';
-        }
-        const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
-        const previousSets = Array.isArray(previous?.exercise?.sets) ? [...previous.exercise.sets] : [];
-        previousSets.sort((a, b) => safeInt(a?.pos, 0) - safeInt(b?.pos, 0));
-        if (!currentSets.length) {
-            const empty = document.createElement('div');
-            empty.className = 'exec-history-empty';
-            empty.textContent = '—';
-            table.appendChild(empty);
-            return;
-        }
-        currentSets.forEach((set, index) => {
-            const targetPos = safeInt(set?.pos, index + 1);
-            const match = previousSets.find((item) => safeInt(item?.pos, 0) === targetPos);
-            const item = document.createElement('div');
-            item.className = 'exec-history-set rpe-chip';
-            item.textContent = match ? formatHistorySetLine(match, weightUnit) : '—';
-            applyRpeTone(item, match?.rpe);
-            table.appendChild(item);
+    function buildHistorySetMap(sets, weightUnit) {
+        const map = new Map();
+        (Array.isArray(sets) ? sets : []).forEach((set, index) => {
+            const pos = safeInt(set?.pos, index + 1);
+            map.set(pos, {
+                text: formatHistorySetLine(set, weightUnit),
+                rpe: set?.rpe ?? null
+            });
         });
+        return map;
+    }
+
+    async function buildMedalMap(exerciseId, currentSets = []) {
+        const previousSets = await collectPreviousExerciseSets(exerciseId);
+        let maxWeight = 0;
+        let maxOrm = 0;
+        const maxRepsByWeight = new Map();
+        const bestByPos = new Map();
+        previousSets.forEach((set, index) => {
+            const pos = safeInt(set?.pos, index + 1);
+            const weight = sanitizeWeight(set?.weight);
+            const reps = safePositiveInt(set?.reps);
+            if (weight != null) {
+                maxWeight = Math.max(maxWeight, weight);
+            }
+            const orm = estimateOrm(weight, reps);
+            if (orm != null) {
+                maxOrm = Math.max(maxOrm, orm);
+            }
+            if (weight != null && reps > 0) {
+                const key = normalizeWeightKey(weight);
+                const bestReps = maxRepsByWeight.get(key) ?? 0;
+                if (reps > bestReps) {
+                    maxRepsByWeight.set(key, reps);
+                }
+            }
+            if (weight != null) {
+                const currentBest = bestByPos.get(pos);
+                if (
+                    !currentBest ||
+                    weight > currentBest.weight ||
+                    (weight === currentBest.weight && reps > currentBest.reps)
+                ) {
+                    bestByPos.set(pos, { weight, reps });
+                }
+            }
+        });
+        const medalsByPos = new Map();
+        (Array.isArray(currentSets) ? currentSets : []).forEach((set, index) => {
+            const pos = safeInt(set?.pos, index + 1);
+            const weight = sanitizeWeight(set?.weight);
+            const reps = safePositiveInt(set?.reps);
+            const medals = [];
+            if (weight != null && weight > maxWeight) {
+                medals.push('⭐️kg');
+            }
+            const orm = estimateOrm(weight, reps);
+            if (orm != null && orm > maxOrm) {
+                medals.push('⭐️RM');
+            }
+            if (weight != null && reps > 0) {
+                const key = normalizeWeightKey(weight);
+                const bestReps = maxRepsByWeight.get(key) ?? 0;
+                if (reps > bestReps) {
+                    medals.push('⭐️reps');
+                }
+            }
+            const bestAtPos = bestByPos.get(pos);
+            if (
+                bestAtPos &&
+                weight != null &&
+                (weight > bestAtPos.weight || (weight === bestAtPos.weight && reps > bestAtPos.reps))
+            ) {
+                medals.push('#⬆️');
+            }
+            medalsByPos.set(pos, medals.slice(0, 3));
+        });
+        return medalsByPos;
+    }
+
+    async function collectPreviousExerciseSets(exerciseId) {
+        const dateKey = state.dateKey;
+        if (!exerciseId || !dateKey) {
+            return [];
+        }
+        const sessions = await db.listSessionDates();
+        const previousDates = sessions
+            .map((entry) => entry.date)
+            .filter((date) => date && date < dateKey)
+            .sort((a, b) => a.localeCompare(b));
+        const results = [];
+        for (const date of previousDates) {
+            const session = await db.getSession(date);
+            const exercise = Array.isArray(session?.exercises)
+                ? session.exercises.find((item) => item.exercise_id === exerciseId)
+                : null;
+            if (exercise && Array.isArray(exercise.sets) && exercise.sets.length) {
+                exercise.sets.forEach((set, index) => {
+                    results.push({
+                        pos: safeInt(set?.pos, index + 1),
+                        reps: safePositiveInt(set?.reps),
+                        weight: sanitizeWeight(set?.weight),
+                        rpe: set?.rpe ?? null
+                    });
+                });
+            }
+        }
+        return results;
+    }
+
+    function normalizeWeightKey(weight) {
+        const normalized = Math.round(Number(weight) * 100) / 100;
+        return String(normalized);
+    }
+
+    function estimateOrm(weight, reps) {
+        if (weight == null || reps == null || reps <= 0) {
+            return null;
+        }
+        return weight * (1 + reps / 30);
     }
 
     async function findPreviousSessionForHistory(exerciseId) {
@@ -723,14 +786,6 @@
         return null;
     }
 
-    function formatHistoryDate(dateValue) {
-        const date = dateValue ? new Date(dateValue) : null;
-        if (!date || Number.isNaN(date.getTime())) {
-            return '—';
-        }
-        return typeof A.fmtUI === 'function' ? A.fmtUI(date) : date.toLocaleDateString('fr-FR');
-    }
-
     function formatHistorySetLine(set, weightUnit) {
         const reps = Number.isFinite(set?.reps) ? set.reps : null;
         const weight = set?.weight != null ? Number(set.weight) : null;
@@ -742,54 +797,6 @@
             parts.push(`${formatNumber(weight)}${weightUnit}`);
         }
         return parts.length ? parts.join(' ') : '—';
-    }
-
-    function syncSidePanelRows() {
-        const { execSets, execSetsLayout, execHistoryPanel, execGoalsPanel } = assertRefs();
-        const panel = state.historySelected ? execHistoryPanel : state.goalsSelected ? execGoalsPanel : null;
-        const resetPanelStyles = (target) => {
-            if (!target) {
-                return;
-            }
-            const header = target.querySelector('.exec-history-header');
-            if (header) {
-                header.style.height = '';
-                header.style.marginTop = '';
-            }
-            const items = target.querySelectorAll('.exec-history-set, .exec-history-empty');
-            items.forEach((item) => {
-                item.style.height = '';
-                item.style.marginTop = '';
-            });
-        };
-        if (!panel || !execSetsLayout) {
-            resetPanelStyles(execHistoryPanel);
-            resetPanelStyles(execGoalsPanel);
-            return;
-        }
-        const headRow = execSetsLayout.querySelector('.routine-set-head');
-        const header = panel.querySelector('.exec-history-header');
-        if (headRow && header) {
-            const headStyles = getComputedStyle(headRow);
-            const headMarginTop = parseFloat(headStyles.marginTop) || 0;
-            const headHeight = headRow.getBoundingClientRect().height;
-            header.style.height = headHeight ? `${headHeight}px` : '';
-            header.style.marginTop = headMarginTop ? `${headMarginTop}px` : '';
-        }
-        const setRows = Array.from(execSets.querySelectorAll('.exec-set-row'));
-        const items = Array.from(panel.querySelectorAll('.exec-history-set, .exec-history-empty'));
-        const firstRow = setRows[0];
-        const rowMarginTop = firstRow ? parseFloat(getComputedStyle(firstRow).marginTop) || 0 : 0;
-        items.forEach((item, index) => {
-            const row = setRows[index];
-            if (row) {
-                const height = row.getBoundingClientRect().height;
-                item.style.height = height ? `${height}px` : '';
-            } else {
-                item.style.height = '';
-            }
-            item.style.marginTop = rowMarginTop ? `${rowMarginTop}px` : '';
-        });
     }
 
     async function addSet() {
@@ -1150,14 +1157,9 @@
         return formatNumber(value);
     }
 
-    function formatRestMinutes(value) {
-        const { minutes } = splitRest(value);
-        return String(minutes);
-    }
-
-    function formatRestSeconds(value) {
-        const { seconds } = splitRest(value);
-        return String(seconds).padStart(2, '0');
+    function formatRestDisplay(value) {
+        const { minutes, seconds } = splitRest(value);
+        return `${minutes}:${String(seconds).padStart(2, '0')}`;
     }
 
     function formatNumber(value) {
@@ -1191,6 +1193,23 @@
         const minutes = Math.floor(secondsTotal / 60);
         const seconds = secondsTotal % 60;
         return { minutes, seconds };
+    }
+
+    function parseRestInput(rawValue, fallback) {
+        if (rawValue == null) {
+            return Math.max(0, safeInt(fallback, 0));
+        }
+        const text = String(rawValue).trim();
+        if (!text) {
+            return 0;
+        }
+        const parts = text.split(':');
+        if (parts.length === 1) {
+            return Math.max(0, safeInt(parts[0], 0));
+        }
+        const minutes = safeInt(parts[0], 0);
+        const seconds = safeInt(parts[1], 0);
+        return Math.max(0, minutes * 60 + seconds);
     }
 
     async function resolveNewSetValues(exercise, sets, previous) {

@@ -625,7 +625,8 @@
 
         const layouts = {
             default: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'],
-            rpe: ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', 'del']
+            rpe: ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', 'del'],
+            time: ['1', '2', '3', '4', '5', '6', '7', '8', '9', ':', '0', 'del']
         };
 
         const renderKeys = (layout) => {
@@ -751,6 +752,10 @@
                 next = shouldReplace ? '' : current.slice(0, -1);
             } else if (layout === 'rpe') {
                 next = key;
+            } else if (layout === 'time' && key === ':') {
+                if (!base.includes(':')) {
+                    next = `${base || '0'}:`;
+                }
             } else if (key === '.') {
                 next = base.includes('.') ? base : `${base || '0'}.`;
             } else {
@@ -1077,32 +1082,18 @@
         const buildStepperRow = (type, state, config, order, moveButtons) => {
             const row = document.createElement('div');
             row.className = `exec-grid routine-set-grid inline-set-editor-row inline-set-editor-${type}`;
-
-            const moveButton = createStepperButton(
-                type === 'plus' ? '▲' : '▼',
-                () => applyMove(type === 'plus' ? 'up' : 'down'),
-                type === 'plus' ? order.position <= 1 : order.position >= order.total,
-                type === 'plus' ? 'Monter la série' : 'Descendre la série'
-            );
-            moveButton.dataset.inlineMove = type;
-            moveButtons?.push(moveButton);
-            row.appendChild(moveButton);
-
-            const delta = type === 'plus' ? 1 : -1;
+            if (container?.closest?.('#screenExecEdit')) {
+                row.classList.add('routine-set-grid--with-meta');
+            }
             const secondsDelta = type === 'plus' ? 10 : -10;
-
-            const repsBtn = createStepperButton(type === 'plus' ? '+' : '−', () => adjustState(state, 'reps', delta, config), false, `${type === 'plus' ? 'Augmenter' : 'Diminuer'} les répétitions`);
-            const weightBtn = createStepperButton(type === 'plus' ? '+' : '−', () => adjustState(state, 'weight', delta, config), false, `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le poids`);
-            const rpeBtn = createStepperButton(type === 'plus' ? '+' : '−', () => adjustState(state, 'rpe', delta, config), false, `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le RPE`);
-            const minutesBtn = createStepperButton(type === 'plus' ? '+' : '−', () => adjustState(state, 'minutes', delta, config), false, `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le repos (minutes)`);
             const secondsBtn = createStepperButton(
                 type === 'plus' ? '+10s' : '−10s',
                 () => adjustState(state, 'seconds', secondsDelta, config),
                 false,
-                `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le repos (secondes)`
+                `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le repos (10 secondes)`
             );
-
-            row.append(repsBtn, weightBtn, rpeBtn, minutesBtn, secondsBtn);
+            secondsBtn.classList.add('inline-set-editor-rest');
+            row.append(secondsBtn);
             return row;
         };
 
