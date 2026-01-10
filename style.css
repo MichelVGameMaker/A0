@@ -75,7 +75,7 @@ emphase);
   --header-h:  44px;       /* hauteur du header */
   --tab-h:     44px;       /* hauteur de la tab bar */
   --tabbar-h: calc(var(--tab-h) + 2px);      /* 2px = border-top de .tabbar */
-  --header-total-h: calc(var(--header-h) + 2px); /* 2px = border-bottom du header/subheader */
+  --header-total-h: calc(var(--header-h) + 2px + env(safe-area-inset-top, 0)); /* 2px = border-bottom du header/subheader */
   --inline-keyboard-h: calc(232px + env(safe-area-inset-bottom, 0));
   --timer-bar-h: 0px;
 }
