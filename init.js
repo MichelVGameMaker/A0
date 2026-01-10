@@ -164,6 +164,8 @@
         refs.screenExecEdit = document.getElementById('screenExecEdit');
         refs.screenStatExercises = document.getElementById('screenStatExercises');
         refs.screenStatExercisesDetail = document.getElementById('screenStatExercisesDetail');
+        refs.screenStatMuscles = document.getElementById('screenStatMuscles');
+        refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenSettings = document.getElementById('screenSettings');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
@@ -209,6 +211,8 @@
             screenRoutineList,
             screenStatExercises,
             screenStatExercisesDetail,
+            screenStatMuscles,
+            screenStatMusclesDetail,
             screenSettings,
             screenPreferences,
             screenData,
@@ -240,6 +244,12 @@
         }
         if (screenStatExercisesDetail) {
             screenStatExercisesDetail.hidden = which !== 'stat-exercises-detail';
+        }
+        if (screenStatMuscles) {
+            screenStatMuscles.hidden = which !== 'stat-muscles';
+        }
+        if (screenStatMusclesDetail) {
+            screenStatMusclesDetail.hidden = which !== 'stat-muscles-detail';
         }
         if (screenSettings) {
             screenSettings.hidden = which !== 'settings';
