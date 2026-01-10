@@ -42,7 +42,6 @@
             tabSessions,
             tabPlanning,
             tabStats,
-            tabTimer,
             screenSessions,
             screenExercises,
             screenExerciseEdit,
@@ -59,6 +58,7 @@
 
         tabSessions?.addEventListener('click', async () => {
             setActiveTab('tabSessions');
+            A.setTimerVisibility?.({ hidden: false });
             showOnly('sessions');
             await A.renderWeek();
             await A.renderSession();
@@ -72,14 +72,6 @@
         tabPlanning?.addEventListener('click', async () => {
             setActiveTab('tabPlanning');
             await A.openPlanning?.();
-        });
-
-        tabTimer?.addEventListener('click', () => {
-            if (!A.timerVisibility) {
-                return;
-            }
-            const nextHidden = !A.timerVisibility.hidden;
-            A.setTimerVisibility?.({ hidden: nextHidden });
         });
 
         screenSessions?.setAttribute('data-screen', 'sessions');
@@ -154,7 +146,6 @@
         refs.tabSessions = document.getElementById('tabSessions');
         refs.tabStats = document.getElementById('tabStats');
         refs.tabPlanning = document.getElementById('tabPlanning');
-        refs.tabTimer = document.getElementById('tabTimer');
         refs.screenSessions = document.getElementById('screenSessions');
         refs.screenExercises = document.getElementById('screenExercises');
         refs.screenExerciseEdit = document.getElementById('screenExerciseEdit');
@@ -198,6 +189,7 @@
         if (element) {
             element.classList.add('active');
         }
+        A.updateSessionTabDisplay?.();
     }
 
     function showOnly(which) {

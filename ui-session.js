@@ -133,6 +133,7 @@
     A.renderSession = async function renderSession() {
         const { todayLabel, sessionList } = assertRefs();
         todayLabel.textContent = A.fmtUI(A.activeDate);
+        A.updateSessionTabDisplay?.();
 
         const key = A.ymd(A.activeDate);
         const session = await db.getSession(key);
