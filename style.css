@@ -73,8 +73,9 @@ emphase);
 
 /* Hauteurs “réelles” en tenant compte des bordures */
   --header-h:  44px;       /* hauteur du header */
-  --tab-h:     44px;       /* hauteur de la tab bar */
-  --tabbar-h: calc(var(--tab-h) + 2px);      /* 2px = border-top de .tabbar */
+  --tab-h:     60px;       /* hauteur de la tab bar */
+  --tabbar-h: calc(var(--tab-h) + 12px);
+  --tab-size: 56px;
   --header-total-h: calc(var(--header-h) + 2px + env(safe-area-inset-top, 0)); /* 2px = border-bottom du header/subheader */
   --inline-keyboard-h: calc(232px + env(safe-area-inset-bottom, 0));
   --timer-bar-h: 0px;
@@ -167,23 +168,36 @@ body{
 .tabbar{
     z-index:10;
     position: fixed; bottom:0; left:0; right:0; 
-    height: var(--tab-h);
-    display:flex; align-items:center; justify-content:space-between;
-    background: var(--panelBack);
-    border-top: 2px solid var(--panelBord);
+    height: var(--tabbar-h);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 16px;
+    padding-bottom: 12px;
+    background: transparent;
+    border-top: none;
 }
 .tab{
-    flex: 1 1 33.333%;
-    height: 100%;
+    flex: 0 0 auto;
+    width: var(--tab-size);
+    height: var(--tab-size);
     box-sizing: border-box;
-    font-size: 32px;
-    padding: 0 var(--pad-x);
-    background: transparent;
-    border:3px solid transparent;
+    font-size: 28px;
+    padding: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+    border: none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     cursor:pointer;
 }
 .tab.active{
-    border-top: 3px solid var(--focusedBord);         /* 4.Onglet actif bordure haute noir */
+    background: rgba(2, 204, 186, 0.85);
+}
+#tabSessions{
+    width: calc(var(--tab-size) * 1.05);
+    height: calc(var(--tab-size) * 1.05);
 }
 #tabSessions.tab--session-timer{
     display:flex;
