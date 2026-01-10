@@ -1063,18 +1063,17 @@
         }
 
         const rawId = typeof workout.id === 'string' ? workout.id.trim() : '';
-        const sessionDateKey = getFitHeroSessionDateKey(workout);
-        const rawDate = typeof workout.date === 'string' ? workout.date : '';
-        const parsedDate = rawDate ? new Date(rawDate) : null;
-        const isoDate = parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : null;
-        const dateKey = sessionDateKey || (!isoDate && rawId && typeof A.sessionDateKeyFromId === 'function'
-            ? A.sessionDateKeyFromId(rawId)
-            : null);
-        const derivedIso = !dateKey || sessionDateKey ? null : new Date(`${dateKey}T00:00:00`).toISOString();
-        const sessionDate = sessionDateKey || isoDate || derivedIso;
+        const rawDate = typeof workout.date === 'string' ? workout.date.trim() : '';
+        const parsedDate = parseWorkoutDate(rawDate);
+        const dateKey = parsedDate
+            ? getFitHeroWorkoutDateKey(parsedDate)
+            : (rawId && typeof A.sessionDateKeyFromId === 'function'
+                ? A.sessionDateKeyFromId(rawId)
+                : null);
+        const sessionDate = dateKey || null;
         const sessionId = rawId
             || (dateKey ? dateKey.replace(/-/g, '') : '')
-            || (sessionDate ? A.sessionId(new Date(sessionDate)) : '');
+            || '';
 
         if (!sessionId || !sessionDate) {
             return null;
@@ -1109,56 +1108,25 @@
         };
     }
 
-    function getFitHeroSessionDateKey(workout) {
-        if (!workout || typeof workout !== 'object') {
-            return null;
-        }
-        const exercises = Array.isArray(workout.exercises) ? workout.exercises : [];
-        let earliest = null;
-        exercises.forEach((exercise) => {
-            const sets = Array.isArray(exercise?.sets) ? exercise.sets : [];
-            sets.forEach((set) => {
-                const raw = typeof set?.date === 'string' ? set.date : null;
-                if (!raw) {
-                    return;
-                }
-                const parsed = new Date(raw);
-                if (Number.isNaN(parsed.getTime())) {
-                    return;
-                }
-                const time = parsed.getTime();
-                if (earliest == null || time < earliest) {
-                    earliest = time;
-                }
-            });
-        });
-        if (earliest == null) {
-            return null;
-        }
-        return formatParisDateKey(new Date(earliest));
-    }
-
-    function formatParisDateKey(date) {
+    function getFitHeroWorkoutDateKey(date) {
         if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
             return null;
         }
-        const formatter = new Intl.DateTimeFormat('fr-FR', {
-            timeZone: 'Europe/Paris',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-        const parts = formatter.formatToParts(date);
-        const values = parts.reduce((acc, part) => {
-            if (part.type !== 'literal') {
-                acc[part.type] = part.value;
-            }
-            return acc;
-        }, {});
-        if (!values.year || !values.month || !values.day) {
+        const year = String(date.getFullYear());
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function parseWorkoutDate(isoUtc) {
+        if (!isoUtc) {
             return null;
         }
-        return `${values.year}-${values.month}-${values.day}`;
+        const d = new Date(isoUtc);
+        if (Number.isNaN(d.getTime())) {
+            return null;
+        }
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
     }
 
     async function toFitHeroExercise(exercise, context) {
