@@ -40,11 +40,13 @@
     <!-- En-tête -->
     <header class="header">
         <div class="header-left">
-            <button id="btnQuickNav" class="btn" title="Calendrier">📅</button>
         </div>
 
         <div class="header-center">
-            <span id="todayLabel">—</span>
+            <button id="btnDateNav" class="btn header-date-btn" type="button" aria-label="Ouvrir le calendrier">
+                <span id="todayLabel">—</span>
+                <span class="header-date-arrow" aria-hidden="true">▼</span>
+            </button>
         </div>
 
         <div class="header-right">

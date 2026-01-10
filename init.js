@@ -97,9 +97,9 @@
     }
 
     function wireCalendar() {
-        const { btnQuickNav, dlgClose, calPrev, calNext } = refs;
+        const { btnDateNav, dlgClose, calPrev, calNext } = refs;
 
-        btnQuickNav?.addEventListener('click', () => A.openCalendar());
+        btnDateNav?.addEventListener('click', () => A.openCalendar());
         dlgClose?.addEventListener('click', () => refs.dlgCalendar?.close());
 
         calPrev?.addEventListener('click', async () => {
@@ -147,7 +147,7 @@
         refs.btnAddRoutines = document.getElementById('btnAddRoutines');
         refs.dlgCalendar = document.getElementById('dlgCalendar');
         refs.bigCalendar = document.getElementById('bigCalendar');
-        refs.btnQuickNav = document.getElementById('btnQuickNav');
+        refs.btnDateNav = document.getElementById('btnDateNav');
         refs.dlgClose = document.getElementById('dlgClose');
         refs.calPrev = document.getElementById('calPrev');
         refs.calNext = document.getElementById('calNext');

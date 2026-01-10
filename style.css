@@ -289,6 +289,21 @@ header .header-left .btn{
     border-color: transparent;
     text-align: left;
 }
+.header-date-btn{
+    background: transparent;
+    border-color: transparent;
+    padding: 0;
+    min-height: auto;
+    min-width: 0;
+    gap: 6px;
+}
+.header-date-btn:active{
+    transform: scale(.98);
+}
+.header-date-arrow{
+    font-size: 0.75em;
+    line-height: 1;
+}
 
 /* =========================================================
    4) Modale
