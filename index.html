@@ -546,9 +546,6 @@
                 <button id="btnSettingsRoutines" class="btn full">📓 Routines</button>
             </div>
             <div class="row">
-                <button id="btnSettingsPlanning" class="btn full">🗓️ Planning</button>
-            </div>
-            <div class="row">
                 <button id="btnSettingsPreferences" class="btn full">⚙️ Préférences</button>
             </div>
             <div class="row">
@@ -574,7 +571,7 @@
             <div class="title">Planning</div>
         </div>
         <div class="header-right">
-            <button id="btnPlanningEditDays" class="btn primary" title="Modifier la durée">✎</button>
+            <button id="btnPlanningSettings" class="btn" title="Réglages" aria-label="Réglages" style="color: var(--emphase);">⚙︎</button>
         </div>
     </header>
 
@@ -585,6 +582,9 @@
             <button class="tag" type="button" aria-pressed="false">Macro</button>
         </div>
         <div class="bloque">
+            <div class="row">
+                <button id="btnPlanningEditDays" class="btn full" type="button">✎ Modifier la durée</button>
+            </div>
             <div id="planningDaysList"></div>
         </div>
     </main>
@@ -845,7 +845,7 @@
 <nav class="tabbar safe-bottom" aria-label="Navigation principale">
     <button id="tabSessions" class="tab active" title="Séances"      aria-label="Séances">🏋️</button>
     <button id="tabStats"    class="tab"        title="Statistiques" aria-label="Statistiques">📈</button>
-    <button id="tabSettings" class="tab"        title="Réglages"     aria-label="Réglages">⚙️</button>
+    <button id="tabPlanning" class="tab"        title="Planning"     aria-label="Planning">🗓️</button>
     <button id="tabTimer"    class="tab"        title="Chronomètre"  aria-label="Chronomètre" aria-pressed="false">⏱️</button>
 </nav>
 <!-- ==================== -->

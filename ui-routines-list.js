@@ -83,7 +83,7 @@
         refs.screenPlanning = document.getElementById('screenPlanning');
         refs.routineCatalog = document.getElementById('routineCatalog');
         refs.btnRoutineCreate = document.getElementById('btnRoutineCreate');
-        refs.tabSettings = document.getElementById('tabSettings');
+        refs.tabPlanning = document.getElementById('tabPlanning');
         refs.routineListBack = document.getElementById('routineListBack');
         refs.content = document.querySelector('#screenRoutineList .content');
         refsResolved = true;
@@ -306,10 +306,10 @@
             screenStatExercises: 'tabStats',
             screenStatMuscles: 'tabStats',
             screenStatMusclesDetail: 'tabStats',
-            screenSettings: 'tabSettings',
-            screenPreferences: 'tabSettings',
-            screenData: 'tabSettings',
-            screenPlanning: 'tabSettings'
+            screenSettings: 'tabPlanning',
+            screenPreferences: 'tabPlanning',
+            screenData: 'tabPlanning',
+            screenPlanning: 'tabPlanning'
         };
         const tabId = map[callerScreen];
         if (tabId) {

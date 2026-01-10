@@ -40,7 +40,7 @@
     function wireNavigation() {
         const {
             tabSessions,
-            tabSettings,
+            tabPlanning,
             tabStats,
             tabTimer,
             screenSessions,
@@ -69,9 +69,9 @@
             await A.openVolume?.();
         });
 
-        tabSettings?.addEventListener('click', async () => {
-            setActiveTab('tabSettings');
-            await A.openSettings();
+        tabPlanning?.addEventListener('click', async () => {
+            setActiveTab('tabPlanning');
+            await A.openPlanning?.();
         });
 
         tabTimer?.addEventListener('click', () => {
@@ -153,7 +153,7 @@
         refs.calNext = document.getElementById('calNext');
         refs.tabSessions = document.getElementById('tabSessions');
         refs.tabStats = document.getElementById('tabStats');
-        refs.tabSettings = document.getElementById('tabSettings');
+        refs.tabPlanning = document.getElementById('tabPlanning');
         refs.tabTimer = document.getElementById('tabTimer');
         refs.screenSessions = document.getElementById('screenSessions');
         refs.screenExercises = document.getElementById('screenExercises');
@@ -183,7 +183,7 @@
             'bigCalendar',
             'tabSessions',
             'tabStats',
-            'tabSettings'
+            'tabPlanning'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {

@@ -22,7 +22,7 @@
 
     A.openPlanning = async function openPlanning() {
         ensureRefs();
-        highlightSettingsTab();
+        highlightPlanningTab();
         await renderPlanning();
         switchScreen('screenPlanning');
     };
@@ -244,10 +244,12 @@
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
-        refs.tabSettings = document.getElementById('tabSettings');
+        refs.tabPlanning = document.getElementById('tabPlanning');
+        refs.tabSessions = document.getElementById('tabSessions');
         refs.planningDaysList = document.getElementById('planningDaysList');
         refs.btnPlanningBack = document.getElementById('btnPlanningBack');
         refs.btnPlanningEditDays = document.getElementById('btnPlanningEditDays');
+        refs.btnPlanningSettings = document.getElementById('btnPlanningSettings');
         refs.dlgPlanningDuration = document.getElementById('dlgPlanningDuration');
         refs.planningDurationTags = document.getElementById('planningDurationTags');
         refs.planningDurationCancel = document.getElementById('planningDurationCancel');
@@ -257,12 +259,24 @@
     }
 
     function wireButtons() {
-        const { btnPlanningBack, btnPlanningEditDays, planningDurationCancel, planningDurationSave } = ensureRefs();
-        btnPlanningBack?.addEventListener('click', () => {
-            A.openSettings?.();
+        const {
+            btnPlanningBack,
+            btnPlanningEditDays,
+            btnPlanningSettings,
+            planningDurationCancel,
+            planningDurationSave
+        } = ensureRefs();
+        btnPlanningBack?.addEventListener('click', async () => {
+            highlightSessionsTab();
+            switchScreen('screenSessions');
+            await A.renderWeek?.();
+            await A.renderSession?.();
         });
         btnPlanningEditDays?.addEventListener('click', () => {
             void handleEditDayCount();
+        });
+        btnPlanningSettings?.addEventListener('click', () => {
+            A.openSettings?.();
         });
         planningDurationCancel?.addEventListener('click', () => {
             refs.dlgPlanningDuration?.close();
@@ -272,9 +286,14 @@
         });
     }
 
-    function highlightSettingsTab() {
+    function highlightPlanningTab() {
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
-        refs.tabSettings?.classList.add('active');
+        refs.tabPlanning?.classList.add('active');
+    }
+
+    function highlightSessionsTab() {
+        document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
+        refs.tabSessions?.classList.add('active');
     }
 
     function switchScreen(target) {

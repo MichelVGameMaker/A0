@@ -68,10 +68,9 @@
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
-        refs.tabSettings = document.getElementById('tabSettings');
+        refs.tabPlanning = document.getElementById('tabPlanning');
         refs.btnSettingsExercises = document.getElementById('btnSettingsExercises');
         refs.btnSettingsRoutines = document.getElementById('btnSettingsRoutines');
-        refs.btnSettingsPlanning = document.getElementById('btnSettingsPlanning');
         refs.btnSettingsPreferences = document.getElementById('btnSettingsPreferences');
         refs.btnSettingsData = document.getElementById('btnSettingsData');
         refs.btnSettingsApplication = document.getElementById('btnSettingsApplication');
@@ -95,7 +94,6 @@
         const {
             btnSettingsExercises,
             btnSettingsRoutines,
-            btnSettingsPlanning,
             btnSettingsPreferences,
             btnSettingsData,
             btnSettingsApplication,
@@ -120,10 +118,6 @@
         btnSettingsRoutines?.addEventListener('click', () => {
             highlightSettingsTab();
             void A.openRoutineList();
-        });
-        btnSettingsPlanning?.addEventListener('click', () => {
-            highlightSettingsTab();
-            A.openPlanning?.();
         });
         btnSettingsPreferences?.addEventListener('click', () => {
             A.openPreferences();
@@ -180,8 +174,8 @@
 
     function highlightSettingsTab() {
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
-        if (refs.tabSettings) {
-            refs.tabSettings.classList.add('active');
+        if (refs.tabPlanning) {
+            refs.tabPlanning.classList.add('active');
         }
     }
 
