@@ -550,9 +550,9 @@
 
     function highlightSettingsTab() {
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
-        const tabSettings = document.getElementById('tabSettings');
-        if (tabSettings) {
-            tabSettings.classList.add('active');
+        const tabPlanning = document.getElementById('tabPlanning');
+        if (tabPlanning) {
+            tabPlanning.classList.add('active');
         }
     }
 
