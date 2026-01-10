@@ -150,6 +150,7 @@
         refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
+        refs.tabSessions = document.getElementById('tabSessions');
         refs.execBack = document.getElementById('execBack');
         refs.execEditMeta = document.getElementById('execEditMeta');
         refs.execTitle = document.getElementById('execTitle');
@@ -166,7 +167,6 @@
         refs.timerMinus = document.getElementById('tmrMinus');
         refs.timerPlus = document.getElementById('tmrPlus');
         refs.timerReset = document.getElementById('tmrReset');
-        refs.tabTimer = document.getElementById('tabTimer');
         refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
         refs.execRoutineInstructions = document.getElementById('execRoutineInstructions');
         refs.execMoveNote = document.getElementById('execMoveNote');
@@ -313,6 +313,7 @@
         });
         timerReset.addEventListener('click', () => {
             resetTimerToDefault();
+            setTimerVisibility({ hidden: true });
         });
     }
 
@@ -1655,7 +1656,6 @@
     function updateTimerUI() {
         const timer = ensureSharedTimer();
         const { execTimerBar, timerDetails, timerDisplay, timerToggle } = assertRefs();
-        const { tabTimer } = refs;
         if (!execTimerBar) {
             return;
         }
@@ -1663,7 +1663,7 @@
         const shouldHide = isTimerHidden();
         execTimerBar.hidden = shouldHide;
         syncTimerBarSpacer(execTimerBar, shouldHide);
-        updateTabTimerDisplay(tabTimer, timer, shouldHide);
+        updateSessionTabDisplay(timer);
         if (shouldHide) {
             timerDisplay.classList.remove('tmr-display--warning', 'tmr-display--negative');
             return;
@@ -1685,17 +1685,18 @@
         syncTimerBarSpacer(execTimerBar, false);
     }
 
-    function updateTabTimerDisplay(tabTimer, timer, shouldHide) {
-        if (!tabTimer) {
+    function updateSessionTabDisplay(timer = ensureSharedTimer()) {
+        ensureRefs();
+        const { tabSessions } = refs;
+        if (!tabSessions) {
             return;
         }
-        tabTimer.setAttribute('aria-pressed', String(!shouldHide));
-        tabTimer.classList.toggle('is-on', !shouldHide);
-        tabTimer.classList.toggle('tab--countdown', shouldHide);
-        tabTimer.classList.toggle('tab--collapse', !shouldHide);
-        if (!shouldHide) {
-            tabTimer.classList.remove('tab--warning', 'tab--negative');
-            tabTimer.textContent = '⏱';
+        const isActive = tabSessions.classList.contains('active');
+        tabSessions.classList.toggle('tab--session-timer', isActive);
+        tabSessions.classList.toggle('tab--session-date', !isActive);
+        if (!isActive) {
+            tabSessions.classList.remove('tab--warning', 'tab--negative');
+            tabSessions.textContent = A.fmtUI(A.activeDate || A.today());
             return;
         }
 
@@ -1706,12 +1707,13 @@
         const seconds = abs % 60;
         const isNegative = remaining <= 0;
         const isWarning = remaining > 0 && remaining <= 10;
-        tabTimer.classList.toggle('tab--warning', isWarning);
-        tabTimer.classList.toggle('tab--negative', isNegative);
-        tabTimer.innerHTML = `<span class="tab-timer-arrow">▲</span><span class="tab-timer-time">${sign}${minutes}:${String(
+        tabSessions.classList.toggle('tab--warning', isWarning);
+        tabSessions.classList.toggle('tab--negative', isNegative);
+        tabSessions.innerHTML = `<span class="tab-session-arrow">⯅</span><span class="tab-session-time">${sign}${minutes}:${String(
             seconds
         ).padStart(2, '0')}</span>`;
     }
+    A.updateSessionTabDisplay = () => updateSessionTabDisplay();
 
     function ensureTimerPlacement(execTimerBar) {
         const target = document.body;
