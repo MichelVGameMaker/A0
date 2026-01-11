@@ -258,12 +258,12 @@ body{
 header{
     z-index:10;
     position: fixed; top: 0; left:0; right:0;
-    height: var(--header-h);
+    height: calc(var(--header-h) + env(safe-area-inset-top, 0));
     display:grid;
     --header-side-w: 60px;
     grid-template-columns: var(--header-side-w) minmax(0, 1fr) var(--header-side-w);
     align-items:center;
-    padding: 0 var(--pad-x);
+    padding: env(safe-area-inset-top, 0) var(--pad-x) 0;
     background: var(--priorityBack);
     border-bottom: 2px solid var(--panelBord);
 }
