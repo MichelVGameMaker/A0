@@ -81,7 +81,6 @@
   --tab-size-active:  112px;
   --header-total-h: calc(var(--header-h) + 2px + env(safe-area-inset-top, 0)); /* 2px = border-bottom du header/subheader */
   --inline-keyboard-h: calc(232px + env(safe-area-inset-bottom, 0));
-  --timer-bar-h: 0px;
 }
 
 
@@ -428,32 +427,35 @@ header .header-left .btn{
 /* =========================================================
    5) Timer
    ========================================================= */
-/* Timer bas */
+/* Timer dialog */
 .exec-timer{
-    z-index:20;
-    position:fixed;
-    left:0;
-    right:0;
-    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0));
+    max-width: 420px;
+}
+.exec-timer-body{
     display:flex;
     flex-direction:column;
-    justify-content:flex-end;
-    gap:10px;
-    padding: 12px;
-    background: var(--panelBack);
-    border-top:1px solid var(--panelBord);
-    height: auto;
+    gap: var(--gap);
+    align-items:stretch;
 }
-.exec-timer[hidden]{
-    display:none;
-}
-.tmr-controls{
-    display:grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+.tmr-adjust{
+    display:flex;
     align-items:center;
+    justify-content:space-between;
     gap:12px;
 }
-.tmr-center{ display:flex; align-items:center; justify-content:center; gap:12px; }
+.tmr-circle{
+    width: min(100%, 360px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin: 0 auto;
+    background: var(--panelBack);
+    cursor: pointer;
+    padding: 0;
+}
 .tmr-display{
     font-weight: var(--fw-strong);
     min-width:76px;
@@ -461,13 +463,11 @@ header .header-left .btn{
     font-size: clamp(2.3rem, 9.2vw, 4.6rem);
     line-height:1;
     font-variant-numeric: tabular-nums;
+    border: none;
+    color: inherit;
 }
 .tmr-display--warning{ color: var(--alert); }
 .tmr-display--negative{ color: var(--red); }
-.exec-timer-spacer{
-    height: var(--timer-bar-h);
-    background: transparent;
-}
 .tmr-details{
     min-height: 1.2em;
 }
