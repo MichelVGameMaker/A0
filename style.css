@@ -766,6 +766,7 @@ textarea:focus{
   border: 1px solid var(--black);
   border-radius: var(--radius);
   padding: var(--pad-y) var(--pad-x);
+  box-shadow: 1px 1px 5px 2px rgba(0 0 0 / 0.25);
 }
 .exercise-card-row,
 .list-card__row{ display:flex; align-items:stretch; gap:var(--gap); min-height:68px; }
