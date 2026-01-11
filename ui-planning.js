@@ -38,6 +38,8 @@
         const routineMap = new Map(routines.map((routine) => [routine.id, routine]));
         const dayCount = clampDayCount(plan.length);
         planningDaysList.innerHTML = '';
+        const columns = Math.max(1, Math.ceil(dayCount / 7));
+        planningDaysList.style.setProperty('--planning-columns', columns);
 
         for (let dayIndex = 1; dayIndex <= dayCount; dayIndex += 1) {
             const dayKey = String(dayIndex);
@@ -46,7 +48,11 @@
             const routineName = routine?.name || 'Aucune routine';
             const label = getDayLabel(dayIndex);
 
-            const structure = listCard.createStructure({ clickable: true, role: 'button' });
+            const structure = listCard.createStructure({
+                clickable: true,
+                role: 'button',
+                cardClass: 'planning-day-card'
+            });
             const { card, body, end } = structure;
             card.dataset.day = dayKey;
             card.setAttribute('aria-label', `${label} — ${routineName}`);

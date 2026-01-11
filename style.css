@@ -633,6 +633,22 @@ textarea:focus{
     border-bottom: 1px solid var(--panelBord);
 }
 
+#planningDaysList{
+    display:grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(7, auto);
+    grid-template-columns: repeat(var(--planning-columns, 1), minmax(0, 1fr));
+    gap:12px;
+}
+
+.planning-day-card .details{
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    white-space:normal;
+    overflow:hidden;
+}
+
 /* =========================================================
    7 ter) Fiche exercice (onglets)
    ========================================================= */
