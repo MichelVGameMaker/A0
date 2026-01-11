@@ -163,7 +163,6 @@
         refs.execTimerBar = document.getElementById('execTimerBar');
         refs.timerDetails = document.getElementById('tmrDetails');
         refs.timerDisplay = document.getElementById('tmrDisplay');
-        refs.timerToggle = document.getElementById('tmrToggle');
         refs.timerMinus = document.getElementById('tmrMinus');
         refs.timerPlus = document.getElementById('tmrPlus');
         refs.timerReset = document.getElementById('tmrReset');
@@ -200,7 +199,6 @@
             'execTimerBar',
             'timerDetails',
             'timerDisplay',
-            'timerToggle',
             'timerMinus',
             'timerPlus',
             'timerReset',
@@ -296,7 +294,7 @@
     }
 
     function wireTimerControls() {
-        const { execTimerBar, timerToggle, timerMinus, timerPlus, timerReset, timerDisplay } = assertRefs();
+        const { execTimerBar, timerMinus, timerPlus, timerReset, timerDisplay } = assertRefs();
         const handleToggle = () => {
             const timer = ensureSharedTimer();
             if (timer.running) {
@@ -305,7 +303,6 @@
                 resumeTimer();
             }
         };
-        timerToggle.addEventListener('click', handleToggle);
         timerDisplay.addEventListener('click', handleToggle);
         timerMinus.addEventListener('click', () => {
             void adjustTimer(-10);
@@ -315,6 +312,15 @@
         });
         timerReset.addEventListener('click', () => {
             resetTimerToDefault();
+        });
+        execTimerBar.addEventListener('cancel', (event) => {
+            event.preventDefault();
+            setTimerVisibility({ hidden: true });
+        });
+        execTimerBar.addEventListener('click', (event) => {
+            if (event.target === execTimerBar) {
+                setTimerVisibility({ hidden: true });
+            }
         });
     }
 
@@ -1657,14 +1663,19 @@
 
     function updateTimerUI() {
         const timer = ensureSharedTimer();
-        const { execTimerBar, timerDetails, timerDisplay, timerToggle } = assertRefs();
+        const { execTimerBar, timerDetails, timerDisplay } = assertRefs();
         if (!execTimerBar) {
             return;
         }
         ensureTimerPlacement(execTimerBar);
         const shouldHide = isTimerHidden() || !isSessionTabActive();
-        execTimerBar.hidden = shouldHide;
-        syncTimerBarSpacer(execTimerBar, shouldHide);
+        if (shouldHide) {
+            if (execTimerBar.open) {
+                execTimerBar.close();
+            }
+        } else if (!execTimerBar.open) {
+            execTimerBar.showModal();
+        }
         updateSessionTabDisplay(timer);
         if (shouldHide) {
             timerDisplay.classList.remove('tmr-display--warning', 'tmr-display--negative');
@@ -1683,8 +1694,6 @@
         timerDisplay.classList.toggle('tmr-display--warning', isWarning);
         timerDisplay.classList.toggle('tmr-display--negative', isNegative);
         timerDisplay.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
-        timerToggle.textContent = timer.running ? '⏸' : '▶︎';
-        syncTimerBarSpacer(execTimerBar, false);
     }
 
     function updateSessionTabDisplay(timer = ensureSharedTimer()) {
@@ -1736,20 +1745,6 @@
             return;
         }
         target.appendChild(execTimerBar);
-    }
-
-    function syncTimerBarSpacer(execTimerBar, shouldHide) {
-        const root = document.documentElement;
-        if (shouldHide) {
-            root.style.setProperty('--timer-bar-h', '0px');
-            return;
-        }
-        requestAnimationFrame(() => {
-            const height = execTimerBar.offsetHeight;
-            if (height) {
-                root.style.setProperty('--timer-bar-h', `${height}px`);
-            }
-        });
     }
 
     function findSetById(sets, setId) {
