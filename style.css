@@ -77,8 +77,11 @@
   --header-h:  44px;       /* hauteur du header */
   --tab-h:     60px;       /* hauteur de la tab bar */
   --tabbar-h: calc(var(--tab-h) + 12px);
-  --tab-size:  56px;
-  --tab-size-active:  112px;
+  --tab-gap:   5px;
+  --tab-size-active: min(calc((100vw - 2 * var(--tab-gap)) / 3), 100px);
+  --tab-size:  55px;
+
+
   --header-total-h: calc(var(--header-h) + 2px + env(safe-area-inset-top, 0)); /* 2px = border-bottom du header/subheader */
   --inline-keyboard-h: calc(232px + env(safe-area-inset-bottom, 0));
   --timer-bar-h: 0px;
@@ -175,7 +178,7 @@ body{
     justify-content: center;
     display:grid;
     grid-template-columns: var(--tab-size-active) var(--tab-size-active) var(--tab-size-active);
-    column-gap: 28px;
+    column-gap: var(--tab-gap);
     padding-bottom: 12px;
     background: transparent;
     border-top: none;
@@ -189,7 +192,7 @@ body{
     box-sizing: border-box;
     font-size: 28px;
     padding: 0;
-    border: 2px solid var(--emphase);
+    border: 2px solid var(--priorityBack);
     border-radius: 999px;
     background-color: rgba( var(--priorityBack) / 0.75); 
     display:flex;
