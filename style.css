@@ -7,7 +7,7 @@
   --emphase_white: #faedf6;
   --red:           #8b0000;
   --green:         #06402b;
-  --white:         #ffffff;
+  --white:         255 255 255;
   --pink:          #faebf2;
   --almost_white:  #f8f8f8; 
   --greyer_white:  #f4f4f4; 
@@ -18,11 +18,13 @@
   --black:         #000000;  
   --alert:         #f5a623;
   /* --- Styles --- */
-  --bodyBack:      var(--red);
-  --contentBack:   var(--almost_white);
-  --panelBack:     var(--white);
-  --panelBord:     var(--greyer_white);
-
+  --bodyBack:      var(--greyer_white);
+  --contentBack:   rgba(0, 0, 0, 0);
+  --panelBack:     var(--almost_white);
+  --panelBord:     var(--light_grey);
+  --priorityBack:  var(--white);
+  --priorityBord:  var(--light_grey);
+  
   --emptyColor:    var(--dark_grey);
   --labelColor:    rgba(0, 0, 0, 0.6);
   --filledColor:   var(--black);
@@ -34,7 +36,7 @@
   --focusedBord:   var(--emphase);
   --clickableBack: var(--light_grey);
   --clickableBord: var(--grey); 
-emphase);
+
   /* --- RPE styles --- */
   --rpe-ink:       var(--black);
   --rpe-5-bg:      #e6f1ff;
@@ -75,7 +77,8 @@ emphase);
   --header-h:  44px;       /* hauteur du header */
   --tab-h:     60px;       /* hauteur de la tab bar */
   --tabbar-h: calc(var(--tab-h) + 12px);
-  --tab-size: 56px;
+  --tab-size:  56px;
+  --tab-size-active:  112px;
   --header-total-h: calc(var(--header-h) + 2px + env(safe-area-inset-top, 0)); /* 2px = border-bottom du header/subheader */
   --inline-keyboard-h: calc(232px + env(safe-area-inset-bottom, 0));
   --timer-bar-h: 0px;
@@ -153,8 +156,7 @@ body{
   
 .content {
     flex: 1;
-    background: var(--contentBack);                /* panneau blanc */
-    border-inline: 6px solid var(--panelBord);
+    background: var(--contentBack);
     padding:  8px;
     padding-top: var(--header-total-h);
     padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0) + 8px);
@@ -169,36 +171,48 @@ body{
     z-index:10;
     position: fixed; bottom:0; left:0; right:0; 
     height: var(--tabbar-h);
-    display:flex;
     align-items:center;
-    justify-content:center;
-    gap: 16px;
+    justify-content: center;
+    display:grid;
+    grid-template-columns: var(--tab-size-active) var(--tab-size-active) var(--tab-size-active);
+    column-gap: 28px;
     padding-bottom: 12px;
     background: transparent;
     border-top: none;
 }
+
 .tab{
-    flex: 0 0 auto;
-    width: var(--tab-size);
+    width:  var(--tab-size);
     height: var(--tab-size);
+    justify-self: center;            /* centre dans la colonne */
+    align-self: center;
     box-sizing: border-box;
     font-size: 28px;
     padding: 0;
+    border: 2px solid var(--emphase);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.75);
-    border: none;
+    background-color: rgba( var(--priorityBack) / 0.75); 
     display:flex;
     align-items:center;
     justify-content:center;
+
+    box-shadow: 2px 2px 10px 4px rgba(0 0 0 / 0.25);
+    
+    transition: width 220ms cubic-bezier(.25,.8,.25,1),
+      transform 160ms ease,
+      background-color 180ms ease,
+      box-shadow 180ms ease;
+
     cursor:pointer;
+    
 }
+
 .tab.active{
-    background: rgba(2, 204, 186, 0.85);
+    background-color: var(--emphase);
+    width:      var(--tab-size-active);
+    transform: scale(1.1);
 }
-#tabSessions{
-    width: calc(var(--tab-size) * 1.05);
-    height: calc(var(--tab-size) * 1.05);
-}
+
 #tabSessions.tab--session-timer{
     display:flex;
     flex-direction:column;
@@ -235,7 +249,7 @@ body{
    3) Header principal (haut)
    ========================================================= */
 header{
-    z-index:5;
+    z-index:10;
     position: fixed; top: 0; left:0; right:0;
     height: var(--header-h);
     display:grid;
@@ -243,22 +257,21 @@ header{
     grid-template-columns: var(--header-side-w) minmax(0, 1fr) var(--header-side-w);
     align-items:center;
     padding: 0 var(--pad-x);
-    background: var(--panelBack);
+    background: var(--priorityBack);
     border-bottom: 2px solid var(--panelBord);
 }
 
-.header-left,
+.header-left{
+    display:flex;
+    align-items:center;
+    justify-content: flex-start;
+    width: 100%;
+}
 .header-right{
     display:flex;
     align-items:center;
-    gap: var(--gap);
-    width: 100%;
-}
-.header-left{
-    justify-content: flex-start;
-}
-.header-right{
     justify-content: flex-end;
+    width: 100%;
 }
 .header-center{
     display:flex;
