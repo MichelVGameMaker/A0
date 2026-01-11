@@ -57,6 +57,13 @@
         } = refs;
 
         tabSessions?.addEventListener('click', async () => {
+            const isActive = tabSessions.classList.contains('active');
+            const isOnSessions = screenSessions && !screenSessions.hidden;
+            if (isActive && isOnSessions) {
+                const isHidden = A.isTimerHidden?.() ?? false;
+                A.setTimerVisibility?.({ hidden: !isHidden });
+                return;
+            }
             setActiveTab('tabSessions');
             A.setTimerVisibility?.({ hidden: false });
             showOnly('sessions');

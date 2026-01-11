@@ -238,6 +238,10 @@ body{
 #tabSessions .tab-session-time{
     line-height:1;
 }
+#tabSessions .tab-session-close{
+    font-size: 18px;
+    line-height:1;
+}
 #tabSessions.tab--warning{
     color: var(--alert);
 }

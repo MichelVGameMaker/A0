@@ -1570,6 +1570,7 @@
     function isTimerHidden() {
         return Boolean(timerVisibility?.hidden);
     }
+    A.isTimerHidden = () => isTimerHidden();
 
     function resetTimerState() {
         const timer = ensureSharedTimer();
@@ -1696,7 +1697,16 @@
         tabSessions.classList.toggle('tab--session-date', !isActive);
         if (!isActive) {
             tabSessions.classList.remove('tab--warning', 'tab--negative');
-            tabSessions.textContent = A.fmtUI(A.activeDate || A.today());
+            const date = A.activeDate || A.today();
+            tabSessions.textContent = date
+                .toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                .replace('.', '');
+            return;
+        }
+
+        if (!isTimerHidden()) {
+            tabSessions.classList.remove('tab--warning', 'tab--negative');
+            tabSessions.innerHTML = '<span class="tab-session-close">✕</span>';
             return;
         }
 
@@ -1709,9 +1719,7 @@
         const isWarning = remaining > 0 && remaining <= 10;
         tabSessions.classList.toggle('tab--warning', isWarning);
         tabSessions.classList.toggle('tab--negative', isNegative);
-        tabSessions.innerHTML = `<span class="tab-session-arrow">⯅</span><span class="tab-session-time">${sign}${minutes}:${String(
-            seconds
-        ).padStart(2, '0')}</span>`;
+        tabSessions.innerHTML = `<span class="tab-session-time">${sign}${minutes}:${String(seconds).padStart(2, '0')}</span>`;
     }
     A.updateSessionTabDisplay = () => updateSessionTabDisplay();
 
