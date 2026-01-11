@@ -197,6 +197,7 @@
             element.classList.add('active');
         }
         A.updateSessionTabDisplay?.();
+        A.updateTimerUI?.();
     }
 
     function showOnly(which) {

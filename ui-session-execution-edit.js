@@ -296,15 +296,17 @@
     }
 
     function wireTimerControls() {
-        const { execTimerBar, timerToggle, timerMinus, timerPlus, timerReset } = assertRefs();
-        timerToggle.addEventListener('click', () => {
+        const { execTimerBar, timerToggle, timerMinus, timerPlus, timerReset, timerDisplay } = assertRefs();
+        const handleToggle = () => {
             const timer = ensureSharedTimer();
             if (timer.running) {
                 pauseTimer();
             } else {
                 resumeTimer();
             }
-        });
+        };
+        timerToggle.addEventListener('click', handleToggle);
+        timerDisplay.addEventListener('click', handleToggle);
         timerMinus.addEventListener('click', () => {
             void adjustTimer(-10);
         });
@@ -313,7 +315,6 @@
         });
         timerReset.addEventListener('click', () => {
             resetTimerToDefault();
-            setTimerVisibility({ hidden: true });
         });
     }
 
@@ -1661,7 +1662,7 @@
             return;
         }
         ensureTimerPlacement(execTimerBar);
-        const shouldHide = isTimerHidden();
+        const shouldHide = isTimerHidden() || !isSessionTabActive();
         execTimerBar.hidden = shouldHide;
         syncTimerBarSpacer(execTimerBar, shouldHide);
         updateSessionTabDisplay(timer);
@@ -1722,6 +1723,12 @@
         tabSessions.innerHTML = `<span class="tab-session-time">${sign}${minutes}:${String(seconds).padStart(2, '0')}</span>`;
     }
     A.updateSessionTabDisplay = () => updateSessionTabDisplay();
+    A.updateTimerUI = () => updateTimerUI();
+
+    function isSessionTabActive() {
+        ensureRefs();
+        return Boolean(refs.tabSessions?.classList.contains('active'));
+    }
 
     function ensureTimerPlacement(execTimerBar) {
         const target = document.body;

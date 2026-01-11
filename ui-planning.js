@@ -344,5 +344,6 @@
                 element.hidden = key !== target;
             }
         });
+        A.updateTimerUI?.();
     }
 })();
