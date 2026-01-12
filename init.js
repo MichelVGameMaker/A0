@@ -59,24 +59,24 @@
         tabSessions?.addEventListener('click', async () => {
             const isActive = tabSessions.classList.contains('active');
             const isOnSessions = screenSessions && !screenSessions.hidden;
+            A.setTimerVisibility?.({ hidden: true });
             if (isActive && isOnSessions) {
-                const isHidden = A.isTimerHidden?.() ?? false;
-                A.setTimerVisibility?.({ hidden: !isHidden });
                 return;
             }
             setActiveTab('tabSessions');
-            A.setTimerVisibility?.({ hidden: false });
             showOnly('sessions');
             await A.renderWeek();
             await A.renderSession();
         });
 
         tabStats?.addEventListener('click', async () => {
+            A.setTimerVisibility?.({ hidden: true });
             setActiveTab('tabStats');
             await A.openVolume?.();
         });
 
         tabPlanning?.addEventListener('click', async () => {
+            A.setTimerVisibility?.({ hidden: true });
             setActiveTab('tabPlanning');
             await A.openPlanning?.();
         });

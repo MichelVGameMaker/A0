@@ -161,6 +161,7 @@
         refs.execSetsLayout = document.getElementById('execSetsLayout');
         refs.execMetaHeader = document.getElementById('execMetaHeader');
         refs.execTimerBar = document.getElementById('execTimerBar');
+        refs.execTimerDialog = document.getElementById('dlgExecTimer');
         refs.timerDetails = document.getElementById('tmrDetails');
         refs.timerDisplay = document.getElementById('tmrDisplay');
         refs.timerToggle = document.getElementById('tmrToggle');
@@ -198,6 +199,7 @@
             'execAddSet',
             'execSets',
             'execTimerBar',
+            'execTimerDialog',
             'timerDetails',
             'timerDisplay',
             'timerToggle',
@@ -1231,6 +1233,9 @@
 
     function switchScreen(target) {
         inlineKeyboard?.detach?.();
+        if (target === 'screenSessions') {
+            A.setTimerVisibility?.({ hidden: true });
+        }
         const {
             screenSessions,
             screenExercises,
@@ -1657,14 +1662,19 @@
 
     function updateTimerUI() {
         const timer = ensureSharedTimer();
-        const { execTimerBar, timerDetails, timerDisplay, timerToggle } = assertRefs();
+        const { execTimerBar, execTimerDialog, timerDetails, timerDisplay, timerToggle } = assertRefs();
         if (!execTimerBar) {
             return;
         }
-        ensureTimerPlacement(execTimerBar);
-        const shouldHide = isTimerHidden() || !isSessionTabActive();
-        execTimerBar.hidden = shouldHide;
+        const shouldHide = isTimerHidden();
         syncTimerBarSpacer(execTimerBar, shouldHide);
+        if (execTimerDialog) {
+            if (shouldHide && execTimerDialog.open) {
+                execTimerDialog.close();
+            } else if (!shouldHide && !execTimerDialog.open) {
+                execTimerDialog.showModal();
+            }
+        }
         updateSessionTabDisplay(timer);
         if (shouldHide) {
             timerDisplay.classList.remove('tmr-display--warning', 'tmr-display--negative');
@@ -1705,12 +1715,6 @@
             return;
         }
 
-        if (!isTimerHidden()) {
-            tabSessions.classList.remove('tab--warning', 'tab--negative');
-            tabSessions.innerHTML = '<span class="tab-session-close">✕</span>';
-            return;
-        }
-
         const remaining = timer.remainSec;
         const sign = remaining < 0 ? '-' : '';
         const abs = Math.abs(remaining);
@@ -1725,31 +1729,9 @@
     A.updateSessionTabDisplay = () => updateSessionTabDisplay();
     A.updateTimerUI = () => updateTimerUI();
 
-    function isSessionTabActive() {
-        ensureRefs();
-        return Boolean(refs.tabSessions?.classList.contains('active'));
-    }
-
-    function ensureTimerPlacement(execTimerBar) {
-        const target = document.body;
-        if (execTimerBar.parentElement === target) {
-            return;
-        }
-        target.appendChild(execTimerBar);
-    }
-
     function syncTimerBarSpacer(execTimerBar, shouldHide) {
         const root = document.documentElement;
-        if (shouldHide) {
-            root.style.setProperty('--timer-bar-h', '0px');
-            return;
-        }
-        requestAnimationFrame(() => {
-            const height = execTimerBar.offsetHeight;
-            if (height) {
-                root.style.setProperty('--timer-bar-h', `${height}px`);
-            }
-        });
+        root.style.setProperty('--timer-bar-h', '0px');
     }
 
     function findSetById(sets, setId) {
