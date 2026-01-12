@@ -450,6 +450,15 @@ header .header-left .btn{
 .exec-timer[hidden]{
     display:none;
 }
+.exec-timer--popup{
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    border-top: none;
+    border-radius: var(--radius);
+    box-shadow: none;
+}
 .tmr-controls{
     display:grid;
     grid-template-columns: auto minmax(0, 1fr) auto;

@@ -825,22 +825,24 @@
 <!-- ==================== -->
 
 
-<!-- ✅ Barre de timer collante en bas -->
-<footer id="execTimerBar" class="exec-timer" hidden>
-    <div id="tmrDetails" class="tmr-details details centered"></div>
-    <div class="tmr-controls">
-        <!-- pause/play -->
-        <button id="tmrToggle" class="btn cta" aria-label="Mettre en pause ou reprendre le timer">⏸</button>
-        <!-- timer avec - [temps] + -->
-        <div class="tmr-center">
-            <button id="tmrMinus"   class="btn" aria-label="Retirer 10 secondes">−10s</button>
-            <div    id="tmrDisplay" class="tmr-display">0:00</div>
-            <button id="tmrPlus"    class="btn" aria-label="Ajouter 10 secondes">+10s</button>
+<!-- ✅ Barre de timer en popup -->
+<dialog id="dlgExecTimer" class="modal modal-centered">
+    <div id="execTimerBar" class="exec-timer exec-timer--popup">
+        <div id="tmrDetails" class="tmr-details details centered"></div>
+        <div class="tmr-controls">
+            <!-- pause/play -->
+            <button id="tmrToggle" class="btn cta" aria-label="Mettre en pause ou reprendre le timer">⏸</button>
+            <!-- timer avec - [temps] + -->
+            <div class="tmr-center">
+                <button id="tmrMinus"   class="btn" aria-label="Retirer 10 secondes">−10s</button>
+                <div    id="tmrDisplay" class="tmr-display">0:00</div>
+                <button id="tmrPlus"    class="btn" aria-label="Ajouter 10 secondes">+10s</button>
+            </div>
+            <!-- reset -->
+            <button id="tmrReset" class="btn danger" aria-label="Réinitialiser le chronomètre">↺</button>
         </div>
-        <!-- reset -->
-        <button id="tmrReset" class="btn danger" aria-label="Réinitialiser le chronomètre">↺</button>
     </div>
-</footer>
+</dialog>
  <!-- ==================== -->
  
 <!-- Barre d’onglets fixe (icônes) -->
