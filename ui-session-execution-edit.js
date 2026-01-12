@@ -1608,7 +1608,6 @@
         timer.running = true;
         timer.intervalId = window.setInterval(runTick, 1000);
         timer.attachment = buildTimerAttachment(options);
-        setTimerVisibility({ hidden: false });
         updateTimerUI();
     }
 
