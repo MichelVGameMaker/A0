@@ -126,7 +126,7 @@
         }
         refreshValueStates();
         setMetaMode('history');
-
+        A.setTimerVisibility?.({ hidden: true });
         updateTimerUI();
         switchScreen('screenExecEdit');
     };
@@ -298,7 +298,8 @@
     }
 
     function wireTimerControls() {
-        const { execTimerBar, timerToggle, timerMinus, timerPlus, timerReset, timerDisplay } = assertRefs();
+        const { execTimerBar, execTimerDialog, timerToggle, timerMinus, timerPlus, timerReset, timerDisplay } =
+            assertRefs();
         const handleToggle = () => {
             const timer = ensureSharedTimer();
             if (timer.running) {
@@ -317,6 +318,18 @@
         });
         timerReset.addEventListener('click', () => {
             resetTimerToDefault();
+        });
+
+        execTimerDialog.addEventListener('click', (event) => {
+            if (event.target === execTimerDialog) {
+                setTimerVisibility({ hidden: true });
+            }
+        });
+
+        execTimerDialog.addEventListener('close', () => {
+            if (!isTimerHidden()) {
+                setTimerVisibility({ hidden: true });
+            }
         });
     }
 
@@ -1698,13 +1711,19 @@
 
     function updateSessionTabDisplay(timer = ensureSharedTimer()) {
         ensureRefs();
-        const { tabSessions } = refs;
+        const { tabSessions, execTimerDialog } = refs;
         if (!tabSessions) {
             return;
         }
         const isActive = tabSessions.classList.contains('active');
         tabSessions.classList.toggle('tab--session-timer', isActive);
         tabSessions.classList.toggle('tab--session-date', !isActive);
+        const showClose = isActive && execTimerDialog?.open && !isTimerHidden();
+        if (showClose) {
+            tabSessions.classList.remove('tab--warning', 'tab--negative');
+            tabSessions.innerHTML = '<span class="tab-session-close">✕</span>';
+            return;
+        }
         if (!isActive) {
             tabSessions.classList.remove('tab--warning', 'tab--negative');
             const date = A.activeDate || A.today();
