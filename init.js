@@ -43,6 +43,7 @@
             tabPlanning,
             tabStats,
             screenSessions,
+            screenExecEdit,
             screenExercises,
             screenExerciseEdit,
             screenRoutineEdit,
@@ -59,6 +60,12 @@
         tabSessions?.addEventListener('click', async () => {
             const isActive = tabSessions.classList.contains('active');
             const isOnSessions = screenSessions && !screenSessions.hidden;
+            const isOnExecEdit = screenExecEdit && !screenExecEdit.hidden;
+            if (isOnExecEdit) {
+                const isHidden = A.isTimerHidden?.() ?? true;
+                A.setTimerVisibility?.({ hidden: !isHidden });
+                return;
+            }
             A.setTimerVisibility?.({ hidden: true });
             if (isActive && isOnSessions) {
                 return;
