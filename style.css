@@ -849,57 +849,54 @@ textarea:focus{
   width:100%;
 }
 .session-card-sets-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:var(--set-synopsis-gap);
-  justify-content:flex-start;
+  display:grid;
+  grid-template-columns: minmax(3.2ch, 0.5fr) minmax(4ch, 0.9fr) minmax(6ch, 1fr) minmax(4ch, 0.7fr);
+  column-gap:8px;
+  row-gap:2px;
+  align-items:center;
   width:100%;
+}
+.session-card-sets-row--empty{
+  grid-template-columns: 1fr;
 }
 .session-card-sets:empty{
   display:none;
 }
-.session-card-set{
-  display:flex;
+.session-card-set-cell{
+  display:inline-flex;
   align-items:center;
-  justify-content:center;
+  justify-content:flex-start;
   gap:3px;
-  padding:3px 4px;
-  border-radius:8px;
-  border:1px solid var(--panelBord);
+  padding:2px 0;
+  border:1px solid transparent;
+  background:transparent;
   font-size:var(--fs-small);
   line-height:1.1;
-  width:var(--set-synopsis-width);
-  max-width:var(--set-synopsis-width);
-  flex:1 1 var(--set-synopsis-width);
-  text-align:center;
+  color:inherit;
+  text-align:left;
   min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+  font-family:inherit;
 }
-.session-card-set--empty{
+.session-card-set-cell[data-field]{
+  cursor:pointer;
+}
+.session-card-set-cell:focus-visible{
+  outline:2px solid var(--emphase);
+  outline-offset:2px;
+  border-radius:6px;
+}
+.session-card-set-cell--empty{
   width:100%;
-  max-width:100%;
   justify-content:flex-start;
   text-align:left;
-  flex:1 1 100%;
+  padding:4px 0;
 }
-.session-card-set--ellipsis{
-  justify-content:center;
-  font-weight:600;
+.session-card-set-cell--rpe{
+  justify-content:flex-start;
 }
-.session-card-set sup{
-  font-size:.7em;
-  color: inherit;
-  font-weight:var(--fw-strong);
-  padding: 0 6px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--rpe-border, transparent);
-}
-
-.session-card-set-rpe{
-  color: inherit;
+.session-card-set-cell[data-rpe]{
+  border-radius:999px;
+  padding:2px 6px;
 }
 
 .rpe-chip{
@@ -920,7 +917,7 @@ textarea:focus{
 }
 
 .rpe-chip[data-rpe],
-.session-card-set[data-rpe],
+.session-card-set-cell[data-rpe],
 .set-edit-input[data-rpe],
 .set-edit-button[data-rpe],
 .inline-keyboard-key[data-rpe]{

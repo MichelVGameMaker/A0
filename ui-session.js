@@ -38,12 +38,6 @@
         return String(rounded).replace(/\.0$/, '');
     }
 
-    function formatSetSynopsis(reps, weight) {
-        const repsDisplay = formatSynopsisReps(reps);
-        const weightDisplay = formatSynopsisWeight(weight);
-        return `${repsDisplay}x ${weightDisplay}`;
-    }
-
     function formatSynopsisReps(value) {
         const numeric = Number.parseInt(value, 10);
         return Number.isFinite(numeric) ? String(numeric) : '—';
@@ -65,6 +59,56 @@
             .toFixed(2)
             .replace(/\.0+$/, '')
             .replace(/(\.\d*?)0+$/, '$1');
+    }
+
+    function formatSynopsisRpe(value) {
+        const numeric = Number.parseFloat(value);
+        if (!Number.isFinite(numeric)) {
+            return '—';
+        }
+        return String(numeric).replace(/\.0$/, '');
+    }
+
+    function formatSetIndex(value) {
+        const numeric = Number.parseInt(value, 10);
+        return Number.isFinite(numeric) ? `#${numeric}` : '#—';
+    }
+
+    function formatSetReps(value) {
+        return `${formatSynopsisReps(value)}x`;
+    }
+
+    function formatSetWeight(value) {
+        return formatSynopsisWeight(value);
+    }
+
+    function formatSetRpe(value) {
+        return `@${formatSynopsisRpe(value)}`;
+    }
+
+    function normalizeFocusField(field) {
+        if (field === 'weight' || field === 'rpe' || field === 'reps') {
+            return field;
+        }
+        return 'reps';
+    }
+
+    function createSetCell({ label, field, onClick, className, rpeValue }) {
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = `session-card-set-cell${className ? ` ${className}` : ''}`;
+        cell.textContent = label;
+        if (field) {
+            cell.dataset.field = field;
+        }
+        const rpeDatasetValue = getRpeDatasetValue(rpeValue);
+        if (rpeDatasetValue) {
+            cell.dataset.rpe = rpeDatasetValue;
+        }
+        if (onClick) {
+            cell.addEventListener('click', onClick);
+        }
+        return cell;
     }
 
     /* ACTIONS */
@@ -163,45 +207,54 @@
             name.textContent = exerciseName;
             const setsWrapper = document.createElement('div');
             setsWrapper.className = 'session-card-sets';
-            const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
-            const MAX_LINES = 2;
-            const BLOCKS_PER_LINE = 3;
-            const MAX_BLOCKS = MAX_LINES * BLOCKS_PER_LINE;
+            const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
+            sets.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
             if (sets.length) {
-                const hasOverflow = sets.length > MAX_BLOCKS;
-                const displayedSets = hasOverflow
-                    ? sets.slice(0, MAX_BLOCKS - 1)
-                    : sets.slice(0, MAX_BLOCKS);
-                const blocks = displayedSets.map((set) => {
-                    const block = document.createElement('span');
-                    block.className = 'session-card-set';
-                    const rpeDatasetValue = getRpeDatasetValue(set.rpe);
-                    if (rpeDatasetValue) {
-                        block.dataset.rpe = rpeDatasetValue;
-                    }
-                    block.textContent = formatSetSynopsis(set.reps, set.weight);
-                    return block;
-                });
-                if (hasOverflow) {
-                    const ellipsis = document.createElement('span');
-                    ellipsis.className = 'session-card-set session-card-set--ellipsis';
-                    ellipsis.textContent = '…';
-                    ellipsis.setAttribute('title', 'Autres séries');
-                    blocks.push(ellipsis);
-                }
-                for (let lineIndex = 0; lineIndex < MAX_LINES; lineIndex += 1) {
-                    const start = lineIndex * BLOCKS_PER_LINE;
-                    const lineBlocks = blocks.slice(start, start + BLOCKS_PER_LINE);
-                    if (!lineBlocks.length) {
-                        break;
-                    }
+                sets.forEach((set, index) => {
                     const line = document.createElement('div');
                     line.className = 'session-card-sets-row';
-                    lineBlocks.forEach((block) => {
-                        line.appendChild(block);
-                    });
+                    const pos = set?.pos ?? index + 1;
+                    const openWithFocus = (field) => {
+                        void A.openExecEdit({
+                            currentId: exercise.exercise_id,
+                            callerScreen: 'screenSessions',
+                            focusSetIndex: index,
+                            focusField: normalizeFocusField(field)
+                        });
+                    };
+                    const stopAndOpen = (field) => (event) => {
+                        event.stopPropagation();
+                        openWithFocus(field);
+                    };
+                    line.append(
+                        createSetCell({
+                            label: formatSetIndex(pos),
+                            field: 'order',
+                            className: 'session-card-set-cell--index',
+                            onClick: stopAndOpen('reps')
+                        }),
+                        createSetCell({
+                            label: formatSetReps(set?.reps),
+                            field: 'reps',
+                            className: 'session-card-set-cell--reps',
+                            onClick: stopAndOpen('reps')
+                        }),
+                        createSetCell({
+                            label: formatSetWeight(set?.weight),
+                            field: 'weight',
+                            className: 'session-card-set-cell--weight',
+                            onClick: stopAndOpen('weight')
+                        }),
+                        createSetCell({
+                            label: formatSetRpe(set?.rpe),
+                            field: 'rpe',
+                            className: 'session-card-set-cell--rpe',
+                            rpeValue: set?.rpe,
+                            onClick: stopAndOpen('rpe')
+                        })
+                    );
                     setsWrapper.appendChild(line);
-                }
+                });
             }
             body.append(name, setsWrapper);
 

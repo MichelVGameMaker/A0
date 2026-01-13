@@ -11,7 +11,8 @@
         exerciseId: null,
         callerScreen: 'screenSessions',
         session: null,
-        metaMode: 'history'
+        metaMode: 'history',
+        pendingFocus: null
     };
     const medalIconMap = {
         progress: {
@@ -89,7 +90,12 @@
 
     /* ACTIONS */
     A.openExecEdit = async function openExecEdit(options = {}) {
-        const { currentId, callerScreen = 'screenSessions' } = options;
+        const {
+            currentId,
+            callerScreen = 'screenSessions',
+            focusSetIndex = null,
+            focusField = null
+        } = options;
         if (!currentId) {
             return;
         }
@@ -115,6 +121,14 @@
         state.exerciseId = currentId;
         state.callerScreen = callerScreen;
         state.session = session;
+        if (Number.isInteger(focusSetIndex) && focusSetIndex >= 0) {
+            state.pendingFocus = {
+                index: focusSetIndex,
+                field: focusField
+            };
+        } else {
+            state.pendingFocus = null;
+        }
         const { execTitle, execDate, execRoutineInstructions, execMoveNote } = assertRefs();
         execTitle.textContent = exercise.exercise_name || 'Exercice';
         execDate.textContent = A.fmtUI(date);
@@ -417,6 +431,41 @@
             sets.forEach((set, index) => {
                 execSets.appendChild(renderSetRow(set, index, sets.length, meta));
             });
+        }
+        if (state.pendingFocus) {
+            const pending = state.pendingFocus;
+            state.pendingFocus = null;
+            requestAnimationFrame(() => focusSetCell(pending.index, pending.field));
+        }
+    }
+
+    function normalizeFocusField(field) {
+        if (field === 'weight' || field === 'rpe' || field === 'rest' || field === 'reps') {
+            return field;
+        }
+        return 'reps';
+    }
+
+    function focusSetCell(index, field) {
+        const { execSets } = assertRefs();
+        if (!execSets) {
+            return;
+        }
+        const rows = Array.from(execSets.querySelectorAll('.exec-set-row'));
+        const row = rows[index];
+        if (!row) {
+            return;
+        }
+        const normalizedField = normalizeFocusField(field);
+        const selectors = {
+            reps: '.exec-reps-cell',
+            weight: '.exec-weight-cell',
+            rpe: '.exec-rpe-cell',
+            rest: '.exec-rest-cell'
+        };
+        const target = row.querySelector(selectors[normalizedField] || selectors.reps);
+        if (target?.click) {
+            target.click();
         }
     }
 
