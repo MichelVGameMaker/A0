@@ -178,7 +178,6 @@
         refs.execTimerDialog = document.getElementById('dlgExecTimer');
         refs.timerDetails = document.getElementById('tmrDetails');
         refs.timerDisplay = document.getElementById('tmrDisplay');
-        refs.timerToggle = document.getElementById('tmrToggle');
         refs.timerMinus = document.getElementById('tmrMinus');
         refs.timerPlus = document.getElementById('tmrPlus');
         refs.timerReset = document.getElementById('tmrReset');
@@ -216,7 +215,6 @@
             'execTimerDialog',
             'timerDetails',
             'timerDisplay',
-            'timerToggle',
             'timerMinus',
             'timerPlus',
             'timerReset',
@@ -312,8 +310,7 @@
     }
 
     function wireTimerControls() {
-        const { execTimerBar, execTimerDialog, timerToggle, timerMinus, timerPlus, timerReset, timerDisplay } =
-            assertRefs();
+        const { execTimerBar, execTimerDialog, timerMinus, timerPlus, timerReset, timerDisplay } = assertRefs();
         const handleToggle = () => {
             const timer = ensureSharedTimer();
             if (timer.running) {
@@ -322,8 +319,13 @@
                 resumeTimer();
             }
         };
-        timerToggle.addEventListener('click', handleToggle);
         timerDisplay.addEventListener('click', handleToggle);
+        timerDisplay.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleToggle();
+            }
+        });
         timerMinus.addEventListener('click', () => {
             void adjustTimer(-10);
         });
@@ -1723,7 +1725,7 @@
 
     function updateTimerUI() {
         const timer = ensureSharedTimer();
-        const { execTimerBar, execTimerDialog, timerDetails, timerDisplay, timerToggle } = assertRefs();
+        const { execTimerBar, execTimerDialog, timerDetails, timerDisplay } = assertRefs();
         if (!execTimerBar) {
             return;
         }
@@ -1754,7 +1756,6 @@
         timerDisplay.classList.toggle('tmr-display--warning', isWarning);
         timerDisplay.classList.toggle('tmr-display--negative', isNegative);
         timerDisplay.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
-        timerToggle.textContent = timer.running ? '⏸' : '▶︎';
         syncTimerBarSpacer(execTimerBar, false);
     }
 
