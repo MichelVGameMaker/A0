@@ -120,6 +120,7 @@ body{
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overscroll-behavior: none;
+    overflow: hidden;
 }
 
 .app-splash {
@@ -146,6 +147,7 @@ body{
 .screen {
     display: flex;
     flex-direction: column;
+    height: 100svh;
 }
 .screen[hidden] { display: none !important; }
 
