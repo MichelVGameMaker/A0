@@ -223,6 +223,7 @@
             return;
         }
         const sets = Array.isArray(move.sets) ? [...move.sets].sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0)) : [];
+        const weightUnit = move?.weight_unit === 'imperial' ? 'lb' : 'kg';
         if (!sets.length) {
             const empty = document.createElement('div');
             empty.className = 'empty';
@@ -231,18 +232,18 @@
             return;
         }
         sets.forEach((set, index) => {
-            routineMoveSets.appendChild(renderSetRow(set, index, sets.length));
+            routineMoveSets.appendChild(renderSetRow(set, index, sets.length, weightUnit));
         });
     }
 
-    function renderSetRow(set, index, totalSets) {
+    function renderSetRow(set, index, totalSets, weightUnit) {
         const row = document.createElement('div');
         row.className = 'exec-grid exec-row routine-set-row routine-set-grid';
         row.dataset.idx = String(index);
 
         const order = document.createElement('div');
         order.className = 'routine-set-order';
-        order.textContent = index + 1;
+        order.textContent = `#${index + 1}`;
 
         let currentIndex = index;
 
@@ -380,71 +381,37 @@
             updatePreview(next);
         };
 
-        const createInput = (getValue, field, extraClass = '', options = {}) => {
-            const input = document.createElement('input');
-            const { inputMode = inlineKeyboard ? 'none' : 'numeric', type = 'text' } = options;
-            input.type = type;
-            input.inputMode = inputMode;
-            input.readOnly = Boolean(inlineKeyboard);
-            input.className = `input set-edit-input${extraClass ? ` ${extraClass}` : ''}`;
+        const createCellButton = (getValue, field, extraClass = '') => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `set-edit-button${extraClass ? ` ${extraClass}` : ''}`;
             const update = () => {
                 const valueToSet = getValue();
-                input.value = String(valueToSet);
+                button.textContent = String(valueToSet);
                 if (field === 'rpe') {
-                    applyRpeTone(input, valueToSet);
+                    applyRpeTone(button, value.rpe);
                 }
             };
-            input._update = update;
+            button._update = update;
             update();
-            input.addEventListener('focus', () => {
-                input.select();
-            });
-            const commit = () => {
-                if (field === 'rpe') {
-                    applyRpeTone(input, input.value);
-                }
-                applyDirectChange(field, input.value);
-            };
-            input.addEventListener('change', commit);
-            input.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    commit();
-                }
-            });
-            input.addEventListener('click', () => {
+            button.addEventListener('click', () => {
+                inlineKeyboard?.detach?.();
                 openEditor(field);
-                inlineKeyboard?.attach?.(input, {
-                    layout: field === 'rpe' ? 'rpe' : field === 'rest' ? 'time' : 'default',
-                    actions: buildKeyboardActions(),
-                    getValue: () => input.value,
-                    onChange: (next) => {
-                        input.value = next;
-                        if (field === 'rpe') {
-                            applyRpeTone(input, next);
-                        }
-                        applyDirectChange(field, input.value);
-                    },
-                    onClose: () => input.blur()
-                });
-                inlineKeyboard?.selectTarget?.(input);
             });
-            return input;
+            return button;
         };
 
-        const repsInput = createInput(() => formatRepsDisplay(value.reps), 'reps', 'exec-reps-cell');
-        const weightInput = createInput(
-            () => (value.weight == null ? '' : formatNumber(value.weight)),
+        const repsInput = createCellButton(() => formatRepsDisplay(value.reps), 'reps', 'exec-reps-cell');
+        const weightInput = createCellButton(
+            () => formatWeightDisplay(value.weight, weightUnit),
             'weight',
-            'exec-weight-cell',
-            { inputMode: 'decimal', type: 'text' }
+            'exec-weight-cell'
         );
-        const rpeInput = createInput(() => (value.rpe == null ? '' : String(value.rpe)), 'rpe', 'exec-rpe-cell');
-        const restInput = createInput(() => formatRestDisplay(value.rest), 'rest', 'exec-rest-cell');
-        collectInputs(repsInput, weightInput, rpeInput, restInput);
+        const rpeInput = createCellButton(() => formatRpeDisplay(value.rpe), 'rpe', 'exec-rpe-cell');
+        collectInputs(repsInput, weightInput, rpeInput);
         syncRowTone();
 
-        row.append(order, repsInput, weightInput, rpeInput, restInput);
+        row.append(order, repsInput, weightInput, rpeInput);
         return row;
     }
 
@@ -859,14 +826,23 @@
     }
 
     function formatRepsDisplay(value) {
-        return String(value ?? 0);
+        const reps = safePositiveInt(value);
+        return reps > 0 ? `${reps}x` : '—';
     }
 
-    function formatWeightValue(value) {
-        if (value == null) {
+    function formatWeightDisplay(value, weightUnit) {
+        if (value == null || value === '') {
             return '—';
         }
-        return formatNumber(value);
+        return `${formatNumber(value)}${weightUnit || 'kg'}`;
+    }
+
+    function formatRpeDisplay(value) {
+        const normalized = clampRpe(value);
+        if (normalized == null) {
+            return '—';
+        }
+        return `@${normalized}`;
     }
 
     function formatRestDisplay(value) {
