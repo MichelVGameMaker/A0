@@ -462,17 +462,25 @@ header .header-left .btn{
     box-shadow: none;
 }
 .tmr-controls{
-    display:grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items:center;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:16px;
+}
+.tmr-display-wrap{
+    display:flex;
+    justify-content:center;
+}
+.tmr-actions{
+    display:flex;
+    justify-content:space-between;
     gap:12px;
 }
-.tmr-center{ display:flex; align-items:center; justify-content:center; gap:12px; }
 .tmr-display{
     font-weight: var(--fw-strong);
     min-width:76px;
     text-align:center;
-    font-size: clamp(2.3rem, 9.2vw, 4.6rem);
+    font-size: clamp(3.4rem, 14vw, 7rem);
     line-height:1;
     font-variant-numeric: tabular-nums;
 }
