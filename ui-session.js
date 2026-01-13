@@ -190,7 +190,7 @@
         }
 
         session.exercises.forEach((exercise) => {
-            const structure = listCard.createStructure({ clickable: true });
+            const structure = listCard.createStructure();
             const { card, start, body, end } = structure;
             card.dataset.exerciseId = exercise.exercise_id;
 
@@ -261,12 +261,9 @@
             const pencil = listCard.createIcon('✏️');
             end.appendChild(pencil);
 
-            card.setAttribute('aria-label', `${exerciseName} — éditer`);
+            card.setAttribute('aria-label', exerciseName);
 
-            makeSessionCardInteractive(card, handle, () => A.openExecEdit({
-                currentId: exercise.exercise_id,
-                callerScreen: 'screenSessions'
-            }));
+            makeSessionCardInteractive(card, handle);
 
             sessionList.appendChild(card);
         });
@@ -508,20 +505,7 @@
         initialOrder: []
     };
 
-    function makeSessionCardInteractive(card, handle, open) {
-        card.setAttribute('role', 'button');
-        card.tabIndex = 0;
-        card.addEventListener('click', open);
-        card.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                open();
-            }
-        });
-
-        handle.addEventListener('click', (event) => {
-            event.stopPropagation();
-        });
+    function makeSessionCardInteractive(card, handle) {
         handle.addEventListener('pointerdown', (event) => startDrag(event, card, handle));
     }
 
