@@ -448,7 +448,7 @@
     }
 
     function renderMoveCard(move) {
-        const structure = listCard.createStructure({ clickable: true, role: 'button' });
+        const structure = listCard.createStructure();
         const { card, start, body, end } = structure;
         card.dataset.moveId = move.id;
 
@@ -516,9 +516,19 @@
         } else {
             const line = document.createElement('div');
             line.className = 'session-card-sets-row session-card-sets-row--empty';
-            const emptyBlock = document.createElement('span');
-            emptyBlock.className = 'session-card-set-cell session-card-set-cell--empty';
-            emptyBlock.textContent = 'Ajouter des séries';
+            const emptyBlock = createSetCell({
+                label: 'Ajouter des séries',
+                field: 'reps',
+                className: 'session-card-set-cell--empty',
+                onClick: (event) => {
+                    event.stopPropagation();
+                    void A.openRoutineMoveEdit({
+                        routineId: state.routineId,
+                        moveId: move.id,
+                        callerScreen: 'screenRoutineEdit'
+                    });
+                }
+            });
             line.appendChild(emptyBlock);
             setsWrapper.appendChild(line);
         }
@@ -527,15 +537,7 @@
         const pencil = listCard.createIcon('✏️');
         end.appendChild(pencil);
 
-        card.setAttribute('aria-label', `${move.exerciseName || 'Exercice'} — éditer`);
-        card.addEventListener('click', () => {
-            A.openRoutineMoveEdit({
-                routineId: state.routineId,
-                moveId: move.id,
-                callerScreen: 'screenRoutineEdit'
-            });
-        });
-
+        card.setAttribute('aria-label', move.exerciseName || 'Exercice');
         makeRoutineCardInteractive(card, handle);
         return card;
     }
