@@ -11,7 +11,8 @@
         moveId: null,
         callerScreen: 'screenRoutineEdit',
         routine: null,
-        pendingSave: null
+        pendingSave: null,
+        pendingFocus: null
     };
     let inlineEditor = null;
     const inlineKeyboard = A.components?.inlineKeyboard || A.components?.createInlineKeyboard?.();
@@ -30,13 +31,24 @@
 
     /* ACTIONS */
     A.openRoutineMoveEdit = async function openRoutineMoveEdit(options = {}) {
-        const { routineId, moveId, callerScreen = 'screenRoutineEdit' } = options;
+        const {
+            routineId,
+            moveId,
+            callerScreen = 'screenRoutineEdit',
+            focusSetIndex = null,
+            focusField = null
+        } = options;
         if (!routineId || !moveId) {
             return;
         }
         state.routineId = routineId;
         state.moveId = moveId;
         state.callerScreen = callerScreen;
+        if (Number.isInteger(focusSetIndex) && focusSetIndex >= 0) {
+            state.pendingFocus = { index: focusSetIndex, field: focusField };
+        } else {
+            state.pendingFocus = null;
+        }
 
         const routine = await db.get('routines', routineId);
         state.routine = normalizeRoutine(routine);
@@ -233,6 +245,41 @@
         sets.forEach((set, index) => {
             routineMoveSets.appendChild(renderSetRow(set, index, sets.length));
         });
+        if (state.pendingFocus) {
+            const pending = state.pendingFocus;
+            state.pendingFocus = null;
+            requestAnimationFrame(() => focusSetCell(pending.index, pending.field));
+        }
+    }
+
+    function normalizeFocusField(field) {
+        if (field === 'weight' || field === 'rpe' || field === 'rest' || field === 'reps') {
+            return field;
+        }
+        return 'reps';
+    }
+
+    function focusSetCell(index, field) {
+        const { routineMoveSets } = assertRefs();
+        if (!routineMoveSets) {
+            return;
+        }
+        const rows = Array.from(routineMoveSets.querySelectorAll('.routine-set-row'));
+        const row = rows[index];
+        if (!row) {
+            return;
+        }
+        const normalizedField = normalizeFocusField(field);
+        const selectors = {
+            reps: '.exec-reps-cell',
+            weight: '.exec-weight-cell',
+            rpe: '.exec-rpe-cell',
+            rest: '.exec-rest-cell'
+        };
+        const target = row.querySelector(selectors[normalizedField] || selectors.reps);
+        if (target?.click) {
+            target.click();
+        }
     }
 
     function renderSetRow(set, index, totalSets) {
