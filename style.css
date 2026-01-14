@@ -862,13 +862,21 @@ textarea:focus{
     minmax(3.2ch, 0.5fr)
     minmax(4ch, 0.9fr)
     minmax(6ch, 1fr)
-    minmax(4ch, 0.7fr)
-    minmax(6ch, 1fr)
-    minmax(6ch, 0.9fr);
+    minmax(4ch, 0.7fr);
   column-gap:8px;
   row-gap:2px;
   align-items:center;
   width:100%;
+}
+.session-card-sets-row--session{
+  grid-template-columns:
+    minmax(3.2ch, 0.5fr)
+    minmax(4ch, 0.9fr)
+    minmax(6ch, 1fr)
+    minmax(4ch, 0.7fr)
+    minmax(10ch, 1.6fr)
+    minmax(6ch, 0.9fr)
+    minmax(3ch, 0.4fr);
 }
 .session-card-sets-row--empty{
   grid-template-columns: 1fr;
@@ -890,6 +898,15 @@ textarea:focus{
   text-align:left;
   min-width:0;
   font-family:inherit;
+}
+.session-card-sets-row--session .session-card-set-cell{
+  font-weight: var(--fw-base);
+  color: var(--black);
+}
+.session-card-sets-row--session .session-card-set-cell--index,
+.session-card-sets-row--session .session-card-set-cell--goal{
+  color: var(--labelColor);
+  font-weight: var(--fw-light);
 }
 .session-card-set-cell[data-field]{
   cursor:pointer;
@@ -913,6 +930,12 @@ textarea:focus{
 }
 .session-card-set-cell--medals{
   justify-content:center;
+}
+.session-card-set-cell--pencil{
+  justify-content:center;
+}
+.session-card-set-cell--pencil-empty{
+  pointer-events:none;
 }
 .session-card-set-cell--medals .exec-medal,
 .session-card-set-cell--medals .exec-medal-icon{
