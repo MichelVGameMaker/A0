@@ -856,6 +856,9 @@ textarea:focus{
   margin-top:4px;
   width:100%;
 }
+.session-card-add-set{
+  font-size:var(--fs-small);
+}
 .session-card-sets-row{
   display:grid;
   grid-template-columns:

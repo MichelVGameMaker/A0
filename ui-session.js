@@ -14,9 +14,6 @@
         saveTimer: null,
         initialComments: ''
     };
-    const plannedRoutineState = {
-        routineId: null
-    };
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -24,7 +21,6 @@
         assertRefs();
         wireAddExercisesButton();
         wireAddRoutinesButton();
-        wirePlannedRoutineButton();
         wireSessionEditor();
     });
 
@@ -292,8 +288,6 @@
         const key = A.ymd(A.activeDate);
         const session = await db.getSession(key);
         sessionList.innerHTML = '';
-        await updatePlannedRoutineButton();
-
         if (!(session?.exercises?.length)) {
             sessionList.innerHTML = '<div class="empty">Aucun exercice pour cette date.</div>';
             return;
@@ -384,6 +378,15 @@
                     setsWrapper.appendChild(line);
                 });
             }
+            const addSetButton = document.createElement('button');
+            addSetButton.type = 'button';
+            addSetButton.className = 'btn full session-card-add-set';
+            addSetButton.textContent = 'Ajouter série';
+            addSetButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                void addSetToSessionExercise(exercise.exercise_id);
+            });
+            setsWrapper.appendChild(addSetButton);
             body.append(name, setsWrapper);
 
             card.setAttribute('aria-label', exerciseName);
@@ -393,6 +396,160 @@
             sessionList.appendChild(card);
         }
     };
+
+    async function addSetToSessionExercise(exerciseId) {
+        if (!exerciseId) {
+            return;
+        }
+        const dateKey = A.ymd(A.activeDate);
+        const session = await ensureSessionForDate(A.activeDate);
+        if (!session?.exercises?.length) {
+            return;
+        }
+        const exercise = session.exercises.find((item) => item.exercise_id === exerciseId);
+        if (!exercise) {
+            return;
+        }
+        const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+        const previous = sets.length ? sets[sets.length - 1] : null;
+        const restForNewSet = getRestForNewSet(previous?.rest);
+        const preferredValues = await resolveNewSetValuesForSession(exercise, sets, previous, dateKey);
+        const now = new Date().toISOString();
+        const newSet = {
+            pos: sets.length + 1,
+            reps: preferredValues?.reps ?? 8,
+            weight: preferredValues?.weight ?? null,
+            rpe: preferredValues?.rpe ?? null,
+            rest: restForNewSet,
+            done: false,
+            date: now,
+            time: previous?.time ?? null,
+            distance: previous?.distance ?? null,
+            setType: null
+        };
+        const updatedSets = [...sets, newSet];
+        exercise.sets = normalizeSessionSets(updatedSets, {
+            sessionId: session.id,
+            exerciseName: exercise.exercise_name,
+            exerciseId: exercise.exercise_id,
+            date: session.date
+        });
+        await db.saveSession(session);
+        await A.renderSession();
+    }
+
+    async function resolveNewSetValuesForSession(exercise, sets, previous, dateKey) {
+        const source = A.preferences?.getNewSetValueSource?.() ?? 'last_set';
+        const exerciseId = exercise.exercise_id;
+        if (source === 'last_session') {
+            const fromPreviousSession = await findPreviousSessionSet(exerciseId, sets.length + 1, dateKey);
+            if (fromPreviousSession) {
+                return sanitizeSetValues(fromPreviousSession);
+            }
+            if (previous) {
+                return sanitizeSetValues(previous);
+            }
+            const lastFromHistory = await findPreviousSessionLastSet(exerciseId, dateKey);
+            if (lastFromHistory) {
+                return sanitizeSetValues(lastFromHistory);
+            }
+            return null;
+        }
+        if (previous) {
+            return sanitizeSetValues(previous);
+        }
+        const lastFromHistory = await findPreviousSessionLastSet(exerciseId, dateKey);
+        if (lastFromHistory) {
+            return sanitizeSetValues(lastFromHistory);
+        }
+        return null;
+    }
+
+    function sanitizeSetValues(source) {
+        return {
+            reps: safePositiveInt(source?.reps),
+            weight: sanitizeWeight(source?.weight),
+            rpe: source?.rpe != null && source?.rpe !== '' ? clampRpe(source?.rpe) : null
+        };
+    }
+
+    async function findPreviousSessionSet(exerciseId, position, dateKey) {
+        const exercise = await findPreviousSessionExercise(exerciseId, dateKey);
+        if (!exercise) {
+            return null;
+        }
+        return findSetByPosition(exercise.sets, position);
+    }
+
+    async function findPreviousSessionLastSet(exerciseId, dateKey) {
+        const exercise = await findPreviousSessionExercise(exerciseId, dateKey);
+        if (!exercise) {
+            return null;
+        }
+        return findLastSet(exercise.sets);
+    }
+
+    async function findPreviousSessionExercise(exerciseId, dateKey) {
+        if (!dateKey || !exerciseId) {
+            return null;
+        }
+        const sessions = await db.listSessionDates();
+        const previousDates = sessions
+            .map((entry) => entry.date)
+            .filter((date) => date && date < dateKey)
+            .sort((a, b) => b.localeCompare(a));
+        for (const date of previousDates) {
+            const session = await db.getSession(date);
+            const exercise = Array.isArray(session?.exercises)
+                ? session.exercises.find((item) => item.exercise_id === exerciseId)
+                : null;
+            if (exercise && Array.isArray(exercise.sets) && exercise.sets.length) {
+                return exercise;
+            }
+        }
+        return null;
+    }
+
+    function findSetByPosition(sets, position) {
+        if (!Array.isArray(sets) || !position) {
+            return null;
+        }
+        const exactMatch = sets.find((set, index) => safeInt(set.pos, index + 1) === position);
+        if (exactMatch) {
+            return exactMatch;
+        }
+        return sets[position - 1] ?? null;
+    }
+
+    function findLastSet(sets) {
+        if (!Array.isArray(sets) || !sets.length) {
+            return null;
+        }
+        let best = null;
+        let bestPos = -Infinity;
+        sets.forEach((set, index) => {
+            const pos = safeInt(set.pos, index + 1);
+            if (pos >= bestPos) {
+                bestPos = pos;
+                best = set;
+            }
+        });
+        return best;
+    }
+
+    function getRestForNewSet(previousRest) {
+        const preferences = A.preferences;
+        const restDefaultDuration = Math.max(0, safeInt(preferences?.getRestDefaultDuration?.(), 80));
+        const lastRestDuration = Math.max(0, safeInt(preferences?.getLastRestDuration?.(), restDefaultDuration));
+        const restDefaultEnabled = preferences?.getRestDefaultEnabled?.() !== false;
+        if (restDefaultEnabled) {
+            return restDefaultDuration;
+        }
+        if (previousRest != null) {
+            return Math.max(0, safeInt(previousRest, lastRestDuration));
+        }
+        return lastRestDuration;
+    }
 
     A.reorderSessionExercises = async function reorderSessionExercises(order) {
         if (!Array.isArray(order) || !order.length) {
@@ -516,28 +673,6 @@
         await A.renderWeek();
         await A.renderSession();
     };
-
-    async function updatePlannedRoutineButton() {
-        const { plannedRoutineRow, btnPlannedRoutine } = ensureRefs();
-        if (!plannedRoutineRow || !btnPlannedRoutine) {
-            return;
-        }
-        const plannedId = await A.getPlannedRoutineId(A.activeDate);
-        if (!plannedId) {
-            plannedRoutineRow.hidden = true;
-            plannedRoutineState.routineId = null;
-            return;
-        }
-        const routine = await db.get('routines', plannedId);
-        if (!routine) {
-            plannedRoutineRow.hidden = true;
-            plannedRoutineState.routineId = null;
-            return;
-        }
-        plannedRoutineState.routineId = plannedId;
-        btnPlannedRoutine.textContent = routine.name || 'Routine planifiée';
-        plannedRoutineRow.hidden = false;
-    }
 
     /* UTILS */
     function createSession(date) {
@@ -789,8 +924,6 @@
         }
         refs.btnAddExercises = document.getElementById('btnAddExercises');
         refs.btnAddRoutines = document.getElementById('btnAddRoutines');
-        refs.plannedRoutineRow = document.getElementById('plannedRoutineRow');
-        refs.btnPlannedRoutine = document.getElementById('btnPlannedRoutine');
         refs.selectRoutine = document.getElementById('selectRoutine');
         refs.todayLabel = document.getElementById('todayLabel');
         refs.sessionList = document.getElementById('sessionList');
@@ -841,16 +974,6 @@
                     await A.addRoutineToSession(ids);
                 }
             });
-        });
-    }
-
-    function wirePlannedRoutineButton() {
-        const { btnPlannedRoutine } = refs;
-        btnPlannedRoutine?.addEventListener('click', async () => {
-            if (!plannedRoutineState.routineId) {
-                return;
-            }
-            await A.addRoutineToSession(plannedRoutineState.routineId);
         });
     }
 
@@ -1059,6 +1182,20 @@
         return Number.isFinite(numeric) ? numeric : fallback;
     }
 
+    function safePositiveInt(value) {
+        const numeric = safeInt(value, 0);
+        return numeric > 0 ? numeric : 0;
+    }
+
+    function clampRpe(value) {
+        const numeric = Number.parseFloat(value);
+        if (!Number.isFinite(numeric)) {
+            return null;
+        }
+        const bounded = Math.min(10, Math.max(5, numeric));
+        return Math.round(bounded * 2) / 2;
+    }
+
     function safeIntOrNull(value) {
         const numeric = Number.parseInt(value, 10);
         return Number.isFinite(numeric) ? numeric : null;
@@ -1067,6 +1204,17 @@
     function safeFloatOrNull(value) {
         const numeric = Number.parseFloat(value);
         return Number.isFinite(numeric) ? numeric : null;
+    }
+
+    function sanitizeWeight(value) {
+        if (value == null || value === '') {
+            return null;
+        }
+        const numeric = Number.parseFloat(String(value).replace(',', '.'));
+        if (!Number.isFinite(numeric)) {
+            return null;
+        }
+        return Math.max(0, Math.round(numeric * 100) / 100);
     }
 
     function uid(prefix) {
