@@ -34,7 +34,8 @@
             mode = 'view',
             onAdd = null,
             autoAdd = false,
-            includeNone = false
+            includeNone = false,
+            preselectedIds = []
         } = options;
         ensureRefs();
         state.listMode = mode === 'add' ? 'add' : 'view';
@@ -42,9 +43,18 @@
         state.autoAdd = Boolean(autoAdd);
         state.includeNone = Boolean(includeNone);
         state.selection.clear();
+        const normalizedPreselected = Array.isArray(preselectedIds) ? preselectedIds.filter(Boolean) : [];
         state.callerScreen = callerScreen;
         highlightCallerTab(callerScreen);
         await loadRoutines(true);
+        if (state.listMode === 'add' && !state.autoAdd && normalizedPreselected.length) {
+            const available = new Set(state.routines.map((routine) => routine?.id).filter(Boolean));
+            normalizedPreselected.forEach((id) => {
+                if (available.has(id)) {
+                    state.selection.add(id);
+                }
+            });
+        }
         renderList();
         ensureSelectionBar();
         updateSelectionBar();
