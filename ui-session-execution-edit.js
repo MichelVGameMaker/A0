@@ -1721,6 +1721,11 @@
             return;
         }
         timer.remainSec -= 1;
+        if (timer.remainSec <= -5 * 60) {
+            stopTimer();
+            updateTimerUI();
+            return;
+        }
         if (timer.remainSec === 0 && navigator.vibrate) {
             try {
                 navigator.vibrate(200);
