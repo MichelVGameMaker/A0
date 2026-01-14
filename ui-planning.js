@@ -12,7 +12,8 @@
     const MAX_PLAN_DAYS = 28;
     const dialogState = {
         plan: null,
-        selected: null
+        selected: null,
+        startDay: null
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -34,6 +35,7 @@
         }
 
         const plan = await ensureActivePlan();
+        const startDay = clampStartDay(plan.startDay);
         const routines = await loadRoutines();
         const routineMap = new Map(routines.map((routine) => [routine.id, routine]));
         const dayCount = clampDayCount(plan.length);
@@ -46,7 +48,7 @@
             const routineId = plan.days?.[dayKey] || null;
             const routine = routineId ? routineMap.get(routineId) : null;
             const routineName = routine?.name || 'Aucune routine';
-            const label = getDayLabel(dayIndex);
+            const label = getDayLabel(dayIndex, startDay);
 
             const structure = listCard.createStructure({
                 clickable: true,
@@ -112,6 +114,9 @@
         const plan = await ensureActivePlan();
         dialogState.plan = plan;
         dialogState.selected = clampDayCount(plan.length);
+        dialogState.startDay = clampStartDay(plan.startDay);
+        renderPlanningStartDayOptions();
+        updatePlanningStartDaySelection();
         renderPlanningDurationTags();
         refs.dlgPlanningDuration?.showModal();
     }
@@ -138,6 +143,10 @@
             plan.startDate = A.ymd(A.today());
             shouldPersist = true;
         }
+        if (!plan.startDay) {
+            plan.startDay = 1;
+            shouldPersist = true;
+        }
         if (shouldPersist) {
             await db.put('plans', plan);
         }
@@ -160,6 +169,40 @@
             return 7;
         }
         return Math.min(MAX_PLAN_DAYS, Math.max(1, numeric));
+    }
+
+    function clampStartDay(value) {
+        const numeric = Number.parseInt(value, 10);
+        if (!Number.isFinite(numeric)) {
+            return 1;
+        }
+        return Math.min(7, Math.max(1, numeric));
+    }
+
+    function renderPlanningStartDayOptions() {
+        const { planningStartDay } = ensureRefs();
+        if (!planningStartDay) {
+            return;
+        }
+        if (planningStartDay.options.length === DAY_LABELS.length) {
+            return;
+        }
+        planningStartDay.innerHTML = '';
+        DAY_LABELS.forEach((label, index) => {
+            const option = document.createElement('option');
+            option.value = String(index + 1);
+            option.textContent = label;
+            planningStartDay.appendChild(option);
+        });
+    }
+
+    function updatePlanningStartDaySelection() {
+        const { planningStartDay } = refs;
+        if (!planningStartDay) {
+            return;
+        }
+        const nextValue = clampStartDay(dialogState.startDay);
+        planningStartDay.value = String(nextValue);
     }
 
     function renderPlanningDurationTags() {
@@ -203,11 +246,14 @@
         const plan = dialogState.plan || (await ensureActivePlan());
         const next = clampDayCount(dialogState.selected);
         const current = clampDayCount(plan.length);
-        if (next === current) {
+        const nextStartDay = clampStartDay(dialogState.startDay ?? plan.startDay);
+        const currentStartDay = clampStartDay(plan.startDay);
+        if (next === current && nextStartDay === currentStartDay) {
             refs.dlgPlanningDuration?.close();
             return;
         }
         plan.length = next;
+        plan.startDay = nextStartDay;
         if (!plan.days || typeof plan.days !== 'object') {
             plan.days = {};
         }
@@ -223,8 +269,10 @@
         refs.dlgPlanningDuration?.close();
     }
 
-    function getDayLabel(dayIndex) {
-        return DAY_LABELS[dayIndex - 1] || `Jour ${dayIndex}`;
+    function getDayLabel(dayIndex, startDay) {
+        const offset = clampStartDay(startDay) - 1;
+        const labelIndex = (offset + dayIndex - 1) % DAY_LABELS.length;
+        return DAY_LABELS[labelIndex] || `Jour ${dayIndex}`;
     }
 
     function ensureRefs() {
@@ -258,6 +306,7 @@
         refs.btnPlanningSettings = document.getElementById('btnPlanningSettings');
         refs.dlgPlanningDuration = document.getElementById('dlgPlanningDuration');
         refs.planningDurationTags = document.getElementById('planningDurationTags');
+        refs.planningStartDay = document.getElementById('planningStartDay');
         refs.planningDurationCancel = document.getElementById('planningDurationCancel');
         refs.planningDurationSave = document.getElementById('planningDurationSave');
         refsResolved = true;
@@ -269,6 +318,7 @@
             btnPlanningBack,
             btnPlanningEditDays,
             btnPlanningSettings,
+            planningStartDay,
             planningDurationCancel,
             planningDurationSave
         } = ensureRefs();
@@ -283,6 +333,11 @@
         });
         btnPlanningSettings?.addEventListener('click', () => {
             A.openSettings?.();
+        });
+        planningStartDay?.addEventListener('change', (event) => {
+            const value = event.target?.value;
+            dialogState.startDay = clampStartDay(value);
+            updatePlanningStartDaySelection();
         });
         planningDurationCancel?.addEventListener('click', () => {
             refs.dlgPlanningDuration?.close();
