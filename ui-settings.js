@@ -865,12 +865,13 @@
 
         let primaryMuscle = null;
         let secondaryMuscles = [];
-        if (isUserExercise) {
+        if (primaryRaw) {
             primaryMuscle = normalizeMuscleValue(primaryRaw, { exerciseName: name, field: 'primary' });
-            secondaryMuscles = normalizeMuscleList(secondaryRaw, { exerciseName: name, field: 'secondary' });
         } else {
             primaryMuscle = 'biceps';
-            secondaryMuscles = [];
+        }
+        if (secondaryRaw) {
+            secondaryMuscles = normalizeMuscleList(secondaryRaw, { exerciseName: name, field: 'secondary' });
         }
         const muscleGroups = CFG.decodeMuscle(primaryMuscle);
         const equipment = deriveEquipmentFromName(name, { exerciseName: name });
