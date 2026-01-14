@@ -868,24 +868,24 @@ textarea:focus{
 .session-card-sets-row{
   display:grid;
   grid-template-columns:
-    minmax(3.2ch, 0.5fr)
-    minmax(4ch, 0.9fr)
-    minmax(6ch, 1fr)
-    minmax(4ch, 0.7fr);
-  column-gap:8px;
+    minmax(0, 0.5fr)
+    minmax(0, 0.9fr)
+    minmax(0, 1fr)
+    minmax(0, 0.7fr);
+  column-gap:6px;
   row-gap:2px;
   align-items:center;
   width:100%;
 }
 .session-card-sets-row--session{
   grid-template-columns:
-    minmax(3.2ch, 0.5fr)
-    minmax(4ch, 0.9fr)
-    minmax(6ch, 1fr)
-    minmax(4ch, 0.7fr)
-    minmax(10ch, 1.6fr)
-    minmax(6ch, 0.9fr)
-    minmax(3ch, 0.4fr);
+    minmax(0, 0.5fr)
+    minmax(0, 0.9fr)
+    minmax(0, 1fr)
+    minmax(0, 0.7fr)
+    minmax(0, 1.6fr)
+    minmax(0, 0.9fr)
+    minmax(0, 0.4fr);
 }
 .session-card-sets-row--empty{
   grid-template-columns: 1fr;
@@ -906,6 +906,10 @@ textarea:focus{
   color:inherit;
   text-align:left;
   min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
   font-family:inherit;
 }
 .session-card-sets-row--session .session-card-set-cell{
