@@ -513,25 +513,16 @@
                 );
                 setsWrapper.appendChild(line);
             });
-        } else {
-            const line = document.createElement('div');
-            line.className = 'session-card-sets-row session-card-sets-row--empty';
-            const emptyBlock = createSetCell({
-                label: 'Ajouter des séries',
-                field: 'reps',
-                className: 'session-card-set-cell--empty',
-                onClick: (event) => {
-                    event.stopPropagation();
-                    void A.openRoutineMoveEdit({
-                        routineId: state.routineId,
-                        moveId: move.id,
-                        callerScreen: 'screenRoutineEdit'
-                    });
-                }
-            });
-            line.appendChild(emptyBlock);
-            setsWrapper.appendChild(line);
         }
+        const addSetButton = document.createElement('button');
+        addSetButton.type = 'button';
+        addSetButton.className = 'btn full session-card-add-set';
+        addSetButton.textContent = 'Ajouter série';
+        addSetButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            void addSetToMove(move.id);
+        });
+        setsWrapper.appendChild(addSetButton);
         body.append(name, setsWrapper);
 
         const pencil = listCard.createIcon('✏️');
@@ -540,6 +531,145 @@
         card.setAttribute('aria-label', move.exerciseName || 'Exercice');
         makeRoutineCardInteractive(card, handle);
         return card;
+    }
+
+    async function addSetToMove(moveId) {
+        if (!moveId || !state.routine?.moves?.length) {
+            return;
+        }
+        const move = state.routine.moves.find((item) => item.id === moveId);
+        if (!move) {
+            return;
+        }
+        const sets = Array.isArray(move.sets) ? move.sets : [];
+        const previous = sets.length ? sets[sets.length - 1] : null;
+        const restForNewSet = getRestForNewSet(previous?.rest);
+        const preferredValues = await resolveNewSetValuesForRoutine(move.exerciseId, sets, previous);
+        const newSet = {
+            pos: sets.length + 1,
+            reps: preferredValues?.reps ?? 8,
+            weight: preferredValues?.weight ?? null,
+            rpe: preferredValues?.rpe ?? null,
+            rest: restForNewSet
+        };
+        move.sets = [...sets, newSet];
+        move.sets.forEach((set, idx) => {
+            set.pos = idx + 1;
+        });
+        scheduleSave();
+        renderRoutineList();
+    }
+
+    async function resolveNewSetValuesForRoutine(exerciseId, sets, previous) {
+        const source = A.preferences?.getNewSetValueSource?.() ?? 'last_set';
+        if (source === 'last_session') {
+            const fromLastSession = await findLastSessionSet(exerciseId, sets.length + 1);
+            if (fromLastSession) {
+                return sanitizeSetValues(fromLastSession);
+            }
+            if (previous) {
+                return sanitizeSetValues(previous);
+            }
+            const lastFromHistory = await findLastSessionLastSet(exerciseId);
+            if (lastFromHistory) {
+                return sanitizeSetValues(lastFromHistory);
+            }
+            return null;
+        }
+        if (previous) {
+            return sanitizeSetValues(previous);
+        }
+        const lastFromHistory = await findLastSessionLastSet(exerciseId);
+        if (lastFromHistory) {
+            return sanitizeSetValues(lastFromHistory);
+        }
+        return null;
+    }
+
+    function sanitizeSetValues(source) {
+        return {
+            reps: safePositiveInt(source?.reps),
+            weight: sanitizeWeight(source?.weight),
+            rpe: source?.rpe != null && source?.rpe !== '' ? clampRpe(source?.rpe) : null
+        };
+    }
+
+    async function findLastSessionSet(exerciseId, position) {
+        const exercise = await findLastSessionExercise(exerciseId);
+        if (!exercise) {
+            return null;
+        }
+        return findSetByPosition(exercise.sets, position);
+    }
+
+    async function findLastSessionLastSet(exerciseId) {
+        const exercise = await findLastSessionExercise(exerciseId);
+        if (!exercise) {
+            return null;
+        }
+        return findLastSet(exercise.sets);
+    }
+
+    async function findLastSessionExercise(exerciseId) {
+        if (!exerciseId) {
+            return null;
+        }
+        const sessions = await db.listSessionDates();
+        const orderedDates = sessions
+            .map((entry) => entry.date)
+            .filter(Boolean)
+            .sort((a, b) => b.localeCompare(a));
+        for (const date of orderedDates) {
+            const session = await db.getSession(date);
+            const exercise = Array.isArray(session?.exercises)
+                ? session.exercises.find((item) => item.exercise_id === exerciseId)
+                : null;
+            if (exercise && Array.isArray(exercise.sets) && exercise.sets.length) {
+                return exercise;
+            }
+        }
+        return null;
+    }
+
+    function findSetByPosition(sets, position) {
+        if (!Array.isArray(sets) || !position) {
+            return null;
+        }
+        const exactMatch = sets.find((set, index) => safeInt(set.pos, index + 1) === position);
+        if (exactMatch) {
+            return exactMatch;
+        }
+        return sets[position - 1] ?? null;
+    }
+
+    function findLastSet(sets) {
+        if (!Array.isArray(sets) || !sets.length) {
+            return null;
+        }
+        let best = null;
+        let bestPos = -Infinity;
+        sets.forEach((set, index) => {
+            const pos = safeInt(set.pos, index + 1);
+            if (pos >= bestPos) {
+                bestPos = pos;
+                best = set;
+            }
+        });
+        return best;
+    }
+
+    function getRestForNewSet(previousRest) {
+        const preferences = A.preferences;
+        const restDefaultDuration = Math.max(0, safeInt(preferences?.getRestDefaultDuration?.(), 80));
+        const lastRestDuration = Math.max(0, safeInt(preferences?.getLastRestDuration?.(), restDefaultDuration));
+        const restDefaultEnabled = preferences?.getRestDefaultEnabled?.() !== false;
+        if (restDefaultEnabled) {
+            return restDefaultDuration;
+        }
+        if (previousRest != null) {
+            return Math.max(0, safeInt(previousRest, lastRestDuration));
+        }
+        return lastRestDuration;
     }
 
     function makeRoutineCardInteractive(card, handle) {
@@ -838,6 +968,20 @@
         return Number.isFinite(number) ? number : fallback;
     }
 
+    function safePositiveInt(value) {
+        const numeric = safeInt(value, 0);
+        return numeric > 0 ? numeric : 0;
+    }
+
+    function clampRpe(value) {
+        const numeric = Number.parseFloat(value);
+        if (!Number.isFinite(numeric)) {
+            return null;
+        }
+        const bounded = Math.min(10, Math.max(5, numeric));
+        return Math.round(bounded * 2) / 2;
+    }
+
     function safeFloatOrNull(value) {
         const number = Number.parseFloat(value);
         return Number.isFinite(number) ? number : null;
@@ -846,6 +990,17 @@
     function safeIntOrNull(value) {
         const number = Number.parseInt(value, 10);
         return Number.isFinite(number) ? number : null;
+    }
+
+    function sanitizeWeight(value) {
+        if (value == null || value === '') {
+            return null;
+        }
+        const numeric = Number.parseFloat(String(value).replace(',', '.'));
+        if (!Number.isFinite(numeric)) {
+            return null;
+        }
+        return Math.max(0, Math.round(numeric * 100) / 100);
     }
 
     function uid(prefix) {
