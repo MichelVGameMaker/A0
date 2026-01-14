@@ -41,6 +41,10 @@
             label: 'Première séance'
         }
     };
+    A.getSessionMedalIconMap = () => medalIconMap;
+    A.buildSessionExerciseMeta = async function buildSessionExerciseMeta(exercise, currentSets = [], options = {}) {
+        return buildSetMeta(exercise, currentSets, options);
+    };
     let inlineEditor = null;
     const inlineKeyboard = A.components?.inlineKeyboard || A.components?.createInlineKeyboard?.();
     if (inlineKeyboard && !A.components.inlineKeyboard) {
@@ -806,15 +810,16 @@
         return row;
     }
 
-    async function buildSetMeta(exercise, currentSets = []) {
+    async function buildSetMeta(exercise, currentSets = [], options = {}) {
+        const { dateKey = state.dateKey } = options;
         const exerciseId = exercise?.exercise_id;
         const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
-        const previous = await findPreviousSessionForHistory(exerciseId);
+        const previous = await findPreviousSessionForHistory(exerciseId, dateKey);
         const previousSets = Array.isArray(previous?.exercise?.sets) ? [...previous.exercise.sets] : [];
         previousSets.sort((a, b) => safeInt(a?.pos, 0) - safeInt(b?.pos, 0));
         const historyByPos = buildHistorySetMap(previousSets, weightUnit);
         const goalsByPos = buildHistorySetMap(previousSets, weightUnit);
-        const medalsByPos = await buildMedalMap(exerciseId, currentSets);
+        const medalsByPos = await buildMedalMap(exerciseId, currentSets, dateKey);
         return { historyByPos, goalsByPos, medalsByPos };
     }
 
@@ -830,8 +835,8 @@
         return map;
     }
 
-    async function buildMedalMap(exerciseId, currentSets = []) {
-        const previousSets = await collectPreviousExerciseSets(exerciseId);
+    async function buildMedalMap(exerciseId, currentSets = [], dateKey = state.dateKey) {
+        const previousSets = await collectPreviousExerciseSets(exerciseId, dateKey);
         if (!previousSets.length) {
             const medalsByPos = new Map();
             (Array.isArray(currentSets) ? currentSets : []).forEach((set, index) => {
@@ -921,8 +926,7 @@
         return medalsByPos;
     }
 
-    async function collectPreviousExerciseSets(exerciseId) {
-        const dateKey = state.dateKey;
+    async function collectPreviousExerciseSets(exerciseId, dateKey = state.dateKey) {
         if (!exerciseId || !dateKey) {
             return [];
         }
@@ -963,8 +967,7 @@
         return weight * (1 + reps / 30);
     }
 
-    async function findPreviousSessionForHistory(exerciseId) {
-        const dateKey = state.dateKey;
+    async function findPreviousSessionForHistory(exerciseId, dateKey = state.dateKey) {
         if (!exerciseId || !dateKey) {
             return null;
         }
