@@ -194,10 +194,10 @@
      * @param {Date} date Date ciblée.
      * @returns {Promise<string|null>} Identifiant ou `null`.
      */
-    A.getPlannedRoutineId = async function getPlannedRoutineId(date) {
+    A.getPlannedRoutineIds = async function getPlannedRoutineIds(date) {
         const plan = await db.getActivePlan();
         if (!plan) {
-            return null;
+            return [];
         }
         if (!plan.startDate) {
             plan.startDate = A.ymd(A.today());
@@ -205,9 +205,23 @@
         }
         const dayIndex = A.getPlanDayIndex?.(date, plan);
         if (!dayIndex) {
-            return null;
+            return [];
         }
-        return plan.days?.[String(dayIndex)] || null;
+        const planned = plan.days?.[String(dayIndex)] || null;
+        if (Array.isArray(planned)) {
+            return planned.filter(Boolean);
+        }
+        return planned ? [planned] : [];
+    };
+
+    /**
+     * Retourne l'identifiant de la routine planifiée pour une date.
+     * @param {Date} date Date ciblée.
+     * @returns {Promise<string|null>} Identifiant ou `null`.
+     */
+    A.getPlannedRoutineId = async function getPlannedRoutineId(date) {
+        const planned = await A.getPlannedRoutineIds(date);
+        return planned[0] || null;
     };
 
     /**
@@ -796,10 +810,12 @@
 
     function wireAddRoutinesButton() {
         const { btnAddRoutines } = refs;
-        btnAddRoutines?.addEventListener('click', () => {
+        btnAddRoutines?.addEventListener('click', async () => {
+            const preselectedIds = await A.getPlannedRoutineIds?.(A.activeDate);
             A.openRoutineList({
                 mode: 'add',
                 callerScreen: 'screenSessions',
+                preselectedIds,
                 onAdd: async (ids) => {
                     await A.addRoutineToSession(ids);
                 }
