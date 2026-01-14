@@ -478,11 +478,17 @@ header .header-left .btn{
 }
 .tmr-display{
     font-weight: var(--fw-strong);
-    min-width:76px;
+    --tmr-display-size: clamp(160px, 45vw, 260px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width: var(--tmr-display-size);
+    height: var(--tmr-display-size);
     text-align:center;
-    font-size: clamp(3.4rem, 14vw, 7rem);
+    font-size: clamp(6.8rem, 28vw, 14rem);
     line-height:1;
     font-variant-numeric: tabular-nums;
+    border-radius: 999px;
 }
 .tmr-display--warning{ color: var(--alert); }
 .tmr-display--negative{ color: var(--red); }
