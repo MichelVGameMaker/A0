@@ -858,7 +858,13 @@ textarea:focus{
 }
 .session-card-sets-row{
   display:grid;
-  grid-template-columns: minmax(3.2ch, 0.5fr) minmax(4ch, 0.9fr) minmax(6ch, 1fr) minmax(4ch, 0.7fr);
+  grid-template-columns:
+    minmax(3.2ch, 0.5fr)
+    minmax(4ch, 0.9fr)
+    minmax(6ch, 1fr)
+    minmax(4ch, 0.7fr)
+    minmax(6ch, 1fr)
+    minmax(6ch, 0.9fr);
   column-gap:8px;
   row-gap:2px;
   align-items:center;
@@ -901,6 +907,17 @@ textarea:focus{
 }
 .session-card-set-cell--rpe{
   justify-content:flex-start;
+}
+.session-card-set-cell--goal{
+  justify-content:flex-start;
+}
+.session-card-set-cell--medals{
+  justify-content:center;
+}
+.session-card-set-cell--medals .exec-medal,
+.session-card-set-cell--medals .exec-medal-icon{
+  width:24px;
+  height:24px;
 }
 .session-card-set-cell[data-rpe]{
   border-radius:999px;

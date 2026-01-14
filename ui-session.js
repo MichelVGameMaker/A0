@@ -93,6 +93,39 @@
         return 'reps';
     }
 
+    function getMedalIconMap() {
+        if (typeof A.getSessionMedalIconMap === 'function') {
+            return A.getSessionMedalIconMap() || {};
+        }
+        return {
+            progress: {
+                icon: 'icons/badge_progress.svg',
+                className: 'exec-medal--progress',
+                label: 'Progression sur la série'
+            },
+            reps: {
+                icon: 'icons/badge_reps.svg',
+                className: 'exec-medal--reps',
+                label: 'Record reps à ce poids'
+            },
+            orm: {
+                icon: 'icons/badge-1rm.svg',
+                className: 'exec-medal--danger',
+                label: 'Record 1RM'
+            },
+            weight: {
+                icon: 'icons/badge-kg.svg',
+                className: 'exec-medal--kg',
+                label: 'Record poids'
+            },
+            new: {
+                icon: 'icons/badge-new.svg',
+                className: 'exec-medal--new',
+                label: 'Première séance'
+            }
+        };
+    }
+
     function createSetCell({ label, field, onClick, className, rpeValue }) {
         const cell = document.createElement('button');
         cell.type = 'button';
@@ -108,6 +141,50 @@
         if (onClick) {
             cell.addEventListener('click', onClick);
         }
+        return cell;
+    }
+
+    function createSetMetaCell({ text, rpeValue, className }) {
+        const cell = document.createElement('div');
+        cell.className = `session-card-set-cell${className ? ` ${className}` : ''}`;
+        cell.textContent = text;
+        const rpeDatasetValue = getRpeDatasetValue(rpeValue);
+        if (rpeDatasetValue) {
+            cell.dataset.rpe = rpeDatasetValue;
+        }
+        return cell;
+    }
+
+    function createSetMedalsCell(medals = []) {
+        const cell = document.createElement('div');
+        cell.className = 'session-card-set-cell session-card-set-cell--medals';
+        if (!Array.isArray(medals) || medals.length === 0) {
+            cell.textContent = '—';
+            return cell;
+        }
+        const list = document.createElement('div');
+        list.className = 'exec-meta-medals';
+        const iconMap = getMedalIconMap();
+        medals.forEach((medalKey) => {
+            const medalConfig = iconMap[medalKey];
+            if (!medalConfig) {
+                return;
+            }
+            const badge = document.createElement('span');
+            badge.className = `exec-medal ${medalConfig.className}`;
+            badge.title = medalConfig.label;
+            const icon = document.createElement('img');
+            icon.src = medalConfig.icon;
+            icon.alt = medalConfig.label;
+            icon.className = 'exec-medal-icon';
+            badge.appendChild(icon);
+            list.appendChild(badge);
+        });
+        if (!list.children.length) {
+            cell.textContent = '—';
+            return cell;
+        }
+        cell.appendChild(list);
         return cell;
     }
 
@@ -189,7 +266,7 @@
             return;
         }
 
-        session.exercises.forEach((exercise) => {
+        for (const exercise of session.exercises) {
             const structure = listCard.createStructure();
             const { card, start, body, end } = structure;
             card.dataset.exerciseId = exercise.exercise_id;
@@ -209,6 +286,10 @@
             setsWrapper.className = 'session-card-sets';
             const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
             sets.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
+            const meta =
+                typeof A.buildSessionExerciseMeta === 'function'
+                    ? await A.buildSessionExerciseMeta(exercise, sets, { dateKey: key })
+                    : { goalsByPos: new Map(), medalsByPos: new Map() };
             if (sets.length) {
                 sets.forEach((set, index) => {
                     const line = document.createElement('div');
@@ -226,6 +307,13 @@
                         event.stopPropagation();
                         openWithFocus(field);
                     };
+                    const goalInfo = meta?.goalsByPos?.get?.(pos) || null;
+                    const goalCell = createSetMetaCell({
+                        text: goalInfo?.text ?? '—',
+                        rpeValue: goalInfo?.rpe ?? null,
+                        className: 'session-card-set-cell--goal'
+                    });
+                    const medalsCell = createSetMedalsCell(meta?.medalsByPos?.get?.(pos) || []);
                     line.append(
                         createSetCell({
                             label: formatSetIndex(pos),
@@ -251,7 +339,9 @@
                             className: 'session-card-set-cell--rpe',
                             rpeValue: set?.rpe,
                             onClick: stopAndOpen('rpe')
-                        })
+                        }),
+                        goalCell,
+                        medalsCell
                     );
                     setsWrapper.appendChild(line);
                 });
@@ -266,7 +356,7 @@
             makeSessionCardInteractive(card, handle);
 
             sessionList.appendChild(card);
-        });
+        }
     };
 
     A.reorderSessionExercises = async function reorderSessionExercises(order) {
