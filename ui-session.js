@@ -162,29 +162,48 @@
             cell.textContent = '—';
             return cell;
         }
-        const list = document.createElement('div');
-        list.className = 'exec-meta-medals';
         const iconMap = getMedalIconMap();
-        medals.forEach((medalKey) => {
-            const medalConfig = iconMap[medalKey];
-            if (!medalConfig) {
-                return;
-            }
-            const badge = document.createElement('span');
-            badge.className = `exec-medal ${medalConfig.className}`;
-            badge.title = medalConfig.label;
-            const icon = document.createElement('img');
-            icon.src = medalConfig.icon;
-            icon.alt = medalConfig.label;
-            icon.className = 'exec-medal-icon';
-            badge.appendChild(icon);
-            list.appendChild(badge);
-        });
-        if (!list.children.length) {
+        const medalKey = medals.find((key) => iconMap[key]);
+        if (!medalKey) {
             cell.textContent = '—';
             return cell;
         }
-        cell.appendChild(list);
+        const medalConfig = iconMap[medalKey];
+        const badge = document.createElement('span');
+        badge.className = `exec-medal ${medalConfig.className}`;
+        badge.title = medalConfig.label;
+        const icon = document.createElement('img');
+        icon.src = medalConfig.icon;
+        icon.alt = medalConfig.label;
+        icon.className = 'exec-medal-icon';
+        badge.appendChild(icon);
+        cell.appendChild(badge);
+        return cell;
+    }
+
+    function createSetEditCell({ exerciseId, exerciseName }) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'session-card-set-cell session-card-set-cell--pencil';
+        const labelName = exerciseName || 'Exercice';
+        button.setAttribute('aria-label', `Éditer l'exercice ${labelName}`);
+        const icon = listCard.createIcon('✏️');
+        button.appendChild(icon);
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            void A.openExecEdit({
+                currentId: exerciseId,
+                callerScreen: 'screenSessions',
+                openMeta: true
+            });
+        });
+        return button;
+    }
+
+    function createSetEditPlaceholder() {
+        const cell = document.createElement('div');
+        cell.className = 'session-card-set-cell session-card-set-cell--pencil session-card-set-cell--pencil-empty';
+        cell.setAttribute('aria-hidden', 'true');
         return cell;
     }
 
@@ -293,7 +312,7 @@
             if (sets.length) {
                 sets.forEach((set, index) => {
                     const line = document.createElement('div');
-                    line.className = 'session-card-sets-row';
+                    line.className = 'session-card-sets-row session-card-sets-row--session';
                     const pos = set?.pos ?? index + 1;
                     const openWithFocus = (field) => {
                         void A.openExecEdit({
@@ -314,6 +333,10 @@
                         className: 'session-card-set-cell--goal'
                     });
                     const medalsCell = createSetMedalsCell(meta?.medalsByPos?.get?.(pos) || []);
+                    const pencilCell =
+                        index === 0
+                            ? createSetEditCell({ exerciseId: exercise.exercise_id, exerciseName })
+                            : createSetEditPlaceholder();
                     line.append(
                         createSetCell({
                             label: formatSetIndex(pos),
@@ -341,15 +364,13 @@
                             onClick: stopAndOpen('rpe')
                         }),
                         goalCell,
-                        medalsCell
+                        medalsCell,
+                        pencilCell
                     );
                     setsWrapper.appendChild(line);
                 });
             }
             body.append(name, setsWrapper);
-
-            const pencil = listCard.createIcon('✏️');
-            end.appendChild(pencil);
 
             card.setAttribute('aria-label', exerciseName);
 

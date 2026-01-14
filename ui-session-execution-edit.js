@@ -98,7 +98,8 @@
             currentId,
             callerScreen = 'screenSessions',
             focusSetIndex = null,
-            focusField = null
+            focusField = null,
+            openMeta = false
         } = options;
         if (!currentId) {
             return;
@@ -147,6 +148,13 @@
         A.setTimerVisibility?.({ hidden: true });
         updateTimerUI();
         switchScreen('screenExecEdit');
+        if (openMeta) {
+            setTimeout(() => {
+                if (state.exerciseId === currentId) {
+                    openMoveEditorDialog();
+                }
+            }, 0);
+        }
     };
 
     /* UTILS */
@@ -274,14 +282,7 @@
         const { execEditMeta, dlgExecMoveEditor, execMoveEditorClose, execMoveEditorCancel, execMoveNote } =
             assertRefs();
         execEditMeta.addEventListener('click', () => {
-            const exercise = getExercise();
-            execMoveSnapshot = exercise ? { note: exercise.exercise_note || '' } : null;
-            if (execMoveSnapshot) {
-                execMoveNote.value = execMoveSnapshot.note;
-                refreshValueStates();
-            }
-            inlineKeyboard?.detach?.();
-            dlgExecMoveEditor?.showModal();
+            openMoveEditorDialog();
         });
         execMoveEditorClose.addEventListener('click', () => {
             dlgExecMoveEditor?.close();
@@ -306,6 +307,18 @@
             exercise.exercise_note = execMoveNote.value;
             void persistSession(false);
         });
+    }
+
+    function openMoveEditorDialog() {
+        const { dlgExecMoveEditor, execMoveNote } = assertRefs();
+        const exercise = getExercise();
+        execMoveSnapshot = exercise ? { note: exercise.exercise_note || '' } : null;
+        if (execMoveSnapshot) {
+            execMoveNote.value = execMoveSnapshot.note;
+            refreshValueStates();
+        }
+        inlineKeyboard?.detach?.();
+        dlgExecMoveEditor?.showModal();
     }
 
     function wireValueStates() {
