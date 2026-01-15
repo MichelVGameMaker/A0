@@ -279,6 +279,7 @@
 
         const key = A.ymd(A.activeDate);
         const session = await db.getSession(key);
+        updateSessionEditButtons(session);
         sessionList.innerHTML = '';
         if (!(session?.exercises?.length)) {
             sessionList.innerHTML = '<div class="empty">Aucun exercice pour cette date.</div>';
@@ -924,6 +925,7 @@
         }
         refs.btnAddExercises = document.getElementById('btnAddExercises');
         refs.btnAddRoutines = document.getElementById('btnAddRoutines');
+        refs.btnSessionEditFull = document.getElementById('btnSessionEditFull');
         refs.selectRoutine = document.getElementById('selectRoutine');
         refs.todayLabel = document.getElementById('todayLabel');
         refs.sessionList = document.getElementById('sessionList');
@@ -1008,6 +1010,7 @@
     function wireSessionEditor() {
         const {
             btnSessionEdit,
+            btnSessionEditFull,
             dlgSessionEditor,
             sessionEditorClose,
             sessionEditorCancel,
@@ -1015,11 +1018,15 @@
             sessionCreateRoutine,
             sessionDelete
         } = ensureRefs();
-        if (!btnSessionEdit || !dlgSessionEditor) {
+        if ((!btnSessionEdit && !btnSessionEditFull) || !dlgSessionEditor) {
             return;
         }
 
-        btnSessionEdit.addEventListener('click', () => {
+        btnSessionEdit?.addEventListener('click', () => {
+            void openSessionEditor();
+        });
+
+        btnSessionEditFull?.addEventListener('click', () => {
             void openSessionEditor();
         });
 
@@ -1129,6 +1136,21 @@
         await A.populateRoutineSelect();
         await A.renderWeek();
         await A.renderSession();
+    }
+
+    function updateSessionEditButtons(session) {
+        const { btnSessionEditFull } = ensureRefs();
+        if (!btnSessionEditFull) {
+            return;
+        }
+        const hasSets = hasSessionSets(session);
+        btnSessionEditFull.hidden = !hasSets;
+        btnSessionEditFull.setAttribute('aria-hidden', String(!hasSets));
+    }
+
+    function hasSessionSets(session) {
+        const exercises = Array.isArray(session?.exercises) ? session.exercises : [];
+        return exercises.some((exercise) => Array.isArray(exercise?.sets) && exercise.sets.length > 0);
     }
 
     async function openSessionEditor() {
