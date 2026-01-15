@@ -276,6 +276,10 @@ header{
     border-bottom: 2px solid var(--panelBord);
 }
 
+.header--borderless{
+    border-bottom: none;
+}
+
 .header--session{
     --header-side-w: 0px;
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 2fr);

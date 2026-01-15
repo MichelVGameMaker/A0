@@ -299,11 +299,8 @@
         refs.screenPlanning = document.getElementById('screenPlanning');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
-        refs.tabSessions = document.getElementById('tabSessions');
         refs.planningDaysList = document.getElementById('planningDaysList');
-        refs.btnPlanningBack = document.getElementById('btnPlanningBack');
         refs.btnPlanningEditDays = document.getElementById('btnPlanningEditDays');
-        refs.btnPlanningSettings = document.getElementById('btnPlanningSettings');
         refs.dlgPlanningDuration = document.getElementById('dlgPlanningDuration');
         refs.planningDurationTags = document.getElementById('planningDurationTags');
         refs.planningStartDay = document.getElementById('planningStartDay');
@@ -315,24 +312,13 @@
 
     function wireButtons() {
         const {
-            btnPlanningBack,
             btnPlanningEditDays,
-            btnPlanningSettings,
             planningStartDay,
             planningDurationCancel,
             planningDurationSave
         } = ensureRefs();
-        btnPlanningBack?.addEventListener('click', async () => {
-            highlightSessionsTab();
-            switchScreen('screenSessions');
-            await A.renderWeek?.();
-            await A.renderSession?.();
-        });
         btnPlanningEditDays?.addEventListener('click', () => {
             void handleEditDayCount();
-        });
-        btnPlanningSettings?.addEventListener('click', () => {
-            A.openSettings?.();
         });
         planningStartDay?.addEventListener('change', (event) => {
             const value = event.target?.value;
@@ -350,11 +336,6 @@
     function highlightPlanningTab() {
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
         refs.tabPlanning?.classList.add('active');
-    }
-
-    function highlightSessionsTab() {
-        document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
-        refs.tabSessions?.classList.add('active');
     }
 
     function switchScreen(target) {
