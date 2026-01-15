@@ -85,6 +85,9 @@
   --header-total-h: calc(var(--header-h) + 2px + env(safe-area-inset-top, 0)); /* 2px = border-bottom du header/subheader */
   --inline-keyboard-h: calc(232px + env(safe-area-inset-bottom, 0));
   --timer-bar-h: 0px;
+  --z-dialog: 40;
+  --z-timer-dialog: 20;
+  --z-tab-session: 30;
 }
 
 
@@ -173,7 +176,6 @@ body{
    2) Tab bar (bas)
    ========================================================= */
 .tabbar{
-    z-index:10;
     position: fixed; bottom:0; left:0; right:0; 
     height: var(--tabbar-h);
     align-items:center;
@@ -216,6 +218,10 @@ body{
     background-color: var(--emphase);
     width:      var(--tab-size-active);
     transform: scale(1.1);
+}
+.tab--session-timer{
+    position: relative;
+    z-index: var(--z-tab-session);
 }
 
 #tabSessions.tab--session-timer{
@@ -347,6 +353,7 @@ header .header-left .btn{
     top: env(safe-area-inset-top, 0);
     left:50%;
     transform: translateX(-50%);
+    z-index: var(--z-dialog);
 }
 
 .modal-header{
@@ -387,6 +394,7 @@ header .header-left .btn{
 #dlgExecTimer.modal-centered{
     height: 90vh;
     max-height: 90vh;
+    z-index: var(--z-timer-dialog);
 }
 .modal::backdrop{ 
     background: rgba(0,0,0,.25); 
@@ -439,7 +447,7 @@ header .header-left .btn{
    ========================================================= */
 /* Timer bas */
 .exec-timer{
-    z-index:20;
+    z-index: var(--z-timer-dialog);
     position:fixed;
     left:0;
     right:0;

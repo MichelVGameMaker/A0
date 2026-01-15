@@ -60,7 +60,8 @@
             const isActive = tabSessions.classList.contains('active');
             const isOnSessions = screenSessions && !screenSessions.hidden;
             if (isActive && isOnSessions) {
-                A.setTimerVisibility?.({ hidden: false });
+                const isHidden = A.isTimerHidden?.();
+                A.setTimerVisibility?.({ hidden: isHidden === false });
                 return;
             }
             A.setTimerVisibility?.({ hidden: true });

@@ -1756,7 +1756,7 @@
             if (shouldHide && execTimerDialog.open) {
                 execTimerDialog.close();
             } else if (!shouldHide && !execTimerDialog.open) {
-                execTimerDialog.showModal();
+                execTimerDialog.show();
             }
         }
         updateSessionTabDisplay(timer);
