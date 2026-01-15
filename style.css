@@ -310,6 +310,9 @@ header{
 .header--session .header-right{
     justify-content: center;
 }
+.header--session .header-right{
+    gap: 8px;
+}
 .header--session .header-date-btn{
     width: 100%;
     justify-content: center;

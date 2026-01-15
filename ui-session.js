@@ -929,6 +929,7 @@
         refs.sessionList = document.getElementById('sessionList');
         refs.btnSessionPrev = document.getElementById('btnSessionPrev');
         refs.btnSessionNext = document.getElementById('btnSessionNext');
+        refs.btnSessionSettings = document.getElementById('btnSessionSettings');
         refs.btnSessionEdit = document.getElementById('btnSessionEdit');
         refs.dlgSessionEditor = document.getElementById('dlgSessionEditor');
         refs.sessionEditorTitle = document.getElementById('sessionEditorTitle');
@@ -980,7 +981,7 @@
     }
 
     function wireSessionNavigation() {
-        const { btnSessionPrev, btnSessionNext } = refs;
+        const { btnSessionPrev, btnSessionNext, btnSessionSettings } = refs;
         if (btnSessionPrev) {
             btnSessionPrev.addEventListener('click', () => {
                 const target = btnSessionPrev.dataset.targetDate;
@@ -995,6 +996,11 @@
                 if (target) {
                     void goToSessionDate(target);
                 }
+            });
+        }
+        if (btnSessionSettings) {
+            btnSessionSettings.addEventListener('click', () => {
+                A.openSettings?.();
             });
         }
     }
