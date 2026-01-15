@@ -38,7 +38,7 @@
 <section id="screenSessions" class="screen">
     
     <!-- En-tête -->
-    <header class="header header--session">
+    <header class="header header--session header--borderless">
         <div class="header-left">
             <button id="btnSessionPrev" class="btn ghost header-nav-btn" type="button" aria-label="Séance précédente">◀︎</button>
         </div>
@@ -439,7 +439,7 @@
 <!-- ========== Statistiques : liste ========== -->
 <section id="screenStatExercises" class="screen" hidden>
 
-    <header class="header">
+    <header class="header header--borderless">
         <div class="header-left"></div>
         <div class="header-center">
             <div class="stats-toggle" role="tablist" aria-label="Statistiques">
@@ -464,7 +464,7 @@
 <!-- ========== Statistiques : volume muscles ========== -->
 <section id="screenStatMuscles" class="screen" hidden>
 
-    <header class="header">
+    <header class="header header--borderless">
         <div class="header-left"></div>
         <div class="header-center">
             <div class="stats-toggle" role="tablist" aria-label="Statistiques">
@@ -502,7 +502,7 @@
 <!-- ========== Statistiques : volume par muscle ========== -->
 <section id="screenStatMusclesDetail" class="screen" hidden>
 
-    <header class="header">
+    <header class="header header--borderless">
         <div class="header-left">
             <button id="btnVolumeMuscleBack" class="btn" title="Retour">◀︎</button>
         </div>
@@ -574,10 +574,8 @@
 <!-- ========== Réglages > Planning ========== -->
 <section id="screenPlanning" class="screen" hidden>
 
-    <header class="header">
-        <div class="header-left">
-            <button id="btnPlanningBack" class="btn" title="Retour">◀︎</button>
-        </div>
+    <header class="header header--borderless">
+        <div class="header-left"></div>
         <div class="header-center">
             <div class="stats-toggle" role="tablist" aria-label="Type de planning">
                 <button class="stats-toggle-btn is-active" type="button" aria-pressed="true">Cycle</button>
@@ -585,9 +583,7 @@
                 <button class="stats-toggle-btn" type="button" aria-pressed="false">Macro</button>
             </div>
         </div>
-        <div class="header-right">
-            <button id="btnPlanningSettings" class="btn" title="Réglages" aria-label="Réglages" style="color: var(--emphase);">⚙︎</button>
-        </div>
+        <div class="header-right"></div>
     </header>
 
     <main class="content">
