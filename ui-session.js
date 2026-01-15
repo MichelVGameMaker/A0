@@ -21,6 +21,7 @@
         assertRefs();
         wireAddExercisesButton();
         wireAddRoutinesButton();
+        wireSessionNavigation();
         wireSessionEditor();
     });
 
@@ -274,6 +275,7 @@
         const { todayLabel, sessionList } = assertRefs();
         todayLabel.textContent = A.fmtUI(A.activeDate);
         A.updateSessionTabDisplay?.();
+        await updateSessionNavigation();
 
         const key = A.ymd(A.activeDate);
         const session = await db.getSession(key);
@@ -922,6 +924,8 @@
         refs.selectRoutine = document.getElementById('selectRoutine');
         refs.todayLabel = document.getElementById('todayLabel');
         refs.sessionList = document.getElementById('sessionList');
+        refs.btnSessionPrev = document.getElementById('btnSessionPrev');
+        refs.btnSessionNext = document.getElementById('btnSessionNext');
         refs.btnSessionEdit = document.getElementById('btnSessionEdit');
         refs.dlgSessionEditor = document.getElementById('dlgSessionEditor');
         refs.sessionEditorTitle = document.getElementById('sessionEditorTitle');
@@ -970,6 +974,26 @@
                 }
             });
         });
+    }
+
+    function wireSessionNavigation() {
+        const { btnSessionPrev, btnSessionNext } = refs;
+        if (btnSessionPrev) {
+            btnSessionPrev.addEventListener('click', () => {
+                const target = btnSessionPrev.dataset.targetDate;
+                if (target) {
+                    void goToSessionDate(target);
+                }
+            });
+        }
+        if (btnSessionNext) {
+            btnSessionNext.addEventListener('click', () => {
+                const target = btnSessionNext.dataset.targetDate;
+                if (target) {
+                    void goToSessionDate(target);
+                }
+            });
+        }
     }
 
     function wireSessionEditor() {
@@ -1027,6 +1051,75 @@
         sessionDelete?.addEventListener('click', () => {
             void deleteSessionFromEditor();
         });
+    }
+
+    async function updateSessionNavigation() {
+        const { btnSessionPrev, btnSessionNext } = ensureRefs();
+        if (!btnSessionPrev && !btnSessionNext) {
+            return;
+        }
+        const dates = await getSessionActivityDates();
+        const dateKey = A.ymd(A.activeDate);
+        const previous = getPreviousDate(dates, dateKey);
+        const next = getNextDate(dates, dateKey);
+
+        setNavButtonState(btnSessionPrev, previous);
+        setNavButtonState(btnSessionNext, next);
+    }
+
+    async function getSessionActivityDates() {
+        const sessions = typeof db.listSessionDatesWithActivity === 'function'
+            ? await db.listSessionDatesWithActivity()
+            : await db.listSessionDates();
+        return sessions
+            .map((entry) => entry.date)
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b));
+    }
+
+    function getPreviousDate(dates, currentKey) {
+        if (!Array.isArray(dates) || !currentKey) {
+            return null;
+        }
+        const earlier = dates.filter((date) => date < currentKey);
+        return earlier.length ? earlier[earlier.length - 1] : null;
+    }
+
+    function getNextDate(dates, currentKey) {
+        if (!Array.isArray(dates) || !currentKey) {
+            return null;
+        }
+        return dates.find((date) => date > currentKey) || null;
+    }
+
+    function setNavButtonState(button, targetDate) {
+        if (!button) {
+            return;
+        }
+        if (targetDate) {
+            button.disabled = false;
+            button.dataset.targetDate = targetDate;
+            button.setAttribute('aria-disabled', 'false');
+        } else {
+            button.disabled = true;
+            delete button.dataset.targetDate;
+            button.setAttribute('aria-disabled', 'true');
+        }
+    }
+
+    async function goToSessionDate(dateKey) {
+        if (!dateKey) {
+            return;
+        }
+        const targetDate = new Date(`${dateKey}T00:00:00`);
+        if (Number.isNaN(targetDate.getTime())) {
+            return;
+        }
+        A.activeDate = new Date(targetDate.toDateString());
+        A.currentAnchor = A.startOfWeek(A.activeDate);
+        await A.populateRoutineSelect();
+        await A.renderWeek();
+        await A.renderSession();
     }
 
     async function openSessionEditor() {

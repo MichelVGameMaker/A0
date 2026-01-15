@@ -133,6 +133,18 @@ const db = (() => {
     }
 
     /**
+     * Liste les dates disposant d'une séance avec des séries prévues ou faites.
+     * @returns {Promise<Array<{date: string}>>} Dates recensées.
+     */
+    async function listSessionDatesWithActivity() {
+        const all = await getAll('sessions');
+        return all
+            .filter((session) => hasPlannedOrDoneSet(session))
+            .map((session) => ({ date: normalizeDateKey(session?.id || session?.date) }))
+            .filter((entry) => entry.date);
+    }
+
+    /**
      * Retourne le plan actif.
      * @returns {Promise<object|null>} Plan actif ou `null`.
      */
@@ -762,6 +774,16 @@ const db = (() => {
         });
     }
 
+    function hasPlannedOrDoneSet(session) {
+        if (!session || !Array.isArray(session.exercises)) {
+            return false;
+        }
+        return session.exercises.some((exercise) => {
+            const sets = Array.isArray(exercise?.sets) ? exercise.sets : [];
+            return sets.some((set) => set && (set.done === true || set.done === false));
+        });
+    }
+
     function ensureSession(session) {
         if (!session || typeof session !== 'object') {
             return session;
@@ -940,6 +962,7 @@ const db = (() => {
         getSession,
         saveSession,
         listSessionDates,
+        listSessionDatesWithActivity,
         getActivePlan,
         importExternalExercisesIfNeeded,
         reset
