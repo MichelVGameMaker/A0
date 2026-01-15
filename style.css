@@ -470,6 +470,7 @@ header .header-left .btn{
 .tmr-display-wrap{
     display:flex;
     justify-content:center;
+	ontainer-type: inline-size; 
 }
 .tmr-actions{
     display:flex;
@@ -477,19 +478,20 @@ header .header-left .btn{
     gap:12px;
 }
 .tmr-display{
-    display:flex;
+    display:inline-flex;
     align-items:center;
     justify-content:center;
 	text-align: center;
-    font-variant-numeric: tabular-nums;
 	
-    /*--tmr-display-size: clamp(160px, 45vw, 260px);
-	width:  var(--tmr-display-size);
-    height: var(--tmr-display-size);*/
-
-  white-space: nowrap;                            /* pas de wrap */
-  min-width: 6ch;
-  display: inline-block;
+    font-variant-numeric: tabular-nums lining-nums;
+	font-feature-settings: "tnum" 1, "lnum" 1;
+	font-size: clamp(64px, 28cqw, 220px);
+    white-space: nowrap;
+    line-height:1;
+	
+    box-sizing:border-box;
+	width: min(80cqw, 320px);
+	height: min(80cqw, 320px);
 
     /*font-weight: var(--fw-strong);
     font-size: clamp(6.8rem, 28vw, 14rem);*/
