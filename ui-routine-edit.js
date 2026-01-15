@@ -448,7 +448,7 @@
     }
 
     function renderMoveCard(move) {
-        const structure = listCard.createStructure();
+        const structure = listCard.createStructure({ endClass: 'exercise-card-end--top' });
         const { card, start, body, end } = structure;
         card.dataset.moveId = move.id;
 
@@ -459,7 +459,7 @@
         start.insertBefore(handle, body);
 
         const name = document.createElement('div');
-        name.className = 'element';
+        name.className = 'element exercise-card-name';
         name.textContent = move.exerciseName || 'Exercice';
         const setsWrapper = document.createElement('div');
         setsWrapper.className = 'session-card-sets';
@@ -469,7 +469,7 @@
         if (sets.length) {
             sets.forEach((set, index) => {
                 const line = document.createElement('div');
-                line.className = 'session-card-sets-row';
+                line.className = 'session-card-sets-row session-card-sets-row--planned';
                 const pos = set?.pos ?? index + 1;
                 const openWithFocus = (field) => {
                     void A.openRoutineMoveEdit({
@@ -525,12 +525,29 @@
         setsWrapper.appendChild(addSetButton);
         body.append(name, setsWrapper);
 
-        const pencil = listCard.createIcon('✏️');
-        end.appendChild(pencil);
+        end.appendChild(createExerciseMenuButton(move));
 
         card.setAttribute('aria-label', move.exerciseName || 'Exercice');
         makeRoutineCardInteractive(card, handle);
         return card;
+    }
+
+    function createExerciseMenuButton(move) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'exercise-card-menu-button';
+        button.textContent = '...';
+        const labelName = move.exerciseName || 'Exercice';
+        button.setAttribute('aria-label', `Éditer l'exercice ${labelName}`);
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            void A.openRoutineMoveEdit({
+                routineId: state.routineId,
+                moveId: move.id,
+                callerScreen: 'screenRoutineEdit'
+            });
+        });
+        return button;
     }
 
     async function addSetToMove(moveId) {
