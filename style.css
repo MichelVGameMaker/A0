@@ -470,7 +470,7 @@ header .header-left .btn{
 .tmr-display-wrap{
     display:flex;
     justify-content:center;
-	ontainer-type: inline-size; 
+	container-type: inline-size; 
 }
 .tmr-actions{
     display:flex;
@@ -490,9 +490,10 @@ header .header-left .btn{
     line-height:1;
 	
     box-sizing:border-box;
-	width: min(80cqw, 320px);
-	height: min(80cqw, 320px);
-
+	width: min(86cqw, 320px);
+	max-width: 100%;
+    aspect-ratio: 1 / 1;
+	  
     /*font-weight: var(--fw-strong);
     font-size: clamp(6.8rem, 28vw, 14rem);*/
     border: 1px solid var(--emphase);
