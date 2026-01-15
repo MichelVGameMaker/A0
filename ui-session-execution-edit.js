@@ -14,6 +14,8 @@
         metaMode: 'history',
         pendingFocus: null
     };
+    let medalPopover = null;
+    let medalPopoverCleanup = null;
     const medalIconMap = {
         progress: {
             icon: 'icons/badge_progress.svg',
@@ -426,10 +428,14 @@
 
     async function renderSets() {
         const exercise = getExercise();
-        const { execSets, execMetaHeader } = assertRefs();
+        const { execSets, execMetaHeader, execSetsLayout } = assertRefs();
         ensureInlineEditor()?.close();
+        clearMedalPopover();
         inlineKeyboard?.detach?.();
         execSets.innerHTML = '';
+        if (execSetsLayout) {
+            execSetsLayout.dataset.metaMode = state.metaMode;
+        }
         if (!exercise) {
             if (execMetaHeader) {
                 execMetaHeader.textContent = getMetaHeaderLabel();
@@ -518,6 +524,57 @@
         return getMetaModeLabel(state.metaMode);
     }
 
+    function clearMedalPopover() {
+        if (medalPopover) {
+            medalPopover.remove();
+            medalPopover = null;
+        }
+        if (medalPopoverCleanup) {
+            medalPopoverCleanup();
+            medalPopoverCleanup = null;
+        }
+    }
+
+    function showMedalPopover(target, label) {
+        if (!target || !label) {
+            return;
+        }
+        clearMedalPopover();
+        const popover = document.createElement('div');
+        popover.className = 'exec-medal-popover';
+        popover.textContent = label;
+        document.body.appendChild(popover);
+        const rect = target.getBoundingClientRect();
+        const popRect = popover.getBoundingClientRect();
+        const padding = 8;
+        let left = rect.left + rect.width / 2 - popRect.width / 2;
+        left = Math.max(padding, Math.min(left, window.innerWidth - popRect.width - padding));
+        let top = rect.top - popRect.height - padding;
+        if (top < padding) {
+            top = rect.bottom + padding;
+        }
+        popover.style.left = `${left}px`;
+        popover.style.top = `${top}px`;
+        medalPopover = popover;
+        const handleClose = (event) => {
+            if (popover.contains(event.target) || target.contains(event.target)) {
+                return;
+            }
+            clearMedalPopover();
+        };
+        const cleanup = () => {
+            document.removeEventListener('click', handleClose);
+            window.removeEventListener('scroll', handleClose, true);
+            window.removeEventListener('resize', handleClose);
+        };
+        medalPopoverCleanup = cleanup;
+        window.setTimeout(() => {
+            document.addEventListener('click', handleClose);
+            window.addEventListener('scroll', handleClose, true);
+            window.addEventListener('resize', handleClose);
+        }, 0);
+    }
+
     function buildMetaCell(set, index, meta) {
         const cell = document.createElement('div');
         cell.className = 'exec-meta-cell';
@@ -543,14 +600,19 @@
             if (!medalConfig) {
                 return;
             }
-            const badge = document.createElement('span');
-            badge.className = `exec-medal ${medalConfig.className}`;
-            badge.title = medalConfig.label;
+            const badge = document.createElement('button');
+            badge.type = 'button';
+            badge.className = `exec-medal exec-medal-button ${medalConfig.className}`;
+            badge.setAttribute('aria-label', medalConfig.label);
             const icon = document.createElement('img');
             icon.src = medalConfig.icon;
             icon.alt = medalConfig.label;
             icon.className = 'exec-medal-icon';
             badge.appendChild(icon);
+            badge.addEventListener('click', (event) => {
+                event.stopPropagation();
+                showMedalPopover(badge, medalConfig.label);
+            });
             list.appendChild(badge);
         });
         cell.appendChild(list);

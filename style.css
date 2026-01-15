@@ -1385,10 +1385,13 @@ textarea:focus{
   text-align:center; align-items:center;
 }
 .exec-grid.routine-set-grid{
-  grid-template-columns: minmax(2.1ch, 0.4fr) 1.2fr 1.2fr 1fr 1fr; /* # | Reps | Poids | RPE | Repos */
+  grid-template-columns: minmax(2.1ch, 0.4fr) 1.2fr 1.2fr 1.4fr 1fr; /* # | Reps | Poids | RPE | Repos */
 }
 .exec-grid.routine-set-grid.routine-set-grid--with-meta{
-  grid-template-columns: minmax(2.1ch, 0.4fr) 1.2fr 1.2fr 1fr 1fr 1.8fr; /* # | Reps | Poids | RPE | Repos | Infos */
+  grid-template-columns: minmax(2.1ch, 0.4fr) 1.2fr 1.2fr 1.4fr 1fr 1.8fr; /* # | Reps | Poids | RPE | Repos | Infos */
+}
+.exec-sets-layout[data-meta-mode="medals"] .routine-set-grid--with-meta{
+  grid-template-columns: minmax(2.1ch, 0.4fr) 1.2fr 1.2fr 1.4fr 1fr 48px; /* # | Reps | Poids | RPE | Repos | Médailles */
 }
 .routine-set-grid > *{ min-width:0; }
 .exec-head{ font-weight: var(--fw-strong); }
@@ -1404,6 +1407,9 @@ textarea:focus{
   height: var(--control-h); width:100%;
   text-align:center; margin:0; padding:0;
 }
+.exec-row{
+  align-items: stretch;
+}
 
 .exec-row .exec-reps-cell{
   border-top-right-radius: 0;
@@ -1412,6 +1418,8 @@ textarea:focus{
 
 .exec-row .exec-reps-cell{
   grid-column: 2;
+  align-self: stretch;
+  height: 100%;
 }
 
 .exec-row .exec-weight-cell{
@@ -1421,10 +1429,14 @@ textarea:focus{
 
 .exec-row .exec-weight-cell{
   grid-column: 3;
+  align-self: stretch;
+  height: 100%;
 }
 
 .exec-row .exec-rpe-cell{
   grid-column: 4;
+  align-self: stretch;
+  height: 100%;
 }
 
 .exec-row .exec-rest-cell{
@@ -1442,6 +1454,7 @@ textarea:focus{
   justify-content: center;
   gap: 6px;
   min-height: var(--control-h);
+  text-align: center;
 }
 
 .exec-meta-medals{
@@ -1449,15 +1462,23 @@ textarea:focus{
   gap: 2px;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 .exec-medal{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40x;
+  width: 40px;
   height: 40px;
   color: inherit;
+}
+.exec-medal-button{
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .exec-medal-icon{
@@ -1475,6 +1496,7 @@ textarea:focus{
   align-items: center;
   justify-content: center;
   font-size: 10px;
+  text-align: center;
 }
 
 
@@ -1549,6 +1571,7 @@ textarea:focus{
 
 .exec-set-planned{
   color: var(--panelBord);
+  opacity: 0.8;
 }
 
 .exec-set-planned .set-edit-button{
@@ -1574,6 +1597,20 @@ textarea:focus{
   display: flex;
   flex-direction: column;
   gap: var(--gap);
+}
+
+.exec-medal-popover{
+  position: fixed;
+  z-index: calc(var(--z-dialog) + 1);
+  padding: 6px 10px;
+  background: var(--panelBack);
+  border: 1px solid var(--panelBord);
+  border-radius: 999px;
+  font-size: var(--fs-small);
+  color: var(--black);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .exec-sets-column{
