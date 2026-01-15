@@ -493,9 +493,10 @@ header .header-left .btn{
 
     /*font-weight: var(--fw-strong);
     font-size: clamp(6.8rem, 28vw, 14rem);*/
-
-    border-color: var(--emphase);
+    border: 1px solid var(--emphase);
     border-radius: 999px;
+	cursor: pointer;
+    touch-action: manipulation;       /* coupe le geste double-tap=zoom */
 }
 .tmr-display--warning{ color: var(--alert); }
 .tmr-display--negative{ color: var(--red); }
