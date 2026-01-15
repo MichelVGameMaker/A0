@@ -339,6 +339,8 @@ header .stats-toggle{
     gap: 6px;
     width: 100%;
     max-width: min(260px, calc(100vw - (var(--header-side-w) * 2) - (var(--pad-x) * 2)));
+    height: 100%;
+    align-items: stretch;
 }
 header .stats-toggle-btn{
     flex:1;
@@ -349,6 +351,10 @@ header .stats-toggle-btn{
     background: var(--clickableBack);
     color: var(--black);
     font-weight: var(--fw-strong);
+}
+header .stats-toggle-btn{
+    height: 100%;
+    min-height: 0;
 }
 header .stats-toggle-btn.is-active{
     color: var(--emphase);
@@ -739,7 +745,6 @@ textarea:focus{
    7 bis) Planning (sous-onglets)
    ========================================================= */
 .planning-tabs{
-    --tag-columns: 3;
     position: sticky;
     top: 0;
     z-index: 2;
