@@ -334,6 +334,25 @@ header .subtitle{
     margin-top: 2px;
     text-align: center;
 }
+header .stats-toggle{
+    display:flex;
+    gap: 6px;
+    width: 100%;
+    max-width: min(260px, calc(100vw - (var(--header-side-w) * 2) - (var(--pad-x) * 2)));
+}
+header .stats-toggle-btn{
+    flex:1;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--clickableBord);
+    background: var(--clickableBack);
+    color: var(--black);
+    font-weight: var(--fw-strong);
+}
+header .stats-toggle-btn.is-active{
+    color: var(--emphase);
+}
 header #exReadTitle{
     white-space: normal;
     display: -webkit-box;

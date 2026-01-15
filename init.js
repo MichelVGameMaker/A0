@@ -74,7 +74,7 @@
         tabStats?.addEventListener('click', async () => {
             A.setTimerVisibility?.({ hidden: true });
             setActiveTab('tabStats');
-            await A.openVolume?.();
+            await A.openStatsSection?.();
         });
 
         tabPlanning?.addEventListener('click', async () => {

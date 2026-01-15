@@ -40,6 +40,7 @@
     A.openVolume = function openVolume() {
         ensureRefs();
         highlightStatsTab();
+        A.setStatsSection?.('volume');
         A.renderVolumeScreen?.();
         switchScreen('screenStatMuscles');
     };
