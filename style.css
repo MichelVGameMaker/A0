@@ -895,6 +895,20 @@ textarea:focus{
   -webkit-line-clamp:2;
   white-space:normal;
 }
+.exercise-card--full-sets .list-card__row{
+  position: relative;
+}
+.exercise-card--full-sets .list-card__start{
+  width: 100%;
+}
+.exercise-card--full-sets .list-card__end{
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.exercise-card--full-sets .exercise-card-name{
+  padding-right: 32px;
+}
 .list-card__handle{
   border:none;
   background:none;

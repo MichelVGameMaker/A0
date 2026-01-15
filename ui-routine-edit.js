@@ -448,7 +448,10 @@
     }
 
     function renderMoveCard(move) {
-        const structure = listCard.createStructure({ endClass: 'exercise-card-end--top' });
+        const structure = listCard.createStructure({
+            endClass: 'exercise-card-end--top',
+            cardClass: 'exercise-card--full-sets'
+        });
         const { card, start, body, end } = structure;
         card.dataset.moveId = move.id;
 
