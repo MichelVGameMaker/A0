@@ -155,13 +155,11 @@
         const cell = document.createElement('div');
         cell.className = 'session-card-set-cell session-card-set-cell--medals';
         if (!Array.isArray(medals) || medals.length === 0) {
-            cell.textContent = '—';
             return cell;
         }
         const iconMap = getMedalIconMap();
         const medalKey = medals.find((key) => iconMap[key]);
         if (!medalKey) {
-            cell.textContent = '—';
             return cell;
         }
         const medalConfig = iconMap[medalKey];
@@ -177,14 +175,13 @@
         return cell;
     }
 
-    function createSetEditCell({ exerciseId, exerciseName }) {
+    function createExerciseMenuButton({ exerciseId, exerciseName }) {
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'session-card-set-cell session-card-set-cell--pencil';
+        button.className = 'exercise-card-menu-button';
+        button.textContent = '...';
         const labelName = exerciseName || 'Exercice';
         button.setAttribute('aria-label', `Éditer l'exercice ${labelName}`);
-        const icon = listCard.createIcon('✏️');
-        button.appendChild(icon);
         button.addEventListener('click', (event) => {
             event.stopPropagation();
             void A.openExecEdit({
@@ -194,13 +191,6 @@
             });
         });
         return button;
-    }
-
-    function createSetEditPlaceholder() {
-        const cell = document.createElement('div');
-        cell.className = 'session-card-set-cell session-card-set-cell--pencil session-card-set-cell--pencil-empty';
-        cell.setAttribute('aria-hidden', 'true');
-        return cell;
     }
 
     /* ACTIONS */
@@ -294,7 +284,7 @@
         }
 
         for (const exercise of session.exercises) {
-            const structure = listCard.createStructure();
+            const structure = listCard.createStructure({ endClass: 'exercise-card-end--top' });
             const { card, start, body, end } = structure;
             card.dataset.exerciseId = exercise.exercise_id;
 
@@ -307,7 +297,7 @@
             const exerciseName = exercise.exercise_name || 'Exercice';
 
             const name = document.createElement('div');
-            name.className = 'element';
+            name.className = 'element exercise-card-name';
             name.textContent = exerciseName;
             const setsWrapper = document.createElement('div');
             setsWrapper.className = 'session-card-sets';
@@ -321,6 +311,15 @@
                 sets.forEach((set, index) => {
                     const line = document.createElement('div');
                     line.className = 'session-card-sets-row session-card-sets-row--session';
+                    const isPlanned = set?.done !== true;
+                    if (isPlanned) {
+                        line.classList.add('session-card-sets-row--planned');
+                    } else {
+                        const rowRpe = getRpeDatasetValue(set?.rpe);
+                        if (rowRpe) {
+                            line.dataset.rpe = rowRpe;
+                        }
+                    }
                     const pos = set?.pos ?? index + 1;
                     const openWithFocus = (field) => {
                         void A.openExecEdit({
@@ -341,10 +340,6 @@
                         className: 'session-card-set-cell--goal'
                     });
                     const medalsCell = createSetMedalsCell(meta?.medalsByPos?.get?.(pos) || []);
-                    const pencilCell =
-                        index === 0
-                            ? createSetEditCell({ exerciseId: exercise.exercise_id, exerciseName })
-                            : createSetEditPlaceholder();
                     line.append(
                         createSetCell({
                             label: formatSetIndex(pos),
@@ -372,8 +367,7 @@
                             onClick: stopAndOpen('rpe')
                         }),
                         goalCell,
-                        medalsCell,
-                        pencilCell
+                        medalsCell
                     );
                     setsWrapper.appendChild(line);
                 });
@@ -388,6 +382,7 @@
             });
             setsWrapper.appendChild(addSetButton);
             body.append(name, setsWrapper);
+            end.appendChild(createExerciseMenuButton({ exerciseId: exercise.exercise_id, exerciseName }));
 
             card.setAttribute('aria-label', exerciseName);
 
