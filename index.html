@@ -579,7 +579,11 @@
             <button id="btnPlanningBack" class="btn" title="Retour">◀︎</button>
         </div>
         <div class="header-center">
-            <div class="title">Planning</div>
+            <div class="stats-toggle" role="tablist" aria-label="Type de planning">
+                <button class="stats-toggle-btn is-active" type="button" aria-pressed="true">Cycle</button>
+                <button class="stats-toggle-btn" type="button" aria-pressed="false">Méso</button>
+                <button class="stats-toggle-btn" type="button" aria-pressed="false">Macro</button>
+            </div>
         </div>
         <div class="header-right">
             <button id="btnPlanningSettings" class="btn" title="Réglages" aria-label="Réglages" style="color: var(--emphase);">⚙︎</button>
@@ -587,11 +591,6 @@
     </header>
 
     <main class="content">
-        <div class="planning-tabs stats-toggle" role="tablist" aria-label="Type de planning">
-            <button class="stats-toggle-btn is-active" type="button" aria-pressed="true">Cycle</button>
-            <button class="stats-toggle-btn" type="button" aria-pressed="false">Méso</button>
-            <button class="stats-toggle-btn" type="button" aria-pressed="false">Macro</button>
-        </div>
         <div class="bloque">
             <div class="row">
                 <button id="btnPlanningEditDays" class="btn full" type="button">✎ Modifier la durée</button>
