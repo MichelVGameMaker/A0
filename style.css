@@ -299,6 +299,7 @@ header{
     flex-direction: column;
     align-items: center;
     min-width: 0;
+    height: 100%;
 }
 .header-session-edit{
     display:flex;
@@ -338,23 +339,23 @@ header .stats-toggle{
     display:flex;
     gap: 6px;
     width: 100%;
-    max-width: min(260px, calc(100vw - (var(--header-side-w) * 2) - (var(--pad-x) * 2)));
     height: 100%;
     align-items: stretch;
+    align-self: stretch;
 }
 header .stats-toggle-btn{
     flex:1;
-    min-height: 32px;
+    height: 100%;
+    min-height: 0;
     padding: 0 12px;
     border-radius: 999px;
     border: 1px solid var(--clickableBord);
     background: var(--clickableBack);
     color: var(--black);
     font-weight: var(--fw-strong);
-}
-header .stats-toggle-btn{
-    height: 100%;
-    min-height: 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 header .stats-toggle-btn.is-active{
     color: var(--emphase);
