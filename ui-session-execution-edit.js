@@ -1762,6 +1762,7 @@
         updateSessionTabDisplay(timer);
         if (shouldHide) {
             timerDisplay.classList.remove('tmr-display--warning', 'tmr-display--negative');
+            timerDisplay.classList.remove('tmr-display--running');
             return;
         }
         const detailText = formatTimerAttachment(timer.attachment);
@@ -1774,6 +1775,7 @@
         const seconds = abs % 60;
         const isNegative = remaining <= 0;
         const isWarning = remaining > 0 && remaining <= 10;
+        timerDisplay.classList.toggle('tmr-display--running', timer.running);
         timerDisplay.classList.toggle('tmr-display--warning', isWarning);
         timerDisplay.classList.toggle('tmr-display--negative', isNegative);
         timerDisplay.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
