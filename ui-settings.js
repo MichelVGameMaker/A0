@@ -1018,7 +1018,7 @@
             throwFitHeroValueError(context?.exerciseName, context?.field || 'muscle', value);
         }
         const raw = String(value).trim().toLowerCase();
-        const normalized = raw === 'core' ? 'abs' : raw;
+        const normalized = raw === 'core' ? 'abs' : raw === 'back' ? 'upper back' : raw;
         if (!CFG?.muscleTranscode?.[normalized]) {
             throwFitHeroValueError(context?.exerciseName, context?.field || 'muscle', value);
         }
