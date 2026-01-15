@@ -477,17 +477,24 @@ header .header-left .btn{
     gap:12px;
 }
 .tmr-display{
-    font-weight: var(--fw-strong);
-    --tmr-display-size: clamp(160px, 45vw, 260px);
     display:flex;
     align-items:center;
     justify-content:center;
-    width: var(--tmr-display-size);
-    height: var(--tmr-display-size);
-    text-align:center;
-    font-size: clamp(6.8rem, 28vw, 14rem);
-    line-height:1;
+	text-align: center;
     font-variant-numeric: tabular-nums;
+	
+    /*--tmr-display-size: clamp(160px, 45vw, 260px);
+	width:  var(--tmr-display-size);
+    height: var(--tmr-display-size);*/
+
+  white-space: nowrap;                            /* pas de wrap */
+  min-width: 6ch;
+  display: inline-block;
+
+    /*font-weight: var(--fw-strong);
+    font-size: clamp(6.8rem, 28vw, 14rem);*/
+
+    border-color: var(--emphase);
     border-radius: 999px;
 }
 .tmr-display--warning{ color: var(--alert); }
