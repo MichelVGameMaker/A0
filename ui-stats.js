@@ -19,6 +19,8 @@
     const goalDialog = {
         wired: false
     };
+    const STATS_SECTION_KEY = 'statsSection';
+    const DEFAULT_STATS_SECTION = 'volume';
 
     const METRIC_DEFINITIONS = [
         {
@@ -102,11 +104,13 @@
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
         wireEvents();
+        updateStatsToggle(getStatsSection());
     });
 
     /* ACTIONS */
     A.openStatsList = async function openStatsList() {
         ensureRefs();
+        setStatsSection('performance');
         highlightStatsTab();
         await loadData(true);
         state.activeExercise = null;
@@ -130,6 +134,23 @@
     A.invalidateStatsCache = function invalidateStatsCache() {
         state.exercises = [];
         state.usageByExercise.clear();
+    };
+
+    A.setStatsSection = function setStatsSectionPublic(section) {
+        return setStatsSection(section);
+    };
+
+    A.getStatsSection = function getStatsSectionPublic() {
+        return getStatsSection();
+    };
+
+    A.openStatsSection = async function openStatsSection(section) {
+        const target = normalizeStatsSection(section || getStatsSection());
+        if (target === 'performance') {
+            await A.openStatsList();
+            return;
+        }
+        await A.openVolume?.();
     };
 
     A.renderExerciseStatsEmbedded = async function renderExerciseStatsEmbedded(exerciseId) {
@@ -249,6 +270,14 @@
                 renderExerciseDetail();
             });
         }
+        document.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-stats-section]');
+            if (!button) {
+                return;
+            }
+            const nextSection = normalizeStatsSection(button.getAttribute('data-stats-section'));
+            void A.openStatsSection?.(nextSection);
+        });
         wireGoalDialogEvents();
     }
 
@@ -444,6 +473,30 @@
                 statsGoalOrmStartValue.dataset.userEdited = 'true';
             });
         }
+    }
+
+    function normalizeStatsSection(value) {
+        return value === 'performance' ? 'performance' : DEFAULT_STATS_SECTION;
+    }
+
+    function getStatsSection() {
+        return normalizeStatsSection(localStorage.getItem(STATS_SECTION_KEY));
+    }
+
+    function setStatsSection(section) {
+        const next = normalizeStatsSection(section);
+        localStorage.setItem(STATS_SECTION_KEY, next);
+        updateStatsToggle(next);
+        return next;
+    }
+
+    function updateStatsToggle(activeSection) {
+        const current = normalizeStatsSection(activeSection);
+        document.querySelectorAll('[data-stats-section]').forEach((button) => {
+            const isActive = button.getAttribute('data-stats-section') === current;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
     }
 
     function openGoalDialog() {
