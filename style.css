@@ -819,8 +819,6 @@ textarea:focus{
 
 /* CTA */
 .btn.primary{
-   border-radius: 50%;
-   font-size: var(--fs-big);
    background: transparent;
    border-color: var(--emphase);
    color: var(--emphase);
