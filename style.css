@@ -80,20 +80,26 @@
   --tab-gap:   5px;
   --tab-size-active: min(calc((100vw - 2 * var(--tab-gap)) / 3), 100px);
   --tab-size:  55px;
-
-
+  --big-h:     66px;
+  --med-h:     44px;
+  --small-h:   22px;
+	
   --header-total-h: calc(var(--header-h) + 2px + env(safe-area-inset-top, 0)); /* 2px = border-bottom du header/subheader */
   --inline-keyboard-h: calc(232px + env(safe-area-inset-bottom, 0));
   --timer-bar-h: 0px;
-  --z-dialog: 40;
-  --z-timer-dialog: 20;
-  --z-tab-session: 30;
+  --z-splash:        999;
+  --z-keyboard:      900;
+  --z-dialog:        40;
+  --z-tab-active:    30
+  --z-timer-dialog:  20;
+  --z-tab-bar:       10;
+  --z-header:        10;
 }
 
 
 /* Safe areas iOS */
 .safe-top    { padding-top: env(safe-area-inset-top, 0); }
-.safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 8px); }
+.safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0)); }
 
 
 /* =========================================================
@@ -129,7 +135,7 @@ body{
 .app-splash {
     position: fixed;
     inset: 0;
-    z-index: 9999;
+    z-index: var(--z-splash);
     display: grid;
     place-items: center;
     background: var(--emphase);
@@ -209,7 +215,8 @@ body{
       transform 160ms ease,
       background-color 180ms ease,
       box-shadow 180ms ease;
-
+	
+	z-index: var(--z-tab-bar);
     cursor:pointer;
     
 }
@@ -218,10 +225,10 @@ body{
     background-color: var(--emphase);
     width:      var(--tab-size-active);
     transform: scale(1.1);
+	z-index: var(--z-tab-active);
 }
 .tab--session-timer{
     position: relative;
-    z-index: var(--z-tab-session);
 }
 
 #tabSessions.tab--session-timer{
@@ -264,7 +271,7 @@ body{
    3) Header principal (haut)
    ========================================================= */
 header{
-    z-index:10;
+    z-index: var(-z-header);
     position: fixed; top: 0; left:0; right:0;
     height: calc(var(--header-h) + env(safe-area-inset-top, 0));
     display:grid;
@@ -1739,7 +1746,7 @@ textarea:focus{
   padding: 11px 14px calc(11px + env(safe-area-inset-bottom, 0));
   background: rgba(248, 248, 248, 0.98);
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08);
-  z-index: 9000;
+  z-index: var(--z-keyboard);
   min-height: var(--inline-keyboard-h);
 }
 
