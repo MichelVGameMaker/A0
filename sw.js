@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `a0-cache-${CACHE_VERSION}`;
 const ASSETS = [
   './',
@@ -1529,6 +1529,22 @@ self.addEventListener('fetch', (event) => {
   }
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) {
+    return;
+  }
+  const acceptHeader = event.request.headers.get('accept') || '';
+  const isHtmlRequest = event.request.mode === 'navigate' || acceptHeader.includes('text/html');
+  if (isHtmlRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
+    );
     return;
   }
   event.respondWith(
