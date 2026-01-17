@@ -53,7 +53,8 @@
             screenSettings,
             screenPreferences,
             screenData,
-            screenPlanning
+            screenPlanning,
+            screenProgression
         } = refs;
 
         tabSessions?.addEventListener('click', async () => {
@@ -95,6 +96,7 @@
         screenPreferences?.setAttribute('data-screen', 'preferences');
         screenData?.setAttribute('data-screen', 'data');
         screenPlanning?.setAttribute('data-screen', 'planning');
+        screenProgression?.setAttribute('data-screen', 'progression');
     }
 
     function wireCalendar() {
@@ -170,6 +172,7 @@
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenProgression = document.getElementById('screenProgression');
         refsResolved = true;
         return refs;
     }
@@ -218,7 +221,8 @@
             screenSettings,
             screenPreferences,
             screenData,
-            screenPlanning
+            screenPlanning,
+            screenProgression
         } = refs;
         if (screenSessions) {
             screenSessions.hidden = which !== 'sessions';
@@ -264,6 +268,9 @@
         }
         if (screenPlanning) {
             screenPlanning.hidden = which !== 'planning';
+        }
+        if (screenProgression) {
+            screenProgression.hidden = which !== 'progression';
         }
     }
 
