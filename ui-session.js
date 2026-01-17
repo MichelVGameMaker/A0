@@ -381,7 +381,10 @@
             const addSetButton = document.createElement('button');
             addSetButton.type = 'button';
             addSetButton.className = 'btn full session-card-add-set';
-            addSetButton.textContent = 'Ajouter série';
+            const addSetPlus = document.createElement('span');
+            addSetPlus.className = 'text-emphase';
+            addSetPlus.textContent = '+';
+            addSetButton.append(addSetPlus, document.createTextNode(' Ajouter série'));
             addSetButton.addEventListener('click', (event) => {
                 event.stopPropagation();
                 void addSetToSessionExercise(exercise.exercise_id);
