@@ -758,6 +758,69 @@ textarea:focus{
 }
 
 /* =========================================================
+   7 bis) Progression
+   ========================================================= */
+#progressionRoutineList{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+.progression-card__header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+.progression-card__title{
+    min-width:0;
+}
+.progression-goal-control{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-size:var(--fs-small);
+    white-space:nowrap;
+}
+.progression-goal-control.is-inherited{
+    color: var(--emptyColor);
+}
+.progression-goal-control.is-custom{
+    color: var(--filledColor);
+}
+.progression-goal-input{
+    width:72px;
+    height:28px;
+    padding:0 6px;
+    font-size:var(--fs-small);
+    font-weight:var(--fw-strong);
+}
+.progression-exercise-list{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-top:6px;
+}
+.progression-exercise-line{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+.progression-exercise-name{
+    flex:1 1 auto;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.list-line--compact{
+    line-height:1.2;
+}
+.progression-empty{
+    font-size:var(--fs-small);
+}
+
+/* =========================================================
    7 ter) Fiche exercice (onglets)
    ========================================================= */
 .exercise-read-tabs{

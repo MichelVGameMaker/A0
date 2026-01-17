@@ -19,11 +19,13 @@
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
         wireButtons();
+        wirePlanningToggle();
     });
 
     A.openPlanning = async function openPlanning() {
         ensureRefs();
         highlightPlanningTab();
+        setPlanningToggleActive('cycle');
         await renderPlanning();
         switchScreen('screenPlanning');
     };
@@ -297,6 +299,7 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenProgression = document.getElementById('screenProgression');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
         refs.planningDaysList = document.getElementById('planningDaysList');
@@ -333,6 +336,31 @@
         });
     }
 
+    function wirePlanningToggle() {
+        const toggleButtons = document.querySelectorAll('#screenPlanning [data-planning-target]');
+        toggleButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const target = button.dataset.planningTarget;
+                if (target === 'progression') {
+                    void A.openProgression?.();
+                    return;
+                }
+                if (target === 'cycle') {
+                    void A.openPlanning?.();
+                }
+            });
+        });
+    }
+
+    function setPlanningToggleActive(target) {
+        const toggleButtons = document.querySelectorAll('#screenPlanning [data-planning-target]');
+        toggleButtons.forEach((button) => {
+            const isActive = button.dataset.planningTarget === target;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        });
+    }
+
     function highlightPlanningTab() {
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
         refs.tabPlanning?.classList.add('active');
@@ -358,6 +386,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenProgression,
             screenFitHeroMapping
         } = ensureRefs();
         const map = {
@@ -379,6 +408,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenProgression,
             screenFitHeroMapping
         };
         Object.entries(map).forEach(([key, element]) => {
