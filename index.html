@@ -600,6 +600,31 @@
 </section>
 <!-- ==================== -->
 
+<!-- ========== Réglages > Méso ========== -->
+<section id="screenMeso" class="screen" hidden>
+
+    <header class="header header">
+        <div class="header-left"></div>
+        <div class="header-center">
+            <div class="stats-toggle" role="tablist" aria-label="Type de planning">
+                <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-target="cycle">Cycle</button>
+                <button class="stats-toggle-btn is-active" type="button" aria-pressed="true" data-planning-target="meso">Méso</button>
+                <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-target="progression">Progression</button>
+            </div>
+        </div>
+        <div class="header-right"></div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <div id="mesoCycleTags" class="tags meso-cycle-tags"></div>
+            <div id="mesoCycleList"></div>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
 <!-- ========== Réglages > Progression ========== -->
 <section id="screenProgression" class="screen" hidden>
 
@@ -1258,6 +1283,7 @@
 <script src="ui-routine-edit.js"></script>
 <script src="ui-routine-execution-edit.js"></script>
 <script src="ui-planning.js"></script>
+<script src="ui-meso.js"></script>
 <script src="ui-progression.js"></script>
 <script src="ui-preferences.js"></script>
 <script src="ui-settings.js"></script>
