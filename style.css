@@ -56,7 +56,7 @@
   /* --- Mesures unifiées --- */
   --control-h: 44px;       /* hauteur unique pour TOUT (inputs, selects, tags, boutons, etc.) */
   --radius:    12px;       /* border-radius unique */
-  --pad-x:     12px;       /* padding horizontal par défaut */
+  --pad-x:     10px;       /* padding horizontal par défaut */
   --pad-y:     10px;       /* padding vertical par défaut */
   --pad-tight: 4px;        /* padding pour les éléments denses */
   --gap:       6px;        /* marge/gap par défaut entre éléments */
