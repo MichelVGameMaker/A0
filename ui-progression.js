@@ -8,6 +8,7 @@
 
     const refs = {};
     let refsResolved = false;
+    const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     const DEFAULT_GOAL_PERCENT = 1;
     const MAX_PLAN_DAYS = 28;
     const state = {
@@ -83,7 +84,8 @@
 
         const dayLabel = document.createElement('div');
         dayLabel.className = 'details progression-card__day';
-        dayLabel.textContent = `Jour ${dayIndex}`;
+        const dayName = getDayLabel(dayIndex, state.plan?.startDay);
+        dayLabel.textContent = dayName;
         header.appendChild(dayLabel);
 
         const title = document.createElement('div');
@@ -120,7 +122,7 @@
 
         body.append(header, exercises);
         const routineName = routine?.name || 'Routine';
-        card.setAttribute('aria-label', `${routineName} - Jour ${dayIndex}`);
+        card.setAttribute('aria-label', `${routineName} - ${dayName}`);
 
         return card;
     }
@@ -302,6 +304,13 @@
             return 7;
         }
         return Math.min(MAX_PLAN_DAYS, Math.max(1, numeric));
+    }
+
+    function getDayLabel(dayIndex, startDay) {
+        const offset = Number.parseInt(startDay, 10);
+        const safeOffset = Number.isFinite(offset) ? Math.min(7, Math.max(1, offset)) : 1;
+        const labelIndex = (safeOffset - 1 + dayIndex - 1) % DAY_LABELS.length;
+        return DAY_LABELS[labelIndex] || `Jour ${dayIndex}`;
     }
 
     function parseGoalPercent(value) {
