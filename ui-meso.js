@@ -14,7 +14,8 @@
     const state = {
         plan: null,
         routines: [],
-        selectedCycle: 1
+        selectedCycle: 1,
+        expandedDayIndex: null
     };
 
     const MODIFIERS = [
@@ -137,6 +138,9 @@
         });
         const { card, body } = structure;
 
+        const isExpanded = state.expandedDayIndex === dayIndex;
+        const detailsId = `meso-day-details-${state.selectedCycle}-${dayIndex}`;
+
         const header = document.createElement('div');
         header.className = 'meso-card__header';
 
@@ -150,14 +154,46 @@
         title.textContent = routine?.name || 'Aucune routine';
         header.appendChild(title);
 
+        const summary = document.createElement('div');
+        summary.className = 'details meso-card__summary';
+        summary.textContent = buildMesoSummary(dayIndex, routine);
+        header.appendChild(summary);
+
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'btn tiny meso-card__toggle';
+        toggle.textContent = isExpanded ? 'Réduire' : 'Détails';
+        toggle.setAttribute('aria-expanded', String(isExpanded));
+        toggle.setAttribute('aria-controls', detailsId);
+        toggle.addEventListener('click', () => {
+            state.expandedDayIndex = isExpanded ? null : dayIndex;
+            void renderMeso();
+        });
+        header.appendChild(toggle);
+
+        const detailsWrapper = document.createElement('div');
+        detailsWrapper.className = 'meso-card__details';
+        detailsWrapper.id = detailsId;
+        detailsWrapper.hidden = !isExpanded;
+
         const modifierPicker = createModifierPicker(dayIndex);
         const modifiersList = renderModifiers(dayIndex);
         const exerciseList = renderExerciseList(dayIndex, routine);
 
-        body.append(header, modifierPicker, modifiersList, exerciseList);
+        detailsWrapper.append(modifierPicker, modifiersList, exerciseList);
+        body.append(header, detailsWrapper);
         card.setAttribute('aria-label', `Jour ${dayIndex} - ${routine?.name || 'Aucune routine'}`);
 
         return card;
+    }
+
+    function buildMesoSummary(dayIndex, routine) {
+        const moves = Array.isArray(routine?.moves) ? routine.moves : [];
+        const exerciseCount = moves.length;
+        const modifierCount = getDayModifiers(dayIndex).length;
+        const exerciseLabel = exerciseCount === 1 ? 'exercice' : 'exercices';
+        const modifierLabel = modifierCount === 1 ? 'modificateur' : 'modificateurs';
+        return `${exerciseCount} ${exerciseLabel} · ${modifierCount} ${modifierLabel}`;
     }
 
     function createModifierPicker(dayIndex) {
