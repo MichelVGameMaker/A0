@@ -90,7 +90,13 @@
         const dayCount = clampDayCount(plan.length);
         for (let dayIndex = 1; dayIndex <= dayCount; dayIndex += 1) {
             const routineId = plan.days?.[String(dayIndex)] || null;
-            const routine = routineId ? routineMap.get(routineId) : null;
+            if (!routineId) {
+                continue;
+            }
+            const routine = routineMap.get(routineId);
+            if (!routine) {
+                continue;
+            }
             mesoCycleList.appendChild(renderDayCard(dayIndex, routine));
         }
     }
