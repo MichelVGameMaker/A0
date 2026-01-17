@@ -49,7 +49,7 @@
             const dayKey = String(dayIndex);
             const routineId = plan.days?.[dayKey] || null;
             const routine = routineId ? routineMap.get(routineId) : null;
-            const routineName = routine?.name || 'Aucune routine';
+            const routineName = routine?.name || 'Repos';
             const label = getDayLabel(dayIndex, startDay);
 
             const structure = listCard.createStructure({
