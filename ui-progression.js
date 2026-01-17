@@ -342,6 +342,7 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenMeso = document.getElementById('screenMeso');
         refs.screenProgression = document.getElementById('screenProgression');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
@@ -357,6 +358,10 @@
                 const target = button.dataset.planningTarget;
                 if (target === 'cycle') {
                     void A.openPlanning?.();
+                    return;
+                }
+                if (target === 'meso') {
+                    void A.openMeso?.();
                     return;
                 }
                 if (target === 'progression') {
@@ -400,6 +405,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenMeso,
             screenProgression,
             screenFitHeroMapping
         } = ensureRefs();
@@ -422,6 +428,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenMeso,
             screenProgression,
             screenFitHeroMapping
         };
