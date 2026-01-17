@@ -383,16 +383,30 @@ header .header-left .btn{
    4) Modale
    ========================================================= */
 .modal{
-    border:none;
-    border-radius: var(--radius);
-    padding:var(--gap);
-    max-width:520px;
-    width:92vw;
+    z-index: var(--z-dialog);
     position:fixed;
     top: env(safe-area-inset-top, 0);
     left:50%;
-    transform: translateX(-50%);
-    z-index: var(--z-dialog);
+    max-width:520px;
+    width:92vw;
+    border:none;
+    border-radius: var(--radius);
+    padding:var(--gap);
+
+    transform: translateX(-50%); 
+}
+.modal-fixed{
+    height: 80vh;
+    top: 50%;
+    padding: 0;
+    transform: translate(-50%, -50%);
+}
+.modal-centered{
+    height: auto;
+    max-height: 80vh;
+    margin: 0;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .modal-header{
@@ -417,19 +431,7 @@ header .header-left .btn{
     top: 50%;
     transform: translateY(-50%);
 }
-.modal-fixed{
-    height: 80vh;
-    top: 50%;
-    padding: 0;
-    transform: translate(-50%, -50%);
-}
-.modal-centered{
-    height: auto;
-    max-height: 80vh;
-    margin: 0;
-    top: 50%;
-    transform: translate(-50%, -50%);
-}
+
 #dlgExecTimer.modal-centered{
     height: 90vh;
     max-height: 90vh;
@@ -484,8 +486,8 @@ header .header-left .btn{
 /* =========================================================
    5) Timer
    ========================================================= */
-/* Timer bas */
-.exec-timer{
+/* Timer bas non utilisé*/
+.exec-timer-bar{
     z-index: var(--z-timer-dialog);
     position:fixed;
     left:0;
@@ -500,18 +502,29 @@ header .header-left .btn{
     border-top:1px solid var(--panelBord);
     height: auto;
 }
-.exec-timer[hidden]{
-    display:none;
-}
-.exec-timer--popup{
-    position: static;
+.exec-timer{
+    z-index: var(--z-timer-dialog);
+    position:fixed;
     left: auto;
     right: auto;
-    bottom: auto;
-    border-top: none;
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0));
+    height: auto;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    gap:10px;
+    padding: 12px;
+    background: var(--panelBack);
+    border: none;
     border-radius: var(--radius);
     box-shadow: none;
 }
+
+.exec-timer[hidden]{
+    display:none;
+}
+/* Timer bas non utilisé*/
+
 .tmr-controls{
     display:flex;
     flex-direction:column;
