@@ -762,6 +762,134 @@ textarea:focus{
 }
 
 /* =========================================================
+   7 bis) Méso
+   ========================================================= */
+.meso-cycle-tags{
+    --tag-columns: 2;
+    margin-bottom:12px;
+}
+#mesoCycleList{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+.meso-card__header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+.meso-card__title{
+    min-width:0;
+}
+.meso-modifier-picker{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-top:8px;
+}
+.meso-modifier-menu{
+    display:none;
+    flex-direction:column;
+    gap:6px;
+}
+.meso-modifier-menu.is-open{
+    display:flex;
+}
+.meso-modifier-option{
+    border:1px solid var(--clickableBord);
+    background:var(--panelBack);
+    border-radius:var(--radius);
+    padding:8px 10px;
+    text-align:left;
+    font-size:var(--fs-small);
+}
+.meso-modifier-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:8px;
+}
+.meso-modifier-tag{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    padding:8px 10px;
+    border:1px solid var(--panelBord);
+    border-radius:var(--radius);
+    background:var(--panelBack);
+}
+.meso-modifier-name{
+    font-weight:var(--fw-strong);
+}
+.meso-modifier-summary{
+    font-size:var(--fs-small);
+}
+.meso-exercise-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:12px;
+}
+.meso-exercise{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+.meso-exercise-line{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    border:1px solid var(--panelBord);
+    border-radius:var(--radius);
+    padding:8px 10px;
+    background:var(--panelBack);
+    text-align:left;
+}
+.meso-exercise-name{
+    font-weight:var(--fw-strong);
+}
+.meso-exercise-status{
+    font-size:var(--fs-small);
+    color:var(--emptyColor);
+}
+.meso-exercise-status.is-custom{
+    color:var(--filledColor);
+}
+.meso-exercise-details{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:8px 10px 10px;
+    border-left:2px solid var(--panelBord);
+}
+.meso-set-row{
+    display:grid;
+    grid-template-columns: 1fr repeat(3, minmax(0, 1fr));
+    gap:6px;
+    align-items:center;
+}
+.meso-set-label{
+    font-size:var(--fs-small);
+}
+.meso-set-input{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    font-size:var(--fs-small);
+}
+.meso-set-input .input{
+    height:32px;
+}
+.meso-reset{
+    align-self:flex-start;
+}
+.meso-empty{
+    font-size:var(--fs-small);
+}
+
+/* =========================================================
    7 bis) Progression
    ========================================================= */
 #progressionRoutineList{
@@ -877,6 +1005,16 @@ textarea:focus{
   display:inline-flex; align-items:center; justify-content:center;   
   color: var(--black);
   font-weight: var(--fw-strong);
+}
+.btn.small{
+    min-height:32px;
+    font-size:var(--fs-small);
+    padding:0 10px;
+}
+.btn.tiny{
+    min-height:28px;
+    font-size:var(--fs-small);
+    padding:0 8px;
 }
 .btn:active{ transform: scale(.9); }
 /* En-tête RETOUR */

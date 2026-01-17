@@ -170,11 +170,11 @@
         const structure = listCard.createStructure({ clickable: true, role: 'button' });
         const { card, body, end } = structure;
         card.classList.add('is-neutral');
-        card.setAttribute('aria-label', 'Aucune routine — ajouter');
+        card.setAttribute('aria-label', 'Repos — ajouter');
 
         const title = document.createElement('div');
         title.className = 'element';
-        title.textContent = 'Aucune routine';
+        title.textContent = 'Repos';
 
         const details = document.createElement('div');
         details.className = 'details';

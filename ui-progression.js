@@ -41,23 +41,21 @@
 
         const routineMap = new Map(routines.map((routine) => [routine.id, routine]));
         const dayCount = clampDayCount(plan.length);
-        const assignedRoutineIds = [];
-        const seen = new Set();
+        const assignedRoutineEntries = [];
         for (let dayIndex = 1; dayIndex <= dayCount; dayIndex += 1) {
             const routineId = plan.days?.[String(dayIndex)] || null;
-            if (!routineId || seen.has(routineId)) {
+            if (!routineId) {
                 continue;
             }
             const routine = routineMap.get(routineId);
             if (!routine) {
                 continue;
             }
-            assignedRoutineIds.push(routineId);
-            seen.add(routineId);
+            assignedRoutineEntries.push({ dayIndex, routineId });
         }
 
         progressionRoutineList.innerHTML = '';
-        if (!assignedRoutineIds.length) {
+        if (!assignedRoutineEntries.length) {
             const empty = document.createElement('div');
             empty.className = 'empty';
             empty.textContent = 'Aucune routine attribuée dans ce cycle.';
@@ -65,16 +63,16 @@
             return;
         }
 
-        assignedRoutineIds.forEach((routineId) => {
+        assignedRoutineEntries.forEach(({ dayIndex, routineId }) => {
             const routine = routineMap.get(routineId);
             if (!routine) {
                 return;
             }
-            progressionRoutineList.appendChild(renderRoutineCard(routine));
+            progressionRoutineList.appendChild(renderRoutineCard(routine, dayIndex));
         });
     }
 
-    function renderRoutineCard(routine) {
+    function renderRoutineCard(routine, dayIndex) {
         const structure = listCard.createStructure({
             cardClass: 'progression-card'
         });
@@ -82,6 +80,11 @@
 
         const header = document.createElement('div');
         header.className = 'progression-card__header';
+
+        const dayLabel = document.createElement('div');
+        dayLabel.className = 'details progression-card__day';
+        dayLabel.textContent = `Jour ${dayIndex}`;
+        header.appendChild(dayLabel);
 
         const title = document.createElement('div');
         title.className = 'element progression-card__title';
@@ -116,7 +119,8 @@
         }
 
         body.append(header, exercises);
-        card.setAttribute('aria-label', routine?.name || 'Routine');
+        const routineName = routine?.name || 'Routine';
+        card.setAttribute('aria-label', `${routineName} - Jour ${dayIndex}`);
 
         return card;
     }
@@ -338,6 +342,7 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenMeso = document.getElementById('screenMeso');
         refs.screenProgression = document.getElementById('screenProgression');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
@@ -353,6 +358,10 @@
                 const target = button.dataset.planningTarget;
                 if (target === 'cycle') {
                     void A.openPlanning?.();
+                    return;
+                }
+                if (target === 'meso') {
+                    void A.openMeso?.();
                     return;
                 }
                 if (target === 'progression') {
@@ -396,6 +405,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenMeso,
             screenProgression,
             screenFitHeroMapping
         } = ensureRefs();
@@ -418,6 +428,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenMeso,
             screenProgression,
             screenFitHeroMapping
         };

@@ -49,7 +49,7 @@
             const dayKey = String(dayIndex);
             const routineId = plan.days?.[dayKey] || null;
             const routine = routineId ? routineMap.get(routineId) : null;
-            const routineName = routine?.name || 'Aucune routine';
+            const routineName = routine?.name || 'Repos';
             const label = getDayLabel(dayIndex, startDay);
 
             const structure = listCard.createStructure({
@@ -299,6 +299,7 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenMeso = document.getElementById('screenMeso');
         refs.screenProgression = document.getElementById('screenProgression');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
@@ -345,6 +346,10 @@
                     void A.openProgression?.();
                     return;
                 }
+                if (target === 'meso') {
+                    void A.openMeso?.();
+                    return;
+                }
                 if (target === 'cycle') {
                     void A.openPlanning?.();
                 }
@@ -386,6 +391,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenMeso,
             screenProgression,
             screenFitHeroMapping
         } = ensureRefs();
@@ -408,6 +414,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenMeso,
             screenProgression,
             screenFitHeroMapping
         };
