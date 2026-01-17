@@ -43,14 +43,14 @@
   --rpe-5-bord:    #c9ddf6;
   --rpe-6-bg:      #ede8ff;
   --rpe-6-bord:    #d6ccff;
-  --rpe-7-bg:      #ffe9d6;
-  --rpe-7-bord:    #f6d7bd;
-  --rpe-8-bg:      #ffe2e5;
-  --rpe-8-bord:    #f3c7cf;
-  --rpe-9-bg:      #f3d9e2;
-  --rpe-9-bord:    #e7c1cd;
-  --rpe-10-bg:     #f0f0f0;
-  --rpe-10-bord:   #d7d7d7;
+  --rpe-7-bg:      #fff4c2;
+  --rpe-7-bord:    #f2d985;
+  --rpe-8-bg:      color-mix(in srgb, var(--alert) 22%, white);
+  --rpe-8-bord:    color-mix(in srgb, var(--alert) 45%, white);
+  --rpe-9-bg:      color-mix(in srgb, var(--red) 18%, white);
+  --rpe-9-bord:    color-mix(in srgb, var(--red) 38%, white);
+  --rpe-10-bg:     color-mix(in srgb, var(--red) 32%, white);
+  --rpe-10-bord:   var(--red);
 
 
   /* --- Mesures unifiées --- */
