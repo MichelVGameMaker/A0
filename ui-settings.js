@@ -1066,10 +1066,14 @@
             : (rawId && typeof A.sessionDateKeyFromId === 'function'
                 ? A.sessionDateKeyFromId(rawId)
                 : null);
-        const sessionDate = dateKey || null;
-        const sessionId = rawId
-            || (dateKey ? dateKey.replace(/-/g, '') : '')
-            || '';
+        const sessionDate = parsedDate && typeof A.sessionISO === 'function'
+            ? A.sessionISO(parsedDate)
+            : dateKey || null;
+        const sessionId = parsedDate && typeof A.sessionId === 'function'
+            ? A.sessionId(parsedDate)
+            : rawId
+                || (dateKey ? dateKey.replace(/-/g, '') : '')
+                || '';
 
         if (!sessionId || !sessionDate) {
             return null;
