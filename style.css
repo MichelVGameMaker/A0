@@ -627,6 +627,9 @@ image_big{
    ========================================================= */
 /* États invisibles */
 .sr-only{ position:absolute; left:-9999px; }
+.text-emphase{
+    color: var(--emphase);
+}
 
 .is-clickable {
     /* Cliquable */
