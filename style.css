@@ -790,9 +790,22 @@ textarea:focus{
     align-items:center;
     justify-content:space-between;
     gap:12px;
+    flex-wrap:wrap;
 }
 .meso-card__title{
     min-width:0;
+}
+.meso-card__summary{
+    font-size:var(--fs-small);
+}
+.meso-card__toggle{
+    white-space:nowrap;
+}
+.meso-card__details{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:8px;
 }
 .meso-modifier-picker{
     display:flex;
@@ -914,9 +927,22 @@ textarea:focus{
     align-items:center;
     justify-content:space-between;
     gap:12px;
+    flex-wrap:wrap;
 }
 .progression-card__title{
     min-width:0;
+}
+.progression-card__summary{
+    font-size:var(--fs-small);
+}
+.progression-card__toggle{
+    white-space:nowrap;
+}
+.progression-card__details{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-top:6px;
 }
 .progression-goal-control{
     display:inline-flex;

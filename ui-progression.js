@@ -13,7 +13,8 @@
     const MAX_PLAN_DAYS = 28;
     const state = {
         plan: null,
-        routines: []
+        routines: [],
+        expandedDayIndex: null
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -79,6 +80,9 @@
         });
         const { card, body } = structure;
 
+        const isExpanded = state.expandedDayIndex === dayIndex;
+        const detailsId = `progression-day-details-${dayIndex}`;
+
         const header = document.createElement('div');
         header.className = 'progression-card__header';
 
@@ -104,6 +108,28 @@
         routineGoal.appendChild(createGoalSuffix());
         header.appendChild(routineGoal);
 
+        const summary = document.createElement('div');
+        summary.className = 'details progression-card__summary';
+        summary.textContent = buildProgressionSummary(routine);
+        header.appendChild(summary);
+
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'btn tiny progression-card__toggle';
+        toggle.textContent = isExpanded ? 'Réduire' : 'Détails';
+        toggle.setAttribute('aria-expanded', String(isExpanded));
+        toggle.setAttribute('aria-controls', detailsId);
+        toggle.addEventListener('click', () => {
+            state.expandedDayIndex = isExpanded ? null : dayIndex;
+            void renderProgression();
+        });
+        header.appendChild(toggle);
+
+        const detailsWrapper = document.createElement('div');
+        detailsWrapper.className = 'progression-card__details';
+        detailsWrapper.id = detailsId;
+        detailsWrapper.hidden = !isExpanded;
+
         const exercises = document.createElement('div');
         exercises.className = 'progression-exercise-list';
         const moves = Array.isArray(routine?.moves) ? [...routine.moves] : [];
@@ -120,11 +146,19 @@
             });
         }
 
-        body.append(header, exercises);
+        detailsWrapper.appendChild(exercises);
+        body.append(header, detailsWrapper);
         const routineName = routine?.name || 'Routine';
         card.setAttribute('aria-label', `${routineName} - ${dayName}`);
 
         return card;
+    }
+
+    function buildProgressionSummary(routine) {
+        const moves = Array.isArray(routine?.moves) ? routine.moves : [];
+        const exerciseCount = moves.length;
+        const exerciseLabel = exerciseCount === 1 ? 'exercice' : 'exercices';
+        return `${exerciseCount} ${exerciseLabel}`;
     }
 
     function renderExerciseLine(routineId, move, routineGoalValue) {
