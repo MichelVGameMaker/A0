@@ -54,6 +54,7 @@
             screenPreferences,
             screenData,
             screenPlanning,
+            screenMeso,
             screenProgression
         } = refs;
 
@@ -96,6 +97,7 @@
         screenPreferences?.setAttribute('data-screen', 'preferences');
         screenData?.setAttribute('data-screen', 'data');
         screenPlanning?.setAttribute('data-screen', 'planning');
+        screenMeso?.setAttribute('data-screen', 'meso');
         screenProgression?.setAttribute('data-screen', 'progression');
     }
 
@@ -172,6 +174,7 @@
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenMeso = document.getElementById('screenMeso');
         refs.screenProgression = document.getElementById('screenProgression');
         refsResolved = true;
         return refs;
@@ -222,6 +225,7 @@
             screenPreferences,
             screenData,
             screenPlanning,
+            screenMeso,
             screenProgression
         } = refs;
         if (screenSessions) {
@@ -268,6 +272,9 @@
         }
         if (screenPlanning) {
             screenPlanning.hidden = which !== 'planning';
+        }
+        if (screenMeso) {
+            screenMeso.hidden = which !== 'meso';
         }
         if (screenProgression) {
             screenProgression.hidden = which !== 'progression';

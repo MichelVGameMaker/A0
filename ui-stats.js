@@ -181,6 +181,7 @@
         refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
+        refs.screenMeso = document.getElementById('screenMeso');
         refs.statsExerciseList = document.getElementById('statsExerciseList');
         refs.statsExerciseTitle = document.getElementById('statsExerciseTitle');
         refs.statsExerciseSubtitle = document.getElementById('statsExerciseSubtitle');
@@ -1810,7 +1811,8 @@
             screenStatMuscles,
             screenStatMusclesDetail,
             screenPreferences,
-            screenData
+            screenData,
+            screenMeso
         } = ensureRefs();
         const map = {
             screenSessions,
@@ -1827,7 +1829,8 @@
             screenStatMuscles,
             screenStatMusclesDetail,
             screenPreferences,
-            screenData
+            screenData,
+            screenMeso
         };
         Object.entries(map).forEach(([key, element]) => {
             if (element) {
