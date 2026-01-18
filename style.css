@@ -164,6 +164,38 @@ body{
     z-index: calc(var(--z-dialog) - 1);
     height: 100svh;
 }
+.dialog-screen--page {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+}
+.dialog-screen--page .dialog-backdrop {
+    display: none;
+}
+.dialog-screen--page .dialog-panel {
+    position: static;
+    inset: auto;
+    height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    animation: none;
+}
+.dialog-screen--page .dialog-panel header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+.dialog-screen--page .dialog-panel .content {
+    padding-top: var(--header-total-h);
+    padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0));
+    min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));
+    background: var(--contentBack);
+}
+.dialog-screen--raised {
+    z-index: calc(var(--z-dialog) + 2);
+}
 .dialog-backdrop {
     position: absolute;
     inset: 0;

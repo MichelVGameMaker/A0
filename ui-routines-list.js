@@ -59,7 +59,12 @@
         renderList();
         ensureSelectionBar();
         updateSelectionBar();
-        showDialog();
+        applyDialogMode(state.listMode === 'add');
+        if (state.listMode === 'add') {
+            showDialog();
+        } else {
+            switchScreen('screenRoutineList');
+        }
     };
 
     A.refreshRoutineList = async function refreshRoutineList() {
@@ -136,6 +141,11 @@
         routineListBackdrop.addEventListener('click', () => {
             returnToCaller();
         });
+    }
+
+    function applyDialogMode(isDialog) {
+        const { screenRoutineList } = assertRefs();
+        screenRoutineList.classList.toggle('dialog-screen--page', !isDialog);
     }
 
     async function loadRoutines(force = false) {
@@ -386,13 +396,17 @@
     function returnToCaller() {
         const target = state.callerScreen || 'screenSettings';
         highlightCallerTab(target);
-        hideDialog();
-        if (target !== 'screenRoutineList') {
-            const caller = refs[target];
-            if (caller) {
-                caller.hidden = false;
+        if (state.listMode === 'add') {
+            hideDialog();
+            if (target !== 'screenRoutineList') {
+                const caller = refs[target];
+                if (caller) {
+                    caller.hidden = false;
+                }
             }
+            return;
         }
+        switchScreen(target);
     }
 
     function showDialog() {
