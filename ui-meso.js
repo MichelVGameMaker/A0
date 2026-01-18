@@ -10,7 +10,8 @@
     let refsResolved = false;
     const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     const MAX_PLAN_DAYS = 28;
-    const MESO_CYCLE_COUNT = 8;
+    const MAX_MESO_CYCLE_COUNT = 8;
+    const DEFAULT_MESO_CYCLE_COUNT = 8;
     const state = {
         plan: null,
         routines: [],
@@ -83,8 +84,15 @@
         state.routines = routines;
 
         const meso = ensureMesoData(plan);
-        state.selectedCycle = clampCycle(meso.selectedCycle);
+        const cycleCount = clampCycleCount(meso.cycleCount);
+        meso.cycleCount = cycleCount;
+        state.selectedCycle = clampCycle(meso.selectedCycle, cycleCount);
+        if (meso.selectedCycle !== state.selectedCycle) {
+            meso.selectedCycle = state.selectedCycle;
+            await db.put('plans', plan);
+        }
 
+        renderCycleCountPicker();
         renderCycleTags();
 
         mesoCycleList.innerHTML = '';
@@ -107,8 +115,10 @@
         if (!mesoCycleTags) {
             return;
         }
+        const cycleCount = getCycleCount();
+        mesoCycleTags.style.setProperty('--tag-columns', String(cycleCount));
         mesoCycleTags.innerHTML = '';
-        for (let index = 1; index <= MESO_CYCLE_COUNT; index += 1) {
+        for (let index = 1; index <= cycleCount; index += 1) {
             const tag = document.createElement('button');
             tag.type = 'button';
             tag.className = 'tag';
@@ -124,10 +134,50 @@
         }
     }
 
+    function renderCycleCountPicker() {
+        const { mesoCycleCountButton, mesoCycleCountMenu } = refs;
+        if (!mesoCycleCountButton || !mesoCycleCountMenu) {
+            return;
+        }
+        if (!mesoCycleCountButton.dataset.wired) {
+            mesoCycleCountButton.addEventListener('click', () => {
+                const isOpen = mesoCycleCountMenu.classList.toggle('is-open');
+                mesoCycleCountButton.setAttribute('aria-expanded', String(isOpen));
+            });
+            mesoCycleCountButton.dataset.wired = 'true';
+        }
+        const cycleCount = getCycleCount();
+        mesoCycleCountMenu.innerHTML = '';
+        for (let index = 1; index <= MAX_MESO_CYCLE_COUNT; index += 1) {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = 'meso-cycle-count-option';
+            option.textContent = `${index} cycle${index > 1 ? 's' : ''}`;
+            option.setAttribute('role', 'menuitemradio');
+            option.setAttribute('aria-checked', String(index === cycleCount));
+            option.addEventListener('click', async () => {
+                await updateCycleCount(index);
+                mesoCycleCountMenu.classList.remove('is-open');
+                mesoCycleCountButton.setAttribute('aria-expanded', 'false');
+            });
+            mesoCycleCountMenu.appendChild(option);
+        }
+    }
+
+    async function updateCycleCount(count) {
+        const plan = state.plan || (await ensureActivePlan());
+        const meso = ensureMesoData(plan);
+        const nextCount = clampCycleCount(count);
+        meso.cycleCount = nextCount;
+        meso.selectedCycle = clampCycle(meso.selectedCycle, nextCount);
+        await db.put('plans', plan);
+        await renderMeso();
+    }
+
     async function selectCycle(index) {
         const plan = state.plan || (await ensureActivePlan());
         const meso = ensureMesoData(plan);
-        meso.selectedCycle = clampCycle(index);
+        meso.selectedCycle = clampCycle(index, getCycleCount());
         await db.put('plans', plan);
         await renderMeso();
     }
@@ -581,7 +631,10 @@
         if (!plan.meso.selectedCycle) {
             plan.meso.selectedCycle = 1;
         }
-        for (let index = 1; index <= MESO_CYCLE_COUNT; index += 1) {
+        if (!plan.meso.cycleCount) {
+            plan.meso.cycleCount = DEFAULT_MESO_CYCLE_COUNT;
+        }
+        for (let index = 1; index <= MAX_MESO_CYCLE_COUNT; index += 1) {
             if (!plan.meso.cycles[index]) {
                 plan.meso.cycles[index] = { days: {} };
             }
@@ -639,12 +692,28 @@
         return Math.min(MAX_PLAN_DAYS, Math.max(1, numeric));
     }
 
-    function clampCycle(value) {
+    function clampCycle(value, maxValue = DEFAULT_MESO_CYCLE_COUNT) {
         const numeric = Number.parseInt(value, 10);
         if (!Number.isFinite(numeric)) {
             return 1;
         }
-        return Math.min(MESO_CYCLE_COUNT, Math.max(1, numeric));
+        return Math.min(maxValue, Math.max(1, numeric));
+    }
+
+    function clampCycleCount(value) {
+        const numeric = Number.parseInt(value, 10);
+        if (!Number.isFinite(numeric)) {
+            return DEFAULT_MESO_CYCLE_COUNT;
+        }
+        return Math.min(MAX_MESO_CYCLE_COUNT, Math.max(1, numeric));
+    }
+
+    function getCycleCount() {
+        if (!state.plan) {
+            return DEFAULT_MESO_CYCLE_COUNT;
+        }
+        const meso = ensureMesoData(state.plan);
+        return clampCycleCount(meso.cycleCount);
     }
 
     function getDayLabel(dayIndex, startDay) {
@@ -680,6 +749,8 @@
         refs.screenProgression = document.getElementById('screenProgression');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
+        refs.mesoCycleCountButton = document.getElementById('mesoCycleCountButton');
+        refs.mesoCycleCountMenu = document.getElementById('mesoCycleCountMenu');
         refs.mesoCycleTags = document.getElementById('mesoCycleTags');
         refs.mesoCycleList = document.getElementById('mesoCycleList');
         refsResolved = true;

@@ -829,7 +829,34 @@ textarea:focus{
    ========================================================= */
 .meso-cycle-tags{
     --tag-columns: 2;
+    --tag-gap: 6px;
     margin-bottom:12px;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    scrollbar-width: thin;
+    gap:6px;
+}
+.meso-cycle-controls{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:12px;
+}
+.meso-cycle-count-menu{
+    display:none;
+    flex-direction:column;
+    gap:6px;
+}
+.meso-cycle-count-menu.is-open{
+    display:flex;
+}
+.meso-cycle-count-option{
+    border:1px solid var(--clickableBord);
+    background:var(--panelBack);
+    border-radius:var(--radius);
+    padding:8px 10px;
+    text-align:left;
+    font-size:var(--fs-small);
 }
 #mesoCycleList{
     display:flex;
@@ -857,6 +884,9 @@ textarea:focus{
     flex-direction:column;
     gap:8px;
     margin-top:8px;
+}
+.meso-card__details[hidden]{
+    display:none;
 }
 .meso-modifier-picker{
     display:flex;
