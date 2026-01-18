@@ -695,7 +695,8 @@ textarea{
   --tag-gap: 1px;                              /* UN seul pixel d’écart */
   --tag-columns: 1;
   --tag-width: calc((100% - (var(--tag-columns, 1) - 1) * var(--tag-gap, 1px)) / var(--tag-columns, 1));
-  display:flex; flex-wrap:wrap;
+  display:flex; 
+  flex-wrap:wrap;
   gap: var(--tag-gap);
 }
 .tags.mono .tag{
@@ -1209,28 +1210,29 @@ textarea:focus{
 .session-card-sets-row{
   display:grid;
   grid-template-columns:
-    minmax(0, 0.5fr)
-    minmax(0, 0.9fr)
-    minmax(0, 1fr)
+    minmax(0, 0.4fr)
+    minmax(0, 1.0fr)
+    minmax(0, 1.0fr)
     minmax(0, 0.7fr);
   column-gap:6px;
   row-gap:2px;
+  justify-content:center;
   align-items:center;
   width:100%;
   box-sizing:border-box;
-  padding:6px 8px;
+  padding:0px 0px;
   border:1px solid var(--panelBord);
   border-radius:10px;
   background: color-mix(in srgb, var(--panelBord) 20%, transparent);
 }
 .session-card-sets-row--session{
   grid-template-columns:
-    minmax(0, 0.5fr)
-    minmax(0, 0.9fr)
-    minmax(0, 1fr)
+    minmax(0, 0.4fr)
+    minmax(0, 1.0fr)
+    minmax(0, 1.0fr)
     minmax(0, 0.7fr)
-    minmax(0, 1.6fr)
-    minmax(0, 0.9fr);
+    minmax(0, 1.0fr)
+    minmax(0, 0.5fr);
 }
 .session-card-sets-row[data-rpe]{
   background: color-mix(in srgb, var(--rpe-bg) 35%, transparent);
@@ -1264,10 +1266,9 @@ textarea:focus{
 }
 .session-card-set-cell{
   display:inline-flex;
-  align-items:center;
-  justify-content:flex-start;
-  gap:3px;
-  padding:2px 0;
+  align-items: center;
+  justify-content: center;
+  gap:px;
   border:1px solid transparent;
   background:transparent;
   font-size:var(--fs-small);
@@ -1276,6 +1277,7 @@ textarea:focus{
   text-align:left;
   min-width:0;
   max-width:100%;
+  height: 100%;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
@@ -1304,15 +1306,7 @@ textarea:focus{
   text-align:left;
   padding:4px 0;
 }
-.session-card-set-cell--rpe{
-  justify-content:flex-start;
-}
-.session-card-set-cell--goal{
-  justify-content:flex-start;
-}
-.session-card-set-cell--medals{
-  justify-content:center;
-}
+
 .session-card-set-cell--pencil{
   justify-content:center;
 }
