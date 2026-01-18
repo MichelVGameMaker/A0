@@ -1134,7 +1134,14 @@ textarea:focus{
 .exercise-card-right.exercise-card-end--top,
 .list-card__end.exercise-card-end--top{ align-items:flex-start; }
 .exercise-card-text,
-.list-card__body{ display:flex; flex-direction:column; gap:2px; min-width:0; justify-content:center; width:100%; }
+.list-card__body{ 
+  min-width:0; 
+  width:100%;
+  display:flex; 
+  flex-direction:column; 
+  justify-content:center; 
+  gap:2px; 
+}
 .exercise-card-text .element,
 .list-card__body .element,
 .exercise-card-text .details,
@@ -1143,11 +1150,20 @@ textarea:focus{
   text-overflow:ellipsis;
   white-space:nowrap;
 }
-.exercise-card-text .exercise-card-name{
+.exercise-card-text{
   display:-webkit-box;
   -webkit-box-orient:vertical;
   -webkit-line-clamp:2;
   white-space:normal;
+}
+.exercise-card-name{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  white-space:normal;
+  padding: 8px;
+  padding-right: 32px;
+  
 }
 .exercise-card--full-sets .list-card__row{
   position: relative;
@@ -1160,8 +1176,8 @@ textarea:focus{
   top: 0;
   right: 0;
 }
-.exercise-card--full-sets .exercise-card-name{
-  padding-right: 32px;
+.exercise-card--full-sets{
+
 }
 .list-card__handle{
   border:none;
@@ -1196,9 +1212,6 @@ textarea:focus{
   background:currentColor;
   opacity:.7;
 }
-.session-card-add-set{
-
-}
 
 .session-card-sets{
   display:flex;
@@ -1222,7 +1235,6 @@ textarea:focus{
   row-gap:   2px;
   justify-content:center;
   align-items:center;
-
   box-sizing:border-box;
   padding:0px 0px;
   border:1px solid var(--panelBord);
@@ -1271,7 +1283,7 @@ textarea:focus{
 .session-card-set-cell{
   min-width:0;
   max-width:100%;
-  height: 100%;
+  height:   100%;
   display:inline-flex;
   align-items: center;
   justify-content: center;
