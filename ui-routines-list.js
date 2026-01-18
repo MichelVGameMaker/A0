@@ -25,6 +25,7 @@
         ensureRefs();
         wireCreateButton();
         wireBackButton();
+        wireDialogDismiss();
     });
 
     /* ACTIONS */
@@ -58,7 +59,7 @@
         renderList();
         ensureSelectionBar();
         updateSelectionBar();
-        switchScreen('screenRoutineList');
+        showDialog();
     };
 
     A.refreshRoutineList = async function refreshRoutineList() {
@@ -95,6 +96,7 @@
         refs.btnRoutineCreate = document.getElementById('btnRoutineCreate');
         refs.tabPlanning = document.getElementById('tabPlanning');
         refs.routineListBack = document.getElementById('routineListBack');
+        refs.routineListBackdrop = document.getElementById('routineListBackdrop');
         refs.content = document.querySelector('#screenRoutineList .content');
         refsResolved = true;
         return refs;
@@ -102,7 +104,7 @@
 
     function assertRefs() {
         ensureRefs();
-        const required = ['screenRoutineList', 'routineCatalog', 'routineListBack'];
+        const required = ['screenRoutineList', 'routineCatalog', 'routineListBack', 'routineListBackdrop'];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
             throw new Error(`ui-routines-list.js: références manquantes (${missing.join(', ')})`);
@@ -125,6 +127,13 @@
     function wireBackButton() {
         const { routineListBack } = assertRefs();
         routineListBack.addEventListener('click', () => {
+            returnToCaller();
+        });
+    }
+
+    function wireDialogDismiss() {
+        const { routineListBackdrop } = assertRefs();
+        routineListBackdrop.addEventListener('click', () => {
             returnToCaller();
         });
     }
@@ -377,7 +386,25 @@
     function returnToCaller() {
         const target = state.callerScreen || 'screenSettings';
         highlightCallerTab(target);
-        switchScreen(target);
+        hideDialog();
+        if (target !== 'screenRoutineList') {
+            const caller = refs[target];
+            if (caller) {
+                caller.hidden = false;
+            }
+        }
+    }
+
+    function showDialog() {
+        const { screenRoutineList } = assertRefs();
+        screenRoutineList.hidden = false;
+        state.active = true;
+    }
+
+    function hideDialog() {
+        const { screenRoutineList } = assertRefs();
+        screenRoutineList.hidden = true;
+        state.active = false;
     }
 
     function switchScreen(target) {
