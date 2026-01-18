@@ -10601,6 +10601,23 @@
     ]
   },
   {
+    "exerciseId": "Lx3BpAq",
+    "name": "band pull apart",
+    "gifUrl": "data/media/Lx3BpAq.gif",
+    "targetMuscles": ["delts"],
+    "bodyParts": ["shoulders"],
+    "equipments": ["resistance band"],
+    "secondaryMuscles": ["upper back", "trapezius"],
+    "instructions": [
+      "1. Stand with your fett shoulder-width apart and hold the resistance band at chest-height in both hands, grip pronated or neutral and shoulder-width apart.",
+      "2. Puffing the chest out, ensuring the torso is upright and the shoulders not internally rotated, pull the band apart by stretching your arms out to the sides.",
+      "3. Rotates your arms to the sides of the body and simultaneously retract your shoulder blades until the band is pressed against the chest and the upper arms are parallel to the sides of the torso",
+      "4. Squeeze your shoulder blades together as the arms reach the end of the movement.",
+      "5. Release tension in your scapula and allow the resistance to slowly pull your arms back towards the midline of their body and back in their starting position shoulder-width apart.",
+      "6. Repeat for the desired number of repetitions."
+    ]
+  },
+  {
     "exerciseId": "bfiHMpI",
     "name": "dumbbell incline press on exercise ball",
     "gifUrl": "data/media/bfiHMpI.gif",
