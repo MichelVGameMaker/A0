@@ -1179,6 +1179,12 @@ textarea:focus{
 .exercise-card--full-sets{
 
 }
+.exercise-card--full-sets .exercise-card-text{
+  display:flex;
+  -webkit-line-clamp:unset;
+  -webkit-box-orient:initial;
+  white-space:normal;
+}
 .list-card__handle{
   border:none;
   background:none;
