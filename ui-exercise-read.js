@@ -294,9 +294,11 @@
             return;
         }
         const sourceExercise = state.exercise;
+        const conversionCaller = state.callerScreen || 'screenExercises';
+        closeDialog();
         A.openExercises?.({
             mode: 'add',
-            callerScreen: 'screenExerciseRead',
+            callerScreen: conversionCaller,
             selectionLimit: 1,
             onAdd: (ids) => {
                 const exerciseId = Array.isArray(ids) ? ids[0] : null;
