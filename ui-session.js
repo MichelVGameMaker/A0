@@ -141,9 +141,9 @@
         return cell;
     }
 
-    function createSetMetaCell({ text, rpeValue, className }) {
+    function createSetMetaCell({ text, rpeValue }) {
         const cell = document.createElement('div');
-        cell.className = `session-card-set-cell${className ? ` ${className}` : ''}`;
+        cell.className = 'session-card-set-cell';
         cell.textContent = text;
         const rpeDatasetValue = getRpeDatasetValue(rpeValue);
         if (rpeDatasetValue) {
@@ -154,7 +154,7 @@
 
     function createSetMedalsCell(medals = []) {
         const cell = document.createElement('div');
-        cell.className = 'session-card-set-cell session-card-set-cell--medals';
+        cell.className = 'session-card-set-cell';
         if (!Array.isArray(medals) || medals.length === 0) {
             return cell;
         }
@@ -349,8 +349,7 @@
                     const goalInfo = meta?.goalsByPos?.get?.(pos) || null;
                     const goalCell = createSetMetaCell({
                         text: goalInfo?.text ?? '—',
-                        rpeValue: goalInfo?.rpe ?? null,
-                        className: 'session-card-set-cell--goal'
+                        rpeValue: goalInfo?.rpe ?? null
                     });
                     const medalsCell = createSetMedalsCell(meta?.medalsByPos?.get?.(pos) || []);
                     line.append(
@@ -375,7 +374,6 @@
                         createSetCell({
                             label: formatSetRpe(set?.rpe),
                             field: 'rpe',
-                            className: 'session-card-set-cell--rpe',
                             rpeValue: set?.rpe,
                             onClick: stopAndOpen('rpe')
                         }),
