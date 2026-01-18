@@ -5,9 +5,7 @@
     const refs = {};
     let refsResolved = false;
 
-    const FIT_HERO_MISSING_STORAGE_KEY = A.fitHeroMissingStorageKey || 'fithero_missing_exercises';
     const FIT_HERO_USER_MAPPING_KEY = A.fitHeroUserMappingKey || 'fithero_user_mapping';
-    A.fitHeroMissingStorageKey = FIT_HERO_MISSING_STORAGE_KEY;
     A.fitHeroUserMappingKey = FIT_HERO_USER_MAPPING_KEY;
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -178,10 +176,8 @@
 
     function loadCustomFitHeroMappings() {
         const rawUserMapping = localStorage.getItem(FIT_HERO_USER_MAPPING_KEY);
-        const rawMissing = localStorage.getItem(FIT_HERO_MISSING_STORAGE_KEY);
         const userMappings = parseMappings(rawUserMapping);
-        const missingSlugs = new Set(parseMissing(rawMissing));
-        return userMappings.filter((entry) => entry?.slug && (!missingSlugs.size || missingSlugs.has(entry.slug)));
+        return userMappings.filter((entry) => entry?.slug);
     }
 
     function parseMappings(raw) {
@@ -193,29 +189,6 @@
             return Array.isArray(parsed) ? parsed.filter((entry) => entry?.slug) : [];
         } catch (error) {
             console.warn('Mapping FitHero utilisateur invalide :', error);
-            return [];
-        }
-    }
-
-    function parseMissing(raw) {
-        if (!raw) {
-            return [];
-        }
-        try {
-            const parsed = JSON.parse(raw);
-            if (!Array.isArray(parsed)) {
-                return [];
-            }
-            return parsed
-                .map((entry) => {
-                    if (typeof entry === 'string') {
-                        return entry;
-                    }
-                    return entry?.slug || null;
-                })
-                .filter(Boolean);
-        } catch (error) {
-            console.warn('Slugs FitHero inconnus invalides :', error);
             return [];
         }
     }
