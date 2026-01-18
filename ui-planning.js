@@ -51,6 +51,7 @@
             const routine = routineId ? routineMap.get(routineId) : null;
             const routineName = routine?.name || 'Repos';
             const label = getDayLabel(dayIndex, startDay);
+            const hasRoutine = Boolean(routineId);
 
             const structure = listCard.createStructure({
                 clickable: true,
@@ -59,6 +60,7 @@
             });
             const { card, body, end } = structure;
             card.dataset.day = dayKey;
+            card.classList.toggle('selected', hasRoutine);
             card.setAttribute('aria-label', `${label} — ${routineName}`);
 
             const title = document.createElement('div');
@@ -70,7 +72,8 @@
             details.textContent = routineName;
 
             body.append(title, details);
-            end.appendChild(listCard.createIcon('›'));
+            const endIcon = hasRoutine ? '✓' : '›';
+            end.appendChild(listCard.createIcon(endIcon));
 
             card.addEventListener('click', () => {
                 void selectRoutineForDay(dayIndex);
