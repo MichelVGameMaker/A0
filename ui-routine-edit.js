@@ -516,7 +516,6 @@
                     createSetCell({
                         label: formatSetRpe(set?.rpe),
                         field: 'rpe',
-                        className: 'session-card-set-cell--rpe',
                         rpeValue: set?.rpe,
                         onClick: stopAndOpen('rpe')
                     })
