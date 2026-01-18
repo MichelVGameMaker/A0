@@ -305,6 +305,13 @@
             const name = document.createElement('div');
             name.className = 'element exercise-card-name';
             name.textContent = exerciseName;
+            name.addEventListener('click', (event) => {
+                event.stopPropagation();
+                if (!exercise.exercise_id) {
+                    return;
+                }
+                void A.openExerciseRead({ currentId: exercise.exercise_id, callerScreen: 'screenSessions' });
+            });
             const setsWrapper = document.createElement('div');
             setsWrapper.className = 'session-card-sets';
             const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
