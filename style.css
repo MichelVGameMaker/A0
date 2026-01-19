@@ -1637,9 +1637,9 @@ textarea:focus{
       display:flex;
       flex:      1;
       overflow-x:auto;
-      padding-top: var(--pad-tight); 
-      padding-bottom: var(--pad-tight); 
-      border-bottom:1px var(--emphase);
+      padding-top:    8px; 
+      padding-bottom: 8px; 
+    
       -webkit-overflow-scrolling:touch;
       touch-action:pan-x;
       scroll-snap-type:x mandatory;
