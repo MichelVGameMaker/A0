@@ -223,7 +223,6 @@
         refs.screenData = document.getElementById('screenData');
         refs.tabSessions = document.getElementById('tabSessions');
         refs.execBack = document.getElementById('execBack');
-        refs.execEditMeta = document.getElementById('execEditMeta');
         refs.execTitle = document.getElementById('execTitle');
         refs.execDate = document.getElementById('execDate');
         refs.execDelete = document.getElementById('execDelete');
@@ -262,7 +261,6 @@
         const required = [
             'screenExecEdit',
             'execBack',
-            'execEditMeta',
             'execTitle',
             'execDate',
             'execDelete',
@@ -317,11 +315,7 @@
     }
 
     function wireMetaDialog() {
-        const { execEditMeta, dlgExecMoveEditor, execMoveEditorClose, execMoveEditorCancel, execMoveNote } =
-            assertRefs();
-        execEditMeta.addEventListener('click', () => {
-            openMoveEditorDialog();
-        });
+        const { dlgExecMoveEditor, execMoveEditorClose, execMoveEditorCancel, execMoveNote } = assertRefs();
         execMoveEditorClose.addEventListener('click', () => {
             if (A.closeDialog) {
                 A.closeDialog(dlgExecMoveEditor);
