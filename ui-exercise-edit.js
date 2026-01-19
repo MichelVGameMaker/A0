@@ -31,7 +31,6 @@
 
         state.currentId = currentId;
         state.callerScreen = callerScreen;
-        applyDialogMode(callerScreen === 'screenExerciseRead');
 
         refs.exEditTitle.textContent = currentId ? 'Modifier' : 'Ajouter';
         refs.exEditDelete.hidden = !currentId;
@@ -87,7 +86,6 @@
         refs.exEditTitle = document.getElementById('exEditTitle');
         refs.exEditDelete = document.getElementById('exEditDelete');
         refs.exEditBack = document.getElementById('exEditBack');
-        refs.exEditBackdrop = document.getElementById('exEditBackdrop');
         refs.exEditOk = document.getElementById('exEditOk');
         refs.exName = document.getElementById('exName');
         refs.exTargetMuscle = document.getElementById('exTargetMuscle');
@@ -108,7 +106,6 @@
             'exEditTitle',
             'exEditDelete',
             'exEditBack',
-            'exEditBackdrop',
             'exEditOk',
             'exName',
             'exTargetMuscle',
@@ -134,19 +131,13 @@
     }
 
     function wireForm() {
-        const goBack = async () => {
+        refs.exTargetMuscle.addEventListener('change', updateGroupInfo);
+        refs.exEditBack?.addEventListener('click', async () => {
             if (state.callerScreen === 'screenExerciseRead' && state.currentId) {
                 await A.openExerciseRead({ currentId: state.currentId, callerScreen: 'screenExercises' });
             } else {
                 await A.openExercises({ callerScreen: 'screenExerciseEdit' });
             }
-        };
-        refs.exTargetMuscle.addEventListener('change', updateGroupInfo);
-        refs.exEditBack?.addEventListener('click', () => {
-            void goBack();
-        });
-        refs.exEditBackdrop?.addEventListener('click', () => {
-            void goBack();
         });
         refs.exEditOk?.addEventListener('click', () => {
             void save();
@@ -264,12 +255,6 @@
         if (!tagGroups.secondary) {
             tagGroups.secondary = new A.TagGroup(refs.exSecMuscles, { mode: 'multi', columns: 4 });
         }
-    }
-
-    function applyDialogMode(isDialog) {
-        const { screenExerciseEdit } = assertRefs();
-        screenExerciseEdit.classList.toggle('dialog-screen--page', !isDialog);
-        screenExerciseEdit.classList.toggle('dialog-screen--raised', isDialog);
     }
 
     function switchScreen(target) {
