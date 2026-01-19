@@ -39,7 +39,6 @@
         assertRefs();
         wireFilters();
         wireValueStates();
-        wireDialogDismiss();
     });
 
     /* ACTIONS */
@@ -166,7 +165,7 @@
             state.selection.clear();
         }
 
-        showDialog();
+        switchScreen('screenExercises');
         initializeFilters();
         applyFilterStateToInputs();
         ensureSelectionBar();
@@ -278,7 +277,6 @@
         refs.exList = document.getElementById('exList');
         refs.exBackList = document.getElementById('exBackList');
         refs.exOkList = document.getElementById('exOkList');
-        refs.exListBackdrop = document.getElementById('exListBackdrop');
         refsResolved = true;
         return refs;
     }
@@ -296,8 +294,7 @@
             'exFilterEquip',
             'exList',
             'exBackList',
-            'exOkList',
-            'exListBackdrop'
+            'exOkList'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -378,7 +375,7 @@
             if (state.onAddCallback) {
                 state.onAddCallback(ids);
             }
-            closeDialog();
+            switchScreen(state.callerScreen || 'screenExercises');
         });
 
         bar.appendChild(button);
@@ -569,31 +566,8 @@
             A.openExerciseEdit({ callerScreen: 'screenExercises' });
         };
         exBackList.onclick = () => {
-            closeDialog();
+            switchScreen(state.callerScreen || 'screenSessions');
         };
-    }
-
-    function wireDialogDismiss() {
-        const { exListBackdrop } = assertRefs();
-        exListBackdrop.addEventListener('click', () => {
-            closeDialog();
-        });
-    }
-
-    function showDialog() {
-        const { screenExercises } = assertRefs();
-        screenExercises.hidden = false;
-    }
-
-    function closeDialog() {
-        const { screenExercises } = assertRefs();
-        screenExercises.hidden = true;
-        if (state.callerScreen && state.callerScreen !== 'screenExercises') {
-            const caller = refs[state.callerScreen];
-            if (caller) {
-                caller.hidden = false;
-            }
-        }
     }
 
     function switchScreen(target) {

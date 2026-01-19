@@ -136,48 +136,46 @@
 <!-- ==================== -->
 
 <!-- ========== 2 Bibliothèque d’exercices ========== -->
-<section id="screenExercises" class="screen dialog-screen" hidden>
-    <button type="button" class="dialog-backdrop" id="exListBackdrop" aria-label="Fermer la bibliothèque"></button>
-    <div class="dialog-panel">
-        <!-- En-tête de l'écran Bibliothèque d'exercices -->
-        <header class="header">
-            <div class="header-left">
-                <button class="btn primary" id="exOkList" title="Créer un exercice">＋</button>
-            </div>
-            <div class="header-center">
-                <div class="title" id="exListTitle">Exercices</div>
-            </div>
-            <div class="header-right">
-                <button class="btn" id="exBackList" aria-label="Fermer">▼</button>
-            </div>
-        </header>
+<section id="screenExercises" class="screen" hidden>
+    
+    <!-- En-tête de l'écran Bibliothèque d'exercices -->
+    <header class="header">
+        <div class="header-left">
+            <button class="btn" id="exBackList">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title" id="exListTitle">Exercices</div>
+        </div>
+        <div class="header-right">
+            <button class="btn primary" id="exOkList" title="Créer un exercice">＋</button>
+        </div>
+    </header>
 
-        <!-- Corps de l'écran Bibliothèque d'exercices -->
-        <main class="content">
-          
-    		<!-- Cartouche haut : Zone de filtre -->
-    		<div class="bloque">
-    		
-    			<div class="row">
-    				<input id="exSearch" class="input full" placeholder="Rechercher par nom…" />
-    			</div>
-    			
-    			<div class="row">
-    				<select id="exFilterGroup" class="input flex-1">
-    					<option value="">Groupe musculaire</option>
-    				</select> 
-    				<select id="exFilterEquip" class="input flex-1">
-    					<option value="">Matériel</option>
-    				</select>
-    			</div>
-    		
-          </div>
-     
-    		<!-- Cartouche bas : Liste déroulante -->
-    		<section id="exList" class="bloque" aria-label="Bibliothèque d’exercices"></section>
-          
-    	</main>    
-    </div>
+    <!-- Corps de l'écran Bibliothèque d'exercices -->
+    <main class="content">
+      
+		<!-- Cartouche haut : Zone de filtre -->
+		<div class="bloque">
+		
+			<div class="row">
+				<input id="exSearch" class="input full" placeholder="Rechercher par nom…" />
+			</div>
+			
+			<div class="row">
+				<select id="exFilterGroup" class="input flex-1">
+					<option value="">Groupe musculaire</option>
+				</select> 
+				<select id="exFilterEquip" class="input flex-1">
+					<option value="">Matériel</option>
+				</select>
+			</div>
+		
+      </div>
+ 
+		<!-- Cartouche bas : Liste déroulante -->
+		<section id="exList" class="bloque" aria-label="Bibliothèque d’exercices"></section>
+      
+	</main>    
   </section>
 <!-- ==================== -->
  
@@ -347,29 +345,28 @@
 <!-- ==================== -->
 
 <!-- ========== 3 Bibliothèque des routines ========== -->
-<section id="screenRoutineList" class="screen dialog-screen" hidden>
-    <button type="button" class="dialog-backdrop" id="routineListBackdrop" aria-label="Fermer la liste des routines"></button>
-    <div class="dialog-panel">
-        <header class="header">
-            <div class="header-left">
-                <button id="btnRoutineCreate" class="btn primary" title="Créer une routine">＋</button>
-            </div>
+<section id="screenRoutineList" class="screen" hidden>
 
-            <div class="header-center">
-                <div class="title">Routines</div>
-            </div>
+    <header class="header">
+        <div class="header-left">
+            <button id="routineListBack" class="btn" title="Retour">◀︎</button>
+        </div>
 
-            <div class="header-right">
-                <button id="routineListBack" class="btn" title="Fermer" aria-label="Fermer">▼</button>
-             </div>
-        </header>
+        <div class="header-center">
+            <div class="title">Routines</div>
+        </div>
 
-        <main class="content">
-            <section id="routineCatalog" class="session-list" aria-label="Routines enregistrées"></section>
+        <div class="header-right">
+            <button id="btnRoutineCreate" class="btn primary" title="Créer une routine">＋</button>
+         </div>
+    </header>
+
+    <main class="content">
+        <section id="routineCatalog" class="session-list" aria-label="Routines enregistrées"></section>
 
 
-        </main>
-    </div>
+    </main>
+
 </section>
 <!-- ==================== -->
 

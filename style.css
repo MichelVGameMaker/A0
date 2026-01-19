@@ -158,56 +158,6 @@ body{
     height: 100svh;
 }
 .screen[hidden] { display: none !important; }
-.dialog-screen {
-    position: fixed;
-    inset: 0;
-    z-index: calc(var(--z-dialog) - 1);
-    height: 100svh;
-}
-.dialog-backdrop {
-    position: absolute;
-    inset: 0;
-    border: none;
-    background: rgba(0, 0, 0, 0.15);
-    padding: 0;
-}
-.dialog-panel {
-    position: absolute;
-    top: 5vh;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    flex-direction: column;
-    background: var(--panelBack);
-    border-radius: 18px 18px 0 0;
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.18);
-    overflow: hidden;
-}
-.dialog-screen:not([hidden]) .dialog-panel {
-    animation: dialog-slide-up 240ms ease-out;
-}
-.dialog-panel header {
-    position: sticky;
-    top: 0;
-    left: 0;
-    right: 0;
-}
-.dialog-panel .content {
-    padding-top: var(--gap);
-    padding-bottom: calc(var(--gap) + env(safe-area-inset-bottom, 0));
-    min-height: auto;
-    background: var(--panelBack);
-}
-
-@keyframes dialog-slide-up {
-    from {
-        transform: translateY(100%);
-    }
-    to {
-        transform: translateY(0%);
-    }
-}
 
 /* Grilles utilitaires */
 .row{ display:flex; align-items:center; gap:var(--gap); }
