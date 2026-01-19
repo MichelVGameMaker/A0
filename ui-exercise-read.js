@@ -51,7 +51,7 @@
         await updateHistory(exercise);
         setActiveTab(tab);
 
-        showDialog();
+        switchScreen('screenExerciseRead');
     };
 
     /* UTILS */
@@ -86,7 +86,6 @@
         refs.exReadTabHistory = document.getElementById('exReadTabHistory');
         refs.exReadTabStats = document.getElementById('exReadTabStats');
         refs.exReadHistoryList = document.getElementById('exReadHistoryList');
-        refs.exReadBackdrop = document.getElementById('exReadBackdrop');
         refs.dlgExerciseActions = document.getElementById('dlgExerciseActions');
         refs.exerciseActionsClose = document.getElementById('exerciseActionsClose');
         refs.exerciseActionName = document.getElementById('exerciseActionName');
@@ -115,7 +114,6 @@
             'exReadTabHistory',
             'exReadTabStats',
             'exReadHistoryList',
-            'exReadBackdrop',
             'dlgExerciseActions',
             'exerciseActionsClose',
             'exerciseActionName',
@@ -143,10 +141,11 @@
             exerciseActionDelete
         } = assertRefs();
         exReadBack?.addEventListener('click', () => {
-            closeDialog();
-        });
-        refs.exReadBackdrop?.addEventListener('click', () => {
-            closeDialog();
+            if (state.callerScreen === 'screenExercises') {
+                void A.openExercises({ callerScreen: 'screenExerciseRead' });
+            } else {
+                switchScreen(state.callerScreen || 'screenExercises');
+            }
         });
         exReadEdit?.addEventListener('click', () => {
             openExerciseActions();
@@ -574,26 +573,6 @@
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-|-$/g, '') || 'exercise';
         return `user--${base}--${Date.now()}`;
-    }
-
-    function showDialog() {
-        const { screenExerciseRead } = assertRefs();
-        const caller = state.callerScreen ? refs[state.callerScreen] : null;
-        if (caller && caller.hidden) {
-            switchScreen(state.callerScreen);
-        }
-        screenExerciseRead.hidden = false;
-    }
-
-    function closeDialog() {
-        const { screenExerciseRead } = assertRefs();
-        screenExerciseRead.hidden = true;
-        if (state.callerScreen && state.callerScreen !== 'screenExerciseRead') {
-            const caller = refs[state.callerScreen];
-            if (caller) {
-                caller.hidden = false;
-            }
-        }
     }
 
     function switchScreen(target) {

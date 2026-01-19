@@ -182,33 +182,32 @@
 <!-- ==================== -->
  
 <!-- ========== 2.1 Fiche d'un exercice ========== -->
-<section id="screenExerciseRead" class="screen dialog-screen dialog-screen--raised" hidden>
-    <button type="button" class="dialog-backdrop" id="exReadBackdrop" aria-label="Fermer la fiche exercice"></button>
-    <div class="dialog-panel">
-        <!-- En-tête -->
-        <header class="header">
-            <div class="header-left">
-                <button class="btn" id="exReadBack">◀︎</button>
-            </div>
-            <div class="header-center">
-                <div class="title" id="exReadTitle">Exercice</div>
-            </div>
-            <div class="header-right">
-                <button class="btn primary" id="exReadEdit" title="Éditer" aria-label="Éditer">✎</button>
-            </div>
-        </header>
+<section id="screenExerciseRead" class="screen" hidden>
+    
+    <!-- En-tête -->
+    <header class="header">
+        <div class="header-left">
+            <button class="btn" id="exReadBack">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title" id="exReadTitle">Exercice</div>
+        </div>
+        <div class="header-right">
+            <button class="btn primary" id="exReadEdit" title="Éditer" aria-label="Éditer">✎</button>
+        </div>
+    </header>
 
-    	<!-- Corps de l'écran Consulter un Exercice) -->
-    	<main class="content">
+	<!-- Corps de l'écran Consulter un Exercice) -->
+	<main class="content">
 
-            <div id="exReadTabs" class="tags exercise-read-tabs" role="tablist">
-                <button type="button" class="tag selected" data-tab="exec" role="tab" aria-selected="true">Exécution</button>
-                <button type="button" class="tag" data-tab="history" role="tab" aria-selected="false">Historique</button>
-                <button type="button" class="tag" data-tab="stats" role="tab" aria-selected="false">Statistiques</button>
-            </div>
+        <div id="exReadTabs" class="tags exercise-read-tabs" role="tablist">
+            <button type="button" class="tag selected" data-tab="exec" role="tab" aria-selected="true">Exécution</button>
+            <button type="button" class="tag" data-tab="history" role="tab" aria-selected="false">Historique</button>
+            <button type="button" class="tag" data-tab="stats" role="tab" aria-selected="false">Statistiques</button>
+        </div>
 
-            <section id="exReadTabExec" class="exercise-read-tab" data-tab-panel="exec">
-                <div class="panel exercise-read-panel">
+        <section id="exReadTabExec" class="exercise-read-tab" data-tab-panel="exec">
+            <div class="panel exercise-read-panel">
                 <!-- Image / GIF -->
                 <img id="exReadHero" alt="aperçu exercice" class="image_big" />
 
@@ -284,9 +283,8 @@
                 </section>
             </div>
         </section>
-    	</main>
-    </div>
-</section>
+	</main>  
+  </section>
 <!-- ==================== -->
   
 <!-- ========== 2.2 Modification d'un exercice ========== -->

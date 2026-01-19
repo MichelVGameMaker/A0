@@ -166,12 +166,7 @@
             state.selection.clear();
         }
 
-        applyDialogMode(state.listMode === 'add');
-        if (state.listMode === 'add') {
-            showDialog();
-        } else {
-            switchScreen('screenExercises');
-        }
+        showDialog();
         initializeFilters();
         applyFilterStateToInputs();
         ensureSelectionBar();
@@ -585,11 +580,6 @@
         });
     }
 
-    function applyDialogMode(isDialog) {
-        const { screenExercises } = assertRefs();
-        screenExercises.classList.toggle('dialog-screen--page', !isDialog);
-    }
-
     function showDialog() {
         const { screenExercises } = assertRefs();
         screenExercises.hidden = false;
@@ -597,21 +587,12 @@
 
     function closeDialog() {
         const { screenExercises } = assertRefs();
-        if (state.listMode === 'add') {
-            screenExercises.hidden = true;
-            if (state.callerScreen && state.callerScreen !== 'screenExercises') {
-                const caller = refs[state.callerScreen];
-                if (caller) {
-                    caller.hidden = false;
-                }
+        screenExercises.hidden = true;
+        if (state.callerScreen && state.callerScreen !== 'screenExercises') {
+            const caller = refs[state.callerScreen];
+            if (caller) {
+                caller.hidden = false;
             }
-            return;
-        }
-        const target = state.callerScreen || 'screenExercises';
-        if (target === 'screenExercises') {
-            screenExercises.hidden = false;
-        } else {
-            switchScreen(target);
         }
     }
 
