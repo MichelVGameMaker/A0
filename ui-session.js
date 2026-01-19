@@ -185,10 +185,9 @@
         button.setAttribute('aria-label', `Éditer l'exercice ${labelName}`);
         button.addEventListener('click', (event) => {
             event.stopPropagation();
-            void A.openExecEdit({
+            void A.openExecMoveMeta?.({
                 currentId: exerciseId,
-                callerScreen: 'screenSessions',
-                openMeta: true
+                callerScreen: 'screenSessions'
             });
         });
         return button;
@@ -1040,7 +1039,11 @@
 
         sessionEditorClose?.addEventListener('click', () => {
             flushSessionSave();
-            dlgSessionEditor.close();
+            if (A.closeDialog) {
+                A.closeDialog(dlgSessionEditor);
+            } else {
+                dlgSessionEditor.close();
+            }
         });
 
         sessionEditorCancel?.addEventListener('click', () => {
@@ -1053,7 +1056,11 @@
                 sessionComments.value = sessionEditorState.initialComments || '';
                 void flushSessionSave();
             }
-            dlgSessionEditor.close();
+            if (A.closeDialog) {
+                A.closeDialog(dlgSessionEditor);
+            } else {
+                dlgSessionEditor.close();
+            }
         });
 
         dlgSessionEditor.addEventListener('close', () => {
@@ -1232,7 +1239,11 @@
         if (typeof A.populateRoutineSelect === 'function') {
             await A.populateRoutineSelect();
         }
-        dlgSessionEditor?.close();
+        if (A.closeDialog) {
+            A.closeDialog(dlgSessionEditor);
+        } else {
+            dlgSessionEditor?.close();
+        }
         if (typeof A.openRoutineEdit === 'function') {
             await A.openRoutineEdit({ routineId, callerScreen: 'screenSessions' });
         }
@@ -1262,7 +1273,11 @@
             await db.del('sessions', session.id);
         }
         sessionEditorState.session = null;
-        dlgSessionEditor?.close();
+        if (A.closeDialog) {
+            A.closeDialog(dlgSessionEditor);
+        } else {
+            dlgSessionEditor?.close();
+        }
         if (typeof A.renderWeek === 'function') {
             await A.renderWeek();
         }

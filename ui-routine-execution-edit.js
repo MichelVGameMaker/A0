@@ -12,7 +12,8 @@
         callerScreen: 'screenRoutineEdit',
         routine: null,
         pendingSave: null,
-        pendingFocus: null
+        pendingFocus: null,
+        replaceCallerScreen: 'screenRoutineMoveEdit'
     };
     let inlineEditor = null;
     const inlineKeyboard = A.components?.inlineKeyboard || A.components?.createInlineKeyboard?.();
@@ -44,6 +45,7 @@
         state.routineId = routineId;
         state.moveId = moveId;
         state.callerScreen = callerScreen;
+        state.replaceCallerScreen = 'screenRoutineMoveEdit';
         if (Number.isInteger(focusSetIndex) && focusSetIndex >= 0) {
             state.pendingFocus = { index: focusSetIndex, field: focusField };
         } else {
@@ -66,6 +68,35 @@
         refreshValueStates();
         renderSets();
         switchScreen('screenRoutineMoveEdit');
+    };
+
+    A.openRoutineMoveMeta = async function openRoutineMoveMeta(options = {}) {
+        const { routineId, moveId, callerScreen = 'screenRoutineEdit' } = options;
+        if (!routineId || !moveId) {
+            return;
+        }
+        state.routineId = routineId;
+        state.moveId = moveId;
+        state.callerScreen = callerScreen;
+        state.replaceCallerScreen = callerScreen;
+        state.pendingFocus = null;
+
+        const routine = await db.get('routines', routineId);
+        state.routine = normalizeRoutine(routine);
+        const move = findMove();
+        if (!move) {
+            alert('Exercice introuvable dans la routine.');
+            return;
+        }
+
+        const { dlgRoutineMoveEditor, routineMoveInstructions } = assertRefs();
+        routineMoveSnapshot = move ? { instructions: move.instructions || '' } : null;
+        if (routineMoveInstructions) {
+            routineMoveInstructions.value = move.instructions || '';
+        }
+        refreshValueStates();
+        inlineKeyboard?.detach?.();
+        dlgRoutineMoveEditor?.showModal();
     };
 
     /* UTILS */
@@ -184,7 +215,11 @@
                 state.pendingSave = null;
                 void persistRoutine();
             }
-            dlgRoutineMoveEditor?.close();
+            if (A.closeDialog) {
+                A.closeDialog(dlgRoutineMoveEditor);
+            } else {
+                dlgRoutineMoveEditor?.close();
+            }
             routineMoveSnapshot = null;
         });
         routineMoveEditorCancel.addEventListener('click', () => {
@@ -199,7 +234,11 @@
                 }
                 void persistRoutine();
             }
-            dlgRoutineMoveEditor?.close();
+            if (A.closeDialog) {
+                A.closeDialog(dlgRoutineMoveEditor);
+            } else {
+                dlgRoutineMoveEditor?.close();
+            }
             routineMoveSnapshot = null;
         });
         routineMoveInstructions.addEventListener('input', () => {
@@ -634,7 +673,11 @@
         });
         state.routine.moves = moves;
         await persistRoutine();
-        refs.dlgRoutineMoveEditor?.close();
+        if (A.closeDialog) {
+            A.closeDialog(refs.dlgRoutineMoveEditor);
+        } else {
+            refs.dlgRoutineMoveEditor?.close();
+        }
         returnToCaller();
     }
 
@@ -643,10 +686,14 @@
         if (!move) {
             return;
         }
-        refs.dlgRoutineMoveEditor?.close();
+        if (A.closeDialog) {
+            A.closeDialog(refs.dlgRoutineMoveEditor);
+        } else {
+            refs.dlgRoutineMoveEditor?.close();
+        }
         A.openExercises({
             mode: 'add',
-            callerScreen: 'screenRoutineMoveEdit',
+            callerScreen: state.replaceCallerScreen || 'screenRoutineMoveEdit',
             selectionLimit: 1,
             onAdd: (ids) => {
                 const [nextId] = ids;
@@ -764,7 +811,11 @@
     }
 
     function returnToCaller() {
-        refs.dlgRoutineMoveEditor?.close();
+        if (A.closeDialog) {
+            A.closeDialog(refs.dlgRoutineMoveEditor);
+        } else {
+            refs.dlgRoutineMoveEditor?.close();
+        }
         switchScreen(state.callerScreen || 'screenRoutineEdit');
         void A.refreshRoutineEdit();
     }
