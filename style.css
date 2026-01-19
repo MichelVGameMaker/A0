@@ -1337,8 +1337,8 @@ textarea:focus{
   border-color: color-mix(in srgb, var(--rpe-border) 50%, var(--panelBord));
 }
 .session-card-sets-row--planned{
-  background: transparent;
-  color: var(--panelBord);
+  background: color-mix(in srgb, var(--rpe-bg) 20%, transparent);
+  color: color-mix(in srgb, var(--black) 65%, transparent);
   font-weight: var(--fw-light);
 }
 .session-card-sets-row--planned .session-card-set-cell{
@@ -1350,10 +1350,13 @@ textarea:focus{
   color: inherit;
   font-weight: inherit;
 }
+.session-card-sets-row--planned[data-rpe]{
+  border-color: color-mix(in srgb, var(--rpe-border) 35%, var(--panelBord));
+}
 .session-card-sets-row--planned .session-card-set-cell[data-rpe]{
-  background: transparent;
-  border-color: var(--panelBord);
-  color: var(--panelBord);
+  background: color-mix(in srgb, var(--rpe-bg) 40%, transparent);
+  border-color: color-mix(in srgb, var(--rpe-border) 40%, transparent);
+  color: inherit;
   box-shadow:none;
 }
 .session-card-sets-row--empty{
