@@ -2,6 +2,38 @@
 (() => {
     const A = window.App;
 
+    A.closeDialog = function closeDialog(dialog) {
+        if (!dialog || !dialog.open) {
+            return;
+        }
+        if (!dialog.classList.contains('modal-top')) {
+            dialog.close();
+            return;
+        }
+        if (dialog.classList.contains('is-closing')) {
+            return;
+        }
+        dialog.classList.add('is-closing');
+        let finished = false;
+        const finish = () => {
+            if (finished) {
+                return;
+            }
+            finished = true;
+            dialog.classList.remove('is-closing');
+            dialog.close();
+        };
+        const timeout = window.setTimeout(finish, 240);
+        dialog.addEventListener(
+            'animationend',
+            () => {
+                clearTimeout(timeout);
+                finish();
+            },
+            { once: true }
+        );
+    };
+
     /* STATE */
     const refs = {};
     let refsResolved = false;

@@ -181,7 +181,11 @@
         await db.del('routines', state.routineId);
         state.routine = null;
         const { dlgRoutineEditor } = assertRefs();
-        dlgRoutineEditor?.close();
+        if (A.closeDialog) {
+            A.closeDialog(dlgRoutineEditor);
+        } else {
+            dlgRoutineEditor?.close();
+        }
         if (typeof A.refreshRoutineList === 'function') {
             await A.refreshRoutineList();
         }
@@ -222,7 +226,11 @@
         state.routineId = newRoutine.id;
         state.routine = normalizeRoutine(newRoutine);
         const { dlgRoutineEditor } = assertRefs();
-        dlgRoutineEditor?.close();
+        if (A.closeDialog) {
+            A.closeDialog(dlgRoutineEditor);
+        } else {
+            dlgRoutineEditor?.close();
+        }
         if (typeof A.refreshRoutineList === 'function') {
             await A.refreshRoutineList();
         }
@@ -317,12 +325,20 @@
             if (refs.routineEditTitle) {
                 refs.routineEditTitle.textContent = state.routine?.name || 'Routine';
             }
-            dlgRoutineEditor?.close();
+            if (A.closeDialog) {
+                A.closeDialog(dlgRoutineEditor);
+            } else {
+                dlgRoutineEditor?.close();
+            }
             routineEditorSnapshot = null;
         });
         routineEditorCancel?.addEventListener('click', () => {
             if (!routineEditorSnapshot || !state.routine) {
-                dlgRoutineEditor?.close();
+                if (A.closeDialog) {
+                    A.closeDialog(dlgRoutineEditor);
+                } else {
+                    dlgRoutineEditor?.close();
+                }
                 return;
             }
             if (state.pendingSave) {
@@ -341,7 +357,11 @@
                 refs.routineEditTitle.textContent = state.routine?.name || 'Routine';
             }
             void persistRoutine();
-            dlgRoutineEditor?.close();
+            if (A.closeDialog) {
+                A.closeDialog(dlgRoutineEditor);
+            } else {
+                dlgRoutineEditor?.close();
+            }
             routineEditorSnapshot = null;
         });
     }
@@ -555,7 +575,7 @@
         button.setAttribute('aria-label', `Éditer l'exercice ${labelName}`);
         button.addEventListener('click', (event) => {
             event.stopPropagation();
-            void A.openRoutineMoveEdit({
+            void A.openRoutineMoveMeta?.({
                 routineId: state.routineId,
                 moveId: move.id,
                 callerScreen: 'screenRoutineEdit'

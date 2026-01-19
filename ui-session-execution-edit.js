@@ -12,7 +12,8 @@
         callerScreen: 'screenSessions',
         session: null,
         metaMode: 'history',
-        pendingFocus: null
+        pendingFocus: null,
+        replaceCallerScreen: 'screenExecEdit'
     };
     let medalPopover = null;
     let medalPopoverCleanup = null;
@@ -128,6 +129,7 @@
         state.exerciseId = currentId;
         state.callerScreen = callerScreen;
         state.session = session;
+        state.replaceCallerScreen = 'screenExecEdit';
         if (Number.isInteger(focusSetIndex) && focusSetIndex >= 0) {
             state.pendingFocus = {
                 index: focusSetIndex,
@@ -157,6 +159,47 @@
                 }
             }, 0);
         }
+    };
+
+    A.openExecMoveMeta = async function openExecMoveMeta(options = {}) {
+        const { currentId, callerScreen = 'screenSessions' } = options;
+        if (!currentId) {
+            return;
+        }
+
+        const date = A.activeDate || A.today();
+        const dateKey = A.ymd(date);
+        const session = await db.getSession(dateKey);
+        if (!session) {
+            alert('Aucune séance pour cette date.');
+            return;
+        }
+        const exercise = Array.isArray(session.exercises)
+            ? session.exercises.find((item) => item.exercise_id === currentId)
+            : null;
+        if (!exercise) {
+            alert('Exercice introuvable dans la séance.');
+            return;
+        }
+
+        normalizeExerciseSets(exercise);
+
+        state.dateKey = dateKey;
+        state.exerciseId = currentId;
+        state.callerScreen = callerScreen;
+        state.session = session;
+        state.pendingFocus = null;
+        state.replaceCallerScreen = callerScreen;
+
+        const { execRoutineInstructions, execMoveNote } = assertRefs();
+        if (execRoutineInstructions) {
+            execRoutineInstructions.value = exercise.routine_instructions || '';
+        }
+        if (execMoveNote) {
+            execMoveNote.value = exercise.exercise_note || '';
+        }
+        refreshValueStates();
+        openMoveEditorDialog();
     };
 
     /* UTILS */
@@ -280,7 +323,11 @@
             openMoveEditorDialog();
         });
         execMoveEditorClose.addEventListener('click', () => {
-            dlgExecMoveEditor?.close();
+            if (A.closeDialog) {
+                A.closeDialog(dlgExecMoveEditor);
+            } else {
+                dlgExecMoveEditor?.close();
+            }
             execMoveSnapshot = null;
         });
         execMoveEditorCancel.addEventListener('click', () => {
@@ -291,7 +338,11 @@
                 refreshValueStates();
                 void persistSession(false);
             }
-            dlgExecMoveEditor?.close();
+            if (A.closeDialog) {
+                A.closeDialog(dlgExecMoveEditor);
+            } else {
+                dlgExecMoveEditor?.close();
+            }
             execMoveSnapshot = null;
         });
         execMoveNote.addEventListener('input', () => {
@@ -1234,7 +1285,11 @@
             await db.saveSession(state.session);
         }
         await refreshSessionViews();
-        refs.dlgExecMoveEditor?.close();
+        if (A.closeDialog) {
+            A.closeDialog(refs.dlgExecMoveEditor);
+        } else {
+            refs.dlgExecMoveEditor?.close();
+        }
         backToCaller();
     }
 
@@ -1243,10 +1298,14 @@
         if (!exercise) {
             return;
         }
-        refs.dlgExecMoveEditor?.close();
+        if (A.closeDialog) {
+            A.closeDialog(refs.dlgExecMoveEditor);
+        } else {
+            refs.dlgExecMoveEditor?.close();
+        }
         A.openExercises({
             mode: 'add',
-            callerScreen: 'screenExecEdit',
+            callerScreen: state.replaceCallerScreen || 'screenExecEdit',
             selectionLimit: 1,
             onAdd: (ids) => {
                 const [nextId] = ids;
@@ -1361,7 +1420,11 @@
     }
 
     function backToCaller() {
-        refs.dlgExecMoveEditor?.close();
+        if (A.closeDialog) {
+            A.closeDialog(refs.dlgExecMoveEditor);
+        } else {
+            refs.dlgExecMoveEditor?.close();
+        }
         switchScreen(state.callerScreen || 'screenSessions');
         void refreshSessionViews();
     }
