@@ -125,7 +125,6 @@
         refs.routineMoveAddSet = document.getElementById('routineMoveAddSet');
         refs.routineMoveDelete = document.getElementById('routineMoveDelete');
         refs.routineMoveReplace = document.getElementById('routineMoveReplace');
-        refs.routineMoveEditMeta = document.getElementById('routineMoveEditMeta');
         refs.dlgRoutineMoveEditor = document.getElementById('dlgRoutineMoveEditor');
         refs.routineMoveInstructions = document.getElementById('routineMoveInstructions');
         refs.routineMoveEditorClose = document.getElementById('routineMoveEditorClose');
@@ -152,7 +151,6 @@
             'routineMoveAddSet',
             'routineMoveDelete',
             'routineMoveReplace',
-            'routineMoveEditMeta',
             'dlgRoutineMoveEditor',
             'routineMoveInstructions',
             'routineMoveEditorClose',
@@ -192,23 +190,12 @@
 
     function wireMetaDialog() {
         const {
-            routineMoveEditMeta,
             dlgRoutineMoveEditor,
             routineMoveEditorClose,
             routineMoveEditorCancel,
             routineMoveInstructions
         } =
             assertRefs();
-        routineMoveEditMeta.addEventListener('click', () => {
-            const move = findMove();
-            routineMoveSnapshot = move ? { instructions: move.instructions || '' } : null;
-            if (routineMoveSnapshot) {
-                routineMoveInstructions.value = routineMoveSnapshot.instructions;
-                refreshValueStates();
-            }
-            inlineKeyboard?.detach?.();
-            dlgRoutineMoveEditor?.showModal();
-        });
         routineMoveEditorClose.addEventListener('click', () => {
             if (state.pendingSave) {
                 clearTimeout(state.pendingSave);
