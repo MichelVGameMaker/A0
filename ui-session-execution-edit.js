@@ -249,17 +249,10 @@
     }
 
     function wireNavigation() {
-        const { execBack, execTitle } = assertRefs();
+        const { execBack } = assertRefs();
         execBack.addEventListener('click', () => {
             inlineKeyboard?.detach?.();
             backToCaller();
-        });
-        execTitle.addEventListener('click', () => {
-            if (!state.exerciseId) {
-                return;
-            }
-            inlineKeyboard?.detach?.();
-            void A.openExerciseRead({ currentId: state.exerciseId, callerScreen: 'screenExecEdit' });
         });
     }
 

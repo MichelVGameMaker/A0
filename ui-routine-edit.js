@@ -479,7 +479,7 @@
         if (sets.length) {
             sets.forEach((set, index) => {
                 const line = document.createElement('div');
-                line.className = 'session-card-sets-row session-card-sets-row--planned';
+                line.className = 'session-card-sets-row';
                 const pos = set?.pos ?? index + 1;
                 const openWithFocus = (field) => {
                     void A.openRoutineMoveEdit({
@@ -518,7 +518,9 @@
                         field: 'rpe',
                         rpeValue: set?.rpe,
                         onClick: stopAndOpen('rpe')
-                    })
+                    }),
+                    createEmptySetCell({ className: 'session-card-set-cell--goal' }),
+                    createEmptySetCell({ className: 'session-card-set-cell--medal' })
                 );
                 setsWrapper.appendChild(line);
             });
@@ -989,6 +991,12 @@
         if (onClick) {
             cell.addEventListener('click', onClick);
         }
+        return cell;
+    }
+
+    function createEmptySetCell({ className } = {}) {
+        const cell = document.createElement('div');
+        cell.className = `session-card-set-cell${className ? ` ${className}` : ''}`;
         return cell;
     }
 

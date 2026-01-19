@@ -1266,7 +1266,9 @@ textarea:focus{
     minmax(0, 0.4fr)
     minmax(0, 1.0fr)
     minmax(0, 1.0fr)
-    minmax(0, 0.7fr);
+    minmax(0, 0.7fr)
+    minmax(0, 1.0fr)
+    minmax(0, 0.5fr);
   column-gap:6px;
   row-gap:   2px;
   justify-content:center;
@@ -1276,15 +1278,6 @@ textarea:focus{
   border:1px solid var(--panelBord);
   border-radius:10px;
   background: color-mix(in srgb, var(--panelBord) 20%, transparent);
-}
-.session-card-sets-row--session{
-  grid-template-columns:
-    minmax(0, 0.4fr)
-    minmax(0, 1.0fr)
-    minmax(0, 1.0fr)
-    minmax(0, 0.7fr)
-    minmax(0, 1.0fr)
-    minmax(0, 0.5fr);
 }
 .session-card-sets-row[data-rpe]{
   background: color-mix(in srgb, var(--rpe-bg) 35%, transparent);
@@ -1299,8 +1292,8 @@ textarea:focus{
   color: inherit;
   font-weight: inherit;
 }
-.session-card-sets-row--planned.session-card-sets-row--session .session-card-set-cell--index,
-.session-card-sets-row--planned.session-card-sets-row--session .session-card-set-cell--goal{
+.session-card-sets-row--planned .session-card-set-cell--index,
+.session-card-sets-row--planned .session-card-set-cell--goal{
   color: inherit;
   font-weight: inherit;
 }
@@ -1335,12 +1328,12 @@ textarea:focus{
   background:transparent;
   font-size:var(--fs-small);
 }
-.session-card-sets-row--session .session-card-set-cell{
+.session-card-sets-row .session-card-set-cell{
   font-weight: var(--fw-base);
   color: var(--black);
 }
-.session-card-sets-row--session .session-card-set-cell--index,
-.session-card-sets-row--session .session-card-set-cell--goal{
+.session-card-sets-row .session-card-set-cell--index,
+.session-card-sets-row .session-card-set-cell--goal{
   color: var(--labelColor);
   font-weight: var(--fw-light);
 }

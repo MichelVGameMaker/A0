@@ -323,7 +323,7 @@
             if (sets.length) {
                 sets.forEach((set, index) => {
                     const line = document.createElement('div');
-                    line.className = 'session-card-sets-row session-card-sets-row--session';
+                    line.className = 'session-card-sets-row';
                     const isPlanned = set?.done !== true;
                     if (isPlanned) {
                         line.classList.add('session-card-sets-row--planned');
