@@ -135,7 +135,7 @@
     }
 
     function wireNavigation() {
-        const { routineMoveBack, routineMoveDone, routineMoveTitle } = assertRefs();
+        const { routineMoveBack, routineMoveDone } = assertRefs();
         routineMoveBack.addEventListener('click', () => {
             inlineKeyboard?.detach?.();
             returnToCaller();
@@ -143,14 +143,6 @@
         routineMoveDone?.addEventListener('click', () => {
             inlineKeyboard?.detach?.();
             returnToCaller();
-        });
-        routineMoveTitle.addEventListener('click', () => {
-            const move = findMove();
-            if (!move?.exerciseId) {
-                return;
-            }
-            inlineKeyboard?.detach?.();
-            void A.openExerciseRead({ currentId: move.exerciseId, callerScreen: 'screenRoutineMoveEdit' });
         });
     }
 
