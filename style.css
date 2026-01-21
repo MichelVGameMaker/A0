@@ -778,6 +778,10 @@ textarea{
   white-space:nowrap;
   text-align:center;
 }
+.tag.is-active{
+    border-color: var(--emphase);
+    color: var(--emphase);
+}
 /* Focus/actif -> fond gris + bordure strong */
 .input:focus,
 select:focus,
@@ -2603,11 +2607,14 @@ input[type="number"]{ -moz-appearance:textfield; }
     flex-direction: column;
     gap: var(--gap);
 }
+.share-session-years {
+    margin-bottom: var(--gap);
+}
 .share-session-item {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr;
     align-items: center;
-    justify-content: flex-start;
-    gap: var(--gap);
+    column-gap: var(--gap);
     padding: 8px 10px;
     border: 1px solid var(--panelBord);
     border-radius: var(--radius);
