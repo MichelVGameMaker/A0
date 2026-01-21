@@ -5,6 +5,10 @@
     /* STATE */
     const refs = {};
     let refsResolved = false;
+    const shareDialogState = {
+        dates: [],
+        selected: new Set()
+    };
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -74,6 +78,7 @@
         refs.btnSettingsRoutines = document.getElementById('btnSettingsRoutines');
         refs.btnSettingsPreferences = document.getElementById('btnSettingsPreferences');
         refs.btnSettingsData = document.getElementById('btnSettingsData');
+        refs.btnSettingsShare = document.getElementById('btnSettingsShare');
         refs.btnSettingsApplication = document.getElementById('btnSettingsApplication');
         refs.btnSettingsUpdate = document.getElementById('btnSettingsUpdate');
         refs.btnSettingsReset = document.getElementById('btnSettingsReset');
@@ -87,6 +92,12 @@
         refs.btnDataFitHeroMapping = document.getElementById('btnDataFitHeroMapping');
         refs.inputDataImportFitHero = document.getElementById('inputDataImportFitHero');
         refs.inputDataImportSessions = document.getElementById('inputDataImportSessions');
+        refs.dlgShareSessions = document.getElementById('dlgShareSessions');
+        refs.shareSessionsList = document.getElementById('shareSessionsList');
+        refs.shareSessionsEmpty = document.getElementById('shareSessionsEmpty');
+        refs.shareSessionsClose = document.getElementById('shareSessionsClose');
+        refs.shareSessionsCancel = document.getElementById('shareSessionsCancel');
+        refs.shareSessionsConfirm = document.getElementById('shareSessionsConfirm');
         refsResolved = true;
         return refs;
     }
@@ -97,6 +108,7 @@
             btnSettingsRoutines,
             btnSettingsPreferences,
             btnSettingsData,
+            btnSettingsShare,
             btnSettingsApplication,
             btnSettingsUpdate,
             btnSettingsReset,
@@ -109,7 +121,10 @@
             btnDataImportSessions,
             btnDataFitHeroMapping,
             inputDataImportFitHero,
-            inputDataImportSessions
+            inputDataImportSessions,
+            shareSessionsClose,
+            shareSessionsCancel,
+            shareSessionsConfirm
         } = ensureRefs();
 
         btnSettingsExercises?.addEventListener('click', () => {
@@ -125,6 +140,9 @@
         });
         btnSettingsData?.addEventListener('click', () => {
             A.openData();
+        });
+        btnSettingsShare?.addEventListener('click', () => {
+            void openShareSessionsDialog();
         });
         btnSettingsApplication?.addEventListener('click', () => {
             A.openApplication();
@@ -171,6 +189,15 @@
                 button: btnDataImportSessions
             });
         });
+        shareSessionsClose?.addEventListener('click', () => {
+            closeShareSessionsDialog();
+        });
+        shareSessionsCancel?.addEventListener('click', () => {
+            closeShareSessionsDialog();
+        });
+        shareSessionsConfirm?.addEventListener('click', () => {
+            void confirmShareSessions();
+        });
     }
 
     function highlightSettingsTab() {
@@ -183,6 +210,265 @@
     function highlightStatsTab() {
         document.querySelectorAll('.tabbar .tab').forEach((button) => button.classList.remove('active'));
         document.getElementById('tabStats')?.classList.add('active');
+    }
+
+    async function openShareSessionsDialog() {
+        const { dlgShareSessions } = ensureRefs();
+        if (!dlgShareSessions) {
+            return;
+        }
+        if (dlgShareSessions.open) {
+            return;
+        }
+
+        const dates = await getShareSessionDates();
+        shareDialogState.dates = dates;
+        shareDialogState.selected = new Set();
+        const todayKey = A.ymd(A.today());
+        if (dates.includes(todayKey)) {
+            shareDialogState.selected.add(todayKey);
+        }
+        renderShareSessionList();
+        dlgShareSessions.showModal();
+    }
+
+    function closeShareSessionsDialog() {
+        const { dlgShareSessions } = ensureRefs();
+        if (dlgShareSessions?.open) {
+            dlgShareSessions.close('cancel');
+        }
+    }
+
+    async function confirmShareSessions() {
+        const { shareSessionsConfirm } = ensureRefs();
+        const selectedDates = Array.from(shareDialogState.selected);
+        if (!selectedDates.length) {
+            if (A.components?.confirmDialog?.alert) {
+                await A.components.confirmDialog.alert({
+                    title: 'Partager',
+                    message: 'Sélectionnez au moins une séance.',
+                    variant: 'info'
+                });
+            } else {
+                alert('Sélectionnez au moins une séance.');
+            }
+            return;
+        }
+
+        if (shareSessionsConfirm) {
+            shareSessionsConfirm.disabled = true;
+        }
+        try {
+            const text = await buildShareSessionsText(selectedDates);
+            await shareSessionText(text);
+            closeShareSessionsDialog();
+        } catch (error) {
+            if (error?.name === 'AbortError') {
+                return;
+            }
+            console.warn('Partage des séances échoué :', error);
+            if (A.components?.confirmDialog?.alert) {
+                await A.components.confirmDialog.alert({
+                    title: 'Partager',
+                    message: 'Le partage des séances a échoué.',
+                    variant: 'error'
+                });
+            } else {
+                alert('Le partage des séances a échoué.');
+            }
+        } finally {
+            if (shareSessionsConfirm) {
+                shareSessionsConfirm.disabled = false;
+            }
+        }
+    }
+
+    async function getShareSessionDates() {
+        if (typeof db?.listSessionDatesWithActivity === 'function') {
+            const entries = await db.listSessionDatesWithActivity();
+            return entries.map((entry) => entry.date).filter(Boolean).sort().reverse();
+        }
+        if (typeof db?.listSessionDates === 'function') {
+            const entries = await db.listSessionDates();
+            return entries.map((entry) => entry.date).filter(Boolean).sort().reverse();
+        }
+        if (typeof db?.getAll !== 'function') {
+            return [];
+        }
+        const sessions = await db.getAll('sessions');
+        return (Array.isArray(sessions) ? sessions : [])
+            .map((session) => A.sessionDateKeyFromId?.(session?.id) || session?.date?.slice(0, 10))
+            .filter(Boolean)
+            .sort()
+            .reverse();
+    }
+
+    function renderShareSessionList() {
+        const { shareSessionsList, shareSessionsEmpty, shareSessionsConfirm } = ensureRefs();
+        if (!shareSessionsList) {
+            return;
+        }
+        shareSessionsList.innerHTML = '';
+        if (!shareDialogState.dates.length) {
+            shareSessionsEmpty?.removeAttribute('hidden');
+            if (shareSessionsConfirm) {
+                shareSessionsConfirm.disabled = true;
+            }
+            return;
+        }
+        shareSessionsEmpty?.setAttribute('hidden', '');
+        if (shareSessionsConfirm) {
+            shareSessionsConfirm.disabled = false;
+        }
+        shareDialogState.dates.forEach((dateKey) => {
+            const label = document.createElement('label');
+            label.className = 'share-session-item';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'app-check';
+            checkbox.value = dateKey;
+            checkbox.checked = shareDialogState.selected.has(dateKey);
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    shareDialogState.selected.add(dateKey);
+                } else {
+                    shareDialogState.selected.delete(dateKey);
+                }
+            });
+
+            const text = document.createElement('span');
+            text.textContent = formatShareDateLabel(dateKey);
+
+            label.appendChild(checkbox);
+            label.appendChild(text);
+            shareSessionsList.appendChild(label);
+        });
+    }
+
+    function formatShareDateLabel(dateKey, options = {}) {
+        if (!dateKey || typeof dateKey !== 'string') {
+            return '';
+        }
+        const date = new Date(`${dateKey}T00:00:00`);
+        if (Number.isNaN(date.getTime())) {
+            return dateKey;
+        }
+        const label = date.toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+        return options.uppercase ? label.toUpperCase() : label;
+    }
+
+    function formatShareNumber(value, options = {}) {
+        if (value == null || value === '') {
+            return '';
+        }
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return String(value).trim();
+        }
+        return numeric.toLocaleString('fr-FR', {
+            maximumFractionDigits: options.maximumFractionDigits ?? 2
+        });
+    }
+
+    function formatShareInteger(value) {
+        if (value == null || value === '') {
+            return '';
+        }
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return String(value).trim();
+        }
+        return String(Math.round(numeric));
+    }
+
+    function formatShareSetLine(set, index, exercise) {
+        const weightValue = formatShareNumber(set?.weight, { maximumFractionDigits: 2 });
+        const repsValue = formatShareInteger(set?.reps);
+        const rpeValue = formatShareNumber(set?.rpe, { maximumFractionDigits: 1 });
+        const unit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
+        let label = '';
+        if (weightValue && repsValue) {
+            label = `${weightValue} ${unit} x ${repsValue} reps`;
+        } else if (weightValue) {
+            label = `${weightValue} ${unit}`;
+        } else if (repsValue) {
+            label = `${repsValue} reps`;
+        } else if (rpeValue) {
+            label = 'Série';
+        }
+        if (!label) {
+            return null;
+        }
+        if (rpeValue) {
+            label = `${label} @ rpe ${rpeValue}`;
+        }
+        return `${index}. ${label}`;
+    }
+
+    async function buildShareSessionsText(dateKeys) {
+        const lines = ['Séance/s de musculation:', ''];
+        for (const dateKey of dateKeys) {
+            const session = await db.getSession(dateKey);
+            lines.push(`> SÉANCE DU ${formatShareDateLabel(dateKey, { uppercase: true })}`);
+            lines.push('');
+            const exercises = Array.isArray(session?.exercises) ? [...session.exercises] : [];
+            exercises.sort((a, b) => (a?.sort ?? 0) - (b?.sort ?? 0));
+            if (!exercises.length) {
+                lines.push('Aucun exercice.');
+                lines.push('');
+                lines.push('');
+                continue;
+            }
+            for (const exercise of exercises) {
+                const name = exercise?.exercise_name || exercise?.name || exercise?.exercise_id || 'Exercice';
+                lines.push(name);
+                const sets = Array.isArray(exercise?.sets) ? [...exercise.sets] : [];
+                sets.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
+                const setLines = sets
+                    .map((set, idx) => formatShareSetLine(set, idx + 1, exercise))
+                    .filter(Boolean);
+                if (setLines.length) {
+                    lines.push(...setLines);
+                } else {
+                    lines.push('Aucune série.');
+                }
+                lines.push('');
+            }
+            lines.push('');
+        }
+        while (lines.length && lines[lines.length - 1] === '') {
+            lines.pop();
+        }
+        return lines.join('\n');
+    }
+
+    async function shareSessionText(text) {
+        if (!text) {
+            return;
+        }
+        if (navigator.share) {
+            await navigator.share({ text, title: 'Séances de musculation' });
+            return;
+        }
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            if (A.components?.confirmDialog?.alert) {
+                await A.components.confirmDialog.alert({
+                    title: 'Partager',
+                    message: 'Texte copié dans le presse-papiers.',
+                    variant: 'info'
+                });
+            } else {
+                alert('Texte copié dans le presse-papiers.');
+            }
+            return;
+        }
+        window.prompt('Copiez ce texte pour le partager :', text);
     }
 
     async function handleUpdateRefresh() {

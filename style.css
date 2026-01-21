@@ -2600,6 +2600,24 @@ input[type="number"]{ -moz-appearance:textfield; }
     flex-direction: column;
     gap: 12px;
 }
+.share-session-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+}
+.share-session-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--gap);
+    padding: 8px 10px;
+    border: 1px solid var(--panelBord);
+    border-radius: var(--radius);
+    background: var(--panelBack);
+}
+.share-session-item span {
+    font-weight: var(--fw-base);
+}
 
 .mapping-card__actions {
     display: flex;
