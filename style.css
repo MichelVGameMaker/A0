@@ -269,7 +269,7 @@ body{
    3) Header principal (haut)
    ========================================================= */
 header{
-    z-index: var(-z-header);
+    z-index: var(--z-header);
     position: fixed; top: 0; left:0; right:0;
     height: calc(var(--header-h) + env(safe-area-inset-top, 0));
     display:grid;
