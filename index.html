@@ -561,6 +561,9 @@
                 <button id="btnSettingsData" class="btn full">💾 Données</button>
             </div>
             <div class="row">
+                <button id="btnSettingsShare" class="btn full">📤 Partager</button>
+            </div>
+            <div class="row">
                 <button id="btnSettingsApplication" class="btn full">📱 Application</button>
             </div>
         </div>
@@ -893,6 +896,25 @@
 <!-- ==================== Modales ==================== -->
 
 <!-- ✅ Barre de timer en popup -->
+<dialog id="dlgShareSessions" class="modal modal-fixed modal-centered">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Partager les séances</div>
+            <button id="shareSessionsClose" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="shareSessionsList" class="share-session-list" aria-label="Séances à partager"></div>
+            <div id="shareSessionsEmpty" class="empty" hidden>Aucune séance disponible.</div>
+        </div>
+        <div class="modal-footer">
+            <div class="modal-actions">
+                <button id="shareSessionsCancel" class="btn ghost" type="button">Annuler</button>
+                <button id="shareSessionsConfirm" class="btn" type="button">OK</button>
+            </div>
+        </div>
+    </form>
+</dialog>
+
 <dialog id="dlgExecTimer" class="modal modal-centered">
     <div id="execTimerBar" class="exec-timer">
         <div id="tmrDetails" class="tmr-details details centered"></div>
