@@ -412,6 +412,8 @@
                 return 'Objectifs';
             case 'medals':
                 return 'Médailles';
+            case 'record':
+                return 'Record';
             default:
                 return 'Historique';
         }
@@ -422,7 +424,7 @@
     }
 
     function getNextMetaMode() {
-        const order = ['history', 'goals', 'medals'];
+        const order = ['history', 'goals', 'medals', 'record'];
         const currentIndex = order.indexOf(state.metaMode);
         const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % order.length;
         return order[nextIndex];
@@ -617,8 +619,13 @@
         const cell = document.createElement('div');
         cell.className = 'exec-meta-cell';
         const pos = safeInt(set?.pos, index + 1);
-        if (state.metaMode === 'history' || state.metaMode === 'goals') {
-            const map = state.metaMode === 'history' ? meta?.historyByPos : meta?.goalsByPos;
+        if (state.metaMode === 'history' || state.metaMode === 'goals' || state.metaMode === 'record') {
+            const map =
+                state.metaMode === 'history'
+                    ? meta?.historyByPos
+                    : state.metaMode === 'goals'
+                        ? meta?.goalsByPos
+                        : meta?.recordByPos;
             const info = map?.get?.(pos) || null;
             const chip = document.createElement('div');
             chip.className = 'exec-history-set rpe-chip exec-meta-chip';
@@ -932,8 +939,10 @@
         previousSets.sort((a, b) => safeInt(a?.pos, 0) - safeInt(b?.pos, 0));
         const historyByPos = buildHistorySetMap(previousSets, weightUnit);
         const goalsByPos = buildHistorySetMap(previousSets, weightUnit);
-        const medalsByPos = await buildMedalMap(exerciseId, currentSets, dateKey);
-        return { historyByPos, goalsByPos, medalsByPos };
+        const previousAllSets = await collectPreviousExerciseSets(exerciseId, dateKey);
+        const recordByPos = buildRecordSetMap(previousAllSets, weightUnit);
+        const medalsByPos = await buildMedalMap(exerciseId, currentSets, dateKey, previousAllSets);
+        return { historyByPos, goalsByPos, recordByPos, medalsByPos };
     }
 
     function buildHistorySetMap(sets, weightUnit) {
@@ -948,8 +957,35 @@
         return map;
     }
 
-    async function buildMedalMap(exerciseId, currentSets = [], dateKey = state.dateKey) {
-        const previousSets = await collectPreviousExerciseSets(exerciseId, dateKey);
+    function buildRecordSetMap(sets, weightUnit) {
+        const bestByPos = new Map();
+        (Array.isArray(sets) ? sets : []).forEach((set, index) => {
+            const pos = safeInt(set?.pos, index + 1);
+            const weight = sanitizeWeight(set?.weight);
+            const reps = safePositiveInt(set?.reps);
+            const orm = estimateOrm(weight, reps);
+            if (orm == null) {
+                return;
+            }
+            const currentBest = bestByPos.get(pos);
+            if (!currentBest || orm > currentBest.orm) {
+                bestByPos.set(pos, { set, orm });
+            }
+        });
+        const map = new Map();
+        bestByPos.forEach((record, pos) => {
+            map.set(pos, {
+                text: formatHistorySetLine(record.set, weightUnit),
+                rpe: record.set?.rpe ?? null
+            });
+        });
+        return map;
+    }
+
+    async function buildMedalMap(exerciseId, currentSets = [], dateKey = state.dateKey, previousSetsOverride = null) {
+        const previousSets = Array.isArray(previousSetsOverride)
+            ? previousSetsOverride
+            : await collectPreviousExerciseSets(exerciseId, dateKey);
         if (!previousSets.length) {
             const medalsByPos = new Map();
             (Array.isArray(currentSets) ? currentSets : []).forEach((set, index) => {
