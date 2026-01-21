@@ -332,40 +332,118 @@
         const labels = await Promise.all(
             filteredDates.map(async (dateKey) => {
                 if (!db?.getSession) {
-                    return { dateKey, label: formatShareDateLabel(dateKey) };
+                    const fallbackDate = parseShareSessionDate(dateKey);
+                    return {
+                        dateKey,
+                        label: formatShareDateLabel(dateKey),
+                        monthKey: getShareSessionMonthKey(fallbackDate, dateKey),
+                        monthLabel: formatShareMonthLabel(fallbackDate, dateKey)
+                    };
                 }
                 try {
                     const session = await db.getSession(dateKey);
-                    return { dateKey, label: formatShareDateLabelFromSession(dateKey, session) };
+                    const sessionDate = parseShareSessionDate(dateKey, session);
+                    return {
+                        dateKey,
+                        label: formatShareDateLabelFromSession(dateKey, session),
+                        monthKey: getShareSessionMonthKey(sessionDate, dateKey),
+                        monthLabel: formatShareMonthLabel(sessionDate, dateKey)
+                    };
                 } catch (error) {
                     console.warn('Chargement de séance pour partage échoué :', error);
-                    return { dateKey, label: formatShareDateLabel(dateKey) };
+                    const fallbackDate = parseShareSessionDate(dateKey);
+                    return {
+                        dateKey,
+                        label: formatShareDateLabel(dateKey),
+                        monthKey: getShareSessionMonthKey(fallbackDate, dateKey),
+                        monthLabel: formatShareMonthLabel(fallbackDate, dateKey)
+                    };
                 }
             })
         );
-        labels.forEach(({ dateKey, label: labelText }) => {
-            const label = document.createElement('label');
-            label.className = 'share-session-item';
+        const monthOrder = [];
+        const monthGroups = new Map();
+        labels.forEach(({ dateKey, label: labelText, monthKey, monthLabel }) => {
+            const key = monthKey || 'unknown';
+            if (!monthGroups.has(key)) {
+                monthGroups.set(key, { label: monthLabel || 'Mois inconnu', items: [] });
+                monthOrder.push(key);
+            }
+            monthGroups.get(key).items.push({ dateKey, labelText });
+        });
 
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.className = 'app-check';
-            checkbox.value = dateKey;
-            checkbox.checked = shareDialogState.selected.has(dateKey);
-            checkbox.addEventListener('change', () => {
-                if (checkbox.checked) {
-                    shareDialogState.selected.add(dateKey);
-                } else {
-                    shareDialogState.selected.delete(dateKey);
-                }
+        const updateMonthCheckboxState = (monthCheckbox, dayCheckboxes) => {
+            const total = dayCheckboxes.length;
+            const checkedCount = dayCheckboxes.filter((checkbox) => checkbox.checked).length;
+            monthCheckbox.checked = total > 0 && checkedCount === total;
+            monthCheckbox.indeterminate = checkedCount > 0 && checkedCount < total;
+        };
+
+        monthOrder.forEach((monthKey) => {
+            const group = monthGroups.get(monthKey);
+            if (!group) {
+                return;
+            }
+            const monthContainer = document.createElement('div');
+            monthContainer.className = 'share-session-month';
+
+            const monthHeader = document.createElement('label');
+            monthHeader.className = 'share-session-month-header';
+
+            const monthCheckbox = document.createElement('input');
+            monthCheckbox.type = 'checkbox';
+            monthCheckbox.className = 'app-check';
+
+            const monthText = document.createElement('span');
+            monthText.textContent = group.label;
+
+            monthHeader.appendChild(monthCheckbox);
+            monthHeader.appendChild(monthText);
+            monthContainer.appendChild(monthHeader);
+
+            const dayCheckboxes = [];
+            group.items.forEach(({ dateKey, labelText }) => {
+                const label = document.createElement('label');
+                label.className = 'share-session-item';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'app-check';
+                checkbox.value = dateKey;
+                checkbox.checked = shareDialogState.selected.has(dateKey);
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        shareDialogState.selected.add(dateKey);
+                    } else {
+                        shareDialogState.selected.delete(dateKey);
+                    }
+                    updateMonthCheckboxState(monthCheckbox, dayCheckboxes);
+                });
+
+                const text = document.createElement('span');
+                text.textContent = labelText;
+
+                label.appendChild(checkbox);
+                label.appendChild(text);
+                monthContainer.appendChild(label);
+                dayCheckboxes.push(checkbox);
             });
 
-            const text = document.createElement('span');
-            text.textContent = labelText;
+            updateMonthCheckboxState(monthCheckbox, dayCheckboxes);
+            monthCheckbox.addEventListener('change', () => {
+                const nextChecked = monthCheckbox.checked;
+                monthCheckbox.indeterminate = false;
+                dayCheckboxes.forEach((checkbox) => {
+                    checkbox.checked = nextChecked;
+                    if (nextChecked) {
+                        shareDialogState.selected.add(checkbox.value);
+                    } else {
+                        shareDialogState.selected.delete(checkbox.value);
+                    }
+                });
+            });
 
-            label.appendChild(checkbox);
-            label.appendChild(text);
-            shareSessionsList.appendChild(label);
+            shareSessionsList.appendChild(monthContainer);
         });
     }
 
@@ -398,6 +476,7 @@
             return;
         }
         shareSessionsYearFilters.removeAttribute('hidden');
+        shareSessionsYearFilters.style.setProperty('--tag-columns', String(years.length + 1));
         const allButton = document.createElement('button');
         allButton.type = 'button';
         allButton.className = `tag${shareDialogState.yearFilter ? '' : ' is-active'}`;
@@ -431,6 +510,43 @@
             return dateKey;
         }
         return formatShareDateLabelFromDate(date, options);
+    }
+
+    function parseShareSessionDate(dateKey, session) {
+        if (session?.date) {
+            const parsed = new Date(session.date);
+            if (!Number.isNaN(parsed.getTime())) {
+                return parsed;
+            }
+        }
+        if (!dateKey || typeof dateKey !== 'string') {
+            return null;
+        }
+        const parsed = new Date(`${dateKey}T00:00:00`);
+        if (Number.isNaN(parsed.getTime())) {
+            return null;
+        }
+        return parsed;
+    }
+
+    function getShareSessionMonthKey(date, dateKey) {
+        if (date instanceof Date && !Number.isNaN(date.getTime())) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        }
+        if (typeof dateKey === 'string' && dateKey.length >= 7) {
+            return dateKey.slice(0, 7);
+        }
+        return null;
+    }
+
+    function formatShareMonthLabel(date, dateKey) {
+        if (date instanceof Date && !Number.isNaN(date.getTime())) {
+            return date.toLocaleDateString('fr-FR', {
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+        return typeof dateKey === 'string' ? dateKey.slice(0, 7) : '';
     }
 
     function formatShareDateLabelFromDate(date, options = {}) {
