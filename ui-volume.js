@@ -894,7 +894,7 @@
                     return;
                 }
 
-                if (primaryMuscle && primaryMuscle === muscleKey) {
+                if (muscles.includes(muscleKey)) {
                     stats.sets += doneSets;
                 }
                 if (!sessionCounted && muscles.includes(muscleKey)) {
@@ -911,15 +911,27 @@
         if (!exercise) {
             return [];
         }
-        const keys = [
+        const keySet = new Set();
+        const addKey = (value) => {
+            if (!value) {
+                return;
+            }
+            keySet.add(normalizeKey(value));
+        };
+        [
             exercise.muscle,
             exercise.muscleGroup1,
             exercise.muscleGroup2,
             exercise.muscleGroup3
-        ]
-            .filter(Boolean)
-            .map(normalizeKey);
-        return Array.from(new Set(keys));
+        ].forEach(addKey);
+
+        if (typeof CFG.decodeMuscle === 'function') {
+            const decoded = CFG.decodeMuscle(exercise.muscle);
+            if (decoded) {
+                [decoded.g1, decoded.g2, decoded.g3].forEach(addKey);
+            }
+        }
+        return Array.from(keySet);
     }
 
     async function computeVolumeStats(tracked, rangeLabel) {
@@ -967,9 +979,12 @@
                     }
                     sessionMuscles.add(muscleKey);
                 });
-                if (primaryMuscle && statsByKey.has(primaryMuscle)) {
-                    statsByKey.get(primaryMuscle).sets += doneSets;
-                }
+                muscles.forEach((muscleKey) => {
+                    if (!statsByKey.has(muscleKey)) {
+                        return;
+                    }
+                    statsByKey.get(muscleKey).sets += doneSets;
+                });
             });
 
             sessionMuscles.forEach((muscleKey) => {
