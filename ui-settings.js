@@ -228,7 +228,7 @@
         if (dates.includes(todayKey)) {
             shareDialogState.selected.add(todayKey);
         }
-        renderShareSessionList();
+        await renderShareSessionList();
         dlgShareSessions.showModal();
     }
 
@@ -303,7 +303,7 @@
             .reverse();
     }
 
-    function renderShareSessionList() {
+    async function renderShareSessionList() {
         const { shareSessionsList, shareSessionsEmpty, shareSessionsConfirm } = ensureRefs();
         if (!shareSessionsList) {
             return;
@@ -320,7 +320,21 @@
         if (shareSessionsConfirm) {
             shareSessionsConfirm.disabled = false;
         }
-        shareDialogState.dates.forEach((dateKey) => {
+        const labels = await Promise.all(
+            shareDialogState.dates.map(async (dateKey) => {
+                if (!db?.getSession) {
+                    return { dateKey, label: formatShareDateLabel(dateKey) };
+                }
+                try {
+                    const session = await db.getSession(dateKey);
+                    return { dateKey, label: formatShareDateLabelFromSession(dateKey, session) };
+                } catch (error) {
+                    console.warn('Chargement de séance pour partage échoué :', error);
+                    return { dateKey, label: formatShareDateLabel(dateKey) };
+                }
+            })
+        );
+        labels.forEach(({ dateKey, label: labelText }) => {
             const label = document.createElement('label');
             label.className = 'share-session-item';
 
@@ -338,7 +352,7 @@
             });
 
             const text = document.createElement('span');
-            text.textContent = formatShareDateLabel(dateKey);
+            text.textContent = labelText;
 
             label.appendChild(checkbox);
             label.appendChild(text);
@@ -354,12 +368,32 @@
         if (Number.isNaN(date.getTime())) {
             return dateKey;
         }
+        return formatShareDateLabelFromDate(date, options);
+    }
+
+    function formatShareDateLabelFromDate(date, options = {}) {
+        if (!(date instanceof Date)) {
+            return '';
+        }
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
         const label = date.toLocaleDateString('fr-FR', {
             day: 'numeric',
             month: 'long',
             year: 'numeric'
         });
         return options.uppercase ? label.toUpperCase() : label;
+    }
+
+    function formatShareDateLabelFromSession(dateKey, session, options = {}) {
+        if (session?.date) {
+            const parsed = new Date(session.date);
+            if (!Number.isNaN(parsed.getTime())) {
+                return formatShareDateLabelFromDate(parsed, options);
+            }
+        }
+        return formatShareDateLabel(dateKey, options);
     }
 
     function formatShareNumber(value, options = {}) {
@@ -414,7 +448,7 @@
         const lines = ['Séance/s de musculation:', ''];
         for (const dateKey of dateKeys) {
             const session = await db.getSession(dateKey);
-            lines.push(`> SÉANCE DU ${formatShareDateLabel(dateKey, { uppercase: true })}`);
+            lines.push(`> SÉANCE DU ${formatShareDateLabelFromSession(dateKey, session, { uppercase: true })}`);
             lines.push('');
             const exercises = Array.isArray(session?.exercises) ? [...session.exercises] : [];
             exercises.sort((a, b) => (a?.sort ?? 0) - (b?.sort ?? 0));
