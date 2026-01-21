@@ -7,7 +7,9 @@
     let refsResolved = false;
     const shareDialogState = {
         dates: [],
-        selected: new Set()
+        selected: new Set(),
+        years: [],
+        yearFilter: null
     };
 
     /* WIRE */
@@ -93,6 +95,7 @@
         refs.inputDataImportFitHero = document.getElementById('inputDataImportFitHero');
         refs.inputDataImportSessions = document.getElementById('inputDataImportSessions');
         refs.dlgShareSessions = document.getElementById('dlgShareSessions');
+        refs.shareSessionsYearFilters = document.getElementById('shareSessionsYearFilters');
         refs.shareSessionsList = document.getElementById('shareSessionsList');
         refs.shareSessionsEmpty = document.getElementById('shareSessionsEmpty');
         refs.shareSessionsClose = document.getElementById('shareSessionsClose');
@@ -223,11 +226,16 @@
 
         const dates = await getShareSessionDates();
         shareDialogState.dates = dates;
+        shareDialogState.years = getShareSessionYears(dates);
+        if (!shareDialogState.yearFilter || !shareDialogState.years.includes(shareDialogState.yearFilter)) {
+            shareDialogState.yearFilter = null;
+        }
         shareDialogState.selected = new Set();
         const todayKey = A.ymd(A.today());
         if (dates.includes(todayKey)) {
             shareDialogState.selected.add(todayKey);
         }
+        renderShareSessionYearFilters();
         await renderShareSessionList();
         dlgShareSessions.showModal();
     }
@@ -309,7 +317,8 @@
             return;
         }
         shareSessionsList.innerHTML = '';
-        if (!shareDialogState.dates.length) {
+        const filteredDates = filterShareSessionDates();
+        if (!filteredDates.length) {
             shareSessionsEmpty?.removeAttribute('hidden');
             if (shareSessionsConfirm) {
                 shareSessionsConfirm.disabled = true;
@@ -321,7 +330,7 @@
             shareSessionsConfirm.disabled = false;
         }
         const labels = await Promise.all(
-            shareDialogState.dates.map(async (dateKey) => {
+            filteredDates.map(async (dateKey) => {
                 if (!db?.getSession) {
                     return { dateKey, label: formatShareDateLabel(dateKey) };
                 }
@@ -357,6 +366,59 @@
             label.appendChild(checkbox);
             label.appendChild(text);
             shareSessionsList.appendChild(label);
+        });
+    }
+
+    function getShareSessionYears(dates) {
+        const yearSet = new Set();
+        (dates || []).forEach((dateKey) => {
+            if (typeof dateKey === 'string' && dateKey.length >= 4) {
+                yearSet.add(dateKey.slice(0, 4));
+            }
+        });
+        return Array.from(yearSet).sort().reverse();
+    }
+
+    function filterShareSessionDates() {
+        if (!shareDialogState.yearFilter) {
+            return shareDialogState.dates;
+        }
+        return shareDialogState.dates.filter((dateKey) => dateKey?.startsWith(shareDialogState.yearFilter));
+    }
+
+    function renderShareSessionYearFilters() {
+        const { shareSessionsYearFilters } = ensureRefs();
+        if (!shareSessionsYearFilters) {
+            return;
+        }
+        shareSessionsYearFilters.innerHTML = '';
+        const years = shareDialogState.years;
+        if (!years.length) {
+            shareSessionsYearFilters.setAttribute('hidden', '');
+            return;
+        }
+        shareSessionsYearFilters.removeAttribute('hidden');
+        const allButton = document.createElement('button');
+        allButton.type = 'button';
+        allButton.className = `tag${shareDialogState.yearFilter ? '' : ' is-active'}`;
+        allButton.textContent = 'Toutes';
+        allButton.addEventListener('click', () => {
+            shareDialogState.yearFilter = null;
+            renderShareSessionYearFilters();
+            renderShareSessionList();
+        });
+        shareSessionsYearFilters.appendChild(allButton);
+        years.forEach((year) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `tag${shareDialogState.yearFilter === year ? ' is-active' : ''}`;
+            button.textContent = year;
+            button.addEventListener('click', () => {
+                shareDialogState.yearFilter = year;
+                renderShareSessionYearFilters();
+                renderShareSessionList();
+            });
+            shareSessionsYearFilters.appendChild(button);
         });
     }
 
