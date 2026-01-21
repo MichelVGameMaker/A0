@@ -2610,6 +2610,21 @@ input[type="number"]{ -moz-appearance:textfield; }
 .share-session-years {
     margin-bottom: var(--gap);
 }
+.share-session-month {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--gap) / 2);
+}
+.share-session-month-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: var(--gap);
+    padding: 6px 10px;
+    border-radius: var(--radius);
+    color: var(--labelColor);
+    font-weight: var(--fw-strong);
+}
 .share-session-item {
     display: grid;
     grid-template-columns: auto 1fr;
