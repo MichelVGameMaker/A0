@@ -352,6 +352,11 @@
     function openMoveEditorDialog() {
         const { dlgExecMoveEditor, execMoveNote } = assertRefs();
         const exercise = getExercise();
+        const dialogTitle = dlgExecMoveEditor?.querySelector('.modal-title');
+        const exerciseTitle = exercise?.exercise_name || exercise?.exercise_id || 'Exercice';
+        if (dialogTitle) {
+            dialogTitle.textContent = exerciseTitle;
+        }
         execMoveSnapshot = exercise ? { note: exercise.exercise_note || '' } : null;
         if (execMoveSnapshot) {
             execMoveNote.value = execMoveSnapshot.note;

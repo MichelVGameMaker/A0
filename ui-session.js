@@ -311,6 +311,9 @@
                 }
                 void A.openExerciseRead({ currentId: exercise.exercise_id, callerScreen: 'screenSessions' });
             });
+            const titleRow = document.createElement('div');
+            titleRow.className = 'exercise-card-title-row';
+            titleRow.appendChild(name);
             const setsWrapper = document.createElement('div');
             setsWrapper.className = 'session-card-sets';
             const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
@@ -394,7 +397,7 @@
                 void addSetToSessionExercise(exercise.exercise_id);
             });
             setsWrapper.appendChild(addSetButton);
-            body.append(name, setsWrapper);
+            body.append(titleRow, setsWrapper);
             end.appendChild(createExerciseMenuButton({ exerciseId: exercise.exercise_id, exerciseName }));
 
             card.setAttribute('aria-label', exerciseName);

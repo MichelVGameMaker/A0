@@ -491,6 +491,9 @@
             }
             void A.openExerciseRead({ currentId: move.exerciseId, callerScreen: 'screenRoutineEdit' });
         });
+        const titleRow = document.createElement('div');
+        titleRow.className = 'exercise-card-title-row';
+        titleRow.appendChild(name);
         const setsWrapper = document.createElement('div');
         setsWrapper.className = 'session-card-sets';
         const sets = Array.isArray(move.sets)
@@ -557,7 +560,7 @@
             void addSetToMove(move.id);
         });
         setsWrapper.appendChild(addSetButton);
-        body.append(name, setsWrapper);
+        body.append(titleRow, setsWrapper);
 
         end.appendChild(createExerciseMenuButton(move));
 
