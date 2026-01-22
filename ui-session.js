@@ -1138,15 +1138,26 @@
         }
     }
 
+    function parseDateKey(dateKey) {
+        if (!dateKey || typeof dateKey !== 'string') {
+            return null;
+        }
+        const [year, month, day] = dateKey.split('-').map((value) => Number.parseInt(value, 10));
+        if (!year || !month || !day) {
+            return null;
+        }
+        return new Date(year, month - 1, day, 12);
+    }
+
     async function goToSessionDate(dateKey) {
         if (!dateKey) {
             return;
         }
-        const targetDate = new Date(`${dateKey}T00:00:00`);
-        if (Number.isNaN(targetDate.getTime())) {
+        const targetDate = parseDateKey(dateKey);
+        if (!(targetDate instanceof Date) || Number.isNaN(targetDate.getTime())) {
             return;
         }
-        A.activeDate = new Date(targetDate.toDateString());
+        A.activeDate = targetDate;
         A.currentAnchor = A.startOfWeek(A.activeDate);
         await A.populateRoutineSelect();
         await A.renderWeek();
