@@ -6,6 +6,7 @@
     const refs = {};
     let refsResolved = false;
     let routineMoveSnapshot = null;
+    const SHEET_ANIMATION_MS = 220;
     const state = {
         routineId: null,
         moveId: null,
@@ -68,6 +69,9 @@
         refreshValueStates();
         renderSets();
         switchScreen('screenRoutineMoveEdit');
+        requestAnimationFrame(() => {
+            refs.screenRoutineMoveEdit?.classList.add('is-active');
+        });
     };
 
     A.openRoutineMoveMeta = async function openRoutineMoveMeta(options = {}) {
@@ -90,6 +94,11 @@
         }
 
         const { dlgRoutineMoveEditor, routineMoveInstructions } = assertRefs();
+        const dialogTitle = dlgRoutineMoveEditor?.querySelector('.modal-title');
+        const exerciseTitle = move.exerciseName || 'Exercice';
+        if (dialogTitle) {
+            dialogTitle.textContent = exerciseTitle;
+        }
         routineMoveSnapshot = move ? { instructions: move.instructions || '' } : null;
         if (routineMoveInstructions) {
             routineMoveInstructions.value = move.instructions || '';
@@ -803,6 +812,17 @@
         } else {
             refs.dlgRoutineMoveEditor?.close();
         }
+        const { screenRoutineMoveEdit } = assertRefs();
+        if (screenRoutineMoveEdit?.classList.contains('is-active')) {
+            screenRoutineMoveEdit.classList.remove('is-active');
+            screenRoutineMoveEdit.classList.add('is-closing');
+            setTimeout(() => {
+                screenRoutineMoveEdit.classList.remove('is-closing');
+                switchScreen(state.callerScreen || 'screenRoutineEdit');
+                void A.refreshRoutineEdit();
+            }, SHEET_ANIMATION_MS);
+            return;
+        }
         switchScreen(state.callerScreen || 'screenRoutineEdit');
         void A.refreshRoutineEdit();
     }
@@ -840,11 +860,20 @@
             screenPreferences,
             screenData
         };
+        const keepBehind = target === 'screenRoutineMoveEdit' ? state.callerScreen : null;
         Object.entries(map).forEach(([key, element]) => {
-            if (element) {
-                element.hidden = key !== target;
+            if (!element) {
+                return;
             }
+            const shouldShow = key === target || (keepBehind && key === keepBehind);
+            element.hidden = !shouldShow;
         });
+        if (target === 'screenRoutineMoveEdit' && screenRoutineMoveEdit) {
+            screenRoutineMoveEdit.classList.remove('is-closing');
+        }
+        if (target !== 'screenRoutineMoveEdit' && screenRoutineMoveEdit) {
+            screenRoutineMoveEdit.classList.remove('is-active', 'is-closing');
+        }
     }
 
     function safeInt(value, fallback = null) {
