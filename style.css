@@ -1739,7 +1739,7 @@ textarea:focus{
   grid-template-columns: minmax(2.1ch, 0.4fr) 1.2fr 1.2fr 1.4fr 1fr; /* # | Reps | Poids | RPE | Repos */
 }
 .exec-grid.routine-set-grid.routine-set-grid--with-meta{
-  --exec-meta-width: 140px;
+  --exec-meta-width: 70px;
   grid-template-columns: minmax(2.1ch, 0.4fr) 1.2fr 1.2fr 1.4fr 1fr var(--exec-meta-width); /* # | Reps | Poids | RPE | Repos | Infos */
 }
 .routine-set-grid > *{ min-width:0; }
