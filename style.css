@@ -1672,6 +1672,7 @@ textarea:focus{
         /* Cliquable */
         border: 1px solid var(--clickableBord);
         background: var(--clickableBack); 
+        color: var(--black);
         cursor: pointer;
         touch-action: manipulation;       /* coupe le geste double-tap=zoom */    
         /* Contenu */
