@@ -1237,7 +1237,7 @@
         const createStepperButton = (label, onClick, disabled = false, aria) => {
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'btn ghost inline-set-editor-button';
+            button.className = 'btn primary inline-set-editor-button';
             button.textContent = label;
             if (aria) {
                 button.setAttribute('aria-label', aria);

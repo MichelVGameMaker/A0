@@ -615,6 +615,11 @@
         }, 0);
     }
 
+    function closeInlineInputs() {
+        inlineKeyboard?.detach?.();
+        ensureInlineEditor()?.close?.();
+    }
+
     function buildMetaCell(set, index, meta) {
         const cell = document.createElement('div');
         cell.className = 'exec-meta-cell';
@@ -632,6 +637,15 @@
             chip.textContent = info?.text ?? '—';
             applyRpeTone(chip, info?.rpe);
             cell.appendChild(chip);
+            cell.addEventListener('click', () => {
+                closeInlineInputs();
+                if (state.metaMode === 'record') {
+                    const recordInfo = formatRecordInfo(info?.recordSet, meta?.weightUnit);
+                    if (recordInfo) {
+                        showMedalPopover(cell, recordInfo);
+                    }
+                }
+            });
             return cell;
         }
         const medals = meta?.medalsByPos?.get?.(pos) || [];
@@ -656,11 +670,19 @@
             badge.appendChild(icon);
             badge.addEventListener('click', (event) => {
                 event.stopPropagation();
+                closeInlineInputs();
                 showMedalPopover(badge, medalConfig.label);
             });
             list.appendChild(badge);
         });
         cell.appendChild(list);
+        cell.addEventListener('click', () => {
+            closeInlineInputs();
+            const medalInfo = formatMedalInfo(medals);
+            if (medalInfo) {
+                showMedalPopover(cell, medalInfo);
+            }
+        });
         return cell;
     }
 
@@ -942,7 +964,7 @@
         const previousAllSets = await collectPreviousExerciseSets(exerciseId, dateKey);
         const recordByPos = buildRecordSetMap(previousAllSets, weightUnit);
         const medalsByPos = await buildMedalMap(exerciseId, currentSets, dateKey, previousAllSets);
-        return { historyByPos, goalsByPos, recordByPos, medalsByPos };
+        return { historyByPos, goalsByPos, recordByPos, medalsByPos, weightUnit };
     }
 
     function buildHistorySetMap(sets, weightUnit) {
@@ -976,7 +998,8 @@
         bestByPos.forEach((record, pos) => {
             map.set(pos, {
                 text: formatHistorySetLine(record.set, weightUnit),
-                rpe: record.set?.rpe ?? null
+                rpe: record.set?.rpe ?? null,
+                recordSet: record.set
             });
         });
         return map;
@@ -1096,7 +1119,8 @@
                         pos: safeInt(set?.pos, index + 1),
                         reps: safePositiveInt(set?.reps),
                         weight: sanitizeWeight(set?.weight),
-                        rpe: set?.rpe ?? null
+                        rpe: set?.rpe ?? null,
+                        dateKey: date
                     });
                 });
             }
@@ -1148,6 +1172,54 @@
             parts.push(`${formatNumber(weight)}${weightUnit}`);
         }
         return parts.length ? parts.join(' ') : '—';
+    }
+
+    function formatDetailedSetLine(set, weightUnit) {
+        const reps = Number.isFinite(set?.reps) ? set.reps : null;
+        const weight = set?.weight != null ? Number(set.weight) : null;
+        const rpe = set?.rpe != null && set?.rpe !== '' ? set.rpe : null;
+        const parts = [];
+        if (reps != null) {
+            parts.push(`${reps}x`);
+        }
+        if (weight != null && !Number.isNaN(weight)) {
+            parts.push(`${formatNumber(weight)}${weightUnit}`);
+        }
+        if (rpe != null) {
+            parts.push(`@${rpe}`);
+        }
+        return parts.length ? parts.join(' ') : '—';
+    }
+
+    function formatRecordDateLabel(dateKey) {
+        const date = dateKey ? new Date(dateKey) : null;
+        if (!date || Number.isNaN(date.getTime())) {
+            return '—';
+        }
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: '2-digit' });
+    }
+
+    function formatRecordInfo(recordSet, weightUnit) {
+        if (!recordSet) {
+            return '';
+        }
+        const dateLabel = formatRecordDateLabel(recordSet.dateKey);
+        const setLine = formatDetailedSetLine(recordSet, weightUnit || 'kg');
+        if (dateLabel && dateLabel !== '—') {
+            return `Record : ${dateLabel}, ${setLine}`;
+        }
+        return `Record : ${setLine}`;
+    }
+
+    function formatMedalInfo(medals = []) {
+        const labels = (Array.isArray(medals) ? medals : [])
+            .map((key) => medalIconMap[key]?.label)
+            .filter(Boolean);
+        if (!labels.length) {
+            return '';
+        }
+        const prefix = labels.length > 1 ? 'Médailles : ' : 'Médaille : ';
+        return `${prefix}${labels.join(' • ')}`;
     }
 
     async function addSet() {
