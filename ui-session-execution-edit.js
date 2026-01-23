@@ -5,7 +5,6 @@
     /* STATE */
     const refs = {};
     let refsResolved = false;
-    let execMoveSnapshot = null;
     const state = {
         dateKey: null,
         exerciseId: null,
@@ -92,7 +91,6 @@
         wireActions();
         wireMetaDialog();
         wireTimerControls();
-        wireValueStates();
     });
 
     /* ACTIONS */
@@ -138,16 +136,9 @@
         } else {
             state.pendingFocus = null;
         }
-        const { execTitle, execDate, execRoutineInstructions, execMoveNote } = assertRefs();
+        const { execTitle, execDate } = assertRefs();
         execTitle.textContent = exercise.exercise_name || 'Exercice';
         execDate.textContent = A.fmtUI(date);
-        if (execRoutineInstructions) {
-            execRoutineInstructions.value = exercise.routine_instructions || '';
-        }
-        if (execMoveNote) {
-            execMoveNote.value = exercise.exercise_note || '';
-        }
-        refreshValueStates();
         setMetaMode('history');
         A.setTimerVisibility?.({ hidden: true });
         updateTimerUI();
@@ -191,14 +182,6 @@
         state.pendingFocus = null;
         state.replaceCallerScreen = callerScreen;
 
-        const { execRoutineInstructions, execMoveNote } = assertRefs();
-        if (execRoutineInstructions) {
-            execRoutineInstructions.value = exercise.routine_instructions || '';
-        }
-        if (execMoveNote) {
-            execMoveNote.value = exercise.exercise_note || '';
-        }
-        refreshValueStates();
         openMoveEditorDialog();
     };
 
@@ -238,13 +221,9 @@
         refs.timerPlus = document.getElementById('tmrPlus');
         refs.timerReset = document.getElementById('tmrReset');
         refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
-        refs.execRoutineInstructions = document.getElementById('execRoutineInstructions');
-        refs.execMoveNote = document.getElementById('execMoveNote');
         refs.execMoveUp = document.getElementById('execMoveUp');
         refs.execMoveDown = document.getElementById('execMoveDown');
         refs.execReplaceExercise = document.getElementById('execReplaceExercise');
-        refs.execMoveEditorClose = document.getElementById('execMoveEditorClose');
-        refs.execMoveEditorCancel = document.getElementById('execMoveEditorCancel');
         refs.execMetaToggle = document.getElementById('execMetaToggle');
         refsResolved = true;
         return refs;
@@ -276,13 +255,9 @@
             'timerPlus',
             'timerReset',
             'dlgExecMoveEditor',
-            'execRoutineInstructions',
-            'execMoveNote',
             'execMoveUp',
             'execMoveDown',
             'execReplaceExercise',
-            'execMoveEditorClose',
-            'execMoveEditorCancel',
             'execMetaToggle',
             'execMetaHeader'
         ];
@@ -325,7 +300,7 @@
     }
 
     function wireMetaDialog() {
-        const { dlgExecMoveEditor, execMoveEditorClose, execMoveEditorCancel, execMoveNote } = assertRefs();
+        const { dlgExecMoveEditor } = assertRefs();
         dlgExecMoveEditor.addEventListener('click', (event) => {
             if (event.target === dlgExecMoveEditor) {
                 if (A.closeDialog) {
@@ -335,60 +310,13 @@
                 }
             }
         });
-        execMoveEditorClose.addEventListener('click', () => {
-            if (A.closeDialog) {
-                A.closeDialog(dlgExecMoveEditor);
-            } else {
-                dlgExecMoveEditor?.close();
-            }
-            execMoveSnapshot = null;
-        });
-        execMoveEditorCancel.addEventListener('click', () => {
-            const exercise = getExercise();
-            if (exercise && execMoveSnapshot) {
-                exercise.exercise_note = execMoveSnapshot.note;
-                execMoveNote.value = execMoveSnapshot.note;
-                refreshValueStates();
-                void persistSession(false);
-            }
-            if (A.closeDialog) {
-                A.closeDialog(dlgExecMoveEditor);
-            } else {
-                dlgExecMoveEditor?.close();
-            }
-            execMoveSnapshot = null;
-        });
-        execMoveNote.addEventListener('input', () => {
-            const exercise = getExercise();
-            if (!exercise) {
-                return;
-            }
-            exercise.exercise_note = execMoveNote.value;
-            void persistSession(false);
-        });
     }
 
     function openMoveEditorDialog() {
-        const { dlgExecMoveEditor, execMoveNote } = assertRefs();
-        const exercise = getExercise();
-        const dialogTitle = dlgExecMoveEditor?.querySelector('.modal-title');
-        const exerciseTitle = exercise?.exercise_name || exercise?.exercise_id || 'Exercice';
-        if (dialogTitle) {
-            dialogTitle.textContent = exerciseTitle;
-        }
-        execMoveSnapshot = exercise ? { note: exercise.exercise_note || '' } : null;
-        if (execMoveSnapshot) {
-            execMoveNote.value = execMoveSnapshot.note;
-            refreshValueStates();
-        }
+        const { dlgExecMoveEditor } = assertRefs();
         inlineKeyboard?.detach?.();
         dlgExecMoveEditor?.showModal();
         updateMoveOrderControls();
-    }
-
-    function wireValueStates() {
-        const { execRoutineInstructions, execMoveNote } = assertRefs();
-        A.watchValueState?.([execRoutineInstructions, execMoveNote]);
     }
 
     function wireTimerControls() {
@@ -1468,11 +1396,6 @@
         if (shouldRender) {
             void renderSets();
         }
-    }
-
-    function refreshValueStates() {
-        A.updateValueState?.(refs.execRoutineInstructions);
-        A.updateValueState?.(refs.execMoveNote);
     }
 
     function updateMoveOrderControls() {
