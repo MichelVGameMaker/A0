@@ -854,8 +854,7 @@
                     return;
             }
             const currentDone = getExercise()?.sets?.[currentIndex]?.done ?? set.done;
-            const keepStatus = field === 'rpe';
-            const markDone = keepStatus ? currentDone : rawValue !== '' ? true : currentDone;
+            const markDone = currentDone;
             await applySetEditorResult(currentIndex, next, { done: markDone, render: false });
             updatePreview(next);
             row.classList.toggle('exec-set-executed', markDone);
