@@ -1326,11 +1326,13 @@ textarea:focus{
   -webkit-line-clamp:2;
   white-space:normal;
 }
-.exercise-card-name{
+.exercise-card-text .exercise-card-name{
   display:-webkit-box;
   -webkit-box-orient:vertical;
   -webkit-line-clamp:2;
   white-space:normal;
+  overflow:visible;
+  text-overflow:unset;
   padding: 8px 0;
   
 }
