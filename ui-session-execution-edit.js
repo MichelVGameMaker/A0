@@ -240,6 +240,8 @@
         refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
         refs.execRoutineInstructions = document.getElementById('execRoutineInstructions');
         refs.execMoveNote = document.getElementById('execMoveNote');
+        refs.execMoveUp = document.getElementById('execMoveUp');
+        refs.execMoveDown = document.getElementById('execMoveDown');
         refs.execReplaceExercise = document.getElementById('execReplaceExercise');
         refs.execMoveEditorClose = document.getElementById('execMoveEditorClose');
         refs.execMoveEditorCancel = document.getElementById('execMoveEditorCancel');
@@ -276,6 +278,8 @@
             'dlgExecMoveEditor',
             'execRoutineInstructions',
             'execMoveNote',
+            'execMoveUp',
+            'execMoveDown',
             'execReplaceExercise',
             'execMoveEditorClose',
             'execMoveEditorCancel',
@@ -298,7 +302,7 @@
     }
 
     function wireActions() {
-        const { execAddSet, execDelete, execReplaceExercise, execMetaToggle } = assertRefs();
+        const { execAddSet, execDelete, execReplaceExercise, execMetaToggle, execMoveUp, execMoveDown } = assertRefs();
         execAddSet.addEventListener('click', () => {
             void addSet();
         });
@@ -308,6 +312,12 @@
         execReplaceExercise.addEventListener('click', () => {
             void replaceExercise();
         });
+        execMoveUp.addEventListener('click', () => {
+            void moveExerciseInSession(-1);
+        });
+        execMoveDown.addEventListener('click', () => {
+            void moveExerciseInSession(1);
+        });
         execMetaToggle.addEventListener('click', () => {
             const nextMode = getNextMetaMode();
             setMetaMode(nextMode);
@@ -316,6 +326,15 @@
 
     function wireMetaDialog() {
         const { dlgExecMoveEditor, execMoveEditorClose, execMoveEditorCancel, execMoveNote } = assertRefs();
+        dlgExecMoveEditor.addEventListener('click', (event) => {
+            if (event.target === dlgExecMoveEditor) {
+                if (A.closeDialog) {
+                    A.closeDialog(dlgExecMoveEditor);
+                } else {
+                    dlgExecMoveEditor?.close();
+                }
+            }
+        });
         execMoveEditorClose.addEventListener('click', () => {
             if (A.closeDialog) {
                 A.closeDialog(dlgExecMoveEditor);
@@ -364,6 +383,7 @@
         }
         inlineKeyboard?.detach?.();
         dlgExecMoveEditor?.showModal();
+        updateMoveOrderControls();
     }
 
     function wireValueStates() {
@@ -1453,6 +1473,47 @@
     function refreshValueStates() {
         A.updateValueState?.(refs.execRoutineInstructions);
         A.updateValueState?.(refs.execMoveNote);
+    }
+
+    function updateMoveOrderControls() {
+        const { execMoveUp, execMoveDown } = assertRefs();
+        if (!state.session?.exercises?.length || !state.exerciseId) {
+            execMoveUp.disabled = true;
+            execMoveDown.disabled = true;
+            return;
+        }
+        const index = state.session.exercises.findIndex((item) => item.exercise_id === state.exerciseId);
+        if (index === -1) {
+            execMoveUp.disabled = true;
+            execMoveDown.disabled = true;
+            return;
+        }
+        execMoveUp.disabled = index === 0;
+        execMoveDown.disabled = index === state.session.exercises.length - 1;
+    }
+
+    async function moveExerciseInSession(direction) {
+        if (!state.session?.exercises?.length || !state.exerciseId) {
+            return;
+        }
+        const index = state.session.exercises.findIndex((item) => item.exercise_id === state.exerciseId);
+        if (index === -1) {
+            return;
+        }
+        const nextIndex = index + direction;
+        if (nextIndex < 0 || nextIndex >= state.session.exercises.length) {
+            return;
+        }
+        const exercises = state.session.exercises;
+        const swap = exercises[nextIndex];
+        exercises[nextIndex] = exercises[index];
+        exercises[index] = swap;
+        exercises.forEach((item, idx) => {
+            item.sort = idx + 1;
+        });
+        await persistSession(false);
+        await refreshSessionViews();
+        updateMoveOrderControls();
     }
 
     async function removeExercise() {

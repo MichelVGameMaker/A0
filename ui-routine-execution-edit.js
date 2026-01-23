@@ -106,6 +106,7 @@
         refreshValueStates();
         inlineKeyboard?.detach?.();
         dlgRoutineMoveEditor?.showModal();
+        updateMoveOrderControls();
     };
 
     /* UTILS */
@@ -138,6 +139,8 @@
         refs.routineMoveInstructions = document.getElementById('routineMoveInstructions');
         refs.routineMoveEditorClose = document.getElementById('routineMoveEditorClose');
         refs.routineMoveEditorCancel = document.getElementById('routineMoveEditorCancel');
+        refs.routineMoveUp = document.getElementById('routineMoveUp');
+        refs.routineMoveDown = document.getElementById('routineMoveDown');
         refsResolved = true;
         return refs;
     }
@@ -163,7 +166,9 @@
             'dlgRoutineMoveEditor',
             'routineMoveInstructions',
             'routineMoveEditorClose',
-            'routineMoveEditorCancel'
+            'routineMoveEditorCancel',
+            'routineMoveUp',
+            'routineMoveDown'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -185,7 +190,7 @@
     }
 
     function wireActions() {
-        const { routineMoveAddSet, routineMoveDelete, routineMoveReplace } = assertRefs();
+        const { routineMoveAddSet, routineMoveDelete, routineMoveReplace, routineMoveUp, routineMoveDown } = assertRefs();
         routineMoveAddSet.addEventListener('click', () => {
             addSet();
         });
@@ -194,6 +199,12 @@
         });
         routineMoveReplace.addEventListener('click', () => {
             replaceMoveExercise();
+        });
+        routineMoveUp.addEventListener('click', () => {
+            void moveRoutineExercise(-1);
+        });
+        routineMoveDown.addEventListener('click', () => {
+            void moveRoutineExercise(1);
         });
     }
 
@@ -205,6 +216,15 @@
             routineMoveInstructions
         } =
             assertRefs();
+        dlgRoutineMoveEditor.addEventListener('click', (event) => {
+            if (event.target === dlgRoutineMoveEditor) {
+                if (A.closeDialog) {
+                    A.closeDialog(dlgRoutineMoveEditor);
+                } else {
+                    dlgRoutineMoveEditor?.close();
+                }
+            }
+        });
         routineMoveEditorClose.addEventListener('click', () => {
             if (state.pendingSave) {
                 clearTimeout(state.pendingSave);
@@ -757,6 +777,48 @@
 
     function refreshValueStates() {
         A.updateValueState?.(refs.routineMoveInstructions);
+    }
+
+    function updateMoveOrderControls() {
+        const { routineMoveUp, routineMoveDown } = assertRefs();
+        if (!state.routine?.moves?.length || !state.moveId) {
+            routineMoveUp.disabled = true;
+            routineMoveDown.disabled = true;
+            return;
+        }
+        const ordered = [...state.routine.moves].sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0));
+        const index = ordered.findIndex((move) => move.id === state.moveId);
+        if (index === -1) {
+            routineMoveUp.disabled = true;
+            routineMoveDown.disabled = true;
+            return;
+        }
+        routineMoveUp.disabled = index === 0;
+        routineMoveDown.disabled = index === ordered.length - 1;
+    }
+
+    async function moveRoutineExercise(direction) {
+        if (!state.routine?.moves?.length || !state.moveId) {
+            return;
+        }
+        state.routine.moves.sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0));
+        const moves = state.routine.moves;
+        const index = moves.findIndex((move) => move.id === state.moveId);
+        if (index === -1) {
+            return;
+        }
+        const nextIndex = index + direction;
+        if (nextIndex < 0 || nextIndex >= moves.length) {
+            return;
+        }
+        const swap = moves[nextIndex];
+        moves[nextIndex] = moves[index];
+        moves[index] = swap;
+        moves.forEach((move, idx) => {
+            move.pos = idx + 1;
+        });
+        await persistRoutine();
+        updateMoveOrderControls();
     }
 
     function normalizeRoutine(routine) {

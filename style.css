@@ -444,6 +444,11 @@ header .header-left .btn{
     background: var(--panelBack);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
+.modal-context-editor{
+    max-width: 360px;
+    width: min(360px, 92vw);
+    padding: var(--gap);
+}
 .modal-context-form{
     display:flex;
     flex-direction:column;
@@ -1298,6 +1303,9 @@ textarea:focus{
   gap:10px;
   flex:1 1 auto;
   min-width:0;
+}
+.list-card__start--solo{
+  grid-template-columns: 1fr;
 }
 .exercise-card-right,
 .list-card__end{ display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-shrink:0; min-width:40px; }

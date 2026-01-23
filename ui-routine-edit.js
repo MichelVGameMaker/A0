@@ -474,12 +474,7 @@
         });
         const { card, start, body, end } = structure;
         card.dataset.moveId = move.id;
-
-        const handle = listCard.createHandle({
-            interactive: true,
-            ariaLabel: "Réordonner l'exercice"
-        });
-        start.insertBefore(handle, body);
+        start.classList.add('list-card__start--solo');
 
         const name = document.createElement('div');
         name.className = 'element exercise-card-name';
@@ -565,7 +560,6 @@
         end.appendChild(createExerciseMenuButton(move));
 
         card.setAttribute('aria-label', move.exerciseName || 'Exercice');
-        makeRoutineCardInteractive(card, handle);
         return card;
     }
 
