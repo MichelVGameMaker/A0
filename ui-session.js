@@ -1189,7 +1189,7 @@
         }
         const date = A.activeDate;
         if (sessionEditorTitle) {
-            sessionEditorTitle.textContent = 'Éditer';
+            sessionEditorTitle.textContent = formatSessionDateLabel(date);
         }
         const session = await ensureSessionForDate(date);
         sessionEditorState.session = session;
@@ -1301,7 +1301,8 @@
     }
 
     function buildRoutineFromSession(session, routineId) {
-        const dateLabel = A.fmtUI(A.activeDate);
+        const sessionDate = session?.date ? new Date(session.date) : A.activeDate;
+        const dateLabel = formatSessionDateLabel(sessionDate);
         const exercises = Array.isArray(session.exercises) ? session.exercises : [];
         const moves = exercises.map((exercise, index) => ({
             id: uid('move'),
@@ -1322,11 +1323,18 @@
 
         return {
             id: routineId,
-            name: `Séance ${dateLabel}`,
+            name: `Routine du ${dateLabel}`,
             icon: '🏋️',
             details: '',
             moves
         };
+    }
+
+    function formatSessionDateLabel(date) {
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+            return '—';
+        }
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
     }
 
     function createRoutineId() {
