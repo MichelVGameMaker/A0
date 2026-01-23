@@ -1051,6 +1051,17 @@
             void openSessionEditor();
         });
 
+        dlgSessionEditor.addEventListener('click', (event) => {
+            if (event.target !== dlgSessionEditor) {
+                return;
+            }
+            if (A.closeDialog) {
+                A.closeDialog(dlgSessionEditor);
+            } else {
+                dlgSessionEditor.close();
+            }
+        });
+
         sessionEditorClose?.addEventListener('click', () => {
             if (A.closeDialog) {
                 A.closeDialog(dlgSessionEditor);
