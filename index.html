@@ -61,6 +61,13 @@
     
     <!-- Corps de l'écran -->
     <main class="content">
+
+        <div class="session-comments-header">
+            <button id="btnSessionComments" class="session-comments-content" type="button" aria-label="Ajouter un commentaire de séance">
+                <span id="sessionCommentsPreview" class="session-comments-text" data-empty="true"></span>
+            </button>
+            <button id="btnSessionEditFull" class="btn ghost session-comments-more" type="button" aria-label="Éditer la séance">...</button>
+        </div>
   
         <!-- Calendrier 1 semaine défilable -->
         <div class="week-strip-wrapper">
@@ -75,9 +82,6 @@
             <div class="row">
                 <button id="btnAddExercises" class="btn cta flex-1">Ajouter exercice/s</button>
                 <button id="btnAddRoutines" class="btn cta flex-1">Ajouter routine/s</button>
-            </div>
-            <div class="row">
-                <button id="btnSessionEditFull" class="btn primary flex-1" >Éditer</button>
             </div>
         </div>
     </main>
@@ -561,9 +565,6 @@
             </div>
             <div class="row">
                 <button id="btnSettingsData" class="btn full">💾 Données</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsShare" class="btn full">📤 Partager</button>
             </div>
             <div class="row">
                 <button id="btnSettingsApplication" class="btn full">📱 Application</button>
@@ -1270,12 +1271,8 @@
         </div>
         <div class="modal-body">
             <div class="bloque">
-                <div class="vstack">
-                    <label class="lbl" for="sessionComments">Commentaires</label>
-                    <textarea id="sessionComments" class="input" rows="3" placeholder="Ajouter des commentaires sur la séance"></textarea>
-                </div>
+                <button id="sessionShare" class="btn full" type="button">📤 Partager</button>
             </div>
-
             <div class="bloque">
                 <button id="sessionCreateRoutine" class="btn full" type="button">Créer une routine à partir de la séance</button>
             </div>
@@ -1285,6 +1282,28 @@
         </div>
         <div class="modal-footer">
             <button id="sessionEditorClose" class="btn cta full" type="button">ok</button>
+        </div>
+    </form>
+</dialog>
+<!-- ==================== -->
+
+<!-- ========== Séance : commentaires ========== -->
+<dialog id="dlgSessionComment" class="modal modal-fixed modal-centered modal-top">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Commentaire de séance</div>
+            <button id="sessionCommentCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="sessionCommentInput">Commentaires</label>
+                    <textarea id="sessionCommentInput" class="input session-comment-textarea" rows="8" placeholder="Ajouter des commentaires sur la séance"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="sessionCommentClose" class="btn cta full" type="button">ok</button>
         </div>
     </form>
 </dialog>

@@ -1773,6 +1773,42 @@ textarea:focus{
 /* =========================================================
    8) Liste de série (séance & routine)
    ========================================================= */
+.session-comments-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-top: var(--gap);
+    padding: var(--pad-y) var(--pad-x);
+    border: 1px solid var(--panelBord);
+    border-radius: var(--radius);
+    background: var(--panelBack);
+}
+.session-comments-content{
+    flex:1;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    text-align:left;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+.session-comments-text{
+    display:block;
+    min-height: 1.2em;
+}
+.session-comments-text[data-empty="true"]::before{
+    content: "commentaires";
+    color: var(--muted);
+}
+.session-comments-more{
+    min-width: 44px;
+}
+.session-comment-textarea{
+    min-height: 180px;
+    resize: vertical;
+}
 .session-list{
     display:flex;
     flex-direction:column;
