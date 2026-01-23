@@ -17,6 +17,10 @@
         saveTimer: null,
         initialComments: ''
     };
+    const sessionScrollState = {
+        top: 0,
+        pendingRestore: false
+    };
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -27,6 +31,7 @@
         wireSessionNavigation();
         wireSessionEditor();
         wireSessionComments();
+        wireSessionScrollRestore();
     });
 
     function getRpeDatasetValue(value) {
@@ -287,6 +292,7 @@
         sessionList.innerHTML = '';
         if (!(session?.exercises?.length)) {
             sessionList.innerHTML = '<div class="empty">Aucun exercice pour cette date.</div>';
+            restoreSessionScroll();
             return;
         }
 
@@ -411,6 +417,7 @@
 
             sessionList.appendChild(card);
         }
+        restoreSessionScroll();
     };
 
     async function addSetToSessionExercise(exerciseId) {
@@ -948,6 +955,8 @@
         refs.btnSessionNext = document.getElementById('btnSessionNext');
         refs.btnSessionSettings = document.getElementById('btnSessionSettings');
         refs.btnSessionEdit = document.getElementById('btnSessionEdit');
+        refs.screenSessions = document.getElementById('screenSessions');
+        refs.sessionContent = refs.screenSessions?.querySelector('.content') || null;
         refs.dlgSessionEditor = document.getElementById('dlgSessionEditor');
         refs.sessionEditorTitle = document.getElementById('sessionEditorTitle');
         refs.sessionEditorClose = document.getElementById('sessionEditorClose');
@@ -963,6 +972,57 @@
         refs.sessionCommentCancel = document.getElementById('sessionCommentCancel');
         refsResolved = true;
         return refs;
+    }
+
+    function wireSessionScrollRestore() {
+        const { screenSessions } = ensureRefs();
+        if (!screenSessions) {
+            return;
+        }
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName !== 'hidden') {
+                    return;
+                }
+                if (screenSessions.hidden) {
+                    storeSessionScroll();
+                } else {
+                    sessionScrollState.pendingRestore = true;
+                }
+            });
+        });
+        observer.observe(screenSessions, { attributes: true, attributeFilter: ['hidden'] });
+    }
+
+    function getSessionScrollContainer() {
+        const { sessionContent, screenSessions } = ensureRefs();
+        if (sessionContent) {
+            return sessionContent;
+        }
+        const content = screenSessions?.querySelector('.content') || null;
+        refs.sessionContent = content;
+        return content;
+    }
+
+    function storeSessionScroll() {
+        const container = getSessionScrollContainer();
+        if (!container) {
+            return;
+        }
+        sessionScrollState.top = container.scrollTop || 0;
+        sessionScrollState.pendingRestore = true;
+    }
+
+    function restoreSessionScroll() {
+        if (!sessionScrollState.pendingRestore) {
+            return;
+        }
+        const container = getSessionScrollContainer();
+        if (!container) {
+            return;
+        }
+        container.scrollTop = sessionScrollState.top;
+        sessionScrollState.pendingRestore = false;
     }
 
     function assertRefs() {
