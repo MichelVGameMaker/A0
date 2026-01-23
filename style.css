@@ -2070,27 +2070,33 @@ textarea:focus{
 }
 
 .exec-set-planned{
-  color: var(--panelBord);
-  opacity: 0.8;
+  background: color-mix(in srgb, var(--panelBord) 20%, transparent);
+  color: color-mix(in srgb, var(--black) 65%, transparent);
+  font-weight: var(--fw-light);
 }
 
 .exec-set-planned .set-edit-button{
-  border-color: var(--panelBord);
-  color: var(--panelBord);
+  background: color-mix(in srgb, var(--panelBord) 35%, transparent);
+  border-color: color-mix(in srgb, var(--panelBord) 55%, transparent);
+  color: inherit;
+  font-weight: inherit;
 }
 .exec-set-planned .set-edit-input{
-  border-color: var(--panelBord);
-  color: var(--panelBord);
+  background: color-mix(in srgb, var(--panelBord) 35%, transparent);
+  border-color: color-mix(in srgb, var(--panelBord) 55%, transparent);
+  color: inherit;
+  font-weight: inherit;
 }
 
 .exec-set-planned .routine-set-order{
-  color: var(--panelBord);
+  color: inherit;
+  font-weight: inherit;
 }
 
 .exec-set-planned .rpe-chip{
   background: transparent;
-  border: 1px solid var(--panelBord);
-  color: var(--panelBord);
+  border: 1px solid color-mix(in srgb, var(--panelBord) 55%, transparent);
+  color: inherit;
 }
 
 .exec-sets-layout{
