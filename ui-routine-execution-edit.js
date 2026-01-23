@@ -5,7 +5,6 @@
     /* STATE */
     const refs = {};
     let refsResolved = false;
-    let routineMoveSnapshot = null;
     const SHEET_ANIMATION_MS = 220;
     const state = {
         routineId: null,
@@ -28,7 +27,6 @@
         wireNavigation();
         wireActions();
         wireMetaDialog();
-        wireValueStates();
     });
 
     /* ACTIONS */
@@ -61,12 +59,8 @@
             return;
         }
 
-        const { routineMoveTitle, routineMoveInstructions } = assertRefs();
+        const { routineMoveTitle } = assertRefs();
         routineMoveTitle.textContent = move.exerciseName || 'Exercice';
-        if (routineMoveInstructions) {
-            routineMoveInstructions.value = move.instructions || '';
-        }
-        refreshValueStates();
         renderSets();
         switchScreen('screenRoutineMoveEdit');
         requestAnimationFrame(() => {
@@ -93,17 +87,7 @@
             return;
         }
 
-        const { dlgRoutineMoveEditor, routineMoveInstructions } = assertRefs();
-        const dialogTitle = dlgRoutineMoveEditor?.querySelector('.modal-title');
-        const exerciseTitle = move.exerciseName || 'Exercice';
-        if (dialogTitle) {
-            dialogTitle.textContent = exerciseTitle;
-        }
-        routineMoveSnapshot = move ? { instructions: move.instructions || '' } : null;
-        if (routineMoveInstructions) {
-            routineMoveInstructions.value = move.instructions || '';
-        }
-        refreshValueStates();
+        const { dlgRoutineMoveEditor } = assertRefs();
         inlineKeyboard?.detach?.();
         dlgRoutineMoveEditor?.showModal();
         updateMoveOrderControls();
@@ -136,9 +120,6 @@
         refs.routineMoveDelete = document.getElementById('routineMoveDelete');
         refs.routineMoveReplace = document.getElementById('routineMoveReplace');
         refs.dlgRoutineMoveEditor = document.getElementById('dlgRoutineMoveEditor');
-        refs.routineMoveInstructions = document.getElementById('routineMoveInstructions');
-        refs.routineMoveEditorClose = document.getElementById('routineMoveEditorClose');
-        refs.routineMoveEditorCancel = document.getElementById('routineMoveEditorCancel');
         refs.routineMoveUp = document.getElementById('routineMoveUp');
         refs.routineMoveDown = document.getElementById('routineMoveDown');
         refsResolved = true;
@@ -164,9 +145,6 @@
             'routineMoveDelete',
             'routineMoveReplace',
             'dlgRoutineMoveEditor',
-            'routineMoveInstructions',
-            'routineMoveEditorClose',
-            'routineMoveEditorCancel',
             'routineMoveUp',
             'routineMoveDown'
         ];
@@ -209,13 +187,7 @@
     }
 
     function wireMetaDialog() {
-        const {
-            dlgRoutineMoveEditor,
-            routineMoveEditorClose,
-            routineMoveEditorCancel,
-            routineMoveInstructions
-        } =
-            assertRefs();
+        const { dlgRoutineMoveEditor } = assertRefs();
         dlgRoutineMoveEditor.addEventListener('click', (event) => {
             if (event.target === dlgRoutineMoveEditor) {
                 if (A.closeDialog) {
@@ -225,51 +197,6 @@
                 }
             }
         });
-        routineMoveEditorClose.addEventListener('click', () => {
-            if (state.pendingSave) {
-                clearTimeout(state.pendingSave);
-                state.pendingSave = null;
-                void persistRoutine();
-            }
-            if (A.closeDialog) {
-                A.closeDialog(dlgRoutineMoveEditor);
-            } else {
-                dlgRoutineMoveEditor?.close();
-            }
-            routineMoveSnapshot = null;
-        });
-        routineMoveEditorCancel.addEventListener('click', () => {
-            const move = findMove();
-            if (move && routineMoveSnapshot) {
-                move.instructions = routineMoveSnapshot.instructions;
-                routineMoveInstructions.value = routineMoveSnapshot.instructions;
-                refreshValueStates();
-                if (state.pendingSave) {
-                    clearTimeout(state.pendingSave);
-                    state.pendingSave = null;
-                }
-                void persistRoutine();
-            }
-            if (A.closeDialog) {
-                A.closeDialog(dlgRoutineMoveEditor);
-            } else {
-                dlgRoutineMoveEditor?.close();
-            }
-            routineMoveSnapshot = null;
-        });
-        routineMoveInstructions.addEventListener('input', () => {
-            const move = findMove();
-            if (!move) {
-                return;
-            }
-            move.instructions = routineMoveInstructions.value;
-            scheduleSave();
-        });
-    }
-
-    function wireValueStates() {
-        const { routineMoveInstructions } = assertRefs();
-        A.watchValueState?.(routineMoveInstructions);
     }
 
     function renderSets() {
@@ -773,10 +700,6 @@
         }
         await db.put('routines', serializeRoutine(state.routine));
         await A.refreshRoutineEdit();
-    }
-
-    function refreshValueStates() {
-        A.updateValueState?.(refs.routineMoveInstructions);
     }
 
     function updateMoveOrderControls() {

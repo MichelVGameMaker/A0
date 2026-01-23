@@ -1177,39 +1177,12 @@
 <!-- ==================== -->
 
 <!-- ========== Routine : méta d'un exercice ========== -->
-<dialog id="dlgRoutineMoveEditor" class="modal modal-context modal-context-editor">
-    <form method="dialog" class="modal-form">
-        <div class="modal-header">
-            <div class="title modal-title">Éditer</div>
-            <button id="routineMoveEditorCancel" class="btn ghost modal-close" type="button">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="bloque">
-                <div class="vstack">
-                    <label class="lbl" for="routineMoveInstructions">Instructions</label>
-                    <textarea id="routineMoveInstructions" class="input" rows="3" placeholder="Ajouter des commentaires pour cette routine"></textarea>
-                </div>
-            </div>
-
-            <div class="bloque">
-                <button id="routineMoveUp" class="btn full" type="button">Remonter</button>
-            </div>
-
-            <div class="bloque">
-                <button id="routineMoveDown" class="btn full" type="button">Descendre</button>
-            </div>
-
-            <div class="bloque">
-                <button id="routineMoveReplace" class="btn full" type="button">Remplacer</button>
-            </div>
-
-            <div class="bloque">
-                <button id="routineMoveDelete" class="btn danger full" type="button">Supprimer</button>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button id="routineMoveEditorClose" class="btn cta full" type="button">ok</button>
-        </div>
+<dialog id="dlgRoutineMoveEditor" class="modal modal-context">
+    <form method="dialog" class="modal-context-form">
+        <button id="routineMoveUp" class="modal-context-action" type="button">Remonter</button>
+        <button id="routineMoveDown" class="modal-context-action" type="button">Descendre</button>
+        <button id="routineMoveReplace" class="modal-context-action" type="button">Remplacer</button>
+        <button id="routineMoveDelete" class="modal-context-action is-danger" type="button">Supprimer</button>
     </form>
 </dialog>
 <!-- ==================== -->
@@ -1234,46 +1207,12 @@
 <!-- ==================== -->
 
 <!-- ========== Séance : méta d'un exercice ========== -->
-<dialog id="dlgExecMoveEditor" class="modal modal-context modal-context-editor">
-    <form method="dialog" class="modal-form">
-        <div class="modal-header">
-            <div class="title modal-title">Éditer</div>
-            <button id="execMoveEditorCancel" class="btn ghost modal-close" type="button">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="bloque">
-                <div class="vstack">
-                    <label class="lbl" for="execRoutineInstructions">Instructions</label>
-                    <textarea id="execRoutineInstructions" class="input" rows="3" readonly placeholder="Commentaire de la routine (lecture seule)"></textarea>
-                </div>
-            </div>
-
-            <div class="bloque">
-                <div class="vstack">
-                    <label class="lbl" for="execMoveNote">Note</label>
-                    <textarea id="execMoveNote" class="input" rows="3" placeholder="Ajouter une note pour cette séance"></textarea>
-                </div>
-            </div>
-
-            <div class="bloque">
-                <button id="execMoveUp" class="btn full" type="button">Remonter</button>
-            </div>
-
-            <div class="bloque">
-                <button id="execMoveDown" class="btn full" type="button">Descendre</button>
-            </div>
-
-            <div class="bloque">
-                <button id="execReplaceExercise" class="btn full" type="button">Remplacer</button>
-            </div>
-
-            <div class="bloque">
-                <button id="execDelete" class="btn danger full" type="button">Supprimer</button>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button id="execMoveEditorClose" class="btn cta full" type="button">ok</button>
-        </div>
+<dialog id="dlgExecMoveEditor" class="modal modal-context">
+    <form method="dialog" class="modal-context-form">
+        <button id="execMoveUp" class="modal-context-action" type="button">Remonter</button>
+        <button id="execMoveDown" class="modal-context-action" type="button">Descendre</button>
+        <button id="execReplaceExercise" class="modal-context-action" type="button">Remplacer</button>
+        <button id="execDelete" class="modal-context-action is-danger" type="button">Supprimer</button>
     </form>
 </dialog>
 <!-- ==================== -->
