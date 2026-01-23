@@ -76,6 +76,7 @@
             tabStats,
             screenSessions,
             screenExercises,
+            screenExerciseRead,
             screenExerciseEdit,
             screenRoutineEdit,
             screenRoutineMoveEdit,
@@ -119,6 +120,7 @@
 
         screenSessions?.setAttribute('data-screen', 'sessions');
         screenExercises?.setAttribute('data-screen', 'exercises');
+        screenExerciseRead?.setAttribute('data-screen', 'exerciseRead');
         screenExerciseEdit?.setAttribute('data-screen', 'edit');
         screenRoutineEdit?.setAttribute('data-screen', 'routine');
         screenRoutineMoveEdit?.setAttribute('data-screen', 'routineMove');
@@ -193,6 +195,7 @@
         refs.tabPlanning = document.getElementById('tabPlanning');
         refs.screenSessions = document.getElementById('screenSessions');
         refs.screenExercises = document.getElementById('screenExercises');
+        refs.screenExerciseRead = document.getElementById('screenExerciseRead');
         refs.screenExerciseEdit = document.getElementById('screenExerciseEdit');
         refs.screenRoutineEdit = document.getElementById('screenRoutineEdit');
         refs.screenRoutineMoveEdit = document.getElementById('screenRoutineMoveEdit');
@@ -244,6 +247,7 @@
         const {
             screenSessions,
             screenExercises,
+            screenExerciseRead,
             screenExerciseEdit,
             screenRoutineEdit,
             screenRoutineMoveEdit,
@@ -265,6 +269,9 @@
         }
         if (screenExercises) {
             screenExercises.hidden = which !== 'exercises';
+        }
+        if (screenExerciseRead) {
+            screenExerciseRead.hidden = which !== 'exerciseRead';
         }
         if (screenExerciseEdit) {
             screenExerciseEdit.hidden = which !== 'edit';
