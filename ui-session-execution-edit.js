@@ -587,6 +587,9 @@
         clearMedalPopover();
         const popover = document.createElement('div');
         popover.className = 'exec-medal-popover';
+        if (String(label).includes('\n')) {
+            popover.classList.add('exec-medal-popover--multiline');
+        }
         popover.textContent = label;
         document.body.appendChild(popover);
         const rect = target.getBoundingClientRect();
@@ -648,6 +651,12 @@
                     const recordInfo = formatRecordInfo(info?.recordSet, meta?.weightUnit);
                     if (recordInfo) {
                         showMedalPopover(cell, recordInfo);
+                    }
+                }
+                if (state.metaMode === 'history') {
+                    const historyInfo = formatHistoryDetails(meta?.historyDetailsByPos?.get?.(pos));
+                    if (historyInfo) {
+                        showMedalPopover(cell, historyInfo);
                     }
                 }
             });
@@ -970,7 +979,8 @@
         const previousAllSets = await collectPreviousExerciseSets(exerciseId, dateKey);
         const recordByPos = buildRecordSetMap(previousAllSets, weightUnit);
         const medalsByPos = await buildMedalMap(exerciseId, currentSets, dateKey, previousAllSets);
-        return { historyByPos, goalsByPos, recordByPos, medalsByPos, weightUnit };
+        const historyDetailsByPos = buildHistoryDetailsMap(previousAllSets, weightUnit);
+        return { historyByPos, goalsByPos, recordByPos, medalsByPos, historyDetailsByPos, weightUnit };
     }
 
     function buildHistorySetMap(sets, weightUnit) {
@@ -981,6 +991,26 @@
                 text: formatHistorySetLine(set, weightUnit),
                 rpe: set?.rpe ?? null
             });
+        });
+        return map;
+    }
+
+    function buildHistoryDetailsMap(sets, weightUnit) {
+        const sorted = (Array.isArray(sets) ? sets : [])
+            .filter((set) => set?.dateKey)
+            .sort((a, b) => String(b.dateKey).localeCompare(String(a.dateKey)));
+        const map = new Map();
+        sorted.forEach((set, index) => {
+            const pos = safeInt(set?.pos, index + 1);
+            if (!pos) {
+                return;
+            }
+            const list = map.get(pos) ?? [];
+            if (list.length >= 5) {
+                return;
+            }
+            list.push(formatHistoryDetailLine(set, weightUnit));
+            map.set(pos, list);
         });
         return map;
     }
@@ -1178,6 +1208,50 @@
             parts.push(`${formatNumber(weight)}${weightUnit}`);
         }
         return parts.length ? parts.join(' ') : '—';
+    }
+
+    function formatHistoryDateLabel(dateKey) {
+        const date = dateKey ? new Date(dateKey) : null;
+        if (!date || Number.isNaN(date.getTime())) {
+            return '—';
+        }
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    function formatRpeValue(rpe) {
+        if (rpe == null || rpe === '') {
+            return '';
+        }
+        return formatNumber(rpe).replace('.', ',');
+    }
+
+    function formatHistoryDetailLine(set, weightUnit) {
+        const dateLabel = formatHistoryDateLabel(set?.dateKey);
+        const pos = safeInt(set?.pos, null);
+        const reps = Number.isFinite(set?.reps) ? set.reps : null;
+        const weight = set?.weight != null ? Number(set.weight) : null;
+        const rpe = set?.rpe != null && set?.rpe !== '' ? set.rpe : null;
+        const parts = [];
+        if (reps != null) {
+            parts.push(`${reps}x`);
+        }
+        if (weight != null && !Number.isNaN(weight)) {
+            parts.push(`${formatNumber(weight)}${weightUnit}`);
+        }
+        if (rpe != null) {
+            parts.push(`@${formatRpeValue(rpe)}`);
+        }
+        const setLabel = pos ? `#${pos}` : '#—';
+        const detail = parts.length ? parts.join(' ') : '—';
+        return `${dateLabel}, ${setLabel} - ${detail}`;
+    }
+
+    function formatHistoryDetails(lines = []) {
+        const items = (Array.isArray(lines) ? lines : []).filter(Boolean);
+        if (!items.length) {
+            return '';
+        }
+        return items.join('\n');
     }
 
     function formatDetailedSetLine(set, weightUnit) {
