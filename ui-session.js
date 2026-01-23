@@ -1043,6 +1043,14 @@
             return;
         }
 
+        const closeSessionEditorDialog = () => {
+            if (A.closeDialog) {
+                A.closeDialog(dlgSessionEditor);
+            } else {
+                dlgSessionEditor.close();
+            }
+        };
+
         btnSessionEdit?.addEventListener('click', () => {
             void openSessionEditor();
         });
@@ -1055,38 +1063,29 @@
             if (event.target !== dlgSessionEditor) {
                 return;
             }
-            if (A.closeDialog) {
-                A.closeDialog(dlgSessionEditor);
-            } else {
-                dlgSessionEditor.close();
-            }
+            closeSessionEditorDialog();
         });
 
         sessionEditorClose?.addEventListener('click', () => {
-            if (A.closeDialog) {
-                A.closeDialog(dlgSessionEditor);
-            } else {
-                dlgSessionEditor.close();
-            }
+            closeSessionEditorDialog();
         });
 
         sessionEditorCancel?.addEventListener('click', () => {
-            if (A.closeDialog) {
-                A.closeDialog(dlgSessionEditor);
-            } else {
-                dlgSessionEditor.close();
-            }
+            closeSessionEditorDialog();
         });
 
         sessionCreateRoutine?.addEventListener('click', () => {
+            closeSessionEditorDialog();
             void createRoutineFromSession();
         });
 
         sessionDelete?.addEventListener('click', () => {
+            closeSessionEditorDialog();
             void deleteSessionFromEditor();
         });
 
         sessionShare?.addEventListener('click', () => {
+            closeSessionEditorDialog();
             void A.openShareSessionsDialog?.();
         });
     }
