@@ -1293,14 +1293,13 @@ textarea:focus{
   -webkit-box-orient:vertical;
   -webkit-line-clamp:2;
   white-space:normal;
-  padding: 8px;
-  padding-right: 32px;
+  padding: 8px 0;
   
 }
 .exercise-card-title-row{
-  height: 44px;
+  min-height: 44px;
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   min-width:0;
 }
 .exercise-card--full-sets .list-card__row{
@@ -1324,7 +1323,7 @@ textarea:focus{
   white-space:normal;
 }
 .exercise-card--full-sets .exercise-card-title-row{
-  padding-right: 44px;
+  padding-right: 52px;
 }
 .exercise-card--full-sets .exercise-card-name{
   padding: 0;
