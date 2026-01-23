@@ -853,6 +853,19 @@
             await refreshSetMetaFrom(currentIndex);
         };
 
+        const resolveKeyboardLayout = (field) => {
+            if (field === 'reps') {
+                return 'integer';
+            }
+            if (field === 'rpe') {
+                return 'rpe';
+            }
+            if (field === 'rest') {
+                return 'time';
+            }
+            return 'default';
+        };
+
         const createInput = (getValue, field, extraClass = '', options = {}) => {
             const input = document.createElement('input');
             const { inputMode = inlineKeyboard ? 'none' : 'numeric', type = 'text', html = false } = options;
@@ -888,7 +901,8 @@
             input.addEventListener('click', () => {
                 openEditor(field);
                 inlineKeyboard?.attach?.(input, {
-                    layout: field === 'rpe' ? 'rpe' : field === 'rest' ? 'time' : 'default',
+                    layout: resolveKeyboardLayout(field),
+                    decimalSeparator: field === 'weight' ? ',' : undefined,
                     actions: buildKeyboardActions,
                     edit: {
                         onMove: async (direction) => {
