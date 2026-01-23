@@ -1255,7 +1255,8 @@
         dlgSessionComment.showModal();
         requestAnimationFrame(() => {
             sessionCommentInput.focus();
-            sessionCommentInput.select();
+            const length = sessionCommentInput.value.length;
+            sessionCommentInput.setSelectionRange(length, length);
         });
     }
 
