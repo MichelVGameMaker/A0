@@ -511,6 +511,9 @@
                         if (field === 'rpe') {
                             applyRpeTone(input, next);
                         }
+                        if (field === 'weight' && /[.,]$/.test(String(next))) {
+                            return;
+                        }
                         applyDirectChange(field, input.value);
                     },
                     onClose: () => input.blur()

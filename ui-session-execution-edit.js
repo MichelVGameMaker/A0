@@ -928,6 +928,9 @@
                         if (field === 'rpe') {
                             applyRpeTone(input, next);
                         }
+                        if (field === 'weight' && /[.,]$/.test(String(next))) {
+                            return;
+                        }
                         void applyDirectChange(field, input.value);
                     },
                     onClose: () => {
