@@ -2119,6 +2119,12 @@ textarea:focus{
   white-space: nowrap;
 }
 
+.exec-medal-popover--multiline{
+  white-space: pre-line;
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
 .exec-sets-column{
   display: flex;
   flex-direction: column;
