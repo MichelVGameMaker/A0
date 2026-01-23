@@ -80,7 +80,6 @@
         refs.btnSettingsRoutines = document.getElementById('btnSettingsRoutines');
         refs.btnSettingsPreferences = document.getElementById('btnSettingsPreferences');
         refs.btnSettingsData = document.getElementById('btnSettingsData');
-        refs.btnSettingsShare = document.getElementById('btnSettingsShare');
         refs.btnSettingsApplication = document.getElementById('btnSettingsApplication');
         refs.btnSettingsUpdate = document.getElementById('btnSettingsUpdate');
         refs.btnSettingsReset = document.getElementById('btnSettingsReset');
@@ -112,7 +111,6 @@
             btnSettingsRoutines,
             btnSettingsPreferences,
             btnSettingsData,
-            btnSettingsShare,
             btnSettingsApplication,
             btnSettingsUpdate,
             btnSettingsReset,
@@ -145,9 +143,6 @@
         });
         btnSettingsData?.addEventListener('click', () => {
             A.openData();
-        });
-        btnSettingsShare?.addEventListener('click', () => {
-            void openShareSessionsDialog();
         });
         btnSettingsApplication?.addEventListener('click', () => {
             A.openApplication();
@@ -244,6 +239,7 @@
         await renderShareSessionList();
         dlgShareSessions.showModal();
     }
+    A.openShareSessionsDialog = openShareSessionsDialog;
 
     function closeShareSessionsDialog() {
         const { dlgShareSessions } = ensureRefs();

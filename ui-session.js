@@ -10,6 +10,9 @@
     const refs = {};
     let refsResolved = false;
     const sessionEditorState = {
+        session: null
+    };
+    const sessionCommentState = {
         session: null,
         saveTimer: null,
         initialComments: ''
@@ -23,6 +26,7 @@
         wireAddRoutinesButton();
         wireSessionNavigation();
         wireSessionEditor();
+        wireSessionComments();
     });
 
     function getRpeDatasetValue(value) {
@@ -279,6 +283,7 @@
         const key = A.ymd(A.activeDate);
         const session = await db.getSession(key);
         updateSessionEditButtons(session);
+        updateSessionCommentsPreview(session);
         sessionList.innerHTML = '';
         if (!(session?.exercises?.length)) {
             sessionList.innerHTML = '<div class="empty">Aucun exercice pour cette date.</div>';
@@ -947,9 +952,15 @@
         refs.sessionEditorTitle = document.getElementById('sessionEditorTitle');
         refs.sessionEditorClose = document.getElementById('sessionEditorClose');
         refs.sessionEditorCancel = document.getElementById('sessionEditorCancel');
-        refs.sessionComments = document.getElementById('sessionComments');
+        refs.btnSessionComments = document.getElementById('btnSessionComments');
+        refs.sessionCommentsPreview = document.getElementById('sessionCommentsPreview');
         refs.sessionCreateRoutine = document.getElementById('sessionCreateRoutine');
         refs.sessionDelete = document.getElementById('sessionDelete');
+        refs.sessionShare = document.getElementById('sessionShare');
+        refs.dlgSessionComment = document.getElementById('dlgSessionComment');
+        refs.sessionCommentInput = document.getElementById('sessionCommentInput');
+        refs.sessionCommentClose = document.getElementById('sessionCommentClose');
+        refs.sessionCommentCancel = document.getElementById('sessionCommentCancel');
         refsResolved = true;
         return refs;
     }
@@ -1024,9 +1035,9 @@
             dlgSessionEditor,
             sessionEditorClose,
             sessionEditorCancel,
-            sessionComments,
             sessionCreateRoutine,
-            sessionDelete
+            sessionDelete,
+            sessionShare
         } = ensureRefs();
         if ((!btnSessionEdit && !btnSessionEditFull) || !dlgSessionEditor) {
             return;
@@ -1041,7 +1052,6 @@
         });
 
         sessionEditorClose?.addEventListener('click', () => {
-            flushSessionSave();
             if (A.closeDialog) {
                 A.closeDialog(dlgSessionEditor);
             } else {
@@ -1050,32 +1060,11 @@
         });
 
         sessionEditorCancel?.addEventListener('click', () => {
-            if (sessionEditorState.saveTimer) {
-                clearTimeout(sessionEditorState.saveTimer);
-                sessionEditorState.saveTimer = null;
-            }
-            if (sessionEditorState.session && sessionComments) {
-                sessionEditorState.session.comments = sessionEditorState.initialComments || '';
-                sessionComments.value = sessionEditorState.initialComments || '';
-                void flushSessionSave();
-            }
             if (A.closeDialog) {
                 A.closeDialog(dlgSessionEditor);
             } else {
                 dlgSessionEditor.close();
             }
-        });
-
-        dlgSessionEditor.addEventListener('close', () => {
-            flushSessionSave();
-        });
-
-        sessionComments?.addEventListener('input', () => {
-            if (!sessionEditorState.session) {
-                return;
-            }
-            sessionEditorState.session.comments = sessionComments.value;
-            scheduleSessionSave();
         });
 
         sessionCreateRoutine?.addEventListener('click', () => {
@@ -1084,6 +1073,48 @@
 
         sessionDelete?.addEventListener('click', () => {
             void deleteSessionFromEditor();
+        });
+
+        sessionShare?.addEventListener('click', () => {
+            void A.openShareSessionsDialog?.();
+        });
+    }
+
+    function wireSessionComments() {
+        const {
+            btnSessionComments,
+            dlgSessionComment,
+            sessionCommentInput,
+            sessionCommentClose,
+            sessionCommentCancel
+        } = ensureRefs();
+        if (!btnSessionComments || !dlgSessionComment) {
+            return;
+        }
+
+        btnSessionComments.addEventListener('click', () => {
+            void openSessionCommentDialog();
+        });
+
+        sessionCommentClose?.addEventListener('click', () => {
+            void closeSessionCommentDialog({ revert: false });
+        });
+
+        sessionCommentCancel?.addEventListener('click', () => {
+            void closeSessionCommentDialog({ revert: true });
+        });
+
+        dlgSessionComment.addEventListener('close', () => {
+            void flushSessionCommentSave();
+        });
+
+        sessionCommentInput?.addEventListener('input', () => {
+            if (!sessionCommentState.session) {
+                return;
+            }
+            sessionCommentState.session.comments = sessionCommentInput.value;
+            updateSessionCommentsPreview(sessionCommentState.session);
+            scheduleSessionCommentSave();
         });
     }
 
@@ -1172,9 +1203,8 @@
         if (!btnSessionEditFull) {
             return;
         }
-        const hasSets = hasSessionSets(session);
-        btnSessionEditFull.hidden = !hasSets;
-        btnSessionEditFull.setAttribute('aria-hidden', String(!hasSets));
+        btnSessionEditFull.hidden = false;
+        btnSessionEditFull.setAttribute('aria-hidden', 'false');
     }
 
     function hasSessionSets(session) {
@@ -1183,7 +1213,7 @@
     }
 
     async function openSessionEditor() {
-        const { dlgSessionEditor, sessionEditorTitle, sessionComments, sessionCreateRoutine } = ensureRefs();
+        const { dlgSessionEditor, sessionEditorTitle, sessionCreateRoutine } = ensureRefs();
         if (!dlgSessionEditor) {
             return;
         }
@@ -1193,10 +1223,6 @@
         }
         const session = await ensureSessionForDate(date);
         sessionEditorState.session = session;
-        if (sessionComments) {
-            sessionComments.value = session.comments || '';
-            sessionEditorState.initialComments = sessionComments.value;
-        }
         if (sessionCreateRoutine) {
             const hasExercises = Array.isArray(session.exercises) && session.exercises.length > 0;
             sessionCreateRoutine.disabled = !hasExercises;
@@ -1217,24 +1243,68 @@
         return session;
     }
 
-    function scheduleSessionSave() {
-        if (sessionEditorState.saveTimer) {
-            clearTimeout(sessionEditorState.saveTimer);
+    async function openSessionCommentDialog() {
+        const { dlgSessionComment, sessionCommentInput } = ensureRefs();
+        if (!dlgSessionComment || !sessionCommentInput) {
+            return;
         }
-        sessionEditorState.saveTimer = setTimeout(() => {
-            void flushSessionSave();
+        const session = await ensureSessionForDate(A.activeDate);
+        sessionCommentState.session = session;
+        sessionCommentInput.value = session.comments || '';
+        sessionCommentState.initialComments = sessionCommentInput.value;
+        dlgSessionComment.showModal();
+        requestAnimationFrame(() => {
+            sessionCommentInput.focus();
+            sessionCommentInput.select();
+        });
+    }
+
+    async function closeSessionCommentDialog({ revert }) {
+        const { dlgSessionComment, sessionCommentInput } = ensureRefs();
+        if (!dlgSessionComment || !sessionCommentInput) {
+            return;
+        }
+        if (revert && sessionCommentState.session) {
+            sessionCommentState.session.comments = sessionCommentState.initialComments || '';
+            sessionCommentInput.value = sessionCommentState.initialComments || '';
+            updateSessionCommentsPreview(sessionCommentState.session);
+        }
+        await flushSessionCommentSave();
+        if (A.closeDialog) {
+            A.closeDialog(dlgSessionComment);
+        } else {
+            dlgSessionComment.close();
+        }
+    }
+
+    function scheduleSessionCommentSave() {
+        if (sessionCommentState.saveTimer) {
+            clearTimeout(sessionCommentState.saveTimer);
+        }
+        sessionCommentState.saveTimer = setTimeout(() => {
+            void flushSessionCommentSave();
         }, 300);
     }
 
-    async function flushSessionSave() {
-        if (sessionEditorState.saveTimer) {
-            clearTimeout(sessionEditorState.saveTimer);
-            sessionEditorState.saveTimer = null;
+    async function flushSessionCommentSave() {
+        if (sessionCommentState.saveTimer) {
+            clearTimeout(sessionCommentState.saveTimer);
+            sessionCommentState.saveTimer = null;
         }
-        if (!sessionEditorState.session) {
+        if (!sessionCommentState.session) {
             return;
         }
-        await db.saveSession(sessionEditorState.session);
+        await db.saveSession(sessionCommentState.session);
+    }
+
+    function updateSessionCommentsPreview(session) {
+        const { sessionCommentsPreview } = ensureRefs();
+        if (!sessionCommentsPreview) {
+            return;
+        }
+        const comment = typeof session?.comments === 'string' ? session.comments.trim() : '';
+        sessionCommentsPreview.textContent = comment;
+        sessionCommentsPreview.dataset.empty = comment ? 'false' : 'true';
     }
 
     async function createRoutineFromSession() {
@@ -1278,10 +1348,6 @@
             : confirm('Supprimer la séance ?');
         if (!confirmed) {
             return;
-        }
-        if (sessionEditorState.saveTimer) {
-            clearTimeout(sessionEditorState.saveTimer);
-            sessionEditorState.saveTimer = null;
         }
         if (session.id) {
             await db.del('sessions', session.id);
