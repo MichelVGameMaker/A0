@@ -1263,26 +1263,11 @@
 <!-- ==================== -->
 
 <!-- ========== Séance : méta séance ========== -->
-<dialog id="dlgSessionEditor" class="modal modal-fixed modal-centered modal-top">
-    <form method="dialog" class="modal-form">
-        <div class="modal-header">
-            <div class="title modal-title" id="sessionEditorTitle">Éditer</div>
-            <button id="sessionEditorCancel" class="btn ghost modal-close" type="button">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="bloque">
-                <button id="sessionShare" class="btn full" type="button">📤 Partager</button>
-            </div>
-            <div class="bloque">
-                <button id="sessionCreateRoutine" class="btn full" type="button">Créer une routine à partir de la séance</button>
-            </div>
-            <div class="bloque">
-                <button id="sessionDelete" class="btn danger full" type="button">🗑️ Supprimer la séance</button>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button id="sessionEditorClose" class="btn cta full" type="button">ok</button>
-        </div>
+<dialog id="dlgSessionEditor" class="modal modal-context">
+    <form method="dialog" class="modal-context-form">
+        <button id="sessionShare" class="modal-context-action" type="button">partager</button>
+        <button id="sessionCreateRoutine" class="modal-context-action" type="button">créer routine</button>
+        <button id="sessionDelete" class="modal-context-action is-danger" type="button">supprimer</button>
     </form>
 </dialog>
 <!-- ==================== -->

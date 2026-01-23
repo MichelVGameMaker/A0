@@ -436,6 +436,44 @@ header .header-left .btn{
 
     transform: translateX(-50%); 
 }
+.modal-context{
+    max-width: 260px;
+    width: min(260px, 90vw);
+    padding: 10px;
+    border: 1px solid var(--panelBord);
+    background: var(--panelBack);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+.modal-context-form{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+.modal-context-action{
+    min-height: 36px;
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: var(--fw-strong);
+    text-align: left;
+    cursor: pointer;
+    display:flex;
+    align-items:center;
+    width: 100%;
+}
+.modal-context-action:hover{
+    background: var(--focusedBack);
+}
+.modal-context-action:focus-visible{
+    outline: 2px solid var(--focusedBord);
+    outline-offset: 2px;
+}
+.modal-context-action.is-danger{
+    color: var(--red);
+}
 .modal-top{
     top: env(safe-area-inset-top, 0);
     transform: translate(-50%, 0);
@@ -1804,6 +1842,15 @@ textarea:focus{
 }
 .session-comments-more{
     min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.session-comments-more:focus-visible{
+    outline: 2px solid var(--focusedBord);
+    outline-offset: 2px;
 }
 .session-comment-textarea{
     min-height: 180px;
