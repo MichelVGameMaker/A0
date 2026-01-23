@@ -90,6 +90,7 @@
         refs.btnDataReloadExercises = document.getElementById('btnDataReloadExercises');
         refs.btnDataImportFitHero = document.getElementById('btnDataImportFitHero');
         refs.btnDataExportSessions = document.getElementById('btnDataExportSessions');
+        refs.btnDataExportExercises = document.getElementById('btnDataExportExercises');
         refs.btnDataImportSessions = document.getElementById('btnDataImportSessions');
         refs.btnDataFitHeroMapping = document.getElementById('btnDataFitHeroMapping');
         refs.inputDataImportFitHero = document.getElementById('inputDataImportFitHero');
@@ -121,6 +122,7 @@
             btnDataReloadExercises,
             btnDataImportFitHero,
             btnDataExportSessions,
+            btnDataExportExercises,
             btnDataImportSessions,
             btnDataFitHeroMapping,
             inputDataImportFitHero,
@@ -173,6 +175,9 @@
         });
         btnDataExportSessions?.addEventListener('click', () => {
             void exportSessions(btnDataExportSessions);
+        });
+        btnDataExportExercises?.addEventListener('click', () => {
+            void exportExercisesLibrary(btnDataExportExercises);
         });
         btnDataImportSessions?.addEventListener('click', () => {
             inputDataImportSessions?.click();
@@ -808,6 +813,70 @@
                 button.disabled = false;
             }
         }
+    }
+
+    async function exportExercisesLibrary(button) {
+        if (!db?.getAll) {
+            alert('L’export de la bibliothèque est indisponible.');
+            return;
+        }
+
+        if (button) {
+            button.disabled = true;
+        }
+
+        try {
+            const exercises = await db.getAll('exercises');
+            const payload = Array.isArray(exercises)
+                ? exercises
+                    .map((exercise) => toExportableExercise(exercise))
+                    .filter(Boolean)
+                : [];
+            downloadJson('exercices.json', payload);
+            alert('Export de la bibliothèque généré.');
+        } catch (error) {
+            console.warn('Export de la bibliothèque échoué :', error);
+            alert('L’export de la bibliothèque a échoué.');
+        } finally {
+            if (button) {
+                button.disabled = false;
+            }
+        }
+    }
+
+    function toExportableExercise(exercise) {
+        if (!exercise || typeof exercise !== 'object') {
+            return null;
+        }
+        const exerciseId = String(exercise.exerciseId || exercise.id || '').trim();
+        if (!exerciseId) {
+            return null;
+        }
+
+        const equipments = normalizeToArray(exercise.equipments || exercise.equipmentGroup2 || exercise.equipment);
+        const targetMuscles = normalizeToArray(exercise.targetMuscles || exercise.muscle || exercise.muscleGroup2 || exercise.muscleGroup1);
+        const bodyParts = normalizeToArray(exercise.bodyParts || exercise.bodyPart || exercise.muscleGroup1);
+
+        return {
+            exerciseId,
+            name: exercise.name || exercise.exercise || exerciseId,
+            gifUrl: exercise.gifUrl || exercise.image || null,
+            targetMuscles,
+            bodyParts,
+            equipments,
+            secondaryMuscles: Array.isArray(exercise.secondaryMuscles) ? exercise.secondaryMuscles : [],
+            instructions: Array.isArray(exercise.instructions) ? exercise.instructions : []
+        };
+    }
+
+    function normalizeToArray(value) {
+        if (Array.isArray(value)) {
+            return value.filter(Boolean);
+        }
+        if (typeof value === 'string' && value.trim()) {
+            return [value.trim()];
+        }
+        return [];
     }
 
     async function importAppSessions({ input, button } = {}) {
