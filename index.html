@@ -1177,7 +1177,7 @@
 <!-- ==================== -->
 
 <!-- ========== Routine : méta d'un exercice ========== -->
-<dialog id="dlgRoutineMoveEditor" class="modal modal-fixed modal-centered modal-top">
+<dialog id="dlgRoutineMoveEditor" class="modal modal-context modal-context-editor">
     <form method="dialog" class="modal-form">
         <div class="modal-header">
             <div class="title modal-title">Éditer</div>
@@ -1192,11 +1192,19 @@
             </div>
 
             <div class="bloque">
-                <button id="routineMoveReplace" class="btn full" type="button">Remplacer l’exercice</button>
+                <button id="routineMoveUp" class="btn full" type="button">Remonter</button>
             </div>
 
             <div class="bloque">
-                <button id="routineMoveDelete" class="btn danger full" type="button">🗑️ Supprimer de la routine</button>
+                <button id="routineMoveDown" class="btn full" type="button">Descendre</button>
+            </div>
+
+            <div class="bloque">
+                <button id="routineMoveReplace" class="btn full" type="button">Remplacer</button>
+            </div>
+
+            <div class="bloque">
+                <button id="routineMoveDelete" class="btn danger full" type="button">Supprimer</button>
             </div>
         </div>
         <div class="modal-footer">
@@ -1226,7 +1234,7 @@
 <!-- ==================== -->
 
 <!-- ========== Séance : méta d'un exercice ========== -->
-<dialog id="dlgExecMoveEditor" class="modal modal-fixed modal-centered modal-top">
+<dialog id="dlgExecMoveEditor" class="modal modal-context modal-context-editor">
     <form method="dialog" class="modal-form">
         <div class="modal-header">
             <div class="title modal-title">Éditer</div>
@@ -1248,11 +1256,19 @@
             </div>
 
             <div class="bloque">
-                <button id="execReplaceExercise" class="btn full" type="button">Remplacer l’exercice</button>
+                <button id="execMoveUp" class="btn full" type="button">Remonter</button>
             </div>
 
             <div class="bloque">
-                <button id="execDelete" class="btn danger full" type="button">🗑️ Supprimer de la séance</button>
+                <button id="execMoveDown" class="btn full" type="button">Descendre</button>
+            </div>
+
+            <div class="bloque">
+                <button id="execReplaceExercise" class="btn full" type="button">Remplacer</button>
+            </div>
+
+            <div class="bloque">
+                <button id="execDelete" class="btn danger full" type="button">Supprimer</button>
             </div>
         </div>
         <div class="modal-footer">
