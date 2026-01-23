@@ -209,10 +209,47 @@
         };
 
         await db.put('exercises', exercise);
+        if (existing?.name && existing.name !== name) {
+            await syncSessionExerciseNames(exercise.id, name);
+        }
         if (state.callerScreen === 'screenExerciseRead' && exercise.id) {
             await A.openExerciseRead({ currentId: exercise.id, callerScreen: 'screenExercises' });
         } else {
             await A.openExercises({ callerScreen: 'screenExerciseEdit' });
+        }
+    }
+
+    async function syncSessionExerciseNames(exerciseId, nextName) {
+        if (!exerciseId || !nextName) {
+            return;
+        }
+        const sessions = await db.getAll('sessions');
+        const updates = [];
+        sessions.forEach((session) => {
+            if (!Array.isArray(session?.exercises)) {
+                return;
+            }
+            let changed = false;
+            session.exercises = session.exercises.map((exercise) => {
+                if (!exercise || exercise.exercise_id !== exerciseId) {
+                    return exercise;
+                }
+                if (exercise.exercise_name === nextName) {
+                    return exercise;
+                }
+                changed = true;
+                return {
+                    ...exercise,
+                    exercise_name: nextName,
+                    exerciseName: nextName
+                };
+            });
+            if (changed) {
+                updates.push(db.saveSession(session));
+            }
+        });
+        if (updates.length) {
+            await Promise.all(updates);
         }
     }
 
