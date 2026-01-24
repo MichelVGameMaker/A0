@@ -465,6 +465,24 @@
                     layout: resolveKeyboardLayout(field),
                     decimalSeparator: field === 'weight' ? ',' : undefined,
                     actions: buildKeyboardActions(),
+                    edit: {
+                        onMove: (direction) => {
+                            const delta = direction === 'up' ? -1 : 1;
+                            const nextIndex = moveSet(currentIndex, delta, row);
+                            if (nextIndex === null || nextIndex === undefined) {
+                                return;
+                            }
+                            currentIndex = nextIndex;
+                            const total = findMove()?.sets?.length ?? totalSets;
+                            ensureInlineEditor()?.reposition?.(row, {
+                                position: currentIndex + 1,
+                                total
+                            });
+                        },
+                        onDelete: () => {
+                            removeSet(currentIndex);
+                        }
+                    },
                     getValue: () => input.value,
                     onChange: (next) => {
                         input.value = next;
@@ -476,7 +494,10 @@
                         }
                         applyDirectChange(field, input.value);
                     },
-                    onClose: () => input.blur()
+                    onClose: () => {
+                        input.blur();
+                        ensureInlineEditor()?.close();
+                    }
                 });
                 inlineKeyboard?.selectTarget?.(input);
             });
