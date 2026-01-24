@@ -208,7 +208,7 @@
         if (!move) {
             return;
         }
-        const sets = Array.isArray(move.sets) ? [...move.sets].sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0)) : [];
+        const sets = normalizeMoveSets(move);
         if (!sets.length) {
             const empty = document.createElement('div');
             empty.className = 'empty';
@@ -254,6 +254,19 @@
         if (target?.click) {
             target.click();
         }
+    }
+
+    function normalizeMoveSets(move) {
+        if (!move) {
+            return [];
+        }
+        const list = Array.isArray(move.sets) ? [...move.sets] : [];
+        list.sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0));
+        list.forEach((set, idx) => {
+            set.pos = idx + 1;
+        });
+        move.sets = list;
+        return list;
     }
 
     function renderSetRow(set, index, totalSets) {
@@ -491,6 +504,7 @@
         if (!move) {
             return;
         }
+        normalizeMoveSets(move);
         if (!Array.isArray(move.sets) || !move.sets[index]) {
             return;
         }
@@ -518,7 +532,7 @@
         if (!move) {
             return;
         }
-        const sets = Array.isArray(move.sets) ? move.sets : [];
+        const sets = normalizeMoveSets(move);
         const previous = sets.length ? sets[sets.length - 1] : null;
         const defaultRest = getRestForNewSet(previous?.rest);
         const newSet = previous
@@ -551,6 +565,7 @@
         if (!move) {
             return;
         }
+        normalizeMoveSets(move);
         if (!Array.isArray(move.sets) || !move.sets[index]) {
             return;
         }
@@ -580,7 +595,7 @@
         if (!move) {
             return null;
         }
-        const sets = Array.isArray(move.sets) ? move.sets : [];
+        const sets = normalizeMoveSets(move);
         const target = index + delta;
         if (target < 0 || target >= sets.length) {
             return index;
