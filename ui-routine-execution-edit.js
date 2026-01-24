@@ -538,6 +538,10 @@
               };
         sets.push(newSet);
         move.sets = sets;
+        state.pendingFocus = {
+            index: sets.length - 1,
+            field: 'reps'
+        };
         scheduleSave();
         renderSets();
     }

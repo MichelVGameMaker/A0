@@ -1451,6 +1451,10 @@
         sets.push(newSet);
         hydrateSetIdentifiers(exercise, sets);
         exercise.sets = sets;
+        state.pendingFocus = {
+            index: sets.length - 1,
+            field: 'reps'
+        };
         await persistSession();
     }
 
