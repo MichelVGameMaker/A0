@@ -301,7 +301,7 @@
             applyRpeTone(weightInput, value.rpe);
         };
 
-        const updatePreview = (source) => {
+        const updatePreview = (source, { persist = true } = {}) => {
             if (!source) {
                 return;
             }
@@ -317,6 +317,13 @@
             }
             inputs.forEach((input) => input?._update?.());
             syncRowTone();
+            if (persist) {
+                applySetEditorResult(
+                    currentIndex,
+                    { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest },
+                    { render: false }
+                );
+            }
         };
 
         const buildKeyboardActions = (mode = 'input') => {
@@ -411,7 +418,7 @@
                     return;
             }
             applySetEditorResult(currentIndex, next, { render: false });
-            updatePreview(next);
+            updatePreview(next, { persist: false });
         };
 
         const resolveKeyboardLayout = (field) => {
