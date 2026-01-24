@@ -1845,9 +1845,10 @@ textarea:focus{
 .session-comments-text{
     display:block;
     min-height: 1.2em;
+    font-size: var(--fs-small);
 }
 .session-comments-text[data-empty="true"]::before{
-    content: "commentaires";
+    content: attr(data-placeholder);
     color: var(--muted);
 }
 .session-comments-more{

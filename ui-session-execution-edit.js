@@ -14,6 +14,11 @@
         pendingFocus: null,
         replaceCallerScreen: 'screenExecEdit'
     };
+    const detailsState = {
+        exercise: null,
+        initialDetails: '',
+        saveTimer: null
+    };
     let medalPopover = null;
     let medalPopoverCleanup = null;
     const medalIconMap = {
@@ -89,6 +94,7 @@
         ensureRefs();
         wireNavigation();
         wireActions();
+        wireDetails();
         wireMetaDialog();
         wireTimerControls();
     });
@@ -139,6 +145,7 @@
         const { execTitle, execDate } = assertRefs();
         execTitle.textContent = exercise.exercise_name || 'Exercice';
         execDate.textContent = A.fmtUI(date);
+        updateExecDetailsPreview(exercise);
         setMetaMode('history');
         A.setTimerVisibility?.({ hidden: true });
         updateTimerUI();
@@ -181,6 +188,7 @@
         state.session = session;
         state.pendingFocus = null;
         state.replaceCallerScreen = callerScreen;
+        updateExecDetailsPreview(exercise);
 
         openMoveEditorDialog();
     };
@@ -225,6 +233,12 @@
         refs.execMoveDown = document.getElementById('execMoveDown');
         refs.execReplaceExercise = document.getElementById('execReplaceExercise');
         refs.execMetaToggle = document.getElementById('execMetaToggle');
+        refs.btnExecDetails = document.getElementById('btnExecDetails');
+        refs.execDetailsPreview = document.getElementById('execDetailsPreview');
+        refs.dlgExecDetails = document.getElementById('dlgExecDetails');
+        refs.execDetailsInput = document.getElementById('execDetailsInput');
+        refs.execDetailsClose = document.getElementById('execDetailsClose');
+        refs.execDetailsCancel = document.getElementById('execDetailsCancel');
         refsResolved = true;
         return refs;
     }
@@ -259,7 +273,13 @@
             'execMoveDown',
             'execReplaceExercise',
             'execMetaToggle',
-            'execMetaHeader'
+            'execMetaHeader',
+            'btnExecDetails',
+            'execDetailsPreview',
+            'dlgExecDetails',
+            'execDetailsInput',
+            'execDetailsClose',
+            'execDetailsCancel'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -296,6 +316,39 @@
         execMetaToggle.addEventListener('click', () => {
             const nextMode = getNextMetaMode();
             setMetaMode(nextMode);
+        });
+    }
+
+    function wireDetails() {
+        const {
+            btnExecDetails,
+            dlgExecDetails,
+            execDetailsInput,
+            execDetailsClose,
+            execDetailsCancel
+        } = ensureRefs();
+        if (!btnExecDetails || !dlgExecDetails) {
+            return;
+        }
+        btnExecDetails.addEventListener('click', () => {
+            void openExecDetailsDialog();
+        });
+        execDetailsClose?.addEventListener('click', () => {
+            void closeExecDetailsDialog({ revert: false });
+        });
+        execDetailsCancel?.addEventListener('click', () => {
+            void closeExecDetailsDialog({ revert: true });
+        });
+        dlgExecDetails.addEventListener('close', () => {
+            void flushExecDetailsSave();
+        });
+        execDetailsInput?.addEventListener('input', () => {
+            if (!detailsState.exercise) {
+                return;
+            }
+            detailsState.exercise.details = execDetailsInput.value;
+            updateExecDetailsPreview(detailsState.exercise);
+            scheduleExecDetailsSave();
         });
     }
 
@@ -355,6 +408,84 @@
         execTimerDialog.addEventListener('close', () => {
             if (!isTimerHidden()) {
                 setTimerVisibility({ hidden: true });
+            }
+        });
+    }
+
+    async function openExecDetailsDialog() {
+        const { dlgExecDetails, execDetailsInput } = ensureRefs();
+        const exercise = getExercise();
+        if (!dlgExecDetails || !execDetailsInput || !exercise) {
+            return;
+        }
+        detailsState.exercise = exercise;
+        execDetailsInput.value = typeof exercise.details === 'string' ? exercise.details : '';
+        detailsState.initialDetails = execDetailsInput.value;
+        dlgExecDetails.showModal();
+        focusTextareaAtEnd(execDetailsInput);
+    }
+
+    async function closeExecDetailsDialog({ revert }) {
+        const { dlgExecDetails, execDetailsInput } = ensureRefs();
+        if (!dlgExecDetails || !execDetailsInput) {
+            return;
+        }
+        if (revert && detailsState.exercise) {
+            detailsState.exercise.details = detailsState.initialDetails || '';
+            execDetailsInput.value = detailsState.initialDetails || '';
+            updateExecDetailsPreview(detailsState.exercise);
+        }
+        await flushExecDetailsSave();
+        if (A.closeDialog) {
+            A.closeDialog(dlgExecDetails);
+        } else {
+            dlgExecDetails.close();
+        }
+    }
+
+    function scheduleExecDetailsSave() {
+        if (detailsState.saveTimer) {
+            clearTimeout(detailsState.saveTimer);
+        }
+        detailsState.saveTimer = setTimeout(() => {
+            void flushExecDetailsSave();
+        }, 300);
+    }
+
+    async function flushExecDetailsSave() {
+        if (detailsState.saveTimer) {
+            clearTimeout(detailsState.saveTimer);
+            detailsState.saveTimer = null;
+        }
+        if (!detailsState.exercise || !state.session) {
+            return;
+        }
+        await persistSession(false);
+    }
+
+    function updateExecDetailsPreview(exercise) {
+        const { execDetailsPreview } = ensureRefs();
+        if (!execDetailsPreview) {
+            return;
+        }
+        const details = typeof exercise?.details === 'string' ? exercise.details.trim() : '';
+        execDetailsPreview.textContent = details;
+        execDetailsPreview.dataset.empty = details ? 'false' : 'true';
+    }
+
+    function focusTextareaAtEnd(textarea) {
+        if (!textarea) {
+            return;
+        }
+        const focusInput = () => {
+            textarea.focus();
+            const length = textarea.value.length;
+            textarea.setSelectionRange(length, length);
+        };
+        requestAnimationFrame(() => {
+            focusInput();
+            if (document.activeElement !== textarea) {
+                setTimeout(focusInput, 0);
             }
         });
     }
@@ -1520,6 +1651,7 @@
         state.exerciseId = nextId;
         const { execTitle } = assertRefs();
         execTitle.textContent = nextName || 'Exercice';
+        updateExecDetailsPreview(exercise);
         const timer = ensureSharedTimer();
         if (timer.attachment?.exerciseId === state.exerciseId) {
             resetTimerState();

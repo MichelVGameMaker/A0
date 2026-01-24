@@ -69,7 +69,7 @@
 
         <div class="session-comments-header">
             <button id="btnSessionComments" class="session-comments-content" type="button" aria-label="Ajouter un commentaire de séance">
-                <span id="sessionCommentsPreview" class="session-comments-text details" data-empty="true"></span>
+                <span id="sessionCommentsPreview" class="session-comments-text details" data-empty="true" data-placeholder="commentaires"></span>
             </button>
             <button id="btnSessionEditFull" class="btn ghost session-comments-more" type="button" aria-label="Éditer la séance">...</button>
         </div>
@@ -110,6 +110,12 @@
             <div class="details" id="execDate">—</div>
             <button id="execMetaToggle" class="tag exec-date-tag selected" type="button" aria-pressed="true">
                 Mode : Historique
+            </button>
+        </div>
+
+        <div class="session-comments-header">
+            <button id="btnExecDetails" class="session-comments-content" type="button" aria-label="Ajouter des détails">
+                <span id="execDetailsPreview" class="session-comments-text details" data-empty="true" data-placeholder="détails"></span>
             </button>
         </div>
 
@@ -1244,6 +1250,28 @@
         </div>
         <div class="modal-footer">
             <button id="sessionCommentClose" class="btn cta full" type="button">ok</button>
+        </div>
+    </form>
+</dialog>
+<!-- ==================== -->
+
+<!-- ========== Séance : détails exécution ========== -->
+<dialog id="dlgExecDetails" class="modal modal-fixed modal-centered modal-top">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Détails</div>
+            <button id="execDetailsCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="execDetailsInput">Détails</label>
+                    <textarea id="execDetailsInput" class="input session-comment-textarea" rows="8" placeholder="Ajouter des détails sur l'exercice"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="execDetailsClose" class="btn cta full" type="button">ok</button>
         </div>
     </form>
 </dialog>
