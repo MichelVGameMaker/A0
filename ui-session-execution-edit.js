@@ -857,7 +857,7 @@
         const buildKeyboardActions = (mode = 'input') => {
             const isEdit = mode === 'edit';
             const toggleAction = {
-                icon: isEdit ? '🔢' : '✏️',
+                icon: isEdit ? '🔢' : '…',
                 ariaLabel: isEdit ? 'Basculer en mode saisie' : 'Basculer en mode édition',
                 className: 'inline-keyboard-action--icon',
                 close: false,
@@ -878,8 +878,7 @@
                 },
                 {
                     label: 'fait',
-                    className: 'inline-keyboard-action--emphase inline-keyboard-action--span-2',
-                    span: 2,
+                    className: 'inline-keyboard-action--emphase',
                     onClick: async () => {
                         await applySetEditorResult(
                             currentIndex,
@@ -888,6 +887,9 @@
                         );
                         startTimer(value.rest, { setId: set.id, setIndex: currentIndex });
                     }
+                },
+                {
+                    label: 'fermer clavier ⬇️'
                 }
             ];
         };

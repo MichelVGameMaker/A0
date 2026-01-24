@@ -309,7 +309,7 @@
         const buildKeyboardActions = (mode = 'input') => {
             const isEdit = mode === 'edit';
             const toggleAction = {
-                icon: isEdit ? '🔢' : '✏️',
+                icon: isEdit ? '🔢' : '…',
                 ariaLabel: isEdit ? 'Basculer en mode saisie' : 'Basculer en mode édition',
                 className: 'inline-keyboard-action--icon',
                 close: false,
