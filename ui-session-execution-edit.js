@@ -912,7 +912,7 @@
             applyRpeTone(weightInput, value.rpe);
         };
 
-        const updatePreview = (source) => {
+        const updatePreview = (source, { persist = true } = {}) => {
             if (!source) {
                 return;
             }
@@ -928,6 +928,14 @@
             }
             inputs.forEach((input) => input?._update?.());
             syncRowTone();
+            if (persist) {
+                const currentDone = getExercise()?.sets?.[currentIndex]?.done ?? set.done ?? false;
+                void applySetEditorResult(
+                    currentIndex,
+                    { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest },
+                    { done: currentDone, render: false }
+                );
+            }
         };
 
         const buildKeyboardActions = (mode = 'input') => {
@@ -1037,7 +1045,7 @@
             const currentDone = getExercise()?.sets?.[currentIndex]?.done ?? set.done;
             const markDone = currentDone;
             await applySetEditorResult(currentIndex, next, { done: markDone, render: false });
-            updatePreview(next);
+            updatePreview(next, { persist: false });
             row.classList.toggle('exec-set-executed', markDone);
             row.classList.toggle('exec-set-planned', !markDone);
             await refreshSetMetaFrom(currentIndex);
