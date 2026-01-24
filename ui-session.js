@@ -19,6 +19,8 @@
     };
     let medalPopover = null;
     let medalPopoverCleanup = null;
+    let detailsPopover = null;
+    let detailsPopoverCleanup = null;
     const sessionScrollState = {
         top: 0,
         pendingRestore: false,
@@ -182,6 +184,60 @@
             window.removeEventListener('resize', handleClose);
         };
         medalPopoverCleanup = cleanup;
+        window.setTimeout(() => {
+            document.addEventListener('click', handleClose);
+            window.addEventListener('scroll', handleClose, true);
+            window.addEventListener('resize', handleClose);
+        }, 0);
+    }
+
+    function clearDetailsPopover() {
+        if (detailsPopover) {
+            detailsPopover.remove();
+            detailsPopover = null;
+        }
+        if (detailsPopoverCleanup) {
+            detailsPopoverCleanup();
+            detailsPopoverCleanup = null;
+        }
+    }
+
+    function showDetailsPopover(target, detailsText) {
+        if (!target) {
+            return;
+        }
+        clearDetailsPopover();
+        const popover = document.createElement('div');
+        popover.className = 'exec-medal-popover exec-details-popover';
+        const text = document.createElement('div');
+        text.className = 'exec-details-popover__text';
+        text.textContent = detailsText || 'Aucun détail.';
+        popover.append(text);
+        document.body.appendChild(popover);
+        const rect = target.getBoundingClientRect();
+        const popRect = popover.getBoundingClientRect();
+        const padding = 8;
+        let left = rect.left + rect.width / 2 - popRect.width / 2;
+        left = Math.max(padding, Math.min(left, window.innerWidth - popRect.width - padding));
+        let top = rect.top - popRect.height - padding;
+        if (top < padding) {
+            top = rect.bottom + padding;
+        }
+        popover.style.left = `${left}px`;
+        popover.style.top = `${top}px`;
+        detailsPopover = popover;
+        const handleClose = (event) => {
+            if (popover.contains(event.target) || target.contains(event.target)) {
+                return;
+            }
+            clearDetailsPopover();
+        };
+        const cleanup = () => {
+            document.removeEventListener('click', handleClose);
+            window.removeEventListener('scroll', handleClose, true);
+            window.removeEventListener('resize', handleClose);
+        };
+        detailsPopoverCleanup = cleanup;
         window.setTimeout(() => {
             document.addEventListener('click', handleClose);
             window.addEventListener('scroll', handleClose, true);
@@ -438,6 +494,7 @@
         todayLabel.textContent = A.fmtUI(A.activeDate);
         A.updateSessionTabDisplay?.();
         await updateSessionNavigation();
+        clearDetailsPopover();
 
         const key = A.ymd(A.activeDate);
         const session = await db.getSession(key);
@@ -455,7 +512,7 @@
                 endClass: 'exercise-card-end--top',
                 cardClass: 'exercise-card--full-sets'
             });
-            const { card, start, body } = structure;
+            const { card, start, body, end } = structure;
             card.dataset.exerciseId = exercise.exercise_id;
             start.classList.add('list-card__start--solo');
 
@@ -474,6 +531,17 @@
             const titleRow = document.createElement('div');
             titleRow.className = 'exercise-card-title-row';
             titleRow.appendChild(name);
+            const detailsButton = document.createElement('button');
+            detailsButton.type = 'button';
+            detailsButton.className = 'exercise-card-menu-button';
+            detailsButton.textContent = 'I';
+            detailsButton.setAttribute('aria-label', "Afficher les détails de l'exercice");
+            detailsButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const details = typeof exercise.details === 'string' ? exercise.details.trim() : '';
+                showDetailsPopover(detailsButton, details);
+            });
+            end.appendChild(detailsButton);
             const setsWrapper = document.createElement('div');
             setsWrapper.className = 'session-card-sets';
             const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
@@ -837,6 +905,7 @@
                         exerciseName: move.exerciseName,
                         routineInstructions: typeof move.instructions === 'string' ? move.instructions : '',
                         note: '',
+                        details: typeof move.details === 'string' ? move.details : '',
                         sort: session.exercises.length + 1,
                         sets: move.sets.map((set) => ({
                             pos: set.pos,

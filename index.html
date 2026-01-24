@@ -1205,6 +1205,7 @@
     <form method="dialog" class="modal-context-form">
         <button id="routineMoveUp" class="modal-context-action" type="button">Remonter</button>
         <button id="routineMoveDown" class="modal-context-action" type="button">Descendre</button>
+        <button id="routineMoveAnnotate" class="modal-context-action" type="button">Anoter</button>
         <button id="routineMoveReplace" class="modal-context-action" type="button">Remplacer</button>
         <button id="routineMoveDelete" class="modal-context-action is-danger" type="button">Supprimer</button>
     </form>
@@ -1235,6 +1236,7 @@
     <form method="dialog" class="modal-context-form">
         <button id="execMoveUp" class="modal-context-action" type="button">Remonter</button>
         <button id="execMoveDown" class="modal-context-action" type="button">Descendre</button>
+        <button id="execMoveAnnotate" class="modal-context-action" type="button">Anoter</button>
         <button id="execReplaceExercise" class="modal-context-action" type="button">Remplacer</button>
         <button id="execDelete" class="modal-context-action is-danger" type="button">Supprimer</button>
     </form>
@@ -1290,6 +1292,28 @@
         </div>
         <div class="modal-footer">
             <button id="execDetailsClose" class="btn cta full" type="button">ok</button>
+        </div>
+    </form>
+</dialog>
+<!-- ==================== -->
+
+<!-- ========== Routine : détails exercice ========== -->
+<dialog id="dlgRoutineMoveDetails" class="modal modal-fixed modal-centered modal-top">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Détails</div>
+            <button id="routineMoveDetailsCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="routineMoveDetailsInput">Détails</label>
+                    <textarea id="routineMoveDetailsInput" class="input session-comment-textarea" rows="8" placeholder="Ajouter des détails sur l'exercice"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="routineMoveDetailsClose" class="btn cta full" type="button">ok</button>
         </div>
     </form>
 </dialog>
