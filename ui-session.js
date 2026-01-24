@@ -21,7 +21,8 @@
     let medalPopoverCleanup = null;
     const sessionScrollState = {
         top: 0,
-        pendingRestore: false
+        pendingRestore: false,
+        targetExerciseId: null
     };
 
     /* WIRE */
@@ -686,6 +687,7 @@
         const dateKey = A.ymd(A.activeDate);
         const session = (await db.getSession(dateKey)) || createSession(A.activeDate);
         const existing = new Set((session.exercises || []).map((exercise) => exercise.exercise_id));
+        let firstAddedId = null;
 
         for (const id of ids) {
             if (existing.has(id)) {
@@ -694,6 +696,9 @@
             const exercise = await db.get('exercises', id);
             if (!exercise) {
                 continue;
+            }
+            if (!firstAddedId) {
+                firstAddedId = exercise.id;
             }
             session.exercises.push(
                 createSessionExercise({
@@ -710,6 +715,10 @@
         }
 
         await db.saveSession(session);
+        if (firstAddedId) {
+            sessionScrollState.targetExerciseId = firstAddedId;
+            sessionScrollState.pendingRestore = true;
+        }
         await A.renderWeek();
         await A.renderSession();
     };
@@ -729,6 +738,7 @@
         const dateKey = A.ymd(A.activeDate);
         const session = (await db.getSession(dateKey)) || createSession(A.activeDate);
         const existingIds = new Set((session.exercises || []).map((exercise) => exercise.exercise_id));
+        let firstAddedId = null;
 
         for (const routineId of uniqueIds) {
             const routine = await db.get('routines', routineId);
@@ -740,6 +750,9 @@
                     return;
                 }
                 existingIds.add(move.exerciseId);
+                if (!firstAddedId) {
+                    firstAddedId = move.exerciseId;
+                }
                 session.exercises.push(
                     createSessionExercise({
                         date: session.date,
@@ -763,6 +776,10 @@
         }
 
         await db.saveSession(session);
+        if (firstAddedId) {
+            sessionScrollState.targetExerciseId = firstAddedId;
+            sessionScrollState.pendingRestore = true;
+        }
         await A.renderWeek();
         await A.renderSession();
     };
@@ -1093,7 +1110,22 @@
         if (!container) {
             return;
         }
-        container.scrollTop = sessionScrollState.top;
+        let restored = false;
+        if (sessionScrollState.targetExerciseId) {
+            const target = container.querySelector(
+                `[data-exercise-id="${CSS.escape(sessionScrollState.targetExerciseId)}"]`
+            );
+            if (target) {
+                const containerRect = container.getBoundingClientRect();
+                const targetRect = target.getBoundingClientRect();
+                container.scrollTop = container.scrollTop + (targetRect.top - containerRect.top);
+                restored = true;
+            }
+            sessionScrollState.targetExerciseId = null;
+        }
+        if (!restored) {
+            container.scrollTop = sessionScrollState.top;
+        }
         sessionScrollState.pendingRestore = false;
     }
 
