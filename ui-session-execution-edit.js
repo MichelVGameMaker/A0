@@ -1729,6 +1729,7 @@
             await refreshSessionViews();
         }
         updateMoveOrderControls();
+        A.ensureSessionCardInView?.(state.exerciseId);
     }
 
     async function removeExercise() {
@@ -1980,22 +1981,6 @@
             titleRow.replaceChild(name, oldName);
         } else if (oldName) {
             oldName.replaceWith(name);
-        }
-        const oldMenu = card.querySelector('.exercise-card-menu-button');
-        if (oldMenu) {
-            const menuButton = document.createElement('button');
-            menuButton.type = 'button';
-            menuButton.className = 'exercise-card-menu-button';
-            menuButton.textContent = '...';
-            menuButton.setAttribute('aria-label', `Éditer l'exercice ${nextName}`);
-            menuButton.addEventListener('click', (event) => {
-                event.stopPropagation();
-                void A.openExecMoveMeta?.({
-                    currentId: exercise.exercise_id,
-                    callerScreen: 'screenSessions'
-                });
-            });
-            oldMenu.replaceWith(menuButton);
         }
         return true;
     }
