@@ -21,6 +21,8 @@
     };
     let medalPopover = null;
     let medalPopoverCleanup = null;
+    let detailsPopover = null;
+    let detailsPopoverCleanup = null;
     const medalIconMap = {
         progress: {
             icon: 'icons/badge_progress.svg',
@@ -220,7 +222,6 @@
         refs.execAddSet = document.getElementById('execAddSet');
         refs.execSets = document.getElementById('execSets');
         refs.execSetsLayout = document.getElementById('execSetsLayout');
-        refs.execMetaHeader = document.getElementById('execMetaHeader');
         refs.execTimerBar = document.getElementById('execTimerBar');
         refs.execTimerDialog = document.getElementById('dlgExecTimer');
         refs.timerDetails = document.getElementById('tmrDetails');
@@ -273,7 +274,6 @@
             'execMoveDown',
             'execReplaceExercise',
             'execMetaToggle',
-            'execMetaHeader',
             'btnExecDetails',
             'execDetailsPreview',
             'dlgExecDetails',
@@ -331,7 +331,13 @@
             return;
         }
         btnExecDetails.addEventListener('click', () => {
-            void openExecDetailsDialog();
+            if (detailsPopover) {
+                clearDetailsPopover();
+                return;
+            }
+            const exercise = getExercise();
+            const details = typeof exercise?.details === 'string' ? exercise.details.trim() : '';
+            showDetailsPopover(btnExecDetails, details);
         });
         execDetailsClose?.addEventListener('click', () => {
             void closeExecDetailsDialog({ revert: false });
@@ -503,10 +509,6 @@
         }
     }
 
-    function getMetaTagLabel(mode = state.metaMode) {
-        return `Mode : ${getMetaModeLabel(mode)}`;
-    }
-
     function getNextMetaMode() {
         const order = ['history', 'goals', 'medals', 'record'];
         const currentIndex = order.indexOf(state.metaMode);
@@ -518,10 +520,10 @@
         const { execMetaToggle } = assertRefs();
         const mode = nextMode || 'history';
         state.metaMode = mode;
-        execMetaToggle.textContent = getMetaTagLabel(mode);
+        execMetaToggle.textContent = getMetaModeLabel(mode);
         execMetaToggle.classList.toggle('selected', true);
         execMetaToggle.setAttribute('aria-pressed', 'true');
-        execMetaToggle.setAttribute('aria-label', getMetaTagLabel(mode));
+        execMetaToggle.setAttribute('aria-label', getMetaModeLabel(mode));
         void renderSets();
     }
 
@@ -552,24 +554,25 @@
 
     async function renderSets() {
         const exercise = getExercise();
-        const { execSets, execMetaHeader, execSetsLayout } = assertRefs();
+        const { execSets, execMetaToggle, execSetsLayout } = assertRefs();
         ensureInlineEditor()?.close();
         clearMedalPopover();
+        clearDetailsPopover();
         inlineKeyboard?.detach?.();
         execSets.innerHTML = '';
         if (execSetsLayout) {
             execSetsLayout.dataset.metaMode = state.metaMode;
         }
         if (!exercise) {
-            if (execMetaHeader) {
-                execMetaHeader.textContent = getMetaHeaderLabel();
+            if (execMetaToggle) {
+                execMetaToggle.textContent = getMetaHeaderLabel();
             }
             return;
         }
         const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
         const meta = await buildSetMeta(exercise, sets);
-        if (execMetaHeader) {
-            execMetaHeader.textContent = getMetaHeaderLabel();
+        if (execMetaToggle) {
+            execMetaToggle.textContent = getMetaHeaderLabel();
         }
         if (!sets.length) {
             const empty = document.createElement('div');
@@ -683,6 +686,17 @@
         }
     }
 
+    function clearDetailsPopover() {
+        if (detailsPopover) {
+            detailsPopover.remove();
+            detailsPopover = null;
+        }
+        if (detailsPopoverCleanup) {
+            detailsPopoverCleanup();
+            detailsPopoverCleanup = null;
+        }
+    }
+
     function showMedalPopover(target, label) {
         if (!target || !label) {
             return;
@@ -719,6 +733,61 @@
             window.removeEventListener('resize', handleClose);
         };
         medalPopoverCleanup = cleanup;
+        window.setTimeout(() => {
+            document.addEventListener('click', handleClose);
+            window.addEventListener('scroll', handleClose, true);
+            window.addEventListener('resize', handleClose);
+        }, 0);
+    }
+
+    function showDetailsPopover(target, detailsText) {
+        if (!target) {
+            return;
+        }
+        clearDetailsPopover();
+        const popover = document.createElement('div');
+        popover.className = 'exec-medal-popover exec-details-popover';
+        const text = document.createElement('div');
+        text.className = 'exec-details-popover__text';
+        text.textContent = detailsText || 'Aucun détail.';
+        const actions = document.createElement('div');
+        actions.className = 'exec-details-popover__actions';
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.className = 'btn ghost';
+        editButton.textContent = 'Éditer';
+        editButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            clearDetailsPopover();
+            void openExecDetailsDialog();
+        });
+        actions.appendChild(editButton);
+        popover.append(text, actions);
+        document.body.appendChild(popover);
+        const rect = target.getBoundingClientRect();
+        const popRect = popover.getBoundingClientRect();
+        const padding = 8;
+        let left = rect.left + rect.width / 2 - popRect.width / 2;
+        left = Math.max(padding, Math.min(left, window.innerWidth - popRect.width - padding));
+        let top = rect.top - popRect.height - padding;
+        if (top < padding) {
+            top = rect.bottom + padding;
+        }
+        popover.style.left = `${left}px`;
+        popover.style.top = `${top}px`;
+        detailsPopover = popover;
+        const handleClose = (event) => {
+            if (popover.contains(event.target) || target.contains(event.target)) {
+                return;
+            }
+            clearDetailsPopover();
+        };
+        const cleanup = () => {
+            document.removeEventListener('click', handleClose);
+            window.removeEventListener('scroll', handleClose, true);
+            window.removeEventListener('resize', handleClose);
+        };
+        detailsPopoverCleanup = cleanup;
         window.setTimeout(() => {
             document.addEventListener('click', handleClose);
             window.addEventListener('scroll', handleClose, true);

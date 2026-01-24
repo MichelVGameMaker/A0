@@ -108,13 +108,7 @@
     <main class="content">
         <div class="exec-date-row">
             <div class="details" id="execDate">—</div>
-            <button id="execMetaToggle" class="tag exec-date-tag selected" type="button" aria-pressed="true">
-                Mode : Historique
-            </button>
-        </div>
-
-        <div class="session-comments-header">
-            <button id="btnExecDetails" class="session-comments-content" type="button" aria-label="Ajouter des détails">
+            <button id="btnExecDetails" class="exec-details-inline" type="button" aria-label="Afficher les détails">
                 <span id="execDetailsPreview" class="session-comments-text details" data-empty="true" data-placeholder="détails"></span>
             </button>
         </div>
@@ -127,7 +121,7 @@
                     <div class="lbl">Poids</div>
                     <div class="lbl">RPE</div>
                     <div class="lbl">Repos</div>
-                    <div id="execMetaHeader" class="lbl">Historique</div>
+                    <button id="execMetaToggle" class="exec-meta-toggle lbl" type="button" aria-pressed="true">Historique</button>
                 </div>
 
                 <div id="execSets"></div>
