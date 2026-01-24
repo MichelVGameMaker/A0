@@ -632,13 +632,18 @@
             move.pos = idx + 1;
         });
         state.routine.moves = moves;
-        await persistRoutine();
+        await persistRoutine({ refresh: false });
         if (A.closeDialog) {
             A.closeDialog(refs.dlgRoutineMoveEditor);
         } else {
             refs.dlgRoutineMoveEditor?.close();
         }
-        returnToCaller();
+        if (!syncRoutineListRemoval(state.moveId)) {
+            await A.refreshRoutineEdit();
+        }
+        if (isRoutineMoveEditActive()) {
+            returnToCaller();
+        }
     }
 
     function replaceMoveExercise() {
@@ -672,6 +677,7 @@
         if (move.exerciseId === nextId) {
             return;
         }
+        const previousMoveId = move.id;
         const nextExercise = await db.get('exercises', nextId);
         if (!nextExercise) {
             alert('Exercice introuvable.');
@@ -681,7 +687,10 @@
         move.exerciseName = nextExercise.name || nextId;
         const { routineMoveTitle } = assertRefs();
         routineMoveTitle.textContent = move.exerciseName || 'Exercice';
-        await persistRoutine();
+        await persistRoutine({ refresh: false });
+        if (!syncRoutineCardReplacement(previousMoveId, move)) {
+            await A.refreshRoutineEdit();
+        }
     }
 
     function scheduleSave() {
@@ -694,13 +703,16 @@
         }, 250);
     }
 
-    async function persistRoutine() {
+    async function persistRoutine(options = {}) {
+        const { refresh = true } = options;
         if (!state.routine) {
             return;
         }
         A.storeRoutineEditScroll?.();
         await db.put('routines', serializeRoutine(state.routine));
-        await A.refreshRoutineEdit();
+        if (refresh) {
+            await A.refreshRoutineEdit();
+        }
     }
 
     function updateMoveOrderControls() {
@@ -741,7 +753,10 @@
         moves.forEach((move, idx) => {
             move.pos = idx + 1;
         });
-        await persistRoutine();
+        await persistRoutine({ refresh: false });
+        if (!syncRoutineListOrder()) {
+            await A.refreshRoutineEdit();
+        }
         updateMoveOrderControls();
     }
 
@@ -828,6 +843,107 @@
         }
         switchScreen(state.callerScreen || 'screenRoutineEdit');
         void A.refreshRoutineEdit();
+    }
+
+    function syncRoutineListOrder() {
+        if (!isRoutineEditActive()) {
+            return false;
+        }
+        const routineList = document.getElementById('routineList');
+        if (!routineList || !state.routine?.moves?.length) {
+            return false;
+        }
+        const cards = Array.from(routineList.querySelectorAll('.exercise-card'));
+        if (!cards.length) {
+            return false;
+        }
+        const cardMap = new Map(cards.map((card) => [card.dataset.moveId, card]));
+        let updated = false;
+        const ordered = [...state.routine.moves].sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0));
+        ordered.forEach((move) => {
+            const card = cardMap.get(move.id);
+            if (card) {
+                routineList.appendChild(card);
+                updated = true;
+            }
+        });
+        const empty = routineList.querySelector('.empty');
+        if (empty && updated) {
+            empty.remove();
+        }
+        return updated;
+    }
+
+    function syncRoutineListRemoval(moveId) {
+        if (!isRoutineEditActive()) {
+            return false;
+        }
+        const routineList = document.getElementById('routineList');
+        if (!routineList) {
+            return false;
+        }
+        if (!state.routine?.moves?.length) {
+            routineList.innerHTML = '<div class="empty">Aucun exercice dans la routine.</div>';
+            return true;
+        }
+        const card = findRoutineCard(routineList, moveId);
+        if (!card) {
+            return false;
+        }
+        card.remove();
+        return true;
+    }
+
+    function syncRoutineCardReplacement(moveId, move) {
+        if (!isRoutineEditActive()) {
+            return false;
+        }
+        const routineList = document.getElementById('routineList');
+        if (!routineList) {
+            return false;
+        }
+        const card = findRoutineCard(routineList, moveId);
+        if (!card) {
+            return false;
+        }
+        const nextName = move.exerciseName || 'Exercice';
+        card.setAttribute('aria-label', nextName);
+        const titleRow = card.querySelector('.exercise-card-title-row');
+        const name = document.createElement('div');
+        name.className = 'element exercise-card-name';
+        name.textContent = nextName;
+        name.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (!move.exerciseId) {
+                return;
+            }
+            void A.openExerciseRead({ currentId: move.exerciseId, callerScreen: 'screenRoutineEdit' });
+        });
+        const oldName = card.querySelector('.exercise-card-name');
+        if (titleRow && oldName) {
+            titleRow.replaceChild(name, oldName);
+        } else if (oldName) {
+            oldName.replaceWith(name);
+        }
+        const oldMenu = card.querySelector('.exercise-card-menu-button');
+        if (oldMenu) {
+            oldMenu.setAttribute('aria-label', `Éditer l'exercice ${nextName}`);
+        }
+        return true;
+    }
+
+    function findRoutineCard(routineList, moveId) {
+        return Array.from(routineList.querySelectorAll('.exercise-card')).find((card) => card.dataset.moveId === moveId);
+    }
+
+    function isRoutineEditActive() {
+        const screen = document.getElementById('screenRoutineEdit');
+        return Boolean(screen && !screen.hidden);
+    }
+
+    function isRoutineMoveEditActive() {
+        const screen = refs.screenRoutineMoveEdit || document.getElementById('screenRoutineMoveEdit');
+        return Boolean(screen && !screen.hidden);
     }
 
     function switchScreen(target) {

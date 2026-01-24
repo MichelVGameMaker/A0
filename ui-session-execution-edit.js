@@ -1567,7 +1567,9 @@
         });
         await persistSession(false);
         A.storeSessionScroll?.();
-        await refreshSessionViews();
+        if (!syncSessionListOrder()) {
+            await refreshSessionViews();
+        }
         updateMoveOrderControls();
     }
 
@@ -1599,7 +1601,9 @@
             await db.saveSession(state.session);
         }
         A.storeSessionScroll?.();
-        await refreshSessionViews();
+        if (!syncSessionListRemoval(state.exerciseId)) {
+            await refreshSessionViews();
+        }
         if (A.closeDialog) {
             A.closeDialog(refs.dlgExecMoveEditor);
         } else {
@@ -1639,6 +1643,7 @@
         if (exercise.exercise_id === nextId) {
             return;
         }
+        const previousId = exercise.exercise_id;
         const nextExercise = await db.get('exercises', nextId);
         if (!nextExercise) {
             alert('Exercice introuvable.');
@@ -1660,7 +1665,9 @@
         }
         await persistSession(false);
         A.storeSessionScroll?.();
-        await refreshSessionViews();
+        if (!syncSessionCardReplacement(previousId, exercise)) {
+            await refreshSessionViews();
+        }
     }
 
     function getExercise() {
@@ -1734,6 +1741,116 @@
         } catch (error) {
             console.warn('ui-session-execution-edit.js: renderSession a échoué', error);
         }
+    }
+
+    function syncSessionListOrder() {
+        if (!isSessionScreenActive()) {
+            return false;
+        }
+        const sessionList = document.getElementById('sessionList');
+        if (!sessionList || !state.session?.exercises?.length) {
+            return false;
+        }
+        const cards = Array.from(sessionList.querySelectorAll('.exercise-card'));
+        if (!cards.length) {
+            return false;
+        }
+        const cardMap = new Map(cards.map((card) => [card.dataset.exerciseId, card]));
+        let updated = false;
+        state.session.exercises.forEach((exercise) => {
+            const card = cardMap.get(exercise.exercise_id);
+            if (card) {
+                sessionList.appendChild(card);
+                updated = true;
+            }
+        });
+        const empty = sessionList.querySelector('.empty');
+        if (empty && updated) {
+            empty.remove();
+        }
+        return updated;
+    }
+
+    function syncSessionListRemoval(exerciseId) {
+        if (!isSessionScreenActive()) {
+            return false;
+        }
+        const sessionList = document.getElementById('sessionList');
+        if (!sessionList) {
+            return false;
+        }
+        if (!state.session?.exercises?.length) {
+            sessionList.innerHTML = '<div class="empty">Aucun exercice pour cette date.</div>';
+            return true;
+        }
+        const card = findSessionCard(sessionList, exerciseId);
+        if (!card) {
+            return false;
+        }
+        card.remove();
+        return true;
+    }
+
+    function syncSessionCardReplacement(previousId, exercise) {
+        if (!isSessionScreenActive()) {
+            return false;
+        }
+        const sessionList = document.getElementById('sessionList');
+        if (!sessionList) {
+            return false;
+        }
+        const card = findSessionCard(sessionList, previousId);
+        if (!card) {
+            return false;
+        }
+        const nextName = exercise.exercise_name || 'Exercice';
+        card.dataset.exerciseId = exercise.exercise_id;
+        card.setAttribute('aria-label', nextName);
+        const titleRow = card.querySelector('.exercise-card-title-row');
+        const name = document.createElement('div');
+        name.className = 'element exercise-card-name';
+        name.textContent = nextName;
+        name.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (!exercise.exercise_id) {
+                return;
+            }
+            void A.openExerciseRead({ currentId: exercise.exercise_id, callerScreen: 'screenSessions' });
+        });
+        const oldName = card.querySelector('.exercise-card-name');
+        if (titleRow && oldName) {
+            titleRow.replaceChild(name, oldName);
+        } else if (oldName) {
+            oldName.replaceWith(name);
+        }
+        const oldMenu = card.querySelector('.exercise-card-menu-button');
+        if (oldMenu) {
+            const menuButton = document.createElement('button');
+            menuButton.type = 'button';
+            menuButton.className = 'exercise-card-menu-button';
+            menuButton.textContent = '...';
+            menuButton.setAttribute('aria-label', `Éditer l'exercice ${nextName}`);
+            menuButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                void A.openExecMoveMeta?.({
+                    currentId: exercise.exercise_id,
+                    callerScreen: 'screenSessions'
+                });
+            });
+            oldMenu.replaceWith(menuButton);
+        }
+        return true;
+    }
+
+    function findSessionCard(sessionList, exerciseId) {
+        return Array.from(sessionList.querySelectorAll('.exercise-card')).find(
+            (card) => card.dataset.exerciseId === exerciseId
+        );
+    }
+
+    function isSessionScreenActive() {
+        const screen = document.getElementById('screenSessions');
+        return Boolean(screen && !screen.hidden);
     }
 
     function backToCaller() {
