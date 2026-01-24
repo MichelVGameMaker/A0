@@ -785,6 +785,7 @@
             exerciseName,
             routineInstructions,
             note,
+            details,
             sort,
             sets
         } = options;
@@ -796,6 +797,7 @@
             exercise_name: exerciseName || 'Exercice',
             routine_instructions: routineInstructions || '',
             exercise_note: note || '',
+            details: details || '',
             date,
             type: exerciseId,
             category: 'weight_reps',
@@ -1393,11 +1395,7 @@
         sessionCommentInput.value = session.comments || '';
         sessionCommentState.initialComments = sessionCommentInput.value;
         dlgSessionComment.showModal();
-        requestAnimationFrame(() => {
-            sessionCommentInput.focus();
-            const length = sessionCommentInput.value.length;
-            sessionCommentInput.setSelectionRange(length, length);
-        });
+        focusTextareaAtEnd(sessionCommentInput);
     }
 
     async function closeSessionCommentDialog({ revert }) {
@@ -1446,6 +1444,23 @@
         const comment = typeof session?.comments === 'string' ? session.comments.trim() : '';
         sessionCommentsPreview.textContent = comment;
         sessionCommentsPreview.dataset.empty = comment ? 'false' : 'true';
+    }
+
+    function focusTextareaAtEnd(textarea) {
+        if (!textarea) {
+            return;
+        }
+        const focusInput = () => {
+            textarea.focus();
+            const length = textarea.value.length;
+            textarea.setSelectionRange(length, length);
+        };
+        requestAnimationFrame(() => {
+            focusInput();
+            if (document.activeElement !== textarea) {
+                setTimeout(focusInput, 0);
+            }
+        });
     }
 
     async function createRoutineFromSession() {
