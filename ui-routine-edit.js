@@ -29,7 +29,8 @@
     };
     const routineScrollState = {
         top: 0,
-        pendingRestore: false
+        pendingRestore: false,
+        targetMoveId: null
     };
 
     /* WIRE */
@@ -159,7 +160,22 @@
         if (!container) {
             return;
         }
-        container.scrollTop = routineScrollState.top;
+        let restored = false;
+        if (routineScrollState.targetMoveId) {
+            const target = container.querySelector(
+                `[data-move-id="${CSS.escape(routineScrollState.targetMoveId)}"]`
+            );
+            if (target) {
+                const containerRect = container.getBoundingClientRect();
+                const targetRect = target.getBoundingClientRect();
+                container.scrollTop = container.scrollTop + (targetRect.top - containerRect.top);
+                restored = true;
+            }
+            routineScrollState.targetMoveId = null;
+        }
+        if (!restored) {
+            container.scrollTop = routineScrollState.top;
+        }
         routineScrollState.pendingRestore = false;
     }
 
@@ -428,6 +444,7 @@
             return;
         }
         const existingIds = new Set(state.routine.moves.map((move) => move.exerciseId));
+        let firstAddedMoveId = null;
         for (const id of ids) {
             if (existingIds.has(id)) {
                 continue;
@@ -436,17 +453,25 @@
             if (!exercise) {
                 continue;
             }
-            state.routine.moves.push({
+            const move = {
                 id: uid('move'),
                 pos: state.routine.moves.length + 1,
                 exerciseId: exercise.id,
                 exerciseName: exercise.name || 'Exercice',
                 instructions: '',
                 sets: []
-            });
+            };
+            state.routine.moves.push(move);
+            if (!firstAddedMoveId) {
+                firstAddedMoveId = move.id;
+            }
             existingIds.add(exercise.id);
         }
         await persistRoutine();
+        if (firstAddedMoveId) {
+            routineScrollState.targetMoveId = firstAddedMoveId;
+            routineScrollState.pendingRestore = true;
+        }
         renderRoutineList();
     }
 
