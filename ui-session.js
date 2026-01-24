@@ -17,6 +17,8 @@
         saveTimer: null,
         initialComments: ''
     };
+    let medalPopover = null;
+    let medalPopoverCleanup = null;
     const sessionScrollState = {
         top: 0,
         pendingRestore: false
@@ -132,6 +134,70 @@
         };
     }
 
+    function clearMedalPopover() {
+        if (medalPopover) {
+            medalPopover.remove();
+            medalPopover = null;
+        }
+        if (medalPopoverCleanup) {
+            medalPopoverCleanup();
+            medalPopoverCleanup = null;
+        }
+    }
+
+    function showMedalPopover(target, label) {
+        if (!target || !label) {
+            return;
+        }
+        clearMedalPopover();
+        const popover = document.createElement('div');
+        popover.className = 'exec-medal-popover';
+        if (String(label).includes('\n')) {
+            popover.classList.add('exec-medal-popover--multiline');
+        }
+        popover.textContent = label;
+        document.body.appendChild(popover);
+        const rect = target.getBoundingClientRect();
+        const popRect = popover.getBoundingClientRect();
+        const padding = 8;
+        let left = rect.left + rect.width / 2 - popRect.width / 2;
+        left = Math.max(padding, Math.min(left, window.innerWidth - popRect.width - padding));
+        let top = rect.top - popRect.height - padding;
+        if (top < padding) {
+            top = rect.bottom + padding;
+        }
+        popover.style.left = `${left}px`;
+        popover.style.top = `${top}px`;
+        medalPopover = popover;
+        const handleClose = (event) => {
+            if (popover.contains(event.target) || target.contains(event.target)) {
+                return;
+            }
+            clearMedalPopover();
+        };
+        const cleanup = () => {
+            document.removeEventListener('click', handleClose);
+            window.removeEventListener('scroll', handleClose, true);
+            window.removeEventListener('resize', handleClose);
+        };
+        medalPopoverCleanup = cleanup;
+        window.setTimeout(() => {
+            document.addEventListener('click', handleClose);
+            window.addEventListener('scroll', handleClose, true);
+            window.addEventListener('resize', handleClose);
+        }, 0);
+    }
+
+    function formatMedalInfo(medals = []) {
+        const iconMap = getMedalIconMap();
+        const labels = (Array.isArray(medals) ? medals : []).map((key) => iconMap[key]?.label).filter(Boolean);
+        if (!labels.length) {
+            return '';
+        }
+        const prefix = labels.length > 1 ? 'Médailles : ' : 'Médaille : ';
+        return `${prefix}${labels.join(' • ')}`;
+    }
+
     function createSetCell({ label, field, onClick, className, rpeValue }) {
         const cell = document.createElement('button');
         cell.type = 'button';
@@ -173,15 +239,26 @@
             return cell;
         }
         const medalConfig = iconMap[medalKey];
-        const badge = document.createElement('span');
-        badge.className = `exec-medal ${medalConfig.className}`;
-        badge.title = medalConfig.label;
+        const badge = document.createElement('button');
+        badge.type = 'button';
+        badge.className = `exec-medal exec-medal-button ${medalConfig.className}`;
+        badge.setAttribute('aria-label', medalConfig.label);
         const icon = document.createElement('img');
         icon.src = medalConfig.icon;
         icon.alt = medalConfig.label;
         icon.className = 'exec-medal-icon';
         badge.appendChild(icon);
+        badge.addEventListener('click', (event) => {
+            event.stopPropagation();
+            showMedalPopover(badge, medalConfig.label);
+        });
         cell.appendChild(badge);
+        cell.addEventListener('click', () => {
+            const medalInfo = formatMedalInfo(medals);
+            if (medalInfo) {
+                showMedalPopover(cell, medalInfo);
+            }
+        });
         return cell;
     }
 
