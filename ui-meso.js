@@ -23,38 +23,69 @@
         {
             id: 'deload',
             name: 'Deload',
-            summary: 'RPE -1 · -2 séries · -2 reps · -5% charge',
+            shortName: 'Deload',
+            details: 'RPE -1 · -2 séries · reps +20%',
             rpeDelta: -1,
             setsDrop: 2,
-            repsDelta: -2,
-            weightPercent: -5
+            repsPercent: 20
         },
         {
-            id: 'volume',
-            name: 'Volume',
-            summary: 'RPE +0,5 · +1 série · +2 reps · +2% charge',
-            rpeDelta: 0.5,
-            setsAdd: 1,
-            repsDelta: 2,
-            weightPercent: 2
-        },
-        {
-            id: 'intensite',
-            name: 'Intensité',
-            summary: 'RPE +1 · -1 série · +0 reps · +5% charge',
+            id: 'intense',
+            name: 'Intense',
+            shortName: 'Intense',
+            details: 'RPE +1 · +1 série · reps -20%',
             rpeDelta: 1,
-            setsDrop: 1,
-            repsDelta: 0,
-            weightPercent: 5
+            setsAdd: 1,
+            repsPercent: -20
         },
         {
-            id: 'technique',
-            name: 'Technique',
-            summary: 'RPE -0,5 · 0 séries · +2 reps · -2,5% charge',
-            rpeDelta: -0.5,
-            setsDrop: 0,
-            repsDelta: 2,
-            weightPercent: -2.5
+            id: 'reps-10',
+            name: 'Reps +10',
+            shortName: 'Reps+10',
+            details: 'reps +10%',
+            repsPercent: 10
+        },
+        {
+            id: 'reps-25',
+            name: 'Reps +25',
+            shortName: 'Reps+25',
+            details: 'reps +25%',
+            repsPercent: 25
+        },
+        {
+            id: 'reps-50',
+            name: 'Reps +50',
+            shortName: 'Reps+50',
+            details: 'reps +50%',
+            repsPercent: 50
+        },
+        {
+            id: 'rpe-minus-2',
+            name: 'RPE -2',
+            shortName: 'RPE-2',
+            details: 'RPE -2',
+            rpeDelta: -2
+        },
+        {
+            id: 'rpe-minus-1',
+            name: 'RPE -1',
+            shortName: 'RPE-1',
+            details: 'RPE -1',
+            rpeDelta: -1
+        },
+        {
+            id: 'rpe-plus-1',
+            name: 'RPE +1',
+            shortName: 'RPE+1',
+            details: 'RPE +1',
+            rpeDelta: 1
+        },
+        {
+            id: 'rpe-plus-2',
+            name: 'RPE +2',
+            shortName: 'RPE+2',
+            details: 'RPE +2',
+            rpeDelta: 2
         }
     ];
 
@@ -191,23 +222,24 @@
         const isExpanded = state.expandedDayIndex === dayIndex;
         const detailsId = `meso-day-details-${state.selectedCycle}-${dayIndex}`;
 
+        card.classList.toggle('is-expanded', isExpanded);
+        card.classList.toggle('is-collapsed', !isExpanded);
+
         const header = document.createElement('div');
         header.className = 'meso-card__header';
 
-        const dayLabel = document.createElement('div');
-        dayLabel.className = 'details meso-card__day';
-        dayLabel.textContent = getDayLabel(dayIndex, state.plan?.startDay);
-        header.appendChild(dayLabel);
+        const content = document.createElement('div');
+        content.className = 'meso-card__content';
 
         const title = document.createElement('div');
         title.className = 'element meso-card__title';
-        title.textContent = routine?.name || 'Aucune routine';
-        header.appendChild(title);
+        title.textContent = buildDayRoutineLabel(dayIndex, routine);
+        content.appendChild(title);
 
         const summary = document.createElement('div');
         summary.className = 'details meso-card__summary';
-        summary.textContent = buildMesoSummary(dayIndex, routine);
-        header.appendChild(summary);
+        summary.textContent = buildModifierSummary(dayIndex);
+        content.appendChild(summary);
 
         const toggle = document.createElement('button');
         toggle.type = 'button';
@@ -219,7 +251,7 @@
             state.expandedDayIndex = isExpanded ? null : dayIndex;
             void renderMeso();
         });
-        header.appendChild(toggle);
+        header.append(content, toggle);
 
         const detailsWrapper = document.createElement('div');
         detailsWrapper.className = 'meso-card__details';
@@ -237,13 +269,23 @@
         return card;
     }
 
-    function buildMesoSummary(dayIndex, routine) {
-        const moves = Array.isArray(routine?.moves) ? routine.moves : [];
-        const exerciseCount = moves.length;
-        const modifierCount = getDayModifiers(dayIndex).length;
-        const exerciseLabel = exerciseCount === 1 ? 'exercice' : 'exercices';
-        const modifierLabel = modifierCount === 1 ? 'modificateur' : 'modificateurs';
-        return `${exerciseCount} ${exerciseLabel} · ${modifierCount} ${modifierLabel}`;
+    function buildDayRoutineLabel(dayIndex, routine) {
+        const dayLabel = getDayLabel(dayIndex, state.plan?.startDay);
+        const shortDay = dayLabel.slice(0, 2);
+        const routineName = routine?.name || 'Aucune routine';
+        return `${shortDay} - ${routineName}`;
+    }
+
+    function buildModifierSummary(dayIndex) {
+        const modifierNames = getDayModifiers(dayIndex)
+            .map((modifierId) => MODIFIERS.find((item) => item.id === modifierId))
+            .filter(Boolean)
+            .map((modifier) => modifier.shortName || modifier.name)
+            .filter(Boolean);
+        if (!modifierNames.length) {
+            return 'Aucun modificateur';
+        }
+        return modifierNames.join(', ');
     }
 
     function createModifierPicker(dayIndex) {
@@ -261,7 +303,7 @@
             const option = document.createElement('button');
             option.type = 'button';
             option.className = 'meso-modifier-option';
-            option.textContent = `${modifier.name} · ${modifier.summary}`;
+            option.textContent = `${modifier.name} · ${modifier.details}`;
             option.addEventListener('click', async () => {
                 await addModifierToDay(dayIndex, modifier.id);
                 menu.classList.remove('is-open');
@@ -301,11 +343,11 @@
 
             const label = document.createElement('div');
             label.className = 'meso-modifier-name';
-            label.textContent = modifier.name;
+            label.textContent = modifier.shortName || modifier.name;
 
             const summary = document.createElement('div');
             summary.className = 'details meso-modifier-summary';
-            summary.textContent = modifier.summary;
+            summary.textContent = modifier.details;
 
             const remove = document.createElement('button');
             remove.type = 'button';
@@ -569,7 +611,7 @@
                 next = next.slice(0, Math.max(0, next.length - modifier.setsDrop));
             }
             next = next.map((set) => ({
-                reps: adjustValue(set.reps, modifier.repsDelta),
+                reps: applyPercent(adjustValue(set.reps, modifier.repsDelta), modifier.repsPercent),
                 weight: adjustValue(
                     applyPercent(set.weight, modifier.weightPercent),
                     modifier.weightDelta

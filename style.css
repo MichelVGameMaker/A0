@@ -991,16 +991,33 @@ textarea:focus{
     align-items:center;
     justify-content:space-between;
     gap:12px;
-    flex-wrap:wrap;
+    flex-wrap:nowrap;
+}
+.meso-card__content{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:0;
+    flex:1;
 }
 .meso-card__title{
     min-width:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 .meso-card__summary{
     font-size:var(--fs-small);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 .meso-card__toggle{
     white-space:nowrap;
+    flex-shrink:0;
+}
+.meso-card.is-collapsed .meso-card__header{
+    min-height:66px;
 }
 .meso-card__details{
     display:flex;
