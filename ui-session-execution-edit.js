@@ -517,14 +517,20 @@
     }
 
     function setMetaMode(nextMode) {
-        const { execMetaToggle } = assertRefs();
+        const { execMetaToggle, execSetsLayout } = assertRefs();
         const mode = nextMode || 'history';
         state.metaMode = mode;
         execMetaToggle.textContent = getMetaModeLabel(mode);
         execMetaToggle.classList.toggle('selected', true);
         execMetaToggle.setAttribute('aria-pressed', 'true');
         execMetaToggle.setAttribute('aria-label', getMetaModeLabel(mode));
-        void renderSets();
+        if (execSetsLayout) {
+            execSetsLayout.dataset.metaMode = state.metaMode;
+        }
+        closeInlineInputs();
+        clearMedalPopover();
+        clearDetailsPopover();
+        void refreshSetMetaFrom(0);
     }
 
     function normalizeExerciseSets(exercise) {
@@ -645,7 +651,7 @@
         });
     }
 
-    async function refreshSetMetaFrom(startIndex = 0) {
+    async function refreshSetMetaFrom(startIndex = 0, metaOverride = null) {
         const exercise = getExercise();
         if (!exercise) {
             return;
@@ -655,7 +661,7 @@
         if (!sets.length) {
             return;
         }
-        const meta = await buildSetMeta(exercise, sets);
+        const meta = metaOverride || (await buildSetMeta(exercise, sets));
         const rows = Array.from(execSets.querySelectorAll('.exec-set-row'));
         rows.forEach((row, index) => {
             if (index < startIndex || !sets[index]) {
@@ -1524,7 +1530,8 @@
             index: sets.length - 1,
             field: 'reps'
         };
-        await persistSession();
+        await persistSession(false);
+        await appendSetRow(sets.length - 1);
     }
 
     async function removeSet(index) {
@@ -1539,7 +1546,55 @@
         sets.splice(index, 1);
         refreshSetOrderMetadata(exercise, sets);
         exercise.sets = sets;
-        await persistSession();
+        await persistSession(false);
+        await removeSetRow(index);
+    }
+
+    async function appendSetRow(index) {
+        const exercise = getExercise();
+        const { execSets } = assertRefs();
+        if (!exercise || !execSets) {
+            return;
+        }
+        const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+        const meta = await buildSetMeta(exercise, sets);
+        const emptyState = execSets.querySelector('.empty');
+        if (emptyState) {
+            emptyState.remove();
+        }
+        execSets.appendChild(renderSetRow(sets[index], index, sets.length, meta));
+        refreshExecSetOrderUI(execSets);
+        await refreshSetMetaFrom(Math.max(0, index - 1), meta);
+        if (state.pendingFocus) {
+            const pending = state.pendingFocus;
+            state.pendingFocus = null;
+            requestAnimationFrame(() => focusSetCell(pending.index, pending.field));
+        }
+    }
+
+    async function removeSetRow(index) {
+        const exercise = getExercise();
+        const { execSets } = assertRefs();
+        if (!exercise || !execSets) {
+            return;
+        }
+        closeInlineInputs();
+        const rows = Array.from(execSets.querySelectorAll('.exec-set-row'));
+        const row = rows[index];
+        if (row) {
+            row.remove();
+        }
+        refreshExecSetOrderUI(execSets);
+        const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+        if (!sets.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty';
+            empty.textContent = 'Aucune série prévue.';
+            execSets.appendChild(empty);
+            return;
+        }
+        const meta = await buildSetMeta(exercise, sets);
+        await refreshSetMetaFrom(index, meta);
     }
 
     function refreshExecSetOrderUI(container) {
