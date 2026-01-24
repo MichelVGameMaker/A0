@@ -15,6 +15,10 @@
         pendingFocus: null,
         replaceCallerScreen: 'screenRoutineMoveEdit'
     };
+    const detailsState = {
+        move: null,
+        initialDetails: ''
+    };
     let inlineEditor = null;
     const inlineKeyboard = A.components?.inlineKeyboard || A.components?.createInlineKeyboard?.();
     if (inlineKeyboard && !A.components.inlineKeyboard) {
@@ -27,6 +31,7 @@
         wireNavigation();
         wireActions();
         wireMetaDialog();
+        wireDetailsDialog();
     });
 
     /* ACTIONS */
@@ -122,6 +127,11 @@
         refs.dlgRoutineMoveEditor = document.getElementById('dlgRoutineMoveEditor');
         refs.routineMoveUp = document.getElementById('routineMoveUp');
         refs.routineMoveDown = document.getElementById('routineMoveDown');
+        refs.routineMoveAnnotate = document.getElementById('routineMoveAnnotate');
+        refs.dlgRoutineMoveDetails = document.getElementById('dlgRoutineMoveDetails');
+        refs.routineMoveDetailsInput = document.getElementById('routineMoveDetailsInput');
+        refs.routineMoveDetailsClose = document.getElementById('routineMoveDetailsClose');
+        refs.routineMoveDetailsCancel = document.getElementById('routineMoveDetailsCancel');
         refsResolved = true;
         return refs;
     }
@@ -146,7 +156,12 @@
             'routineMoveReplace',
             'dlgRoutineMoveEditor',
             'routineMoveUp',
-            'routineMoveDown'
+            'routineMoveDown',
+            'routineMoveAnnotate',
+            'dlgRoutineMoveDetails',
+            'routineMoveDetailsInput',
+            'routineMoveDetailsClose',
+            'routineMoveDetailsCancel'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -168,7 +183,14 @@
     }
 
     function wireActions() {
-        const { routineMoveAddSet, routineMoveDelete, routineMoveReplace, routineMoveUp, routineMoveDown } = assertRefs();
+        const {
+            routineMoveAddSet,
+            routineMoveDelete,
+            routineMoveReplace,
+            routineMoveUp,
+            routineMoveDown,
+            routineMoveAnnotate
+        } = assertRefs();
         routineMoveAddSet.addEventListener('click', () => {
             addSet();
         });
@@ -184,6 +206,15 @@
         routineMoveDown.addEventListener('click', () => {
             void moveRoutineExercise(1);
         });
+        routineMoveAnnotate.addEventListener('click', () => {
+            const { dlgRoutineMoveEditor } = assertRefs();
+            if (A.closeDialog) {
+                A.closeDialog(dlgRoutineMoveEditor);
+            } else {
+                dlgRoutineMoveEditor?.close();
+            }
+            void openRoutineMoveDetailsDialog();
+        });
     }
 
     function wireMetaDialog() {
@@ -196,6 +227,31 @@
                     dlgRoutineMoveEditor?.close();
                 }
             }
+        });
+    }
+
+    function wireDetailsDialog() {
+        const {
+            dlgRoutineMoveDetails,
+            routineMoveDetailsInput,
+            routineMoveDetailsClose,
+            routineMoveDetailsCancel
+        } = assertRefs();
+        routineMoveDetailsClose.addEventListener('click', () => {
+            void closeRoutineMoveDetailsDialog({ revert: false });
+        });
+        routineMoveDetailsCancel.addEventListener('click', () => {
+            void closeRoutineMoveDetailsDialog({ revert: true });
+        });
+        dlgRoutineMoveDetails.addEventListener('close', () => {
+            void flushRoutineMoveDetailsSave();
+        });
+        routineMoveDetailsInput.addEventListener('input', () => {
+            if (!detailsState.move) {
+                return;
+            }
+            detailsState.move.details = routineMoveDetailsInput.value;
+            scheduleSave();
         });
     }
 
@@ -224,6 +280,40 @@
             state.pendingFocus = null;
             requestAnimationFrame(() => focusSetCell(pending.index, pending.field));
         }
+    }
+
+    async function openRoutineMoveDetailsDialog() {
+        const { dlgRoutineMoveDetails, routineMoveDetailsInput } = assertRefs();
+        const move = findMove();
+        if (!move) {
+            return;
+        }
+        detailsState.move = move;
+        routineMoveDetailsInput.value = typeof move.details === 'string' ? move.details : '';
+        detailsState.initialDetails = routineMoveDetailsInput.value;
+        dlgRoutineMoveDetails.showModal();
+    }
+
+    async function closeRoutineMoveDetailsDialog({ revert }) {
+        const { dlgRoutineMoveDetails, routineMoveDetailsInput } = assertRefs();
+        if (revert && detailsState.move) {
+            detailsState.move.details = detailsState.initialDetails || '';
+            routineMoveDetailsInput.value = detailsState.initialDetails || '';
+        }
+        await flushRoutineMoveDetailsSave();
+        if (A.closeDialog) {
+            A.closeDialog(dlgRoutineMoveDetails);
+        } else {
+            dlgRoutineMoveDetails.close();
+        }
+        detailsState.move = null;
+    }
+
+    async function flushRoutineMoveDetailsSave() {
+        if (!detailsState.move || !state.routine) {
+            return;
+        }
+        await persistRoutine({ refresh: false });
     }
 
     function normalizeFocusField(field) {
@@ -824,6 +914,7 @@
                     exerciseId: move.exerciseId,
                     exerciseName: move.exerciseName || 'Exercice',
                     instructions: typeof move.instructions === 'string' ? move.instructions : '',
+                    details: typeof move.details === 'string' ? move.details : '',
                     sets: Array.isArray(move.sets)
                         ? move.sets.map((set, idx) => ({
                             pos: safeInt(set.pos, idx + 1),
@@ -851,6 +942,7 @@
                     exerciseId: move.exerciseId,
                     exerciseName: move.exerciseName,
                     instructions: typeof move.instructions === 'string' ? move.instructions : '',
+                    details: typeof move.details === 'string' ? move.details : '',
                     sets: Array.isArray(move.sets)
                         ? move.sets.map((set, idx) => ({
                             pos: safeInt(set.pos, idx + 1),

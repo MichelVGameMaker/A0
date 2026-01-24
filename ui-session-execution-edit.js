@@ -233,6 +233,7 @@
         refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
         refs.execMoveUp = document.getElementById('execMoveUp');
         refs.execMoveDown = document.getElementById('execMoveDown');
+        refs.execMoveAnnotate = document.getElementById('execMoveAnnotate');
         refs.execReplaceExercise = document.getElementById('execReplaceExercise');
         refs.execMetaToggle = document.getElementById('execMetaToggle');
         refs.btnExecDetails = document.getElementById('btnExecDetails');
@@ -273,6 +274,7 @@
             'dlgExecMoveEditor',
             'execMoveUp',
             'execMoveDown',
+            'execMoveAnnotate',
             'execReplaceExercise',
             'execMetaToggle',
             'btnExecDetails',
@@ -298,7 +300,15 @@
     }
 
     function wireActions() {
-        const { execAddSet, execDelete, execReplaceExercise, execMetaToggle, execMoveUp, execMoveDown } = assertRefs();
+        const {
+            execAddSet,
+            execDelete,
+            execReplaceExercise,
+            execMetaToggle,
+            execMoveUp,
+            execMoveDown,
+            execMoveAnnotate
+        } = assertRefs();
         execAddSet.addEventListener('click', () => {
             void addSet();
         });
@@ -313,6 +323,15 @@
         });
         execMoveDown.addEventListener('click', () => {
             void moveExerciseInSession(1);
+        });
+        execMoveAnnotate.addEventListener('click', () => {
+            const { dlgExecMoveEditor } = assertRefs();
+            if (A.closeDialog) {
+                A.closeDialog(dlgExecMoveEditor);
+            } else {
+                dlgExecMoveEditor?.close();
+            }
+            void openExecDetailsDialog();
         });
         execMetaToggle.addEventListener('click', () => {
             const nextMode = getNextMetaMode();
