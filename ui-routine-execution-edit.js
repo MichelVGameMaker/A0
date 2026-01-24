@@ -798,6 +798,7 @@
             await A.refreshRoutineEdit();
         }
         updateMoveOrderControls();
+        A.ensureRoutineMoveInView?.(state.moveId);
     }
 
     function normalizeRoutine(routine) {
@@ -964,10 +965,6 @@
             titleRow.replaceChild(name, oldName);
         } else if (oldName) {
             oldName.replaceWith(name);
-        }
-        const oldMenu = card.querySelector('.exercise-card-menu-button');
-        if (oldMenu) {
-            oldMenu.setAttribute('aria-label', `Éditer l'exercice ${nextName}`);
         }
         return true;
     }

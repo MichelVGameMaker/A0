@@ -187,6 +187,122 @@
 
     A.storeRoutineEditScroll = () => storeRoutineScroll();
     A.restoreRoutineEditScroll = () => restoreRoutineScroll();
+    A.ensureRoutineMoveInView = (moveId) => {
+        if (!moveId) {
+            return false;
+        }
+        const container = getRoutineScrollContainer();
+        if (!container) {
+            return false;
+        }
+        const target = container.querySelector(`[data-move-id="${CSS.escape(moveId)}"]`);
+        if (!target) {
+            return false;
+        }
+        const containerRect = container.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        if (targetRect.top < containerRect.top) {
+            container.scrollTop += targetRect.top - containerRect.top;
+        } else if (targetRect.bottom > containerRect.bottom) {
+            container.scrollTop += targetRect.bottom - containerRect.bottom;
+        }
+        return true;
+    };
+
+    function attachRoutineCardPressHandlers(card) {
+        if (!card) {
+            return;
+        }
+        const LONG_PRESS_DELAY = 450;
+        let pressTimer = null;
+        let longPressFired = false;
+        let startX = 0;
+        let startY = 0;
+        const clearPress = () => {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+        };
+        const shouldIgnoreDown = (event) =>
+            Boolean(event.target.closest('button, a, input, textarea, select, .exercise-card-name'));
+        const shouldIgnoreShortPress = (event) =>
+            Boolean(
+                event.target.closest(
+                    'button, a, input, textarea, select, .exercise-card-name, .session-card-sets'
+                )
+            );
+        const fireShortPress = () => {
+            const moveId = card.dataset.moveId;
+            if (!moveId) {
+                return;
+            }
+            void A.openRoutineMoveEdit?.({
+                routineId: state.routineId,
+                moveId,
+                callerScreen: 'screenRoutineEdit'
+            });
+        };
+        const fireLongPress = () => {
+            const moveId = card.dataset.moveId;
+            if (!moveId) {
+                return;
+            }
+            void A.openRoutineMoveMeta?.({
+                routineId: state.routineId,
+                moveId,
+                callerScreen: 'screenRoutineEdit'
+            });
+        };
+        const onPointerDown = (event) => {
+            if (event.button !== 0 && event.pointerType !== 'touch') {
+                return;
+            }
+            if (shouldIgnoreDown(event)) {
+                return;
+            }
+            clearPress();
+            longPressFired = false;
+            startX = event.clientX;
+            startY = event.clientY;
+            pressTimer = setTimeout(() => {
+                longPressFired = true;
+                clearPress();
+                fireLongPress();
+            }, LONG_PRESS_DELAY);
+        };
+        const onPointerMove = (event) => {
+            if (!pressTimer) {
+                return;
+            }
+            const deltaX = event.clientX - startX;
+            const deltaY = event.clientY - startY;
+            if (Math.hypot(deltaX, deltaY) > 8) {
+                clearPress();
+            }
+        };
+        const onPointerUp = (event) => {
+            if (shouldIgnoreShortPress(event)) {
+                clearPress();
+                return;
+            }
+            if (pressTimer) {
+                clearPress();
+            }
+            if (!longPressFired) {
+                fireShortPress();
+            }
+        };
+        const onPointerCancel = () => {
+            clearPress();
+        };
+
+        card.addEventListener('pointerdown', onPointerDown);
+        card.addEventListener('pointermove', onPointerMove);
+        card.addEventListener('pointerup', onPointerUp);
+        card.addEventListener('pointercancel', onPointerCancel);
+        card.addEventListener('pointerleave', onPointerCancel);
+    }
 
     function wireHeaderButtons() {
         const { routineEditBack, routineEditEdit, dlgRoutineEditor, routineName, routineIcon } = assertRefs();
@@ -660,7 +776,7 @@
             endClass: 'exercise-card-end--top',
             cardClass: 'exercise-card--full-sets'
         });
-        const { card, start, body, end } = structure;
+        const { card, start, body } = structure;
         card.dataset.moveId = move.id;
         start.classList.add('list-card__start--solo');
 
@@ -745,28 +861,9 @@
         setsWrapper.appendChild(addSetButton);
         body.append(titleRow, setsWrapper);
 
-        end.appendChild(createExerciseMenuButton(move));
-
         card.setAttribute('aria-label', move.exerciseName || 'Exercice');
+        attachRoutineCardPressHandlers(card);
         return card;
-    }
-
-    function createExerciseMenuButton(move) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'exercise-card-menu-button';
-        button.textContent = '...';
-        const labelName = move.exerciseName || 'Exercice';
-        button.setAttribute('aria-label', `Éditer l'exercice ${labelName}`);
-        button.addEventListener('click', (event) => {
-            event.stopPropagation();
-            void A.openRoutineMoveMeta?.({
-                routineId: state.routineId,
-                moveId: move.id,
-                callerScreen: 'screenRoutineEdit'
-            });
-        });
-        return button;
     }
 
     async function addSetToMove(moveId) {

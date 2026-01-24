@@ -263,21 +263,97 @@
         return cell;
     }
 
-    function createExerciseMenuButton({ exerciseId, exerciseName }) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'exercise-card-menu-button';
-        button.textContent = '...';
-        const labelName = exerciseName || 'Exercice';
-        button.setAttribute('aria-label', `Éditer l'exercice ${labelName}`);
-        button.addEventListener('click', (event) => {
-            event.stopPropagation();
+    function attachSessionCardPressHandlers(card) {
+        if (!card) {
+            return;
+        }
+        const LONG_PRESS_DELAY = 450;
+        let pressTimer = null;
+        let longPressFired = false;
+        let startX = 0;
+        let startY = 0;
+        const clearPress = () => {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+        };
+        const shouldIgnoreDown = (event) =>
+            Boolean(event.target.closest('button, a, input, textarea, select, .exercise-card-name'));
+        const shouldIgnoreShortPress = (event) =>
+            Boolean(
+                event.target.closest(
+                    'button, a, input, textarea, select, .exercise-card-name, .session-card-sets'
+                )
+            );
+        const fireShortPress = () => {
+            const exerciseId = card.dataset.exerciseId;
+            if (!exerciseId) {
+                return;
+            }
+            void A.openExecEdit?.({
+                currentId: exerciseId,
+                callerScreen: 'screenSessions'
+            });
+        };
+        const fireLongPress = () => {
+            const exerciseId = card.dataset.exerciseId;
+            if (!exerciseId) {
+                return;
+            }
             void A.openExecMoveMeta?.({
                 currentId: exerciseId,
                 callerScreen: 'screenSessions'
             });
-        });
-        return button;
+        };
+        const onPointerDown = (event) => {
+            if (event.button !== 0 && event.pointerType !== 'touch') {
+                return;
+            }
+            if (shouldIgnoreDown(event)) {
+                return;
+            }
+            clearPress();
+            longPressFired = false;
+            startX = event.clientX;
+            startY = event.clientY;
+            pressTimer = setTimeout(() => {
+                longPressFired = true;
+                clearPress();
+                fireLongPress();
+            }, LONG_PRESS_DELAY);
+        };
+        const onPointerMove = (event) => {
+            if (!pressTimer) {
+                return;
+            }
+            const deltaX = event.clientX - startX;
+            const deltaY = event.clientY - startY;
+            if (Math.hypot(deltaX, deltaY) > 8) {
+                clearPress();
+            }
+        };
+        const onPointerUp = (event) => {
+            if (shouldIgnoreShortPress(event)) {
+                clearPress();
+                return;
+            }
+            if (pressTimer) {
+                clearPress();
+            }
+            if (!longPressFired) {
+                fireShortPress();
+            }
+        };
+        const onPointerCancel = () => {
+            clearPress();
+        };
+
+        card.addEventListener('pointerdown', onPointerDown);
+        card.addEventListener('pointermove', onPointerMove);
+        card.addEventListener('pointerup', onPointerUp);
+        card.addEventListener('pointercancel', onPointerCancel);
+        card.addEventListener('pointerleave', onPointerCancel);
     }
 
     /* ACTIONS */
@@ -379,7 +455,7 @@
                 endClass: 'exercise-card-end--top',
                 cardClass: 'exercise-card--full-sets'
             });
-            const { card, start, body, end } = structure;
+            const { card, start, body } = structure;
             card.dataset.exerciseId = exercise.exercise_id;
             start.classList.add('list-card__start--solo');
 
@@ -482,9 +558,9 @@
             });
             setsWrapper.appendChild(addSetButton);
             body.append(titleRow, setsWrapper);
-            end.appendChild(createExerciseMenuButton({ exerciseId: exercise.exercise_id, exerciseName }));
 
             card.setAttribute('aria-label', exerciseName);
+            attachSessionCardPressHandlers(card);
 
             sessionList.appendChild(card);
         }
@@ -1131,6 +1207,27 @@
 
     A.storeSessionScroll = () => storeSessionScroll();
     A.restoreSessionScroll = () => restoreSessionScroll();
+    A.ensureSessionCardInView = (exerciseId) => {
+        if (!exerciseId) {
+            return false;
+        }
+        const container = getSessionScrollContainer();
+        if (!container) {
+            return false;
+        }
+        const target = container.querySelector(`[data-exercise-id="${CSS.escape(exerciseId)}"]`);
+        if (!target) {
+            return false;
+        }
+        const containerRect = container.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        if (targetRect.top < containerRect.top) {
+            container.scrollTop += targetRect.top - containerRect.top;
+        } else if (targetRect.bottom > containerRect.bottom) {
+            container.scrollTop += targetRect.bottom - containerRect.bottom;
+        }
+        return true;
+    };
 
     function assertRefs() {
         ensureRefs();
