@@ -389,6 +389,13 @@
     </header>
 
     <main class="content">
+        <div class="session-comments-header">
+            <button id="btnRoutineDetails" class="session-comments-content" type="button" aria-label="Ajouter des détails de routine">
+                <span id="routineDetailsPreview" class="session-comments-text details" data-empty="true" data-placeholder="détails"></span>
+            </button>
+            <button id="routineEditMenu" class="btn ghost session-comments-more" type="button" aria-label="Actions de routine">...</button>
+        </div>
+
         <section id="routineList" class="session-list" aria-label="Exercices de la routine"></section>
 
         <div class="bloque">
@@ -1122,24 +1129,41 @@
                     <select id="routineIcon" class="input" aria-label="Icône de routine"></select>
                 </div>
             </div>
-
-            <div class="bloque">
-                <div class="vstack">
-                    <label class="lbl" for="routineDetails">Détails</label>
-                    <textarea id="routineDetails" class="input" rows="3" placeholder="Ajouter des détails sur la routine"></textarea>
-                </div>
-            </div>
-
-            <div class="bloque">
-                <button id="routineDuplicate" class="btn full" type="button">Dupliquer</button>
-            </div>
-
-            <div class="bloque">
-                <button id="routineDelete" class="btn danger full" type="button">🗑️ Supprimer de la liste des routines</button>
-            </div>
         </div>
         <div class="modal-footer">
             <button id="routineEditorClose" class="btn cta full" type="button">ok</button>
+        </div>
+    </form>
+</dialog>
+<!-- ==================== -->
+
+<!-- ========== Routine : actions ========== -->
+<dialog id="dlgRoutineActions" class="modal modal-context">
+    <form method="dialog" class="modal-context-form">
+        <button id="routineShare" class="modal-context-action" type="button">partager</button>
+        <button id="routineDuplicateAction" class="modal-context-action" type="button">dupliquer</button>
+        <button id="routineDeleteAction" class="modal-context-action is-danger" type="button">supprimer</button>
+    </form>
+</dialog>
+<!-- ==================== -->
+
+<!-- ========== Routine : détails ========== -->
+<dialog id="dlgRoutineDetails" class="modal modal-fixed modal-centered modal-top">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Détails de routine</div>
+            <button id="routineDetailsCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="routineDetailsInput">Détails</label>
+                    <textarea id="routineDetailsInput" class="input session-comment-textarea" rows="8" placeholder="Ajouter des détails sur la routine"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="routineDetailsClose" class="btn cta full" type="button">ok</button>
         </div>
     </form>
 </dialog>

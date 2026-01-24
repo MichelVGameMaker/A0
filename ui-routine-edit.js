@@ -11,6 +11,7 @@
     const refs = {};
     let refsResolved = false;
     let routineEditorSnapshot = null;
+    let routineDetailsSnapshot = null;
     const state = {
         routineId: 'routine-test',
         callerScreen: 'screenSettings',
@@ -39,8 +40,8 @@
         wireInputs();
         wireAddExercisesButton();
         wireHeaderButtons();
-        wireDuplication();
-        wireDeletion();
+        wireRoutineDetails();
+        wireRoutineActions();
         wireValueStates();
     });
 
@@ -89,12 +90,20 @@
         refs.screenData = document.getElementById('screenData');
         refs.routineName = document.getElementById('routineName');
         refs.routineIcon = document.getElementById('routineIcon');
-        refs.routineDetails = document.getElementById('routineDetails');
+        refs.btnRoutineDetails = document.getElementById('btnRoutineDetails');
+        refs.routineDetailsPreview = document.getElementById('routineDetailsPreview');
+        refs.dlgRoutineDetails = document.getElementById('dlgRoutineDetails');
+        refs.routineDetailsInput = document.getElementById('routineDetailsInput');
+        refs.routineDetailsClose = document.getElementById('routineDetailsClose');
+        refs.routineDetailsCancel = document.getElementById('routineDetailsCancel');
         refs.dlgRoutineEditor = document.getElementById('dlgRoutineEditor');
         refs.routineEditorClose = document.getElementById('routineEditorClose');
         refs.routineEditorCancel = document.getElementById('routineEditorCancel');
-        refs.routineDuplicate = document.getElementById('routineDuplicate');
-        refs.routineDelete = document.getElementById('routineDelete');
+        refs.routineEditMenu = document.getElementById('routineEditMenu');
+        refs.dlgRoutineActions = document.getElementById('dlgRoutineActions');
+        refs.routineShare = document.getElementById('routineShare');
+        refs.routineDuplicateAction = document.getElementById('routineDuplicateAction');
+        refs.routineDeleteAction = document.getElementById('routineDeleteAction');
         refs.routineList = document.getElementById('routineList');
         refs.routineEditTitle = document.getElementById('routineEditTitle');
         refs.btnRoutineAddExercises = document.getElementById('btnRoutineAddExercises');
@@ -114,7 +123,6 @@
             'screenRoutineEdit',
             'routineName',
             'routineIcon',
-            'routineDetails',
             'routineList',
             'routineEditTitle',
             'btnRoutineAddExercises',
@@ -122,9 +130,7 @@
             'routineEditEdit',
             'dlgRoutineEditor',
             'routineEditorClose',
-            'routineEditorCancel',
-            'routineDuplicate',
-            'routineDelete'
+            'routineEditorCancel'
         ];
         const missing = required.filter((key) => !refs[key]);
         if (missing.length) {
@@ -183,7 +189,7 @@
     A.restoreRoutineEditScroll = () => restoreRoutineScroll();
 
     function wireHeaderButtons() {
-        const { routineEditBack, routineEditEdit, dlgRoutineEditor, routineName, routineIcon, routineDetails } = assertRefs();
+        const { routineEditBack, routineEditEdit, dlgRoutineEditor, routineName, routineIcon } = assertRefs();
         routineEditBack.addEventListener('click', () => {
             void A.openRoutineList({ callerScreen: state.callerScreen });
         });
@@ -191,12 +197,10 @@
             if (state.routine) {
                 routineEditorSnapshot = {
                     name: state.routine.name || '',
-                    icon: state.routine.icon || ICONS[0],
-                    details: state.routine.details || ''
+                    icon: state.routine.icon || ICONS[0]
                 };
                 routineName.value = routineEditorSnapshot.name;
                 routineIcon.value = routineEditorSnapshot.icon;
-                routineDetails.value = routineEditorSnapshot.details;
                 renderIconPreview();
                 refreshValueStates();
             }
@@ -204,17 +208,44 @@
         });
     }
 
-    function wireDeletion() {
-        const { routineDelete } = assertRefs();
-        routineDelete.addEventListener('click', () => {
-            void deleteRoutine();
+    function wireRoutineActions() {
+        const {
+            routineEditMenu,
+            dlgRoutineActions,
+            routineShare,
+            routineDuplicateAction,
+            routineDeleteAction
+        } = ensureRefs();
+        if (!routineEditMenu || !dlgRoutineActions) {
+            return;
+        }
+        const closeRoutineActions = () => {
+            if (A.closeDialog) {
+                A.closeDialog(dlgRoutineActions);
+            } else {
+                dlgRoutineActions.close();
+            }
+        };
+        routineEditMenu.addEventListener('click', () => {
+            dlgRoutineActions.showModal();
         });
-    }
-
-    function wireDuplication() {
-        const { routineDuplicate } = assertRefs();
-        routineDuplicate.addEventListener('click', () => {
+        dlgRoutineActions.addEventListener('click', (event) => {
+            if (event.target !== dlgRoutineActions) {
+                return;
+            }
+            closeRoutineActions();
+        });
+        routineShare?.addEventListener('click', () => {
+            closeRoutineActions();
+            void shareRoutine();
+        });
+        routineDuplicateAction?.addEventListener('click', () => {
+            closeRoutineActions();
             void duplicateRoutine();
+        });
+        routineDeleteAction?.addEventListener('click', () => {
+            closeRoutineActions();
+            void deleteRoutine();
         });
     }
 
@@ -294,6 +325,34 @@
         renderRoutine();
     }
 
+    async function shareRoutine() {
+        if (!state.routine) {
+            return;
+        }
+        const text = buildShareRoutineText(state.routine);
+        if (!text) {
+            return;
+        }
+        if (navigator.share) {
+            await navigator.share({ text, title: 'Routine de musculation' });
+            return;
+        }
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            if (A.components?.confirmDialog?.alert) {
+                await A.components.confirmDialog.alert({
+                    title: 'Partager',
+                    message: 'Texte copié dans le presse-papiers.',
+                    variant: 'info'
+                });
+            } else {
+                alert('Texte copié dans le presse-papiers.');
+            }
+            return;
+        }
+        window.prompt('Copiez ce texte pour le partager :', text);
+    }
+
     async function loadRoutine(force = false) {
         if (!force && state.routine) {
             return state.routine;
@@ -342,7 +401,6 @@
         const {
             routineName,
             routineIcon,
-            routineDetails,
             dlgRoutineEditor,
             routineEditorClose,
             routineEditorCancel
@@ -362,13 +420,6 @@
             state.routine.icon = routineIcon.value || ICONS[0];
             scheduleSave();
             renderIconPreview();
-        });
-        routineDetails.addEventListener('input', () => {
-            if (!state.routine) {
-                return;
-            }
-            state.routine.details = routineDetails.value;
-            scheduleSave();
         });
         routineEditorClose?.addEventListener('click', () => {
             if (state.pendingSave) {
@@ -401,10 +452,8 @@
             }
             state.routine.name = routineEditorSnapshot.name || 'Routine';
             state.routine.icon = routineEditorSnapshot.icon || ICONS[0];
-            state.routine.details = routineEditorSnapshot.details || '';
             routineName.value = routineEditorSnapshot.name;
             routineIcon.value = routineEditorSnapshot.icon;
-            routineDetails.value = routineEditorSnapshot.details;
             renderIconPreview();
             refreshValueStates();
             if (refs.routineEditTitle) {
@@ -420,9 +469,70 @@
         });
     }
 
+    function wireRoutineDetails() {
+        const {
+            btnRoutineDetails,
+            dlgRoutineDetails,
+            routineDetailsInput,
+            routineDetailsClose,
+            routineDetailsCancel
+        } = ensureRefs();
+        if (!btnRoutineDetails || !dlgRoutineDetails || !routineDetailsInput) {
+            return;
+        }
+        const closeRoutineDetailsDialog = () => {
+            if (A.closeDialog) {
+                A.closeDialog(dlgRoutineDetails);
+            } else {
+                dlgRoutineDetails.close();
+            }
+        };
+        btnRoutineDetails.addEventListener('click', () => {
+            if (!state.routine) {
+                return;
+            }
+            routineDetailsSnapshot = state.routine.details || '';
+            routineDetailsInput.value = routineDetailsSnapshot;
+            dlgRoutineDetails.showModal();
+        });
+        routineDetailsInput.addEventListener('input', () => {
+            if (!state.routine) {
+                return;
+            }
+            state.routine.details = routineDetailsInput.value;
+            updateRoutineDetailsPreview(state.routine);
+            scheduleSave();
+        });
+        routineDetailsClose?.addEventListener('click', () => {
+            if (state.pendingSave) {
+                clearTimeout(state.pendingSave);
+                state.pendingSave = null;
+                void persistRoutine();
+            }
+            closeRoutineDetailsDialog();
+            routineDetailsSnapshot = null;
+        });
+        routineDetailsCancel?.addEventListener('click', () => {
+            if (routineDetailsSnapshot == null || !state.routine) {
+                closeRoutineDetailsDialog();
+                return;
+            }
+            if (state.pendingSave) {
+                clearTimeout(state.pendingSave);
+                state.pendingSave = null;
+            }
+            state.routine.details = routineDetailsSnapshot;
+            routineDetailsInput.value = routineDetailsSnapshot;
+            updateRoutineDetailsPreview(state.routine);
+            void persistRoutine();
+            closeRoutineDetailsDialog();
+            routineDetailsSnapshot = null;
+        });
+    }
+
     function wireValueStates() {
-        const { routineName, routineIcon, routineDetails } = assertRefs();
-        A.watchValueState?.([routineName, routineIcon, routineDetails]);
+        const { routineName, routineIcon } = assertRefs();
+        A.watchValueState?.([routineName, routineIcon]);
     }
 
     function wireAddExercisesButton() {
@@ -481,15 +591,28 @@
         }
         populateIconSelect();
         renderIconPreview();
-        const { routineName, routineIcon, routineDetails, routineEditTitle } = assertRefs();
+        const { routineName, routineIcon, routineEditTitle, routineDetailsInput } = assertRefs();
         routineName.value = state.routine.name || '';
         routineIcon.value = state.routine.icon || ICONS[0];
-        routineDetails.value = state.routine.details || '';
+        if (routineDetailsInput) {
+            routineDetailsInput.value = state.routine.details || '';
+        }
         if (routineEditTitle) {
             routineEditTitle.textContent = state.routine.name || 'Routine';
         }
+        updateRoutineDetailsPreview(state.routine);
         refreshValueStates();
         renderRoutineList();
+    }
+
+    function updateRoutineDetailsPreview(routine) {
+        const { routineDetailsPreview } = ensureRefs();
+        if (!routineDetailsPreview) {
+            return;
+        }
+        const details = routine?.details || '';
+        routineDetailsPreview.textContent = details;
+        routineDetailsPreview.dataset.empty = details.trim() ? 'false' : 'true';
     }
 
     function renderIconPreview() {
@@ -1034,6 +1157,85 @@
         return String(numeric).replace(/\.0$/, '');
     }
 
+    function formatShareNumber(value, options = {}) {
+        if (value == null || value === '') {
+            return '';
+        }
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return String(value).trim();
+        }
+        return numeric.toLocaleString('fr-FR', {
+            maximumFractionDigits: options.maximumFractionDigits ?? 2
+        });
+    }
+
+    function formatShareInteger(value) {
+        if (value == null || value === '') {
+            return '';
+        }
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return String(value).trim();
+        }
+        return String(Math.round(numeric));
+    }
+
+    function formatShareRoutineSetLine(set, index) {
+        const weightValue = formatShareNumber(set?.weight, { maximumFractionDigits: 2 });
+        const repsValue = formatShareInteger(set?.reps);
+        const rpeValue = formatShareNumber(set?.rpe, { maximumFractionDigits: 1 });
+        let label = '';
+        if (weightValue && repsValue) {
+            label = `${weightValue} kg x ${repsValue} reps`;
+        } else if (weightValue) {
+            label = `${weightValue} kg`;
+        } else if (repsValue) {
+            label = `${repsValue} reps`;
+        } else if (rpeValue) {
+            label = 'Série';
+        }
+        if (!label) {
+            return null;
+        }
+        if (rpeValue) {
+            label = `${label} @ rpe ${rpeValue}`;
+        }
+        return `${index}. ${label}`;
+    }
+
+    function buildShareRoutineText(routine) {
+        if (!routine) {
+            return '';
+        }
+        const name = routine?.name || 'Routine';
+        const lines = ['Routine de musculation:', '', `> ROUTINE ${name.toUpperCase()}`, ''];
+        const moves = Array.isArray(routine?.moves) ? [...routine.moves] : [];
+        moves.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
+        if (!moves.length) {
+            lines.push('Aucun exercice.');
+        } else {
+            moves.forEach((move) => {
+                lines.push(move?.exerciseName || 'Exercice');
+                const sets = Array.isArray(move?.sets) ? [...move.sets] : [];
+                sets.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
+                const setLines = sets
+                    .map((set, idx) => formatShareRoutineSetLine(set, idx + 1))
+                    .filter(Boolean);
+                if (setLines.length) {
+                    lines.push(...setLines);
+                } else {
+                    lines.push('Aucune série.');
+                }
+                lines.push('');
+            });
+        }
+        while (lines.length && lines[lines.length - 1] === '') {
+            lines.pop();
+        }
+        return lines.join('\n');
+    }
+
     function formatSetIndex(value) {
         const numeric = Number.parseInt(value, 10);
         return Number.isFinite(numeric) ? `#${numeric}` : '#—';
@@ -1129,7 +1331,6 @@
     function refreshValueStates() {
         A.updateValueState?.(refs.routineName);
         A.updateValueState?.(refs.routineIcon);
-        A.updateValueState?.(refs.routineDetails);
     }
 
     function switchScreen(target) {
