@@ -1097,6 +1097,9 @@
         sessionScrollState.pendingRestore = false;
     }
 
+    A.storeSessionScroll = () => storeSessionScroll();
+    A.restoreSessionScroll = () => restoreSessionScroll();
+
     function assertRefs() {
         ensureRefs();
         const required = ['todayLabel', 'sessionList'];

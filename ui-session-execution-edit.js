@@ -1566,6 +1566,7 @@
             item.sort = idx + 1;
         });
         await persistSession(false);
+        A.storeSessionScroll?.();
         await refreshSessionViews();
         updateMoveOrderControls();
     }
@@ -1597,6 +1598,7 @@
         } else {
             await db.saveSession(state.session);
         }
+        A.storeSessionScroll?.();
         await refreshSessionViews();
         if (A.closeDialog) {
             A.closeDialog(refs.dlgExecMoveEditor);
@@ -1657,6 +1659,7 @@
             resetTimerState();
         }
         await persistSession(false);
+        A.storeSessionScroll?.();
         await refreshSessionViews();
     }
 

@@ -698,6 +698,7 @@
         if (!state.routine) {
             return;
         }
+        A.storeRoutineEditScroll?.();
         await db.put('routines', serializeRoutine(state.routine));
         await A.refreshRoutineEdit();
     }
