@@ -911,7 +911,7 @@
                             pos: set.pos,
                             reps: set.reps ?? null,
                             weight: null,
-                            rpe: null,
+                            rpe: set.rpe ?? null,
                             rest: set.rest ?? null,
                             done: false
                         }))
