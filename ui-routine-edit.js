@@ -27,6 +27,10 @@
         offsetY: 0,
         initialOrder: []
     };
+    const routineScrollState = {
+        top: 0,
+        pendingRestore: false
+    };
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -127,6 +131,40 @@
         }
         return refs;
     }
+
+    function getRoutineScrollContainer() {
+        const { routineContent, screenRoutineEdit } = ensureRefs();
+        if (routineContent) {
+            return routineContent;
+        }
+        const content = screenRoutineEdit?.querySelector('.content') || null;
+        refs.routineContent = content;
+        return content;
+    }
+
+    function storeRoutineScroll() {
+        const container = getRoutineScrollContainer();
+        if (!container) {
+            return;
+        }
+        routineScrollState.top = container.scrollTop || 0;
+        routineScrollState.pendingRestore = true;
+    }
+
+    function restoreRoutineScroll() {
+        if (!routineScrollState.pendingRestore) {
+            return;
+        }
+        const container = getRoutineScrollContainer();
+        if (!container) {
+            return;
+        }
+        container.scrollTop = routineScrollState.top;
+        routineScrollState.pendingRestore = false;
+    }
+
+    A.storeRoutineEditScroll = () => storeRoutineScroll();
+    A.restoreRoutineEditScroll = () => restoreRoutineScroll();
 
     function wireHeaderButtons() {
         const { routineEditBack, routineEditEdit, dlgRoutineEditor, routineName, routineIcon, routineDetails } = assertRefs();
@@ -459,12 +497,14 @@
             empty.className = 'empty';
             empty.textContent = 'Aucun exercice dans la routine.';
             routineList.appendChild(empty);
+            restoreRoutineScroll();
             return;
         }
         const ordered = [...state.routine.moves].sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0));
         ordered.forEach((move) => {
             routineList.appendChild(renderMoveCard(move));
         });
+        restoreRoutineScroll();
     }
 
     function renderMoveCard(move) {
