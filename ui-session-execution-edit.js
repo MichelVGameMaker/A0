@@ -152,6 +152,7 @@
         A.setTimerVisibility?.({ hidden: true });
         updateTimerUI();
         switchScreen('screenExecEdit');
+        await renderSets();
         if (openMeta) {
             setTimeout(() => {
                 if (state.exerciseId === currentId) {
