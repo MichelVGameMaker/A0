@@ -1315,6 +1315,7 @@
 
     A.storeSessionScroll = () => storeSessionScroll();
     A.restoreSessionScroll = () => restoreSessionScroll();
+    A.setSessionScrollTarget = (exerciseId) => setSessionScrollTarget(exerciseId);
     A.ensureSessionCardInView = (exerciseId) => {
         if (!exerciseId) {
             return false;

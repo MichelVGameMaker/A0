@@ -189,6 +189,16 @@
 
     A.storeRoutineEditScroll = () => storeRoutineScroll();
     A.restoreRoutineEditScroll = () => restoreRoutineScroll();
+    A.setRoutineEditScrollTarget = (moveId) => setRoutineScrollTarget(moveId);
+    A.setRoutineEditScrollTargetByExercise = (exerciseId) => {
+        if (!exerciseId || !Array.isArray(state.routine?.moves)) {
+            return;
+        }
+        const move = state.routine.moves.find((item) => item.exerciseId === exerciseId);
+        if (move?.id) {
+            setRoutineScrollTarget(move.id);
+        }
+    };
     A.ensureRoutineMoveInView = (moveId) => {
         if (!moveId) {
             return false;
