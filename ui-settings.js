@@ -74,6 +74,8 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenMeso = document.getElementById('screenMeso');
+        refs.screenProgression = document.getElementById('screenProgression');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
         refs.btnSettingsExercises = document.getElementById('btnSettingsExercises');
@@ -1843,6 +1845,8 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenMeso,
+            screenProgression,
             screenFitHeroMapping
         } = ensureRefs();
         const map = {
@@ -1864,6 +1868,8 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenMeso,
+            screenProgression,
             screenFitHeroMapping
         };
         Object.entries(map).forEach(([key, element]) => {
