@@ -986,6 +986,17 @@ textarea:focus{
     flex-direction:column;
     gap:12px;
 }
+.meso-card .list-card__row{
+    align-items:flex-start;
+}
+.meso-card .list-card__start{
+    grid-template-columns: 1fr;
+    align-items:flex-start;
+    width:100%;
+}
+.meso-card .list-card__end{
+    display:none;
+}
 .meso-card__header{
     display:flex;
     align-items:center;
@@ -1031,6 +1042,7 @@ textarea:focus{
     flex-direction:column;
     gap:8px;
     margin-top:8px;
+    width:100%;
 }
 .meso-card__details[hidden]{
     display:none;
