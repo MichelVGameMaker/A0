@@ -989,7 +989,6 @@ textarea:focus{
 .meso-card__header{
     display:flex;
     align-items:center;
-    justify-content:space-between;
     gap:12px;
     flex-wrap:nowrap;
 }
@@ -1000,11 +999,19 @@ textarea:focus{
     min-width:0;
     flex:1;
 }
+.meso-card__headline{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    min-width:0;
+}
 .meso-card__title{
     min-width:0;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    flex:1;
 }
 .meso-card__summary{
     font-size:var(--fs-small);
@@ -1056,10 +1063,11 @@ textarea:focus{
     gap:8px;
     margin-top:8px;
 }
-.meso-modifier-tag{
+.meso-modifier-row{
     display:flex;
-    flex-direction:column;
-    gap:4px;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
     padding:8px 10px;
     border:1px solid var(--panelBord);
     border-radius:var(--radius);
@@ -1067,6 +1075,11 @@ textarea:focus{
 }
 .meso-modifier-name{
     font-weight:var(--fw-strong);
+    flex:1;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }
 .meso-modifier-summary{
     font-size:var(--fs-small);
