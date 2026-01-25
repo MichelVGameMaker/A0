@@ -456,9 +456,10 @@
         if (!dlgExecDetails || !execDetailsInput) {
             return;
         }
-        if (revert && detailsState.exercise) {
-            detailsState.exercise.details = detailsState.initialDetails || '';
-            execDetailsInput.value = detailsState.initialDetails || '';
+        if (detailsState.exercise) {
+            const nextDetails = revert ? detailsState.initialDetails || '' : execDetailsInput.value;
+            detailsState.exercise.details = nextDetails;
+            execDetailsInput.value = nextDetails;
             updateExecDetailsPreview(detailsState.exercise);
         }
         await flushExecDetailsSave();
@@ -466,6 +467,9 @@
             A.closeDialog(dlgExecDetails);
         } else {
             dlgExecDetails.close();
+        }
+        if (!revert && isSessionScreenActive()) {
+            await refreshSessionViews();
         }
     }
 

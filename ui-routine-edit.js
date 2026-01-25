@@ -35,6 +35,7 @@
     };
     let detailsPopover = null;
     let detailsPopoverCleanup = null;
+    let activeContextCard = null;
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -44,6 +45,7 @@
         wireHeaderButtons();
         wireRoutineDetails();
         wireRoutineActions();
+        wireRoutineContextDialog();
         wireValueStates();
     });
 
@@ -102,6 +104,7 @@
         refs.routineEditorClose = document.getElementById('routineEditorClose');
         refs.routineEditorCancel = document.getElementById('routineEditorCancel');
         refs.routineEditMenu = document.getElementById('routineEditMenu');
+        refs.dlgRoutineMoveEditor = document.getElementById('dlgRoutineMoveEditor');
         refs.dlgRoutineActions = document.getElementById('dlgRoutineActions');
         refs.routineShare = document.getElementById('routineShare');
         refs.routineDuplicateAction = document.getElementById('routineDuplicateAction');
@@ -262,6 +265,7 @@
                 return;
             }
             setRoutineScrollTarget(moveId);
+            setActiveContextCard(card);
             void A.openRoutineMoveMeta?.({
                 routineId: state.routineId,
                 moveId,
@@ -324,6 +328,32 @@
         }
         routineScrollState.targetMoveId = moveId;
         storeRoutineScroll();
+    }
+
+    function setActiveContextCard(card) {
+        if (activeContextCard && activeContextCard !== card) {
+            activeContextCard.classList.remove('is-context-open');
+        }
+        activeContextCard = card;
+        activeContextCard?.classList.add('is-context-open');
+    }
+
+    function clearActiveContextCard() {
+        if (!activeContextCard) {
+            return;
+        }
+        activeContextCard.classList.remove('is-context-open');
+        activeContextCard = null;
+    }
+
+    function wireRoutineContextDialog() {
+        const { dlgRoutineMoveEditor } = ensureRefs();
+        if (!dlgRoutineMoveEditor) {
+            return;
+        }
+        dlgRoutineMoveEditor.addEventListener('close', () => {
+            clearActiveContextCard();
+        });
     }
 
     function clearDetailsPopover() {
@@ -877,7 +907,7 @@
         const detailsButton = document.createElement('button');
         detailsButton.type = 'button';
         detailsButton.className = 'exercise-card-menu-button';
-        detailsButton.textContent = 'I';
+        detailsButton.textContent = 'ⓘ';
         detailsButton.setAttribute('aria-label', "Afficher les détails de l'exercice");
         detailsButton.addEventListener('click', (event) => {
             event.stopPropagation();

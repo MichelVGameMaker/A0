@@ -296,11 +296,12 @@
 
     async function closeRoutineMoveDetailsDialog({ revert }) {
         const { dlgRoutineMoveDetails, routineMoveDetailsInput } = assertRefs();
-        if (revert && detailsState.move) {
-            detailsState.move.details = detailsState.initialDetails || '';
-            routineMoveDetailsInput.value = detailsState.initialDetails || '';
+        if (detailsState.move) {
+            const nextDetails = revert ? detailsState.initialDetails || '' : routineMoveDetailsInput.value;
+            detailsState.move.details = nextDetails;
+            routineMoveDetailsInput.value = nextDetails;
         }
-        await flushRoutineMoveDetailsSave();
+        await flushRoutineMoveDetailsSave({ refresh: !revert });
         if (A.closeDialog) {
             A.closeDialog(dlgRoutineMoveDetails);
         } else {
@@ -309,11 +310,12 @@
         detailsState.move = null;
     }
 
-    async function flushRoutineMoveDetailsSave() {
+    async function flushRoutineMoveDetailsSave(options = {}) {
+        const { refresh = false } = options;
         if (!detailsState.move || !state.routine) {
             return;
         }
-        await persistRoutine({ refresh: false });
+        await persistRoutine({ refresh });
     }
 
     function normalizeFocusField(field) {

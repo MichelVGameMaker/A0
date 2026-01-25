@@ -26,6 +26,7 @@
         pendingRestore: false,
         targetExerciseId: null
     };
+    let activeContextCard = null;
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -36,6 +37,7 @@
         wireSessionNavigation();
         wireSessionEditor();
         wireSessionComments();
+        wireSessionContextDialog();
         wireSessionScrollRestore();
     });
 
@@ -359,6 +361,7 @@
                 return;
             }
             setSessionScrollTarget(exerciseId);
+            setActiveContextCard(card);
             void A.openExecMoveMeta?.({
                 currentId: exerciseId,
                 callerScreen: 'screenSessions'
@@ -420,6 +423,32 @@
         }
         sessionScrollState.targetExerciseId = exerciseId;
         storeSessionScroll();
+    }
+
+    function setActiveContextCard(card) {
+        if (activeContextCard && activeContextCard !== card) {
+            activeContextCard.classList.remove('is-context-open');
+        }
+        activeContextCard = card;
+        activeContextCard?.classList.add('is-context-open');
+    }
+
+    function clearActiveContextCard() {
+        if (!activeContextCard) {
+            return;
+        }
+        activeContextCard.classList.remove('is-context-open');
+        activeContextCard = null;
+    }
+
+    function wireSessionContextDialog() {
+        const { dlgExecMoveEditor } = ensureRefs();
+        if (!dlgExecMoveEditor) {
+            return;
+        }
+        dlgExecMoveEditor.addEventListener('close', () => {
+            clearActiveContextCard();
+        });
     }
 
     /* ACTIONS */
@@ -545,7 +574,7 @@
             const detailsButton = document.createElement('button');
             detailsButton.type = 'button';
             detailsButton.className = 'exercise-card-menu-button';
-            detailsButton.textContent = 'I';
+            detailsButton.textContent = 'ⓘ';
             detailsButton.setAttribute('aria-label', "Afficher les détails de l'exercice");
             detailsButton.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -1234,6 +1263,7 @@
         refs.sessionEditorTitle = document.getElementById('sessionEditorTitle');
         refs.sessionEditorClose = document.getElementById('sessionEditorClose');
         refs.sessionEditorCancel = document.getElementById('sessionEditorCancel');
+        refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
         refs.btnSessionComments = document.getElementById('btnSessionComments');
         refs.sessionCommentsPreview = document.getElementById('sessionCommentsPreview');
         refs.sessionCreateRoutine = document.getElementById('sessionCreateRoutine');
