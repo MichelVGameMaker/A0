@@ -1185,7 +1185,24 @@
             }
         };
 
+        const syncStateFromInputs = (state, config) => {
+            if (!config || typeof config.getValues !== 'function') {
+                return;
+            }
+            const source = config.getValues();
+            if (!source) {
+                return;
+            }
+            const normalized = normalizeValues(source);
+            state.reps = normalized.reps;
+            state.weight = normalized.weight;
+            state.rpe = normalized.rpe;
+            state.minutes = normalized.minutes;
+            state.seconds = normalized.seconds;
+        };
+
         const adjustState = (state, field, delta, config) => {
+            syncStateFromInputs(state, config);
             inlineKeyboard?.selectTarget?.(undefined, { select: false });
             switch (field) {
                 case 'reps': {

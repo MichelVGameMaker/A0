@@ -1009,6 +1009,12 @@
                 focus: focusField,
                 tone: 'black',
                 order: { position: set.pos ?? currentIndex + 1, total: totalSets },
+                getValues: () => ({
+                    reps: repsInput.value,
+                    weight: weightInput.value,
+                    rpe: rpeInput.value,
+                    rest: parseRestInput(restInput.value, value.rest)
+                }),
                 onSelectField: (field) => selectField?.(field),
                 onMove: async (direction) => {
                     const delta = direction === 'up' ? -1 : 1;
