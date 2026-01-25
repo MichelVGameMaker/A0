@@ -145,6 +145,12 @@
                 void A.openExercises({ callerScreen: 'screenExerciseRead' });
             } else {
                 const targetScreen = state.callerScreen || 'screenExercises';
+                if (targetScreen === 'screenSessions') {
+                    A.setSessionScrollTarget?.(state.currentId);
+                }
+                if (targetScreen === 'screenRoutineEdit') {
+                    A.setRoutineEditScrollTargetByExercise?.(state.currentId);
+                }
                 switchScreen(targetScreen);
                 if (targetScreen === 'screenSessions') {
                     A.restoreSessionScroll?.();
