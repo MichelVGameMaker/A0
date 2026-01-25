@@ -457,6 +457,12 @@
                 focus: focusField,
                 tone: 'black',
                 order: { position: set.pos ?? currentIndex + 1, total: totalSets },
+                getValues: () => ({
+                    reps: repsInput.value,
+                    weight: weightInput.value,
+                    rpe: rpeInput.value,
+                    rest: parseRestInput(restInput.value, value.rest)
+                }),
                 onMove: (direction) => {
                     const delta = direction === 'up' ? -1 : 1;
                     const nextIndex = moveSet(currentIndex, delta, row);
