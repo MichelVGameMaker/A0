@@ -347,6 +347,7 @@
             if (!exerciseId) {
                 return;
             }
+            setSessionScrollTarget(exerciseId);
             void A.openExecEdit?.({
                 currentId: exerciseId,
                 callerScreen: 'screenSessions'
@@ -357,6 +358,7 @@
             if (!exerciseId) {
                 return;
             }
+            setSessionScrollTarget(exerciseId);
             void A.openExecMoveMeta?.({
                 currentId: exerciseId,
                 callerScreen: 'screenSessions'
@@ -410,6 +412,14 @@
         card.addEventListener('pointerup', onPointerUp);
         card.addEventListener('pointercancel', onPointerCancel);
         card.addEventListener('pointerleave', onPointerCancel);
+    }
+
+    function setSessionScrollTarget(exerciseId) {
+        if (!exerciseId) {
+            return;
+        }
+        sessionScrollState.targetExerciseId = exerciseId;
+        storeSessionScroll();
     }
 
     /* ACTIONS */
@@ -526,6 +536,7 @@
                 if (!exercise.exercise_id) {
                     return;
                 }
+                setSessionScrollTarget(exercise.exercise_id);
                 void A.openExerciseRead({ currentId: exercise.exercise_id, callerScreen: 'screenSessions' });
             });
             const titleRow = document.createElement('div');
@@ -544,87 +555,7 @@
             end.appendChild(detailsButton);
             const setsWrapper = document.createElement('div');
             setsWrapper.className = 'session-card-sets';
-            const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
-            sets.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
-            const meta =
-                typeof A.buildSessionExerciseMeta === 'function'
-                    ? await A.buildSessionExerciseMeta(exercise, sets, { dateKey: key })
-                    : { goalsByPos: new Map(), medalsByPos: new Map() };
-            if (sets.length) {
-                sets.forEach((set, index) => {
-                    const line = document.createElement('div');
-                    line.className = 'session-card-sets-row';
-                    const isPlanned = set?.done !== true;
-                    if (isPlanned) {
-                        line.classList.add('session-card-sets-row--planned');
-                    } else {
-                        const rowRpe = getRpeDatasetValue(set?.rpe);
-                        if (rowRpe) {
-                            line.dataset.rpe = rowRpe;
-                        }
-                    }
-                    const pos = set?.pos ?? index + 1;
-                    const openWithFocus = (field) => {
-                        void A.openExecEdit({
-                            currentId: exercise.exercise_id,
-                            callerScreen: 'screenSessions',
-                            focusSetIndex: index,
-                            focusField: normalizeFocusField(field)
-                        });
-                    };
-                    const stopAndOpen = (field) => (event) => {
-                        event.stopPropagation();
-                        openWithFocus(field);
-                    };
-                    const goalInfo = meta?.goalsByPos?.get?.(pos) || null;
-                    const goalCell = createSetMetaCell({
-                        text: goalInfo?.text ?? '—',
-                        rpeValue: goalInfo?.rpe ?? null
-                    });
-                    const medalsCell = createSetMedalsCell(meta?.medalsByPos?.get?.(pos) || []);
-                    line.append(
-                        createSetCell({
-                            label: formatSetIndex(pos),
-                            field: 'order',
-                            className: 'session-card-set-cell--index',
-                            onClick: stopAndOpen('reps')
-                        }),
-                        createSetCell({
-                            label: formatSetReps(set?.reps),
-                            field: 'reps',
-                            className: 'session-card-set-cell--reps',
-                            onClick: stopAndOpen('reps')
-                        }),
-                        createSetCell({
-                            label: formatSetWeight(set?.weight),
-                            field: 'weight',
-                            className: 'session-card-set-cell--weight',
-                            onClick: stopAndOpen('weight')
-                        }),
-                        createSetCell({
-                            label: formatSetRpe(set?.rpe),
-                            field: 'rpe',
-                            rpeValue: set?.rpe,
-                            onClick: stopAndOpen('rpe')
-                        }),
-                        goalCell,
-                        medalsCell
-                    );
-                    setsWrapper.appendChild(line);
-                });
-            }
-            const addSetButton = document.createElement('button');
-            addSetButton.type = 'button';
-            addSetButton.className = 'btn full session-card-add-set';
-            const addSetPlus = document.createElement('span');
-            addSetPlus.className = 'text-emphase';
-            addSetPlus.textContent = '+';
-            addSetButton.append(addSetPlus, document.createTextNode(' Ajouter série'));
-            addSetButton.addEventListener('click', (event) => {
-                event.stopPropagation();
-                void addSetToSessionExercise(exercise.exercise_id);
-            });
-            setsWrapper.appendChild(addSetButton);
+            await renderSessionCardSets({ exercise, setsWrapper, dateKey: key });
             body.append(titleRow, setsWrapper);
 
             card.setAttribute('aria-label', exerciseName);
@@ -634,6 +565,112 @@
         }
         restoreSessionScroll();
     };
+
+    async function renderSessionCardSets({ exercise, setsWrapper, dateKey }) {
+        if (!exercise || !setsWrapper) {
+            return;
+        }
+        setsWrapper.innerHTML = '';
+        const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
+        sets.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
+        const meta =
+            typeof A.buildSessionExerciseMeta === 'function'
+                ? await A.buildSessionExerciseMeta(exercise, sets, { dateKey })
+                : { goalsByPos: new Map(), medalsByPos: new Map() };
+        if (sets.length) {
+            sets.forEach((set, index) => {
+                const line = document.createElement('div');
+                line.className = 'session-card-sets-row';
+                const isPlanned = set?.done !== true;
+                if (isPlanned) {
+                    line.classList.add('session-card-sets-row--planned');
+                } else {
+                    const rowRpe = getRpeDatasetValue(set?.rpe);
+                    if (rowRpe) {
+                        line.dataset.rpe = rowRpe;
+                    }
+                }
+                const pos = set?.pos ?? index + 1;
+                const openWithFocus = (field) => {
+                    setSessionScrollTarget(exercise.exercise_id);
+                    void A.openExecEdit({
+                        currentId: exercise.exercise_id,
+                        callerScreen: 'screenSessions',
+                        focusSetIndex: index,
+                        focusField: normalizeFocusField(field)
+                    });
+                };
+                const stopAndOpen = (field) => (event) => {
+                    event.stopPropagation();
+                    openWithFocus(field);
+                };
+                const goalInfo = meta?.goalsByPos?.get?.(pos) || null;
+                const goalCell = createSetMetaCell({
+                    text: goalInfo?.text ?? '—',
+                    rpeValue: goalInfo?.rpe ?? null
+                });
+                const medalsCell = createSetMedalsCell(meta?.medalsByPos?.get?.(pos) || []);
+                line.append(
+                    createSetCell({
+                        label: formatSetIndex(pos),
+                        field: 'order',
+                        className: 'session-card-set-cell--index',
+                        onClick: stopAndOpen('reps')
+                    }),
+                    createSetCell({
+                        label: formatSetReps(set?.reps),
+                        field: 'reps',
+                        className: 'session-card-set-cell--reps',
+                        onClick: stopAndOpen('reps')
+                    }),
+                    createSetCell({
+                        label: formatSetWeight(set?.weight),
+                        field: 'weight',
+                        className: 'session-card-set-cell--weight',
+                        onClick: stopAndOpen('weight')
+                    }),
+                    createSetCell({
+                        label: formatSetRpe(set?.rpe),
+                        field: 'rpe',
+                        rpeValue: set?.rpe,
+                        onClick: stopAndOpen('rpe')
+                    }),
+                    goalCell,
+                    medalsCell
+                );
+                setsWrapper.appendChild(line);
+            });
+        }
+        const addSetButton = document.createElement('button');
+        addSetButton.type = 'button';
+        addSetButton.className = 'btn full session-card-add-set';
+        const addSetPlus = document.createElement('span');
+        addSetPlus.className = 'text-emphase';
+        addSetPlus.textContent = '+';
+        addSetButton.append(addSetPlus, document.createTextNode(' Ajouter série'));
+        addSetButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            void addSetToSessionExercise(exercise.exercise_id);
+        });
+        setsWrapper.appendChild(addSetButton);
+    }
+
+    async function updateSessionExerciseCard(exercise, dateKey) {
+        const { sessionList, screenSessions } = ensureRefs();
+        if (!exercise?.exercise_id || !sessionList || screenSessions?.hidden) {
+            return false;
+        }
+        const card = sessionList.querySelector(`[data-exercise-id="${CSS.escape(exercise.exercise_id)}"]`);
+        if (!card) {
+            return false;
+        }
+        const setsWrapper = card.querySelector('.session-card-sets');
+        if (!setsWrapper) {
+            return false;
+        }
+        await renderSessionCardSets({ exercise, setsWrapper, dateKey });
+        return true;
+    }
 
     async function addSetToSessionExercise(exerciseId) {
         if (!exerciseId) {
@@ -673,7 +710,9 @@
             date: session.date
         });
         await db.saveSession(session);
-        await A.renderSession();
+        if (!(await updateSessionExerciseCard(exercise, dateKey))) {
+            await A.renderSession();
+        }
     }
 
     async function resolveNewSetValuesForSession(exercise, sets, previous, dateKey) {
