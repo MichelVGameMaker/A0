@@ -231,15 +231,12 @@
         const content = document.createElement('div');
         content.className = 'meso-card__content';
 
+        const headline = document.createElement('div');
+        headline.className = 'meso-card__headline';
+
         const title = document.createElement('div');
         title.className = 'element meso-card__title';
         title.textContent = buildDayRoutineLabel(dayIndex, routine);
-        content.appendChild(title);
-
-        const summary = document.createElement('div');
-        summary.className = 'details meso-card__summary';
-        summary.textContent = buildModifierSummary(dayIndex);
-        content.appendChild(summary);
 
         const toggle = document.createElement('button');
         toggle.type = 'button';
@@ -251,18 +248,26 @@
             state.expandedDayIndex = isExpanded ? null : dayIndex;
             void renderMeso();
         });
-        header.append(content, toggle);
+
+        headline.append(title, toggle);
+
+        const summary = document.createElement('div');
+        summary.className = 'details meso-card__summary';
+        summary.textContent = buildModifierSummary(dayIndex);
+
+        content.append(headline, summary);
+        header.append(content);
 
         const detailsWrapper = document.createElement('div');
         detailsWrapper.className = 'meso-card__details';
         detailsWrapper.id = detailsId;
         detailsWrapper.hidden = !isExpanded;
 
-        const modifierPicker = createModifierPicker(dayIndex);
         const modifiersList = renderModifiers(dayIndex);
+        const modifierPicker = createModifierPicker(dayIndex);
         const exerciseList = renderExerciseList(dayIndex, routine);
 
-        detailsWrapper.append(modifierPicker, modifiersList, exerciseList);
+        detailsWrapper.append(modifiersList, modifierPicker, exerciseList);
         body.append(header, detailsWrapper);
         card.setAttribute('aria-label', `Jour ${dayIndex} - ${routine?.name || 'Aucune routine'}`);
 
@@ -295,7 +300,7 @@
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'btn small';
-        button.textContent = '＋ Ajouter un modificateur';
+        button.textContent = 'Ajouter modificateurs';
 
         const menu = document.createElement('div');
         menu.className = 'meso-modifier-menu';
@@ -325,41 +330,36 @@
         const container = document.createElement('div');
         container.className = 'meso-modifier-list';
         const modifiers = getDayModifiers(dayIndex);
-        if (!modifiers.length) {
-            const empty = document.createElement('div');
-            empty.className = 'details meso-empty';
-            empty.textContent = 'Aucun modificateur appliqué.';
-            container.appendChild(empty);
-            return container;
-        }
-
         modifiers.forEach((modifierId) => {
             const modifier = MODIFIERS.find((item) => item.id === modifierId);
             if (!modifier) {
                 return;
             }
-            const tag = document.createElement('div');
-            tag.className = 'meso-modifier-tag';
+            const row = document.createElement('div');
+            row.className = 'meso-modifier-row';
 
             const label = document.createElement('div');
             label.className = 'meso-modifier-name';
-            label.textContent = modifier.shortName || modifier.name;
-
-            const summary = document.createElement('div');
-            summary.className = 'details meso-modifier-summary';
-            summary.textContent = modifier.details;
+            label.textContent = `${modifier.name} · ${modifier.details}`;
 
             const remove = document.createElement('button');
             remove.type = 'button';
             remove.className = 'btn tiny';
-            remove.textContent = 'Retirer';
+            remove.textContent = 'Supprimer';
             remove.addEventListener('click', async () => {
                 await removeModifierFromDay(dayIndex, modifier.id);
             });
 
-            tag.append(label, summary, remove);
-            container.appendChild(tag);
+            row.append(label, remove);
+            container.appendChild(row);
         });
+
+        if (!modifiers.length) {
+            const empty = document.createElement('div');
+            empty.className = 'details meso-empty';
+            empty.textContent = 'Aucun modificateur appliqué.';
+            container.appendChild(empty);
+        }
         return container;
     }
 
@@ -389,10 +389,8 @@
         const wrapper = document.createElement('div');
         wrapper.className = 'meso-exercise';
 
-        const line = document.createElement('button');
-        line.type = 'button';
+        const line = document.createElement('div');
         line.className = 'meso-exercise-line';
-        line.setAttribute('aria-expanded', 'false');
 
         const name = document.createElement('div');
         name.className = 'meso-exercise-name';
@@ -406,95 +404,7 @@
 
         line.append(name, status);
 
-        const details = renderExerciseDetails(dayIndex, move);
-        details.hidden = true;
-
-        line.addEventListener('click', () => {
-            const isExpanded = details.hidden;
-            details.hidden = !isExpanded;
-            line.setAttribute('aria-expanded', String(isExpanded));
-        });
-
-        wrapper.append(line, details);
-        return wrapper;
-    }
-
-    function renderExerciseDetails(dayIndex, move) {
-        const details = document.createElement('div');
-        details.className = 'meso-exercise-details';
-
-        const sets = getEffectiveSets(dayIndex, move);
-        if (!sets.length) {
-            const empty = document.createElement('div');
-            empty.className = 'details meso-empty';
-            empty.textContent = 'Aucune série définie.';
-            details.appendChild(empty);
-            return details;
-        }
-
-        sets.forEach((set, index) => {
-            details.appendChild(renderSetRow(dayIndex, move, set, index));
-        });
-
-        const reset = document.createElement('button');
-        reset.type = 'button';
-        reset.className = 'btn tiny meso-reset';
-        reset.textContent = 'Réinitialiser l’exercice';
-        reset.addEventListener('click', async () => {
-            await clearExerciseOverride(dayIndex, move?.exerciseId);
-        });
-        details.appendChild(reset);
-
-        return details;
-    }
-
-    function renderSetRow(dayIndex, move, set, index) {
-        const row = document.createElement('div');
-        row.className = 'meso-set-row';
-
-        const label = document.createElement('div');
-        label.className = 'details meso-set-label';
-        label.textContent = `Série ${index + 1}`;
-
-        const repsInput = createSetInput('reps', set.reps, async (value) => {
-            await updateExerciseSet(dayIndex, move, index, { reps: value });
-        });
-        const weightInput = createSetInput('poids', set.weight, async (value) => {
-            await updateExerciseSet(dayIndex, move, index, { weight: value });
-        });
-        const rpeInput = createSetInput('RPE', set.rpe, async (value) => {
-            await updateExerciseSet(dayIndex, move, index, { rpe: value });
-        });
-
-        row.append(label, repsInput, weightInput, rpeInput);
-        return row;
-    }
-
-    function createSetInput(label, value, onChange) {
-        const wrapper = document.createElement('label');
-        wrapper.className = 'meso-set-input';
-
-        const text = document.createElement('span');
-        text.className = 'details';
-        text.textContent = label;
-
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.className = 'input';
-        input.value = Number.isFinite(value) ? String(value) : '';
-        input.step = '0.5';
-
-        input.addEventListener('change', async () => {
-            const parsed = input.value === '' ? null : Number(input.value);
-            const numeric = Number.isFinite(parsed) ? parsed : null;
-            input.value = Number.isFinite(numeric) ? String(numeric) : '';
-            if (typeof onChange === 'function') {
-                await onChange(numeric);
-                await renderMeso();
-            }
-        });
-
-        wrapper.append(text, input);
+        wrapper.append(line);
         return wrapper;
     }
 
