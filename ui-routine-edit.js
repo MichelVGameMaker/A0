@@ -239,6 +239,7 @@
             if (!moveId) {
                 return;
             }
+            setRoutineScrollTarget(moveId);
             void A.openRoutineMoveEdit?.({
                 routineId: state.routineId,
                 moveId,
@@ -250,6 +251,7 @@
             if (!moveId) {
                 return;
             }
+            setRoutineScrollTarget(moveId);
             void A.openRoutineMoveMeta?.({
                 routineId: state.routineId,
                 moveId,
@@ -304,6 +306,14 @@
         card.addEventListener('pointerup', onPointerUp);
         card.addEventListener('pointercancel', onPointerCancel);
         card.addEventListener('pointerleave', onPointerCancel);
+    }
+
+    function setRoutineScrollTarget(moveId) {
+        if (!moveId) {
+            return;
+        }
+        routineScrollState.targetMoveId = moveId;
+        storeRoutineScroll();
     }
 
     function clearDetailsPopover() {
@@ -848,6 +858,7 @@
             if (!move.exerciseId) {
                 return;
             }
+            setRoutineScrollTarget(move.id);
             void A.openExerciseRead({ currentId: move.exerciseId, callerScreen: 'screenRoutineEdit' });
         });
         const titleRow = document.createElement('div');
@@ -866,6 +877,19 @@
         end.appendChild(detailsButton);
         const setsWrapper = document.createElement('div');
         setsWrapper.className = 'session-card-sets';
+        renderRoutineCardSets(move, setsWrapper);
+        body.append(titleRow, setsWrapper);
+
+        card.setAttribute('aria-label', move.exerciseName || 'Exercice');
+        attachRoutineCardPressHandlers(card);
+        return card;
+    }
+
+    function renderRoutineCardSets(move, setsWrapper) {
+        if (!move || !setsWrapper) {
+            return;
+        }
+        setsWrapper.innerHTML = '';
         const sets = Array.isArray(move.sets)
             ? [...move.sets].sort((a, b) => (a.pos ?? 0) - (b.pos ?? 0))
             : [];
@@ -875,6 +899,7 @@
                 line.className = 'session-card-sets-row';
                 const pos = set?.pos ?? index + 1;
                 const openWithFocus = (field) => {
+                    setRoutineScrollTarget(move.id);
                     void A.openRoutineMoveEdit({
                         routineId: state.routineId,
                         moveId: move.id,
@@ -930,11 +955,23 @@
             void addSetToMove(move.id);
         });
         setsWrapper.appendChild(addSetButton);
-        body.append(titleRow, setsWrapper);
+    }
 
-        card.setAttribute('aria-label', move.exerciseName || 'Exercice');
-        attachRoutineCardPressHandlers(card);
-        return card;
+    function updateRoutineMoveCard(move) {
+        const { routineList, screenRoutineEdit } = ensureRefs();
+        if (!move?.id || !routineList || screenRoutineEdit?.hidden) {
+            return false;
+        }
+        const card = routineList.querySelector(`[data-move-id="${CSS.escape(move.id)}"]`);
+        if (!card) {
+            return false;
+        }
+        const setsWrapper = card.querySelector('.session-card-sets');
+        if (!setsWrapper) {
+            return false;
+        }
+        renderRoutineCardSets(move, setsWrapper);
+        return true;
     }
 
     async function addSetToMove(moveId) {
@@ -961,7 +998,9 @@
             set.pos = idx + 1;
         });
         scheduleSave();
-        renderRoutineList();
+        if (!updateRoutineMoveCard(move)) {
+            renderRoutineList();
+        }
     }
 
     async function resolveNewSetValuesForRoutine(exerciseId, sets, previous) {

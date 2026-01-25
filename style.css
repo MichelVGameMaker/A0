@@ -318,7 +318,7 @@ header{
     grid-template-columns: var(--header-side-w) minmax(0, 1fr) var(--header-side-w);
     align-items:center;
     padding: env(safe-area-inset-top, 0) var(--pad-x) 0;
-    background: var(--priorityBack);
+    background: rgb(var(--priorityBack));
 }
 
 .header-left{

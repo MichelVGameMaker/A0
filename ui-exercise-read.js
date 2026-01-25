@@ -144,7 +144,14 @@
             if (state.callerScreen === 'screenExercises') {
                 void A.openExercises({ callerScreen: 'screenExerciseRead' });
             } else {
-                switchScreen(state.callerScreen || 'screenExercises');
+                const targetScreen = state.callerScreen || 'screenExercises';
+                switchScreen(targetScreen);
+                if (targetScreen === 'screenSessions') {
+                    A.restoreSessionScroll?.();
+                }
+                if (targetScreen === 'screenRoutineEdit') {
+                    A.restoreRoutineEditScroll?.();
+                }
             }
         });
         exReadEdit?.addEventListener('click', () => {
