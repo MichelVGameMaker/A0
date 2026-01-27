@@ -76,7 +76,7 @@
 
     function renderRoutineCard(routine, dayIndex) {
         const structure = listCard.createStructure({
-            cardClass: 'progression-card'
+            cardClass: 'meso-card progression-card'
         });
         const { card, body } = structure;
 
@@ -84,18 +84,18 @@
         const detailsId = `progression-day-details-${dayIndex}`;
 
         const header = document.createElement('div');
-        header.className = 'progression-card__header';
+        header.className = 'meso-card__header progression-card__header';
 
-        const dayLabel = document.createElement('div');
-        dayLabel.className = 'details progression-card__day';
-        const dayName = getDayLabel(dayIndex, state.plan?.startDay);
-        dayLabel.textContent = dayName;
-        header.appendChild(dayLabel);
+        const content = document.createElement('div');
+        content.className = 'meso-card__content progression-card__content';
+
+        const headline = document.createElement('div');
+        headline.className = 'meso-card__headline progression-card__headline';
 
         const title = document.createElement('div');
-        title.className = 'element progression-card__title';
-        title.textContent = routine?.name || 'Routine';
-        header.appendChild(title);
+        title.className = 'element meso-card__title progression-card__title';
+        const dayName = getDayLabel(dayIndex, state.plan?.startDay);
+        title.textContent = `${dayName} - ${routine?.name || 'Routine'}`;
 
         const routineGoal = document.createElement('div');
         routineGoal.className = 'progression-goal-control progression-goal-control--routine';
@@ -106,16 +106,14 @@
         });
         routineGoal.appendChild(routineInput);
         routineGoal.appendChild(createGoalSuffix());
-        header.appendChild(routineGoal);
 
         const summary = document.createElement('div');
-        summary.className = 'details progression-card__summary';
+        summary.className = 'details meso-card__summary progression-card__summary';
         summary.textContent = buildProgressionSummary(routine);
-        header.appendChild(summary);
 
         const toggle = document.createElement('button');
         toggle.type = 'button';
-        toggle.className = 'btn tiny progression-card__toggle';
+        toggle.className = 'btn tiny meso-card__toggle progression-card__toggle';
         toggle.textContent = isExpanded ? 'Réduire' : 'Détails';
         toggle.setAttribute('aria-expanded', String(isExpanded));
         toggle.setAttribute('aria-controls', detailsId);
@@ -123,10 +121,18 @@
             state.expandedDayIndex = isExpanded ? null : dayIndex;
             void renderProgression();
         });
-        header.appendChild(toggle);
+
+        headline.append(title, toggle);
+
+        const meta = document.createElement('div');
+        meta.className = 'progression-card__meta';
+        meta.append(routineGoal, summary);
+
+        content.append(headline, meta);
+        header.appendChild(content);
 
         const detailsWrapper = document.createElement('div');
-        detailsWrapper.className = 'progression-card__details';
+        detailsWrapper.className = 'meso-card__details progression-card__details';
         detailsWrapper.id = detailsId;
         detailsWrapper.hidden = !isExpanded;
 

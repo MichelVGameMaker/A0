@@ -1096,6 +1096,25 @@ textarea:focus{
     border-radius:var(--radius);
     background:var(--panelBack);
 }
+.meso-modifier-remove{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:24px;
+    height:24px;
+    border:0;
+    border-radius:50%;
+    background:transparent;
+    color:var(--emptyColor);
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+}
+.meso-modifier-remove:hover,
+.meso-modifier-remove:focus-visible{
+    color:var(--filledColor);
+    background:var(--clickableBack);
+}
 .meso-modifier-name{
     font-weight:var(--fw-strong);
     flex:1;
@@ -1194,15 +1213,21 @@ textarea:focus{
 .progression-card__header{
     display:flex;
     align-items:center;
-    justify-content:space-between;
     gap:12px;
-    flex-wrap:wrap;
+    flex-wrap:nowrap;
 }
 .progression-card__title{
     min-width:0;
 }
+.progression-card__meta{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+}
 .progression-card__summary{
     font-size:var(--fs-small);
+    margin-left:auto;
 }
 .progression-card__toggle{
     white-space:nowrap;
@@ -1210,8 +1235,8 @@ textarea:focus{
 .progression-card__details{
     display:flex;
     flex-direction:column;
-    gap:6px;
-    margin-top:6px;
+    gap:8px;
+    margin-top:8px;
 }
 .progression-goal-control{
     display:inline-flex;
