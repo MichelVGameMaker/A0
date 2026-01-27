@@ -39,6 +39,34 @@
             repsPercent: -20
         },
         {
+            id: 'perf-plus-1',
+            name: 'Perf +1%',
+            shortName: 'Perf+1%',
+            details: 'perf +1%',
+            perfPercent: 1
+        },
+        {
+            id: 'perf-plus-5',
+            name: 'Perf +5%',
+            shortName: 'Perf+5%',
+            details: 'perf +5%',
+            perfPercent: 5
+        },
+        {
+            id: 'perf-minus-1',
+            name: 'Perf -1%',
+            shortName: 'Perf-1%',
+            details: 'perf -1%',
+            perfPercent: -1
+        },
+        {
+            id: 'perf-minus-5',
+            name: 'Perf -5%',
+            shortName: 'Perf-5%',
+            details: 'perf -5%',
+            perfPercent: -5
+        },
+        {
             id: 'reps-10',
             name: 'Reps +10',
             shortName: 'Reps+10',
@@ -58,6 +86,20 @@
             shortName: 'Reps+50',
             details: 'reps +50%',
             repsPercent: 50
+        },
+        {
+            id: 'reps-minus-10',
+            name: 'Reps -10',
+            shortName: 'Reps-10',
+            details: 'reps -10%',
+            repsPercent: -10
+        },
+        {
+            id: 'reps-minus-20',
+            name: 'Reps -20',
+            shortName: 'Reps-20',
+            details: 'reps -20%',
+            repsPercent: -20
         },
         {
             id: 'rpe-minus-2',
@@ -344,8 +386,9 @@
 
             const remove = document.createElement('button');
             remove.type = 'button';
-            remove.className = 'btn tiny';
-            remove.textContent = 'Supprimer';
+            remove.className = 'meso-modifier-remove';
+            remove.textContent = '×';
+            remove.setAttribute('aria-label', 'Supprimer');
             remove.addEventListener('click', async () => {
                 await removeModifierFromDay(dayIndex, modifier.id);
             });
