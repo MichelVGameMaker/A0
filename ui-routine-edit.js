@@ -413,6 +413,10 @@
     function wireHeaderButtons() {
         const { routineEditBack, routineEditEdit, dlgRoutineEditor, routineName, routineIcon } = assertRefs();
         routineEditBack.addEventListener('click', () => {
+            if (state.callerScreen === 'screenPlanning') {
+                void A.openPlanning?.({ section: 'routines' });
+                return;
+            }
             void A.openRoutineList({ callerScreen: state.callerScreen });
         });
         routineEditEdit.addEventListener('click', () => {

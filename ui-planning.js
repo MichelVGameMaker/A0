@@ -121,8 +121,8 @@
     }
 
     async function renderRoutinesSection() {
-        const { planningActivePlanCard, btnPlanningEditActivePlan } = ensureRefs();
-        if (!planningActivePlanCard || !btnPlanningEditActivePlan) {
+        const { planningActivePlanCard, btnPlanningEditActivePlan, planningRoutinesList } = ensureRefs();
+        if (!planningActivePlanCard || !btnPlanningEditActivePlan || !planningRoutinesList) {
             return;
         }
         const plan = await ensureActivePlan();
@@ -135,6 +135,7 @@
             }));
         }
         btnPlanningEditActivePlan.disabled = !plan;
+        await renderPlanningRoutinesList();
     }
 
     async function renderPlanCycle() {
@@ -221,6 +222,99 @@
         });
 
         return card;
+    }
+
+    async function renderPlanningRoutinesList() {
+        const { planningRoutinesList } = ensureRefs();
+        if (!planningRoutinesList) {
+            return;
+        }
+        planningRoutinesList.innerHTML = '';
+        planningRoutinesList.appendChild(renderPlanningRoutineCreateCard());
+        const routines = await loadRoutines();
+        if (!routines.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty';
+            empty.textContent = 'Aucune routine enregistrée.';
+            planningRoutinesList.appendChild(empty);
+            return;
+        }
+        routines.forEach((routine) => {
+            planningRoutinesList.appendChild(renderPlanningRoutineCard(routine));
+        });
+    }
+
+    function renderPlanningRoutineCreateCard() {
+        const structure = listCard.createStructure({ clickable: true, role: 'button' });
+        const { card, body, end } = structure;
+        card.classList.add('planning-routine-create');
+        card.setAttribute('aria-label', 'Créer une routine');
+
+        const title = document.createElement('div');
+        title.className = 'element';
+        title.textContent = '+ Créer routine';
+
+        const details = document.createElement('div');
+        details.className = 'details';
+        details.textContent = 'Ajouter une nouvelle routine.';
+
+        body.append(title, details);
+        end.appendChild(listCard.createIcon('+'));
+
+        card.addEventListener('click', () => {
+            const routineId = createRoutineId();
+            void A.openRoutineEdit?.({ routineId, callerScreen: 'screenPlanning' });
+        });
+
+        return card;
+    }
+
+    function renderPlanningRoutineCard(routine) {
+        const structure = listCard.createStructure({ clickable: true, role: 'button' });
+        const { card, body, end } = structure;
+        const routineName = routine?.name || 'Routine';
+        card.setAttribute('aria-label', `${routineName} — éditer`);
+
+        const title = document.createElement('div');
+        title.className = 'element';
+        title.textContent = routineName;
+
+        const details = document.createElement('div');
+        details.className = 'details';
+        details.textContent = buildRoutineDetails(routine);
+
+        body.append(title, details);
+        end.appendChild(listCard.createIcon('›'));
+
+        card.addEventListener('click', () => {
+            if (!routine?.id) {
+                return;
+            }
+            void A.openRoutineEdit?.({ routineId: routine.id, callerScreen: 'screenPlanning' });
+        });
+
+        return card;
+    }
+
+    function buildRoutineDetails(routine) {
+        const moves = Array.isArray(routine?.moves) ? routine.moves : [];
+        if (!moves.length) {
+            return 'Aucun exercice.';
+        }
+        const exerciseCount = moves.length;
+        const reps = moves.reduce((total, move) => {
+            const sets = Array.isArray(move?.sets) ? move.sets : [];
+            return (
+                total +
+                sets.reduce((subtotal, set) => {
+                    const repsValue = Number.parseInt(set?.reps, 10);
+                    return Number.isFinite(repsValue) ? subtotal + repsValue : subtotal;
+                }, 0)
+            );
+        }, 0);
+        const exerciseLabel = exerciseCount > 1 ? 'exercices' : 'exercice';
+        const repsLabel = reps > 1 ? 'répétitions' : 'répétition';
+        return `${exerciseCount} ${exerciseLabel} • ${reps} ${repsLabel}`;
     }
 
     async function selectRoutineForDay(dayIndex) {
@@ -433,6 +527,10 @@
         return `plan-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
     }
 
+    function createRoutineId() {
+        return `routine-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
+    }
+
     async function loadRoutines() {
         const raw = await db.getAll('routines');
         const routines = Array.isArray(raw) ? raw.slice() : [];
@@ -628,9 +726,9 @@
         refs.planningPlansList = document.getElementById('planningPlansList');
         refs.planningPlansSection = document.getElementById('planningPlansSection');
         refs.planningRoutinesSection = document.getElementById('planningRoutinesSection');
+        refs.planningRoutinesList = document.getElementById('planningRoutinesList');
         refs.planningActivePlanCard = document.getElementById('planningActivePlanCard');
         refs.btnPlanningEditActivePlan = document.getElementById('btnPlanningEditActivePlan');
-        refs.btnPlanningManageRoutines = document.getElementById('btnPlanningManageRoutines');
         refs.btnPlanEditBack = document.getElementById('btnPlanEditBack');
         refs.planEditName = document.getElementById('planEditName');
         refs.planEditComment = document.getElementById('planEditComment');
@@ -654,7 +752,6 @@
     function wireButtons() {
         const {
             btnPlanningEditActivePlan,
-            btnPlanningManageRoutines,
             btnPlanEditBack,
             planEditName,
             planEditComment,
@@ -673,11 +770,6 @@
         btnPlanningEditActivePlan?.addEventListener('click', async () => {
             const plan = await ensureActivePlan();
             await A.openPlanEdit({ planId: plan.id, returnSection: 'routines' });
-        });
-
-        btnPlanningManageRoutines?.addEventListener('click', () => {
-            setPlanningSection('routines');
-            void A.openRoutineList?.({ callerScreen: 'screenPlanning' });
         });
 
         btnPlanEditBack?.addEventListener('click', () => {
