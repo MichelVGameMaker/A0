@@ -705,8 +705,8 @@
         <div class="header-left"></div>
         <div class="header-center">
             <div class="stats-toggle" role="tablist" aria-label="Plan d'entrainements">
-                <button class="stats-toggle-btn is-active" type="button" aria-pressed="true" data-planning-section="plans">Plans</button>
                 <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-section="routines">Routines</button>
+                <button class="stats-toggle-btn is-active" type="button" aria-pressed="true" data-planning-section="plans">Plans</button>
             </div>
         </div>
         <div class="header-right"></div>
@@ -721,10 +721,6 @@
 
         <section id="planningRoutinesSection" class="planning-section" data-planning-section="routines" hidden>
             <div class="bloque">
-                <div id="planningActivePlanCard"></div>
-                <div class="row">
-                    <button id="btnPlanningEditActivePlan" class="btn full" type="button">✎ Modifier le plan actuel</button>
-                </div>
                 <section id="planningRoutinesList" class="session-list" aria-label="Routines enregistrées"></section>
             </div>
         </section>
@@ -760,14 +756,43 @@
             <div class="row">
                 <button id="btnPlanDuplicate" class="btn full" type="button">📄 Dupliquer ce plan</button>
             </div>
-            <div class="row">
-                <button id="btnPlanEditCycle" class="btn full" type="button">🗓️ Cycle</button>
-            </div>
-            <div class="row">
-                <button id="btnPlanEditMeso" class="btn full" type="button">♻️ Méso-cycle</button>
-            </div>
-            <div class="row">
-                <button id="btnPlanEditProgression" class="btn full" type="button">📈 Progression</button>
+            <div class="planning-plan-actions">
+                <button id="btnPlanEditCycle" class="exercise-card list-card planning-action-card clickable" type="button">
+                    <div class="exercise-card-row list-card__row">
+                        <div class="exercise-card-left list-card__start list-card__start--solo"></div>
+                        <div class="exercise-card-text list-card__body">
+                            <div class="element">🗓️ Cycle</div>
+                            <div class="details" id="planEditCycleDetails"></div>
+                        </div>
+                        <div class="exercise-card-right list-card__end">
+                            <span class="list-card__icon">›</span>
+                        </div>
+                    </div>
+                </button>
+                <button id="btnPlanEditMeso" class="exercise-card list-card planning-action-card clickable" type="button">
+                    <div class="exercise-card-row list-card__row">
+                        <div class="exercise-card-left list-card__start list-card__start--solo"></div>
+                        <div class="exercise-card-text list-card__body">
+                            <div class="element">♻️ Méso-cycle</div>
+                            <div class="details" id="planEditMesoDetails"></div>
+                        </div>
+                        <div class="exercise-card-right list-card__end">
+                            <span class="list-card__icon">›</span>
+                        </div>
+                    </div>
+                </button>
+                <button id="btnPlanEditProgression" class="exercise-card list-card planning-action-card clickable" type="button">
+                    <div class="exercise-card-row list-card__row">
+                        <div class="exercise-card-left list-card__start list-card__start--solo"></div>
+                        <div class="exercise-card-text list-card__body">
+                            <div class="element">📈 Progression</div>
+                            <div class="details" id="planEditProgressionDetails"></div>
+                        </div>
+                        <div class="exercise-card-right list-card__end">
+                            <span class="list-card__icon">›</span>
+                        </div>
+                    </div>
+                </button>
             </div>
         </div>
     </main>
