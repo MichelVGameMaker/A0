@@ -90,6 +90,7 @@
         const plans = await loadPlans();
         const activePlan = await ensureActivePlan();
         planningPlansList.innerHTML = '';
+        planningPlansList.appendChild(renderPlanCreateCard());
 
         if (activePlan) {
             planningPlansList.appendChild(renderPlanCard(activePlan, {
@@ -98,19 +99,6 @@
                 returnSection: 'plans'
             }));
         }
-
-        const newPlanRow = document.createElement('div');
-        newPlanRow.className = 'row';
-        const newPlanButton = document.createElement('button');
-        newPlanButton.id = 'btnPlanningNewPlan';
-        newPlanButton.className = 'btn full';
-        newPlanButton.type = 'button';
-        newPlanButton.textContent = '➕ Nouveau plan';
-        newPlanButton.addEventListener('click', () => {
-            void handleCreatePlan();
-        });
-        newPlanRow.appendChild(newPlanButton);
-        planningPlansList.appendChild(newPlanRow);
 
         const otherPlans = plans.filter((plan) => plan && plan.id !== activePlan?.id);
         otherPlans
@@ -121,21 +109,35 @@
     }
 
     async function renderRoutinesSection() {
-        const { planningActivePlanCard, btnPlanningEditActivePlan, planningRoutinesList } = ensureRefs();
-        if (!planningActivePlanCard || !btnPlanningEditActivePlan || !planningRoutinesList) {
+        const { planningRoutinesList } = ensureRefs();
+        if (!planningRoutinesList) {
             return;
         }
-        const plan = await ensureActivePlan();
-        planningActivePlanCard.innerHTML = '';
-        if (plan) {
-            planningActivePlanCard.appendChild(renderPlanCard(plan, {
-                label: 'Plan actuel',
-                isActive: true,
-                returnSection: 'routines'
-            }));
-        }
-        btnPlanningEditActivePlan.disabled = !plan;
         await renderPlanningRoutinesList();
+    }
+
+    function renderPlanCreateCard() {
+        const structure = listCard.createStructure({ clickable: true, role: 'button' });
+        const { card, body, end } = structure;
+        card.classList.add('planning-plan-card');
+        card.setAttribute('aria-label', 'Créer un nouveau plan');
+
+        const title = document.createElement('div');
+        title.className = 'element';
+        title.textContent = '➕ Nouveau plan';
+
+        const details = document.createElement('div');
+        details.className = 'details';
+        details.textContent = 'Créer un nouveau plan.';
+
+        body.append(title, details);
+        end.appendChild(listCard.createIcon('›'));
+
+        card.addEventListener('click', () => {
+            void handleCreatePlan();
+        });
+
+        return card;
     }
 
     async function renderPlanCycle() {
@@ -205,10 +207,11 @@
 
         const details = document.createElement('div');
         details.className = 'details';
+        const planSummary = buildPlanCycleDetails(plan);
         if (label) {
-            details.textContent = `${label} · ${plan?.comment || 'Plan d\'entrainements'}`;
+            details.textContent = `${label} · ${planSummary}`;
         } else {
-            details.textContent = plan?.comment || 'Plan d\'entrainements';
+            details.textContent = planSummary;
         }
 
         body.append(title, details);
@@ -302,7 +305,10 @@
             return 'Aucun exercice.';
         }
         const exerciseCount = moves.length;
-        const reps = moves.reduce((total, move) => {
+        const setCounts = moves.map((move) => (Array.isArray(move?.sets) ? move.sets.length : 0));
+        const minSets = Math.min(...setCounts);
+        const maxSets = Math.max(...setCounts);
+        const totalReps = moves.reduce((total, move) => {
             const sets = Array.isArray(move?.sets) ? move.sets : [];
             return (
                 total +
@@ -312,9 +318,12 @@
                 }, 0)
             );
         }, 0);
+        const totalSets = setCounts.reduce((total, value) => total + value, 0);
+        const averageReps = totalSets ? Math.round(totalReps / totalSets) : 0;
         const exerciseLabel = exerciseCount > 1 ? 'exercices' : 'exercice';
-        const repsLabel = reps > 1 ? 'répétitions' : 'répétition';
-        return `${exerciseCount} ${exerciseLabel} • ${reps} ${repsLabel}`;
+        const setsLabel = minSets === maxSets ? `${minSets}` : `${minSets}-${maxSets}`;
+        const seriesLabel = minSets === 1 && maxSets === 1 ? 'série' : 'séries';
+        return `${exerciseCount} ${exerciseLabel} x ${setsLabel} ${seriesLabel} x ${averageReps} reps`;
     }
 
     async function selectRoutineForDay(dayIndex) {
@@ -403,7 +412,14 @@
     }
 
     function renderPlanEdit(plan) {
-        const { planEditName, planEditComment, btnPlanApply } = ensureRefs();
+        const {
+            planEditName,
+            planEditComment,
+            btnPlanApply,
+            planEditCycleDetails,
+            planEditMesoDetails,
+            planEditProgressionDetails
+        } = ensureRefs();
         if (!planEditName || !planEditComment) {
             return;
         }
@@ -413,6 +429,15 @@
             const isActive = Boolean(plan?.active);
             btnPlanApply.disabled = isActive;
             btnPlanApply.textContent = isActive ? '✅ Plan actuel' : '✅ Appliquer ce plan';
+        }
+        if (planEditCycleDetails) {
+            planEditCycleDetails.textContent = buildPlanCycleDetails(plan);
+        }
+        if (planEditMesoDetails) {
+            planEditMesoDetails.textContent = buildMesoSummary(plan);
+        }
+        if (planEditProgressionDetails) {
+            planEditProgressionDetails.textContent = buildProgressionSummary(plan);
         }
     }
 
@@ -487,6 +512,59 @@
         return plan;
     }
 
+    function buildPlanCycleDetails(plan) {
+        const dayCount = clampDayCount(plan?.length);
+        const sessionCount = countPlanSessions(plan, dayCount);
+        const sessionLabel = sessionCount > 1 ? 'séances' : 'séance';
+        const dayLabel = dayCount > 1 ? 'jours' : 'jour';
+        return `${sessionCount} ${sessionLabel} sur ${dayCount} ${dayLabel}`;
+    }
+
+    function countPlanSessions(plan, dayCount) {
+        const totalDays = Number.isFinite(dayCount) ? dayCount : clampDayCount(plan?.length);
+        let count = 0;
+        for (let dayIndex = 1; dayIndex <= totalDays; dayIndex += 1) {
+            const routineId = plan?.days?.[String(dayIndex)];
+            if (routineId) {
+                count += 1;
+            }
+        }
+        return count;
+    }
+
+    function buildMesoSummary(plan) {
+        const cycleCount = clampMesoCycleCount(plan?.meso?.cycleCount);
+        const label = cycleCount > 1 ? 'cycles' : 'cycle';
+        return `${cycleCount} ${label}`;
+    }
+
+    function buildProgressionSummary(plan) {
+        const percent = getProgressionPercent(plan);
+        const formatted = formatPercentFr(percent);
+        return `+ ${formatted}% de poids`;
+    }
+
+    function getProgressionPercent(plan) {
+        const routineGoals = plan?.progressionGoals?.routines || {};
+        const percents = Object.values(routineGoals)
+            .map((goal) => Number.parseFloat(goal?.percent))
+            .filter((value) => Number.isFinite(value));
+        if (!percents.length) {
+            return 2.5;
+        }
+        const total = percents.reduce((sum, value) => sum + value, 0);
+        return total / percents.length;
+    }
+
+    function formatPercentFr(value) {
+        const numeric = Number.isFinite(value) ? value : 0;
+        const hasDecimal = Math.abs(numeric % 1) > Number.EPSILON;
+        return numeric.toLocaleString('fr-FR', {
+            minimumFractionDigits: hasDecimal ? 1 : 0,
+            maximumFractionDigits: 1
+        });
+    }
+
     async function loadPlans() {
         const raw = await db.getAll('plans');
         return Array.isArray(raw) ? raw.slice() : [];
@@ -547,6 +625,14 @@
             return 7;
         }
         return Math.min(MAX_PLAN_DAYS, Math.max(1, numeric));
+    }
+
+    function clampMesoCycleCount(value) {
+        const numeric = Number.parseInt(value, 10);
+        if (!Number.isFinite(numeric)) {
+            return 8;
+        }
+        return Math.min(8, Math.max(1, numeric));
     }
 
     function clampStartDay(value) {
@@ -727,8 +813,6 @@
         refs.planningPlansSection = document.getElementById('planningPlansSection');
         refs.planningRoutinesSection = document.getElementById('planningRoutinesSection');
         refs.planningRoutinesList = document.getElementById('planningRoutinesList');
-        refs.planningActivePlanCard = document.getElementById('planningActivePlanCard');
-        refs.btnPlanningEditActivePlan = document.getElementById('btnPlanningEditActivePlan');
         refs.btnPlanEditBack = document.getElementById('btnPlanEditBack');
         refs.planEditName = document.getElementById('planEditName');
         refs.planEditComment = document.getElementById('planEditComment');
@@ -737,6 +821,9 @@
         refs.btnPlanEditCycle = document.getElementById('btnPlanEditCycle');
         refs.btnPlanEditMeso = document.getElementById('btnPlanEditMeso');
         refs.btnPlanEditProgression = document.getElementById('btnPlanEditProgression');
+        refs.planEditCycleDetails = document.getElementById('planEditCycleDetails');
+        refs.planEditMesoDetails = document.getElementById('planEditMesoDetails');
+        refs.planEditProgressionDetails = document.getElementById('planEditProgressionDetails');
         refs.btnPlanCycleBack = document.getElementById('btnPlanCycleBack');
         refs.planningDaysList = document.getElementById('planningDaysList');
         refs.btnPlanningEditDays = document.getElementById('btnPlanningEditDays');
@@ -751,7 +838,6 @@
 
     function wireButtons() {
         const {
-            btnPlanningEditActivePlan,
             btnPlanEditBack,
             planEditName,
             planEditComment,
@@ -766,11 +852,6 @@
             planningDurationCancel,
             planningDurationSave
         } = ensureRefs();
-
-        btnPlanningEditActivePlan?.addEventListener('click', async () => {
-            const plan = await ensureActivePlan();
-            await A.openPlanEdit({ planId: plan.id, returnSection: 'routines' });
-        });
 
         btnPlanEditBack?.addEventListener('click', () => {
             void A.openPlanning({ section: planningState.returnSection || 'plans' });

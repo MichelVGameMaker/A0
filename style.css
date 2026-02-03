@@ -947,6 +947,20 @@ textarea:focus{
     overflow:hidden;
 }
 
+.planning-plan-actions{
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap:var(--gap);
+}
+
+.planning-action-card{
+    width:100%;
+    text-align:left;
+    background: var(--panelBack);
+    border: 1px solid var(--panelBord);
+    appearance:none;
+}
+
 /* =========================================================
    7 bis) Méso
    ========================================================= */
