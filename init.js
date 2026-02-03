@@ -87,6 +87,8 @@
             screenPreferences,
             screenData,
             screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
             screenMeso,
             screenProgression
         } = refs;
@@ -131,6 +133,8 @@
         screenPreferences?.setAttribute('data-screen', 'preferences');
         screenData?.setAttribute('data-screen', 'data');
         screenPlanning?.setAttribute('data-screen', 'planning');
+        screenPlanEdit?.setAttribute('data-screen', 'plan-edit');
+        screenPlanCycle?.setAttribute('data-screen', 'plan-cycle');
         screenMeso?.setAttribute('data-screen', 'meso');
         screenProgression?.setAttribute('data-screen', 'progression');
     }
@@ -209,6 +213,8 @@
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenPlanEdit = document.getElementById('screenPlanEdit');
+        refs.screenPlanCycle = document.getElementById('screenPlanCycle');
         refs.screenMeso = document.getElementById('screenMeso');
         refs.screenProgression = document.getElementById('screenProgression');
         refsResolved = true;
@@ -261,6 +267,8 @@
             screenPreferences,
             screenData,
             screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
             screenMeso,
             screenProgression
         } = refs;
@@ -311,6 +319,12 @@
         }
         if (screenPlanning) {
             screenPlanning.hidden = which !== 'planning';
+        }
+        if (screenPlanEdit) {
+            screenPlanEdit.hidden = which !== 'plan-edit';
+        }
+        if (screenPlanCycle) {
+            screenPlanCycle.hidden = which !== 'plan-cycle';
         }
         if (screenMeso) {
             screenMeso.hidden = which !== 'meso';

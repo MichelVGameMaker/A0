@@ -19,13 +19,12 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
-        wirePlanningToggle();
+        wireButtons();
     });
 
     A.openProgression = async function openProgression() {
         ensureRefs();
         highlightPlanningTab();
-        setPlanningToggleActive('progression');
         await renderProgression();
         switchScreen('screenProgression');
     };
@@ -36,7 +35,10 @@
             return;
         }
 
-        const plan = await ensureActivePlan();
+        const plan = await ensurePlanningPlan();
+        if (!plan) {
+            return;
+        }
         const routines = await loadRoutines();
         state.plan = plan;
         state.routines = routines;
@@ -296,36 +298,14 @@
         return plan.progressionGoals;
     }
 
-    async function ensureActivePlan() {
-        let plan = await db.getActivePlan();
-        if (!plan) {
-            plan = {
-                id: 'active',
-                name: 'Planning actif',
-                days: {},
-                length: 7,
-                startDate: A.ymd(A.today()),
-                active: true
-            };
-            await db.put('plans', plan);
+    async function ensurePlanningPlan() {
+        if (typeof A.getPlanningPlan === 'function') {
+            const plan = await A.getPlanningPlan();
+            if (plan) {
+                return plan;
+            }
         }
-        let shouldPersist = false;
-        if (!plan.days || typeof plan.days !== 'object') {
-            plan.days = {};
-            shouldPersist = true;
-        }
-        if (!plan.startDate) {
-            plan.startDate = A.ymd(A.today());
-            shouldPersist = true;
-        }
-        if (!plan.startDay) {
-            plan.startDay = 1;
-            shouldPersist = true;
-        }
-        if (shouldPersist) {
-            await db.put('plans', plan);
-        }
-        return plan;
+        return null;
     }
 
     async function loadRoutines() {
@@ -391,41 +371,24 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenPlanEdit = document.getElementById('screenPlanEdit');
+        refs.screenPlanCycle = document.getElementById('screenPlanCycle');
         refs.screenMeso = document.getElementById('screenMeso');
         refs.screenProgression = document.getElementById('screenProgression');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
         refs.progressionRoutineList = document.getElementById('progressionRoutineList');
+        refs.btnProgressionBack = document.getElementById('btnProgressionBack');
         refsResolved = true;
         return refs;
     }
 
-    function wirePlanningToggle() {
-        const toggleButtons = document.querySelectorAll('#screenProgression [data-planning-target]');
-        toggleButtons.forEach((button) => {
-            button.addEventListener('click', () => {
-                const target = button.dataset.planningTarget;
-                if (target === 'cycle') {
-                    void A.openPlanning?.();
-                    return;
-                }
-                if (target === 'meso') {
-                    void A.openMeso?.();
-                    return;
-                }
-                if (target === 'progression') {
-                    void A.openProgression?.();
-                }
-            });
-        });
-    }
-
-    function setPlanningToggleActive(target) {
-        const toggleButtons = document.querySelectorAll('#screenProgression [data-planning-target]');
-        toggleButtons.forEach((button) => {
-            const isActive = button.dataset.planningTarget === target;
-            button.classList.toggle('is-active', isActive);
-            button.setAttribute('aria-pressed', String(isActive));
+    function wireButtons() {
+        const { btnProgressionBack } = ensureRefs();
+        btnProgressionBack?.addEventListener('click', () => {
+            const planId = state.plan?.id || A.planningState?.planId;
+            const returnSection = A.planningState?.returnSection || 'plans';
+            void A.openPlanEdit?.({ planId, returnSection });
         });
     }
 
@@ -454,6 +417,8 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
             screenMeso,
             screenProgression,
             screenFitHeroMapping
@@ -477,6 +442,8 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
             screenMeso,
             screenProgression,
             screenFitHeroMapping

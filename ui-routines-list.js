@@ -91,6 +91,10 @@
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenPlanEdit = document.getElementById('screenPlanEdit');
+        refs.screenPlanCycle = document.getElementById('screenPlanCycle');
+        refs.screenMeso = document.getElementById('screenMeso');
+        refs.screenProgression = document.getElementById('screenProgression');
         refs.routineCatalog = document.getElementById('routineCatalog');
         refs.btnRoutineCreate = document.getElementById('btnRoutineCreate');
         refs.tabPlanning = document.getElementById('tabPlanning');
@@ -319,7 +323,11 @@
             screenSettings: 'tabPlanning',
             screenPreferences: 'tabPlanning',
             screenData: 'tabPlanning',
-            screenPlanning: 'tabPlanning'
+            screenPlanning: 'tabPlanning',
+            screenPlanEdit: 'tabPlanning',
+            screenPlanCycle: 'tabPlanning',
+            screenMeso: 'tabPlanning',
+            screenProgression: 'tabPlanning'
         };
         const tabId = map[callerScreen];
         if (tabId) {
@@ -395,7 +403,11 @@
             screenStatMusclesDetail,
             screenPreferences,
             screenData,
-            screenPlanning
+            screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
+            screenMeso,
+            screenProgression
         } = assertRefs();
         const { screenStatExercises, screenStatExercisesDetail } = refs;
         const map = {
@@ -414,7 +426,11 @@
             screenStatMusclesDetail,
             screenPreferences,
             screenData,
-            screenPlanning
+            screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
+            screenMeso,
+            screenProgression
         };
         Object.entries(map).forEach(([key, element]) => {
             if (element) {

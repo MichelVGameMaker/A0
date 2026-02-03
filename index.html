@@ -582,17 +582,94 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== Réglages > Planning ========== -->
+<!-- ========== Planning : Plans & Routines ========== -->
 <section id="screenPlanning" class="screen" hidden>
 
-    <header class="header header">
+    <header class="header">
         <div class="header-left"></div>
         <div class="header-center">
-            <div class="stats-toggle" role="tablist" aria-label="Type de planning">
-                <button class="stats-toggle-btn is-active" type="button" aria-pressed="true" data-planning-target="cycle">Cycle</button>
-                <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-target="meso">Méso</button>
-                <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-target="progression">Progression</button>
+            <div class="stats-toggle" role="tablist" aria-label="Plan d'entrainements">
+                <button class="stats-toggle-btn is-active" type="button" aria-pressed="true" data-planning-section="plans">Plans</button>
+                <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-section="routines">Routines</button>
             </div>
+        </div>
+        <div class="header-right"></div>
+    </header>
+
+    <main class="content">
+        <section id="planningPlansSection" class="planning-section" data-planning-section="plans">
+            <div class="bloque">
+                <div id="planningPlansList"></div>
+            </div>
+        </section>
+
+        <section id="planningRoutinesSection" class="planning-section" data-planning-section="routines" hidden>
+            <div class="bloque">
+                <div id="planningActivePlanCard"></div>
+                <div class="row">
+                    <button id="btnPlanningEditActivePlan" class="btn full" type="button">✎ Modifier le plan actuel</button>
+                </div>
+                <div class="row">
+                    <button id="btnPlanningManageRoutines" class="btn full" type="button">📓 Gérer les routines</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Planning : Modification du plan ========== -->
+<section id="screenPlanEdit" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnPlanEditBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Modification du plan</div>
+        </div>
+        <div class="header-right"></div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <div class="row">
+                <input id="planEditName" class="input full" type="text" placeholder="Nom du plan" />
+            </div>
+            <div class="row">
+                <textarea id="planEditComment" class="input full" rows="4" placeholder="Commentaire du plan"></textarea>
+            </div>
+            <div class="row">
+                <button id="btnPlanApply" class="btn full" type="button">✅ Appliquer ce plan</button>
+            </div>
+            <div class="row">
+                <button id="btnPlanDuplicate" class="btn full" type="button">📄 Dupliquer ce plan</button>
+            </div>
+            <div class="row">
+                <button id="btnPlanEditCycle" class="btn full" type="button">🗓️ Cycle</button>
+            </div>
+            <div class="row">
+                <button id="btnPlanEditMeso" class="btn full" type="button">♻️ Méso-cycle</button>
+            </div>
+            <div class="row">
+                <button id="btnPlanEditProgression" class="btn full" type="button">📈 Progression</button>
+            </div>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Planning : Cycle ========== -->
+<section id="screenPlanCycle" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnPlanCycleBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Cycle</div>
         </div>
         <div class="header-right"></div>
     </header>
@@ -609,17 +686,15 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== Réglages > Méso ========== -->
+<!-- ========== Planning : Méso ========== -->
 <section id="screenMeso" class="screen" hidden>
 
-    <header class="header header">
-        <div class="header-left"></div>
+    <header class="header">
+        <div class="header-left">
+            <button id="btnMesoBack" class="btn" title="Retour">◀︎</button>
+        </div>
         <div class="header-center">
-            <div class="stats-toggle" role="tablist" aria-label="Type de planning">
-                <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-target="cycle">Cycle</button>
-                <button class="stats-toggle-btn is-active" type="button" aria-pressed="true" data-planning-target="meso">Méso</button>
-                <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-target="progression">Progression</button>
-            </div>
+            <div class="title">Méso-cycle</div>
         </div>
         <div class="header-right"></div>
     </header>
@@ -640,17 +715,15 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== Réglages > Progression ========== -->
+<!-- ========== Planning : Progression ========== -->
 <section id="screenProgression" class="screen" hidden>
 
-    <header class="header header">
-        <div class="header-left"></div>
+    <header class="header">
+        <div class="header-left">
+            <button id="btnProgressionBack" class="btn" title="Retour">◀︎</button>
+        </div>
         <div class="header-center">
-            <div class="stats-toggle" role="tablist" aria-label="Type de planning">
-                <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-target="cycle">Cycle</button>
-                <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-target="meso">Méso</button>
-                <button class="stats-toggle-btn is-active" type="button" aria-pressed="true" data-planning-target="progression">Progression</button>
-            </div>
+            <div class="title">Progression</div>
         </div>
         <div class="header-right"></div>
     </header>

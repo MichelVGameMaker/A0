@@ -133,13 +133,12 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
-        wirePlanningToggle();
+        wireButtons();
     });
 
     A.openMeso = async function openMeso() {
         ensureRefs();
         highlightPlanningTab();
-        setPlanningToggleActive('meso');
         await renderMeso();
         switchScreen('screenMeso');
     };
@@ -150,7 +149,10 @@
             return;
         }
 
-        const plan = await ensureActivePlan();
+        const plan = await ensurePlanningPlan();
+        if (!plan) {
+            return;
+        }
         const routines = await loadRoutines();
         const routineMap = new Map(routines.map((routine) => [routine.id, routine]));
         state.plan = plan;
@@ -238,7 +240,10 @@
     }
 
     async function updateCycleCount(count) {
-        const plan = state.plan || (await ensureActivePlan());
+        const plan = state.plan || (await ensurePlanningPlan());
+        if (!plan) {
+            return;
+        }
         const meso = ensureMesoData(plan);
         const nextCount = clampCycleCount(count);
         meso.cycleCount = nextCount;
@@ -248,7 +253,10 @@
     }
 
     async function selectCycle(index) {
-        const plan = state.plan || (await ensureActivePlan());
+        const plan = state.plan || (await ensurePlanningPlan());
+        if (!plan) {
+            return;
+        }
         const meso = ensureMesoData(plan);
         meso.selectedCycle = clampCycle(index, getCycleCount());
         await db.put('plans', plan);
@@ -452,7 +460,10 @@
     }
 
     async function addModifierToDay(dayIndex, modifierId) {
-        const plan = state.plan || (await ensureActivePlan());
+        const plan = state.plan || (await ensurePlanningPlan());
+        if (!plan) {
+            return;
+        }
         const dayData = ensureDayData(plan, state.selectedCycle, dayIndex);
         if (!dayData.modifiers.includes(modifierId)) {
             dayData.modifiers.push(modifierId);
@@ -462,7 +473,10 @@
     }
 
     async function removeModifierFromDay(dayIndex, modifierId) {
-        const plan = state.plan || (await ensureActivePlan());
+        const plan = state.plan || (await ensurePlanningPlan());
+        if (!plan) {
+            return;
+        }
         const dayData = ensureDayData(plan, state.selectedCycle, dayIndex);
         const next = dayData.modifiers.filter((id) => id !== modifierId);
         dayData.modifiers = next;
@@ -496,7 +510,10 @@
     }
 
     async function updateExerciseSet(dayIndex, move, setIndex, patch) {
-        const plan = state.plan || (await ensureActivePlan());
+        const plan = state.plan || (await ensurePlanningPlan());
+        if (!plan) {
+            return;
+        }
         const dayData = ensureDayData(plan, state.selectedCycle, dayIndex);
         if (!dayData.exerciseOverrides || typeof dayData.exerciseOverrides !== 'object') {
             dayData.exerciseOverrides = {};
@@ -522,7 +539,10 @@
         if (!exerciseId) {
             return;
         }
-        const plan = state.plan || (await ensureActivePlan());
+        const plan = state.plan || (await ensurePlanningPlan());
+        if (!plan) {
+            return;
+        }
         const dayData = ensureDayData(plan, state.selectedCycle, dayIndex);
         if (!dayData.exerciseOverrides || typeof dayData.exerciseOverrides !== 'object') {
             return;
@@ -637,36 +657,14 @@
         return plan.meso;
     }
 
-    async function ensureActivePlan() {
-        let plan = await db.getActivePlan();
-        if (!plan) {
-            plan = {
-                id: 'active',
-                name: 'Planning actif',
-                days: {},
-                length: 7,
-                startDate: A.ymd(A.today()),
-                active: true
-            };
-            await db.put('plans', plan);
+    async function ensurePlanningPlan() {
+        if (typeof A.getPlanningPlan === 'function') {
+            const plan = await A.getPlanningPlan();
+            if (plan) {
+                return plan;
+            }
         }
-        let shouldPersist = false;
-        if (!plan.days || typeof plan.days !== 'object') {
-            plan.days = {};
-            shouldPersist = true;
-        }
-        if (!plan.startDate) {
-            plan.startDate = A.ymd(A.today());
-            shouldPersist = true;
-        }
-        if (!plan.startDay) {
-            plan.startDay = 1;
-            shouldPersist = true;
-        }
-        if (shouldPersist) {
-            await db.put('plans', plan);
-        }
-        return plan;
+        return null;
     }
 
     async function loadRoutines() {
@@ -740,10 +738,13 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenPlanEdit = document.getElementById('screenPlanEdit');
+        refs.screenPlanCycle = document.getElementById('screenPlanCycle');
         refs.screenMeso = document.getElementById('screenMeso');
         refs.screenProgression = document.getElementById('screenProgression');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
+        refs.btnMesoBack = document.getElementById('btnMesoBack');
         refs.mesoCycleCountButton = document.getElementById('mesoCycleCountButton');
         refs.mesoCycleCountMenu = document.getElementById('mesoCycleCountMenu');
         refs.mesoCycleTags = document.getElementById('mesoCycleTags');
@@ -752,32 +753,12 @@
         return refs;
     }
 
-    function wirePlanningToggle() {
-        const toggleButtons = document.querySelectorAll('#screenMeso [data-planning-target]');
-        toggleButtons.forEach((button) => {
-            button.addEventListener('click', () => {
-                const target = button.dataset.planningTarget;
-                if (target === 'cycle') {
-                    void A.openPlanning?.();
-                    return;
-                }
-                if (target === 'progression') {
-                    void A.openProgression?.();
-                    return;
-                }
-                if (target === 'meso') {
-                    void A.openMeso?.();
-                }
-            });
-        });
-    }
-
-    function setPlanningToggleActive(target) {
-        const toggleButtons = document.querySelectorAll('#screenMeso [data-planning-target]');
-        toggleButtons.forEach((button) => {
-            const isActive = button.dataset.planningTarget === target;
-            button.classList.toggle('is-active', isActive);
-            button.setAttribute('aria-pressed', String(isActive));
+    function wireButtons() {
+        const { btnMesoBack } = ensureRefs();
+        btnMesoBack?.addEventListener('click', () => {
+            const planId = state.plan?.id || A.planningState?.planId;
+            const returnSection = A.planningState?.returnSection || 'plans';
+            void A.openPlanEdit?.({ planId, returnSection });
         });
     }
 
@@ -806,6 +787,8 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
             screenMeso,
             screenProgression,
             screenFitHeroMapping
@@ -829,6 +812,8 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
             screenMeso,
             screenProgression,
             screenFitHeroMapping
