@@ -121,9 +121,7 @@
             alert('Aucune séance pour cette date.');
             return;
         }
-        const exercise = Array.isArray(session.exercises)
-            ? session.exercises.find((item) => item.exercise_id === currentId)
-            : null;
+        const exercise = Array.isArray(session.exercises) ? session.exercises.find((item) => item.id === currentId) : null;
         if (!exercise) {
             alert('Exercice introuvable dans la séance.');
             return;
@@ -175,9 +173,7 @@
             alert('Aucune séance pour cette date.');
             return;
         }
-        const exercise = Array.isArray(session.exercises)
-            ? session.exercises.find((item) => item.exercise_id === currentId)
-            : null;
+        const exercise = Array.isArray(session.exercises) ? session.exercises.find((item) => item.id === currentId) : null;
         if (!exercise) {
             alert('Exercice introuvable dans la séance.');
             return;
@@ -234,6 +230,7 @@
         refs.execMoveUp = document.getElementById('execMoveUp');
         refs.execMoveDown = document.getElementById('execMoveDown');
         refs.execMoveAnnotate = document.getElementById('execMoveAnnotate');
+        refs.execMoveDuplicate = document.getElementById('execMoveDuplicate');
         refs.execReplaceExercise = document.getElementById('execReplaceExercise');
         refs.execMetaToggle = document.getElementById('execMetaToggle');
         refs.btnExecDetails = document.getElementById('btnExecDetails');
@@ -275,6 +272,7 @@
             'execMoveUp',
             'execMoveDown',
             'execMoveAnnotate',
+            'execMoveDuplicate',
             'execReplaceExercise',
             'execMetaToggle',
             'btnExecDetails',
@@ -307,7 +305,8 @@
             execMetaToggle,
             execMoveUp,
             execMoveDown,
-            execMoveAnnotate
+            execMoveAnnotate,
+            execMoveDuplicate
         } = assertRefs();
         execAddSet.addEventListener('click', () => {
             void addSet();
@@ -332,6 +331,9 @@
                 dlgExecMoveEditor?.close();
             }
             void openExecDetailsDialog();
+        });
+        execMoveDuplicate.addEventListener('click', () => {
+            void duplicateExerciseInSession();
         });
         execMetaToggle.addEventListener('click', () => {
             const nextMode = getNextMetaMode();
@@ -1731,7 +1733,7 @@
             execMoveDown.disabled = true;
             return;
         }
-        const index = state.session.exercises.findIndex((item) => item.exercise_id === state.exerciseId);
+        const index = state.session.exercises.findIndex((item) => item.id === state.exerciseId);
         if (index === -1) {
             execMoveUp.disabled = true;
             execMoveDown.disabled = true;
@@ -1745,7 +1747,7 @@
         if (!state.session?.exercises?.length || !state.exerciseId) {
             return;
         }
-        const index = state.session.exercises.findIndex((item) => item.exercise_id === state.exerciseId);
+        const index = state.session.exercises.findIndex((item) => item.id === state.exerciseId);
         if (index === -1) {
             return;
         }
@@ -1783,7 +1785,7 @@
         if (!confirmed) {
             return;
         }
-        const index = state.session.exercises.findIndex((item) => item.exercise_id === state.exerciseId);
+        const index = state.session.exercises.findIndex((item) => item.id === state.exerciseId);
         if (index === -1) {
             return;
         }
@@ -1806,6 +1808,39 @@
             refs.dlgExecMoveEditor?.close();
         }
         backToCaller();
+    }
+
+    async function duplicateExerciseInSession() {
+        if (!state.session?.exercises?.length || !state.exerciseId) {
+            return;
+        }
+        const index = state.session.exercises.findIndex((item) => item.id === state.exerciseId);
+        if (index === -1) {
+            return;
+        }
+        const original = state.session.exercises[index];
+        const baseId =
+            original.id || buildSessionExerciseId(state.session.id, original.exercise_name || original.exercise_id);
+        const copy = {
+            ...original,
+            id: buildUniqueSessionExerciseId(baseId),
+            date: state.session.date,
+            sets: Array.isArray(original.sets) ? original.sets.map((set) => ({ ...set })) : []
+        };
+        refreshSetOrderMetadata(copy, copy.sets || []);
+        state.session.exercises.splice(index + 1, 0, copy);
+        state.session.exercises.forEach((item, idx) => {
+            item.sort = idx + 1;
+        });
+        await persistSession(false);
+        if (A.closeDialog) {
+            A.closeDialog(refs.dlgExecMoveEditor);
+        } else {
+            refs.dlgExecMoveEditor?.close();
+        }
+        A.setSessionScrollTarget?.(copy.id);
+        await refreshSessionViews();
+        A.ensureSessionCardInView?.(copy.id);
     }
 
     async function replaceExercise() {
@@ -1839,7 +1874,7 @@
         if (exercise.exercise_id === nextId) {
             return;
         }
-        const previousId = exercise.exercise_id;
+        const previousId = exercise.id || exercise.exercise_id;
         const nextExercise = await db.get('exercises', nextId);
         if (!nextExercise) {
             alert('Exercice introuvable.');
@@ -1849,9 +1884,12 @@
         exercise.exercise_id = nextId;
         exercise.exercise_name = nextName;
         exercise.type = nextId;
-        exercise.id = buildSessionExerciseId(state.session.id, nextName);
+        exercise.id = buildUniqueSessionExerciseId(
+            exercise.id || buildSessionExerciseId(state.session.id, nextName),
+            previousId
+        );
         hydrateSetIdentifiers(exercise, exercise.sets || []);
-        state.exerciseId = nextId;
+        state.exerciseId = exercise.id;
         const { execTitle } = assertRefs();
         execTitle.textContent = nextName || 'Exercice';
         updateExecDetailsPreview(exercise);
@@ -1870,7 +1908,7 @@
         if (!state.session?.exercises) {
             return null;
         }
-        return state.session.exercises.find((item) => item.exercise_id === state.exerciseId) || null;
+        return state.session.exercises.find((item) => item.id === state.exerciseId) || null;
     }
 
     function refreshSetOrderMetadata(exercise, sets) {
@@ -1914,6 +1952,29 @@
         return `${sessionId}_${base}`;
     }
 
+    function buildUniqueSessionExerciseId(baseId, excludeId = null) {
+        const fallback = baseId || 'exercice';
+        if (!state.session?.exercises?.length) {
+            return fallback;
+        }
+        const existing = new Set(
+            state.session.exercises.map((exercise) => exercise.id || exercise.exercise_id).filter(Boolean)
+        );
+        if (excludeId) {
+            existing.delete(excludeId);
+        }
+        if (!existing.has(fallback)) {
+            return fallback;
+        }
+        let counter = 2;
+        let candidate = `${fallback}-${counter}`;
+        while (existing.has(candidate)) {
+            counter += 1;
+            candidate = `${fallback}-${counter}`;
+        }
+        return candidate;
+    }
+
     function slugifyExerciseName(value) {
         return String(value || '')
             .trim()
@@ -1954,7 +2015,7 @@
         const cardMap = new Map(cards.map((card) => [card.dataset.exerciseId, card]));
         let updated = false;
         state.session.exercises.forEach((exercise) => {
-            const card = cardMap.get(exercise.exercise_id);
+            const card = cardMap.get(exercise.id || exercise.exercise_id);
             if (card) {
                 sessionList.appendChild(card);
                 updated = true;
@@ -2000,7 +2061,7 @@
             return false;
         }
         const nextName = exercise.exercise_name || 'Exercice';
-        card.dataset.exerciseId = exercise.exercise_id;
+        card.dataset.exerciseId = exercise.id || exercise.exercise_id;
         card.setAttribute('aria-label', nextName);
         const titleRow = card.querySelector('.exercise-card-title-row');
         const name = document.createElement('div');
@@ -2314,7 +2375,7 @@
         }
         return {
             dateKey: state.dateKey,
-            exerciseId: exercise.exercise_id,
+            exerciseId: exercise.id || exercise.exercise_id,
             exerciseName: exercise.exercise_name || exercise.exercise_id || 'Exercice',
             setId: set.id ?? null,
             setPos: safeInt(set.pos, null),
@@ -2358,7 +2419,8 @@
             return;
         }
         const exercise = Array.isArray(session.exercises)
-            ? session.exercises.find((item) => item.exercise_id === attachment.exerciseId)
+            ? session.exercises.find((item) => item.id === attachment.exerciseId) ||
+              session.exercises.find((item) => item.exercise_id === attachment.exerciseId)
             : null;
         if (!exercise || !Array.isArray(exercise.sets)) {
             return;

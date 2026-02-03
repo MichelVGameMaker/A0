@@ -128,6 +128,7 @@
         refs.routineMoveUp = document.getElementById('routineMoveUp');
         refs.routineMoveDown = document.getElementById('routineMoveDown');
         refs.routineMoveAnnotate = document.getElementById('routineMoveAnnotate');
+        refs.routineMoveDuplicate = document.getElementById('routineMoveDuplicate');
         refs.dlgRoutineMoveDetails = document.getElementById('dlgRoutineMoveDetails');
         refs.routineMoveDetailsInput = document.getElementById('routineMoveDetailsInput');
         refs.routineMoveDetailsClose = document.getElementById('routineMoveDetailsClose');
@@ -158,6 +159,7 @@
             'routineMoveUp',
             'routineMoveDown',
             'routineMoveAnnotate',
+            'routineMoveDuplicate',
             'dlgRoutineMoveDetails',
             'routineMoveDetailsInput',
             'routineMoveDetailsClose',
@@ -189,7 +191,8 @@
             routineMoveReplace,
             routineMoveUp,
             routineMoveDown,
-            routineMoveAnnotate
+            routineMoveAnnotate,
+            routineMoveDuplicate
         } = assertRefs();
         routineMoveAddSet.addEventListener('click', () => {
             addSet();
@@ -214,6 +217,9 @@
                 dlgRoutineMoveEditor?.close();
             }
             void openRoutineMoveDetailsDialog();
+        });
+        routineMoveDuplicate.addEventListener('click', () => {
+            void duplicateMove();
         });
     }
 
@@ -789,6 +795,49 @@
         if (isRoutineMoveEditActive()) {
             returnToCaller();
         }
+    }
+
+    async function duplicateMove() {
+        if (!state.routine) {
+            return;
+        }
+        const moves = state.routine.moves || [];
+        const index = moves.findIndex((move) => move.id === state.moveId);
+        if (index === -1) {
+            return;
+        }
+        const move = moves[index];
+        const copy = {
+            ...move,
+            id: uid('move'),
+            pos: move.pos + 1,
+            instructions: typeof move.instructions === 'string' ? move.instructions : '',
+            details: typeof move.details === 'string' ? move.details : '',
+            sets: Array.isArray(move.sets)
+                ? move.sets.map((set, idx) => ({
+                    pos: safeInt(set.pos, idx + 1),
+                    reps: safeIntOrNull(set.reps),
+                    weight: safeFloatOrNull(set.weight),
+                    rpe: safeFloatOrNull(set.rpe),
+                    rest: safeIntOrNull(set.rest)
+                }))
+                : []
+        };
+        moves.splice(index + 1, 0, copy);
+        moves.forEach((item, idx) => {
+            item.pos = idx + 1;
+        });
+        state.routine.moves = moves;
+        await persistRoutine({ refresh: false });
+        if (A.closeDialog) {
+            A.closeDialog(refs.dlgRoutineMoveEditor);
+        } else {
+            refs.dlgRoutineMoveEditor?.close();
+        }
+        if (!syncRoutineListOrder()) {
+            await A.refreshRoutineEdit();
+        }
+        A.ensureRoutineMoveInView?.(copy.id);
     }
 
     function replaceMoveExercise() {

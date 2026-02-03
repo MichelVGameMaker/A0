@@ -552,7 +552,8 @@
                 cardClass: 'exercise-card--full-sets'
             });
             const { card, start, body, end } = structure;
-            card.dataset.exerciseId = exercise.exercise_id;
+            const exerciseInstanceId = exercise.id || exercise.exercise_id;
+            card.dataset.exerciseId = exerciseInstanceId;
             start.classList.add('list-card__start--solo');
 
             const exerciseName = exercise.exercise_name || 'Exercice';
@@ -565,7 +566,7 @@
                 if (!exercise.exercise_id) {
                     return;
                 }
-                setSessionScrollTarget(exercise.exercise_id);
+                setSessionScrollTarget(exerciseInstanceId);
                 void A.openExerciseRead({ currentId: exercise.exercise_id, callerScreen: 'screenSessions' });
             });
             const titleRow = document.createElement('div');
@@ -599,6 +600,7 @@
         if (!exercise || !setsWrapper) {
             return;
         }
+        const exerciseInstanceId = exercise.id || exercise.exercise_id;
         setsWrapper.innerHTML = '';
         const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
         sets.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
@@ -621,9 +623,9 @@
                 }
                 const pos = set?.pos ?? index + 1;
                 const openWithFocus = (field) => {
-                    setSessionScrollTarget(exercise.exercise_id);
+                    setSessionScrollTarget(exerciseInstanceId);
                     void A.openExecEdit({
-                        currentId: exercise.exercise_id,
+                        currentId: exerciseInstanceId,
                         callerScreen: 'screenSessions',
                         focusSetIndex: index,
                         focusField: normalizeFocusField(field)
@@ -679,17 +681,18 @@
         addSetButton.append(addSetPlus, document.createTextNode(' Ajouter série'));
         addSetButton.addEventListener('click', (event) => {
             event.stopPropagation();
-            void addSetToSessionExercise(exercise.exercise_id);
+            void addSetToSessionExercise(exerciseInstanceId);
         });
         setsWrapper.appendChild(addSetButton);
     }
 
     async function updateSessionExerciseCard(exercise, dateKey) {
         const { sessionList, screenSessions } = ensureRefs();
-        if (!exercise?.exercise_id || !sessionList || screenSessions?.hidden) {
+        const exerciseInstanceId = exercise?.id || exercise?.exercise_id;
+        if (!exercise || !exerciseInstanceId || !sessionList || screenSessions?.hidden) {
             return false;
         }
-        const card = sessionList.querySelector(`[data-exercise-id="${CSS.escape(exercise.exercise_id)}"]`);
+        const card = sessionList.querySelector(`[data-exercise-id="${CSS.escape(exerciseInstanceId)}"]`);
         if (!card) {
             return false;
         }
@@ -710,7 +713,7 @@
         if (!session?.exercises?.length) {
             return;
         }
-        const exercise = session.exercises.find((item) => item.exercise_id === exerciseId);
+        const exercise = session.exercises.find((item) => item.id === exerciseId);
         if (!exercise) {
             return;
         }
@@ -909,21 +912,20 @@
             if (!exercise) {
                 continue;
             }
+            const created = createSessionExercise({
+                date: session.date,
+                sessionId: session.id,
+                exerciseId: exercise.id,
+                exerciseName: exercise.name || 'Exercice',
+                routineInstructions: '',
+                note: '',
+                sort: (session.exercises?.length || 0) + 1,
+                sets: []
+            });
             if (!firstAddedId) {
-                firstAddedId = exercise.id;
+                firstAddedId = created.id;
             }
-            session.exercises.push(
-                createSessionExercise({
-                    date: session.date,
-                    sessionId: session.id,
-                    exerciseId: exercise.id,
-                    exerciseName: exercise.name || 'Exercice',
-                    routineInstructions: '',
-                    note: '',
-                    sort: (session.exercises?.length || 0) + 1,
-                    sets: []
-                })
-            );
+            session.exercises.push(created);
         }
 
         await db.saveSession(session);
@@ -962,29 +964,28 @@
                     return;
                 }
                 existingIds.add(move.exerciseId);
+                const created = createSessionExercise({
+                    date: session.date,
+                    sessionId: session.id,
+                    exerciseId: move.exerciseId,
+                    exerciseName: move.exerciseName,
+                    routineInstructions: typeof move.instructions === 'string' ? move.instructions : '',
+                    note: '',
+                    details: typeof move.details === 'string' ? move.details : '',
+                    sort: session.exercises.length + 1,
+                    sets: move.sets.map((set) => ({
+                        pos: set.pos,
+                        reps: set.reps ?? null,
+                        weight: null,
+                        rpe: set.rpe ?? null,
+                        rest: set.rest ?? null,
+                        done: false
+                    }))
+                });
                 if (!firstAddedId) {
-                    firstAddedId = move.exerciseId;
+                    firstAddedId = created.id;
                 }
-                session.exercises.push(
-                    createSessionExercise({
-                        date: session.date,
-                        sessionId: session.id,
-                        exerciseId: move.exerciseId,
-                        exerciseName: move.exerciseName,
-                        routineInstructions: typeof move.instructions === 'string' ? move.instructions : '',
-                        note: '',
-                        details: typeof move.details === 'string' ? move.details : '',
-                        sort: session.exercises.length + 1,
-                        sets: move.sets.map((set) => ({
-                            pos: set.pos,
-                            reps: set.reps ?? null,
-                            weight: null,
-                            rpe: set.rpe ?? null,
-                            rest: set.rest ?? null,
-                            done: false
-                        }))
-                    })
-                );
+                session.exercises.push(created);
             });
         }
 
