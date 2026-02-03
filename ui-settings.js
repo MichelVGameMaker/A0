@@ -74,6 +74,8 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenPlanEdit = document.getElementById('screenPlanEdit');
+        refs.screenPlanCycle = document.getElementById('screenPlanCycle');
         refs.screenMeso = document.getElementById('screenMeso');
         refs.screenProgression = document.getElementById('screenProgression');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
@@ -138,7 +140,7 @@
         });
         btnSettingsRoutines?.addEventListener('click', () => {
             highlightSettingsTab();
-            void A.openRoutineList();
+            void A.openPlanning?.({ section: 'routines' });
         });
         btnSettingsPreferences?.addEventListener('click', () => {
             A.openPreferences();
@@ -1845,6 +1847,8 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
             screenMeso,
             screenProgression,
             screenFitHeroMapping
@@ -1868,6 +1872,8 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
             screenMeso,
             screenProgression,
             screenFitHeroMapping

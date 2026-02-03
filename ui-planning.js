@@ -10,33 +10,140 @@
     let refsResolved = false;
     const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     const MAX_PLAN_DAYS = 28;
+    const PLANNING_SECTION_KEY = 'planningSection';
+    const DEFAULT_PLANNING_SECTION = 'plans';
+    const planningState = A.planningState || {
+        section: DEFAULT_PLANNING_SECTION,
+        planId: null,
+        returnSection: DEFAULT_PLANNING_SECTION
+    };
+    A.planningState = planningState;
+
     const dialogState = {
         plan: null,
         selected: null,
         startDay: null
     };
 
+    const planEditState = {
+        plan: null
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
         wireButtons();
-        wirePlanningToggle();
+        wirePlanningTabs();
     });
 
-    A.openPlanning = async function openPlanning() {
+    A.openPlanning = async function openPlanning(options = {}) {
         ensureRefs();
         highlightPlanningTab();
-        setPlanningToggleActive('cycle');
-        await renderPlanning();
+        const section = options.section || planningState.section || DEFAULT_PLANNING_SECTION;
+        setPlanningSection(section);
+        await renderPlanningSection(section);
         switchScreen('screenPlanning');
     };
 
-    async function renderPlanning() {
+    A.openPlanEdit = async function openPlanEdit(options = {}) {
+        ensureRefs();
+        highlightPlanningTab();
+        const { planId, returnSection } = options;
+        const plan = await getPlanForEdit(planId);
+        planEditState.plan = plan;
+        planningState.planId = plan?.id || null;
+        planningState.returnSection = returnSection || planningState.section || DEFAULT_PLANNING_SECTION;
+        renderPlanEdit(plan);
+        switchScreen('screenPlanEdit');
+    };
+
+    A.openPlanCycle = async function openPlanCycle() {
+        ensureRefs();
+        highlightPlanningTab();
+        await renderPlanCycle();
+        switchScreen('screenPlanCycle');
+    };
+
+    A.getPlanningPlan = async function getPlanningPlan() {
+        const planId = planningState.planId;
+        if (planId) {
+            const plan = await db.get('plans', planId);
+            if (plan) {
+                return ensurePlanDefaults(plan);
+            }
+        }
+        return ensureActivePlan();
+    };
+
+    async function renderPlanningSection(section) {
+        if (section === 'routines') {
+            await renderRoutinesSection();
+        } else {
+            await renderPlansSection();
+        }
+    }
+
+    async function renderPlansSection() {
+        const { planningPlansList } = ensureRefs();
+        if (!planningPlansList) {
+            return;
+        }
+        const plans = await loadPlans();
+        const activePlan = await ensureActivePlan();
+        planningPlansList.innerHTML = '';
+
+        if (activePlan) {
+            planningPlansList.appendChild(renderPlanCard(activePlan, {
+                label: 'Plan actuel',
+                isActive: true,
+                returnSection: 'plans'
+            }));
+        }
+
+        const newPlanRow = document.createElement('div');
+        newPlanRow.className = 'row';
+        const newPlanButton = document.createElement('button');
+        newPlanButton.id = 'btnPlanningNewPlan';
+        newPlanButton.className = 'btn full';
+        newPlanButton.type = 'button';
+        newPlanButton.textContent = '➕ Nouveau plan';
+        newPlanButton.addEventListener('click', () => {
+            void handleCreatePlan();
+        });
+        newPlanRow.appendChild(newPlanButton);
+        planningPlansList.appendChild(newPlanRow);
+
+        const otherPlans = plans.filter((plan) => plan && plan.id !== activePlan?.id);
+        otherPlans
+            .sort((a, b) => (a?.name || '').localeCompare((b?.name || ''), 'fr-FR'))
+            .forEach((plan) => {
+                planningPlansList.appendChild(renderPlanCard(plan, { returnSection: 'plans' }));
+            });
+    }
+
+    async function renderRoutinesSection() {
+        const { planningActivePlanCard, btnPlanningEditActivePlan } = ensureRefs();
+        if (!planningActivePlanCard || !btnPlanningEditActivePlan) {
+            return;
+        }
+        const plan = await ensureActivePlan();
+        planningActivePlanCard.innerHTML = '';
+        if (plan) {
+            planningActivePlanCard.appendChild(renderPlanCard(plan, {
+                label: 'Plan actuel',
+                isActive: true,
+                returnSection: 'routines'
+            }));
+        }
+        btnPlanningEditActivePlan.disabled = !plan;
+    }
+
+    async function renderPlanCycle() {
         const { planningDaysList } = ensureRefs();
         if (!planningDaysList) {
             return;
         }
 
-        const plan = await ensureActivePlan();
+        const plan = await A.getPlanningPlan();
         const startDay = clampStartDay(plan.startDay);
         const routines = await loadRoutines();
         const routineMap = new Map(routines.map((routine) => [routine.id, routine]));
@@ -83,12 +190,45 @@
         }
     }
 
+    function renderPlanCard(plan, options = {}) {
+        const { label, isActive = false, returnSection = 'plans' } = options;
+        const structure = listCard.createStructure({ clickable: true, role: 'button' });
+        const { card, body, end } = structure;
+        card.classList.add('planning-plan-card');
+        card.classList.toggle('is-active', isActive);
+        card.setAttribute('aria-label', plan?.name || 'Plan');
+
+        const title = document.createElement('div');
+        title.className = 'element';
+        title.textContent = plan?.name || 'Plan sans nom';
+
+        const details = document.createElement('div');
+        details.className = 'details';
+        if (label) {
+            details.textContent = `${label} · ${plan?.comment || 'Plan d\'entrainements'}`;
+        } else {
+            details.textContent = plan?.comment || 'Plan d\'entrainements';
+        }
+
+        body.append(title, details);
+        const icon = listCard.createIcon(isActive ? '✓' : '›');
+        end.appendChild(icon);
+
+        card.addEventListener('click', () => {
+            if (plan?.id) {
+                void A.openPlanEdit({ planId: plan.id, returnSection });
+            }
+        });
+
+        return card;
+    }
+
     async function selectRoutineForDay(dayIndex) {
         if (typeof A.openRoutineList !== 'function') {
             return;
         }
         await A.openRoutineList({
-            callerScreen: 'screenPlanning',
+            callerScreen: 'screenPlanCycle',
             mode: 'add',
             autoAdd: true,
             includeNone: true,
@@ -100,7 +240,7 @@
     }
 
     async function assignRoutineToDay(dayIndex, routineId) {
-        const plan = await ensureActivePlan();
+        const plan = await A.getPlanningPlan();
         const dayKey = String(dayIndex);
         if (!plan.days || typeof plan.days !== 'object') {
             plan.days = {};
@@ -111,12 +251,12 @@
             delete plan.days[dayKey];
         }
         await db.put('plans', plan);
-        await renderPlanning();
+        await renderPlanCycle();
         await A.populateRoutineSelect?.();
     }
 
     async function handleEditDayCount() {
-        const plan = await ensureActivePlan();
+        const plan = await A.getPlanningPlan();
         dialogState.plan = plan;
         dialogState.selected = clampDayCount(plan.length);
         dialogState.startDay = clampStartDay(plan.startDay);
@@ -126,20 +266,111 @@
         refs.dlgPlanningDuration?.showModal();
     }
 
+    async function handleCreatePlan() {
+        const plan = await createEmptyPlan();
+        await db.put('plans', plan);
+        await A.openPlanEdit({ planId: plan.id, returnSection: 'plans' });
+    }
+
+    async function handleDuplicatePlan() {
+        const plan = planEditState.plan;
+        if (!plan) {
+            return;
+        }
+        const cloned = JSON.parse(JSON.stringify(plan));
+        const next = {
+            ...cloned,
+            id: createPlanId(),
+            name: `Copie de ${plan.name || 'Plan'}`,
+            active: false
+        };
+        await db.put('plans', next);
+        await A.openPlanEdit({ planId: next.id, returnSection: planningState.returnSection });
+    }
+
+    async function handleApplyPlan() {
+        const plan = planEditState.plan;
+        if (!plan?.id) {
+            return;
+        }
+        const plans = await loadPlans();
+        await Promise.all(
+            plans.map(async (item) => {
+                const next = { ...item, active: item.id === plan.id };
+                await db.put('plans', next);
+                if (next.id === plan.id) {
+                    planEditState.plan = next;
+                }
+            })
+        );
+        renderPlanEdit(planEditState.plan);
+        await renderPlansSection();
+        await renderRoutinesSection();
+    }
+
+    function renderPlanEdit(plan) {
+        const { planEditName, planEditComment, btnPlanApply } = ensureRefs();
+        if (!planEditName || !planEditComment) {
+            return;
+        }
+        planEditName.value = plan?.name || '';
+        planEditComment.value = plan?.comment || '';
+        if (btnPlanApply) {
+            const isActive = Boolean(plan?.active);
+            btnPlanApply.disabled = isActive;
+            btnPlanApply.textContent = isActive ? '✅ Plan actuel' : '✅ Appliquer ce plan';
+        }
+    }
+
+    async function persistPlanField(field, value) {
+        const plan = planEditState.plan;
+        if (!plan) {
+            return;
+        }
+        plan[field] = value;
+        await db.put('plans', plan);
+        if (planningState.section === 'plans') {
+            await renderPlansSection();
+        }
+        if (planningState.section === 'routines') {
+            await renderRoutinesSection();
+        }
+    }
+
+    async function getPlanForEdit(planId) {
+        if (planId) {
+            const plan = await db.get('plans', planId);
+            if (plan) {
+                return ensurePlanDefaults(plan);
+            }
+        }
+        return ensureActivePlan();
+    }
+
     async function ensureActivePlan() {
         let plan = await db.getActivePlan();
         if (!plan) {
-            plan = {
-                id: 'active',
-                name: 'Planning actif',
-                days: {},
-                length: 7,
-                startDate: A.ymd(A.today()),
-                active: true
-            };
+            plan = await createEmptyPlan();
+            plan.active = true;
             await db.put('plans', plan);
         }
+        return ensurePlanDefaults(plan);
+    }
+
+    function ensurePlanDefaults(plan) {
         let shouldPersist = false;
+        if (!plan.id) {
+            plan.id = createPlanId();
+            shouldPersist = true;
+        }
+        if (!plan.name) {
+            plan.name = 'Plan sans nom';
+            shouldPersist = true;
+        }
+        if (!plan.comment) {
+            plan.comment = '';
+            shouldPersist = true;
+        }
         if (!plan.days || typeof plan.days !== 'object') {
             plan.days = {};
             shouldPersist = true;
@@ -152,10 +383,54 @@
             plan.startDay = 1;
             shouldPersist = true;
         }
+        if (!Number.isFinite(Number.parseInt(plan.length, 10))) {
+            plan.length = 7;
+            shouldPersist = true;
+        }
         if (shouldPersist) {
-            await db.put('plans', plan);
+            void db.put('plans', plan);
         }
         return plan;
+    }
+
+    async function loadPlans() {
+        const raw = await db.getAll('plans');
+        return Array.isArray(raw) ? raw.slice() : [];
+    }
+
+    async function createEmptyPlan() {
+        const plans = await loadPlans();
+        const nextNumber = getNextPlanNumber(plans);
+        return {
+            id: createPlanId(),
+            name: `Plan ${nextNumber}`,
+            comment: '',
+            days: {},
+            length: 7,
+            startDate: A.ymd(A.today()),
+            startDay: 1,
+            active: false
+        };
+    }
+
+    function getNextPlanNumber(plans) {
+        const used = new Set(
+            plans
+                .map((plan) => {
+                    const match = String(plan?.name || '').match(/Plan\s+(\d+)/i);
+                    return match ? Number.parseInt(match[1], 10) : null;
+                })
+                .filter((value) => Number.isFinite(value))
+        );
+        let next = 1;
+        while (used.has(next)) {
+            next += 1;
+        }
+        return next;
+    }
+
+    function createPlanId() {
+        return `plan-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
     }
 
     async function loadRoutines() {
@@ -248,7 +523,7 @@
     }
 
     async function savePlanningDuration() {
-        const plan = dialogState.plan || (await ensureActivePlan());
+        const plan = dialogState.plan || (await A.getPlanningPlan());
         const next = clampDayCount(dialogState.selected);
         const current = clampDayCount(plan.length);
         const nextStartDay = clampStartDay(dialogState.startDay ?? plan.startDay);
@@ -269,7 +544,7 @@
             }
         });
         await db.put('plans', plan);
-        await renderPlanning();
+        await renderPlanCycle();
         await A.populateRoutineSelect?.();
         refs.dlgPlanningDuration?.close();
     }
@@ -278,6 +553,48 @@
         const offset = clampStartDay(startDay) - 1;
         const labelIndex = (offset + dayIndex - 1) % DAY_LABELS.length;
         return DAY_LABELS[labelIndex] || `Jour ${dayIndex}`;
+    }
+
+    function setPlanningSection(section) {
+        const nextSection = section === 'routines' ? 'routines' : 'plans';
+        planningState.section = nextSection;
+        localStorage.setItem(PLANNING_SECTION_KEY, nextSection);
+        updatePlanningTabs(nextSection);
+    }
+
+    function updatePlanningTabs(section) {
+        const toggleButtons = document.querySelectorAll('#screenPlanning [data-planning-section]');
+        toggleButtons.forEach((button) => {
+            const isActive = button.dataset.planningSection === section;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        });
+        const plansSection = refs.planningPlansSection;
+        const routinesSection = refs.planningRoutinesSection;
+        if (plansSection) {
+            plansSection.hidden = section !== 'plans';
+        }
+        if (routinesSection) {
+            routinesSection.hidden = section !== 'routines';
+        }
+    }
+
+    function wirePlanningTabs() {
+        const toggleButtons = document.querySelectorAll('#screenPlanning [data-planning-section]');
+        if (!toggleButtons.length) {
+            return;
+        }
+        const stored = localStorage.getItem(PLANNING_SECTION_KEY);
+        if (stored) {
+            planningState.section = stored;
+        }
+        toggleButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const target = button.dataset.planningSection;
+                setPlanningSection(target);
+                void renderPlanningSection(target);
+            });
+        });
     }
 
     function ensureRefs() {
@@ -302,10 +619,27 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenPlanEdit = document.getElementById('screenPlanEdit');
+        refs.screenPlanCycle = document.getElementById('screenPlanCycle');
         refs.screenMeso = document.getElementById('screenMeso');
         refs.screenProgression = document.getElementById('screenProgression');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
+        refs.planningPlansList = document.getElementById('planningPlansList');
+        refs.planningPlansSection = document.getElementById('planningPlansSection');
+        refs.planningRoutinesSection = document.getElementById('planningRoutinesSection');
+        refs.planningActivePlanCard = document.getElementById('planningActivePlanCard');
+        refs.btnPlanningEditActivePlan = document.getElementById('btnPlanningEditActivePlan');
+        refs.btnPlanningManageRoutines = document.getElementById('btnPlanningManageRoutines');
+        refs.btnPlanEditBack = document.getElementById('btnPlanEditBack');
+        refs.planEditName = document.getElementById('planEditName');
+        refs.planEditComment = document.getElementById('planEditComment');
+        refs.btnPlanApply = document.getElementById('btnPlanApply');
+        refs.btnPlanDuplicate = document.getElementById('btnPlanDuplicate');
+        refs.btnPlanEditCycle = document.getElementById('btnPlanEditCycle');
+        refs.btnPlanEditMeso = document.getElementById('btnPlanEditMeso');
+        refs.btnPlanEditProgression = document.getElementById('btnPlanEditProgression');
+        refs.btnPlanCycleBack = document.getElementById('btnPlanCycleBack');
         refs.planningDaysList = document.getElementById('planningDaysList');
         refs.btnPlanningEditDays = document.getElementById('btnPlanningEditDays');
         refs.dlgPlanningDuration = document.getElementById('dlgPlanningDuration');
@@ -319,53 +653,87 @@
 
     function wireButtons() {
         const {
+            btnPlanningEditActivePlan,
+            btnPlanningManageRoutines,
+            btnPlanEditBack,
+            planEditName,
+            planEditComment,
+            btnPlanApply,
+            btnPlanDuplicate,
+            btnPlanEditCycle,
+            btnPlanEditMeso,
+            btnPlanEditProgression,
+            btnPlanCycleBack,
             btnPlanningEditDays,
             planningStartDay,
             planningDurationCancel,
             planningDurationSave
         } = ensureRefs();
+
+        btnPlanningEditActivePlan?.addEventListener('click', async () => {
+            const plan = await ensureActivePlan();
+            await A.openPlanEdit({ planId: plan.id, returnSection: 'routines' });
+        });
+
+        btnPlanningManageRoutines?.addEventListener('click', () => {
+            setPlanningSection('routines');
+            void A.openRoutineList?.({ callerScreen: 'screenPlanning' });
+        });
+
+        btnPlanEditBack?.addEventListener('click', () => {
+            void A.openPlanning({ section: planningState.returnSection || 'plans' });
+        });
+
+        planEditName?.addEventListener('input', (event) => {
+            const value = event.target?.value || '';
+            void persistPlanField('name', value.trim());
+        });
+
+        planEditComment?.addEventListener('input', (event) => {
+            const value = event.target?.value || '';
+            void persistPlanField('comment', value.trim());
+        });
+
+        btnPlanApply?.addEventListener('click', () => {
+            void handleApplyPlan();
+        });
+
+        btnPlanDuplicate?.addEventListener('click', () => {
+            void handleDuplicatePlan();
+        });
+
+        btnPlanEditCycle?.addEventListener('click', () => {
+            void A.openPlanCycle();
+        });
+
+        btnPlanEditMeso?.addEventListener('click', () => {
+            void A.openMeso?.();
+        });
+
+        btnPlanEditProgression?.addEventListener('click', () => {
+            void A.openProgression?.();
+        });
+
+        btnPlanCycleBack?.addEventListener('click', () => {
+            void A.openPlanEdit({ planId: planningState.planId, returnSection: planningState.returnSection });
+        });
+
         btnPlanningEditDays?.addEventListener('click', () => {
             void handleEditDayCount();
         });
+
         planningStartDay?.addEventListener('change', (event) => {
             const value = event.target?.value;
             dialogState.startDay = clampStartDay(value);
             updatePlanningStartDaySelection();
         });
+
         planningDurationCancel?.addEventListener('click', () => {
             refs.dlgPlanningDuration?.close();
         });
+
         planningDurationSave?.addEventListener('click', () => {
             void savePlanningDuration();
-        });
-    }
-
-    function wirePlanningToggle() {
-        const toggleButtons = document.querySelectorAll('#screenPlanning [data-planning-target]');
-        toggleButtons.forEach((button) => {
-            button.addEventListener('click', () => {
-                const target = button.dataset.planningTarget;
-                if (target === 'progression') {
-                    void A.openProgression?.();
-                    return;
-                }
-                if (target === 'meso') {
-                    void A.openMeso?.();
-                    return;
-                }
-                if (target === 'cycle') {
-                    void A.openPlanning?.();
-                }
-            });
-        });
-    }
-
-    function setPlanningToggleActive(target) {
-        const toggleButtons = document.querySelectorAll('#screenPlanning [data-planning-target]');
-        toggleButtons.forEach((button) => {
-            const isActive = button.dataset.planningTarget === target;
-            button.classList.toggle('is-active', isActive);
-            button.setAttribute('aria-pressed', String(isActive));
         });
     }
 
@@ -394,6 +762,8 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
             screenMeso,
             screenProgression,
             screenFitHeroMapping
@@ -417,6 +787,8 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanEdit,
+            screenPlanCycle,
             screenMeso,
             screenProgression,
             screenFitHeroMapping
