@@ -138,6 +138,122 @@
 </section>
 <!-- ==================== -->
 
+<!-- ========== Réglages > Données > Mapping FitHero ========== -->
+<section id="screenFitHeroMapping" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnFitHeroMappingBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Mapping FitHero</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <p class="details">Liste des slugs FitHero inconnus à associer à vos exercices.</p>
+        </div>
+        <div class="bloque">
+            <div id="fitHeroMappingEmpty" class="empty" hidden>Aucun slug FitHero inconnu.</div>
+            <div id="fitHeroMappingList" class="mapping-list" aria-label="Mapping FitHero"></div>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Réglages >  Application ========== -->
+<section id="screenApplication" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnApplicationBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Application</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <div class="row">
+                <button id="btnSettingsUpdate" class="btn full danger">🧹 Update</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsReset" class="btn full danger">🗑️ Reset</button>
+            </div>
+            <div class="row">
+                <button id="btnSettingsAdmin" class="btn full">🛠️ Admin</button>
+            </div>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
+<!-- ========== Réglages > Application > Admin ========== -->
+<section id="screenAdmin" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left">
+            <button id="btnAdminBack" class="btn" title="Retour">◀︎</button>
+        </div>
+        <div class="header-center">
+            <div class="title">Admin</div>
+        </div>
+        <div class="header-right">
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="bloque">
+            <button id="btnDataExportExercises" class="list-card clickable full" type="button">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">Exporter bibliothèque d'exercices</div>
+                            <div class="details">Génère un fichier exercices.json pour mettre à jour la bibliothèque.</div>
+                        </div>
+                    </div>
+                    <div class="list-card__end">
+                        <span class="list-card__icon" aria-hidden="true">›</span>
+                    </div>
+                </div>
+            </button>
+        </div>
+        <div class="bloque">
+            <button id="btnDataReloadExercises" class="list-card clickable full" type="button">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">Synchroniser la bibliothèque d'exercices</div>
+                            <div class="details">Mettre à jour la bibliothèque d'exercices depuis Internet.</div>
+                        </div>
+                    </div>
+                    <div class="list-card__end">
+                        <span class="list-card__icon" aria-hidden="true">›</span>
+                    </div>
+                </div>
+            </button>
+        </div>
+        <div class="bloque">
+            <button id="btnAdminUpdateFitHeroMapping" class="btn full" type="button">
+                Mettre à jour le mapping FitHero
+            </button>
+            <p class="details">
+                Génère un fichier de mapping FitHero à jour depuis les mappings en ligne et personnalisés.
+            </p>
+        </div>
+    </main>
+
+</section>
+<!-- ==================== -->
+
 <!-- ========== 2 Bibliothèque d’exercices ========== -->
 <section id="screenExercises" class="screen" hidden>
     
@@ -818,21 +934,6 @@
             </button>
         </div>
         <div class="bloque">
-            <button id="btnDataExportExercises" class="list-card clickable full" type="button">
-                <div class="list-card__row">
-                    <div class="list-card__start">
-                        <div class="list-card__body">
-                            <div class="element">Exporter bibliothèque d'exercices</div>
-                            <div class="details">Génère un fichier exercices.json pour mettre à jour la bibliothèque.</div>
-                        </div>
-                    </div>
-                    <div class="list-card__end">
-                        <span class="list-card__icon" aria-hidden="true">›</span>
-                    </div>
-                </div>
-            </button>
-        </div>
-        <div class="bloque">
             <button id="btnDataImportSessions" class="list-card clickable full" type="button">
                 <div class="list-card__row">
                     <div class="list-card__start">
@@ -875,107 +976,6 @@
                     </div>
                 </div>
             </button>
-        </div>
-        <div class="bloque">
-            <button id="btnDataReloadExercises" class="list-card clickable full" type="button">
-                <div class="list-card__row">
-                    <div class="list-card__start">
-                        <div class="list-card__body">
-                            <div class="element">Synchroniser la bibliothèque d'exercices</div>
-                            <div class="details">Mettre à jour la bibliothèque d'exercices depuis Internet.</div>
-                        </div>
-                    </div>
-                    <div class="list-card__end">
-                        <span class="list-card__icon" aria-hidden="true">›</span>
-                    </div>
-                </div>
-            </button>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== Réglages > Données > Mapping FitHero ========== -->
-<section id="screenFitHeroMapping" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="btnFitHeroMappingBack" class="btn" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title">Mapping FitHero</div>
-        </div>
-        <div class="header-right">
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <p class="details">Liste des slugs FitHero inconnus à associer à vos exercices.</p>
-        </div>
-        <div class="bloque">
-            <div id="fitHeroMappingEmpty" class="empty" hidden>Aucun slug FitHero inconnu.</div>
-            <div id="fitHeroMappingList" class="mapping-list" aria-label="Mapping FitHero"></div>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== Réglages >  Application ========== -->
-<section id="screenApplication" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="btnApplicationBack" class="btn" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title">Application</div>
-        </div>
-        <div class="header-right">
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <div class="row">
-                <button id="btnSettingsUpdate" class="btn full danger">🧹 Update</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsReset" class="btn full danger">🗑️ Reset</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsAdmin" class="btn full">🛠️ Admin</button>
-            </div>
-        </div>
-    </main>
-
-</section>
-<!-- ==================== -->
-
-<!-- ========== Réglages > Application > Admin ========== -->
-<section id="screenAdmin" class="screen" hidden>
-
-    <header class="header">
-        <div class="header-left">
-            <button id="btnAdminBack" class="btn" title="Retour">◀︎</button>
-        </div>
-        <div class="header-center">
-            <div class="title">Admin</div>
-        </div>
-        <div class="header-right">
-        </div>
-    </header>
-
-    <main class="content">
-        <div class="bloque">
-            <button id="btnAdminUpdateFitHeroMapping" class="btn full" type="button">
-                Mettre à jour le mapping FitHero
-            </button>
-            <p class="details">
-                Génère un fichier de mapping FitHero à jour depuis les mappings en ligne et personnalisés.
-            </p>
         </div>
     </main>
 
