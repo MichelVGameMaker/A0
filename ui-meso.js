@@ -19,116 +19,11 @@
         expandedDayIndex: null
     };
 
-    const MODIFIERS = [
-        {
-            id: 'deload',
-            name: 'Deload',
-            shortName: 'Deload',
-            details: 'RPE -1 · -2 séries · reps +20%',
-            rpeDelta: -1,
-            setsDrop: 2,
-            repsPercent: 20
-        },
-        {
-            id: 'intense',
-            name: 'Intense',
-            shortName: 'Intense',
-            details: 'RPE +1 · +1 série · reps -20%',
-            rpeDelta: 1,
-            setsAdd: 1,
-            repsPercent: -20
-        },
-        {
-            id: 'perf-plus-1',
-            name: 'Perf +1%',
-            shortName: 'Perf+1%',
-            details: 'perf +1%',
-            perfPercent: 1
-        },
-        {
-            id: 'perf-plus-5',
-            name: 'Perf +5%',
-            shortName: 'Perf+5%',
-            details: 'perf +5%',
-            perfPercent: 5
-        },
-        {
-            id: 'perf-minus-1',
-            name: 'Perf -1%',
-            shortName: 'Perf-1%',
-            details: 'perf -1%',
-            perfPercent: -1
-        },
-        {
-            id: 'perf-minus-5',
-            name: 'Perf -5%',
-            shortName: 'Perf-5%',
-            details: 'perf -5%',
-            perfPercent: -5
-        },
-        {
-            id: 'reps-10',
-            name: 'Reps +10',
-            shortName: 'Reps+10',
-            details: 'reps +10%',
-            repsPercent: 10
-        },
-        {
-            id: 'reps-25',
-            name: 'Reps +25',
-            shortName: 'Reps+25',
-            details: 'reps +25%',
-            repsPercent: 25
-        },
-        {
-            id: 'reps-50',
-            name: 'Reps +50',
-            shortName: 'Reps+50',
-            details: 'reps +50%',
-            repsPercent: 50
-        },
-        {
-            id: 'reps-minus-10',
-            name: 'Reps -10',
-            shortName: 'Reps-10',
-            details: 'reps -10%',
-            repsPercent: -10
-        },
-        {
-            id: 'reps-minus-20',
-            name: 'Reps -20',
-            shortName: 'Reps-20',
-            details: 'reps -20%',
-            repsPercent: -20
-        },
-        {
-            id: 'rpe-minus-2',
-            name: 'RPE -2',
-            shortName: 'RPE-2',
-            details: 'RPE -2',
-            rpeDelta: -2
-        },
-        {
-            id: 'rpe-minus-1',
-            name: 'RPE -1',
-            shortName: 'RPE-1',
-            details: 'RPE -1',
-            rpeDelta: -1
-        },
-        {
-            id: 'rpe-plus-1',
-            name: 'RPE +1',
-            shortName: 'RPE+1',
-            details: 'RPE +1',
-            rpeDelta: 1
-        },
-        {
-            id: 'rpe-plus-2',
-            name: 'RPE +2',
-            shortName: 'RPE+2',
-            details: 'RPE +2',
-            rpeDelta: 2
-        }
+    const MODIFIER_OPTIONS = [
+        { value: 'reps', label: 'Reps', type: 'percent', defaultValue: 2.5, step: 0.1 },
+        { value: 'weight', label: 'Poids', type: 'percent', defaultValue: 2.5, step: 0.1 },
+        { value: 'rpe', label: 'RPE', type: 'absolute', defaultValue: -0.5, step: 0.5 },
+        { value: 'sets', label: 'Séries', type: 'absolute', defaultValue: 1, step: 1 }
     ];
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -315,9 +210,8 @@
 
         const modifiersList = renderModifiers(dayIndex);
         const modifierPicker = createModifierPicker(dayIndex);
-        const exerciseList = renderExerciseList(dayIndex, routine);
 
-        detailsWrapper.append(modifiersList, modifierPicker, exerciseList);
+        detailsWrapper.append(modifiersList, modifierPicker);
         body.append(header, detailsWrapper);
         card.setAttribute('aria-label', `Jour ${dayIndex} - ${routine?.name || 'Aucune routine'}`);
 
@@ -332,47 +226,30 @@
     }
 
     function buildModifierSummary(dayIndex) {
-        const modifierNames = getDayModifiers(dayIndex)
-            .map((modifierId) => MODIFIERS.find((item) => item.id === modifierId))
-            .filter(Boolean)
-            .map((modifier) => modifier.shortName || modifier.name)
-            .filter(Boolean);
-        if (!modifierNames.length) {
+        const modifiers = getDayModifiers(dayIndex);
+        if (!modifiers.length) {
             return 'Aucun modificateur';
         }
-        return modifierNames.join(', ');
+        return modifiers.map((modifier) => formatModifierLabel(modifier)).join(', ');
     }
 
     function createModifierPicker(dayIndex) {
         const wrapper = document.createElement('div');
-        wrapper.className = 'meso-modifier-picker';
+        wrapper.className = 'meso-modifier-actions';
 
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'btn small';
-        button.textContent = 'Ajouter modificateurs';
-
-        const menu = document.createElement('div');
-        menu.className = 'meso-modifier-menu';
-        MODIFIERS.forEach((modifier) => {
-            const option = document.createElement('button');
-            option.type = 'button';
-            option.className = 'meso-modifier-option';
-            option.textContent = `${modifier.name} · ${modifier.details}`;
-            option.addEventListener('click', async () => {
-                await addModifierToDay(dayIndex, modifier.id);
-                menu.classList.remove('is-open');
-                button.setAttribute('aria-expanded', 'false');
+        const modifiers = getDayModifiers(dayIndex);
+        const usedMetrics = new Set(modifiers.map((modifier) => modifier.metric));
+        MODIFIER_OPTIONS.forEach((option) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn small';
+            button.textContent = option.label;
+            button.disabled = usedMetrics.has(option.value);
+            button.addEventListener('click', async () => {
+                await addModifierToDay(dayIndex, option.value);
             });
-            menu.appendChild(option);
+            wrapper.appendChild(button);
         });
-
-        button.addEventListener('click', () => {
-            const isOpen = menu.classList.toggle('is-open');
-            button.setAttribute('aria-expanded', String(isOpen));
-        });
-
-        wrapper.append(button, menu);
         return wrapper;
     }
 
@@ -380,28 +257,47 @@
         const container = document.createElement('div');
         container.className = 'meso-modifier-list';
         const modifiers = getDayModifiers(dayIndex);
-        modifiers.forEach((modifierId) => {
-            const modifier = MODIFIERS.find((item) => item.id === modifierId);
-            if (!modifier) {
-                return;
-            }
+        modifiers.forEach((modifier, index) => {
+            const config = getMetricConfig(modifier.metric);
             const row = document.createElement('div');
-            row.className = 'meso-modifier-row';
+            row.className = 'progression-module-row meso-modifier-row';
 
             const label = document.createElement('div');
-            label.className = 'meso-modifier-name';
-            label.textContent = `${modifier.name} · ${modifier.details}`;
+            label.className = 'progression-module-label';
+            label.textContent = config.label;
+
+            const valueWrapper = document.createElement('div');
+            valueWrapper.className = 'progression-module-percent';
+
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'input progression-module-input';
+            input.value = String(formatModifierValue(modifier.metric, modifier.value));
+            input.step = String(config.step);
+            if (config.type === 'percent') {
+                input.min = '-100';
+                input.max = '500';
+            }
+
+            const suffix = document.createElement('span');
+            suffix.className = 'progression-module-suffix';
+            suffix.textContent = config.type === 'percent' ? '%' : '';
+
+            valueWrapper.append(input, suffix);
 
             const remove = document.createElement('button');
             remove.type = 'button';
-            remove.className = 'meso-modifier-remove';
-            remove.textContent = '×';
-            remove.setAttribute('aria-label', 'Supprimer');
+            remove.className = 'btn tiny meso-modifier-remove';
+            remove.textContent = 'Supprimer';
             remove.addEventListener('click', async () => {
-                await removeModifierFromDay(dayIndex, modifier.id);
+                await removeModifierFromDay(dayIndex, modifier.metric);
             });
 
-            row.append(label, remove);
+            input.addEventListener('change', async () => {
+                await updateModifierValue(dayIndex, index, modifier.metric, input.value);
+            });
+
+            row.append(label, valueWrapper, remove);
             container.appendChild(row);
         });
 
@@ -414,71 +310,26 @@
         return container;
     }
 
-    function renderExerciseList(dayIndex, routine) {
-        const container = document.createElement('div');
-        container.className = 'meso-exercise-list';
-
-        const moves = Array.isArray(routine?.moves) ? [...routine.moves] : [];
-        moves.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
-
-        if (!moves.length) {
-            const empty = document.createElement('div');
-            empty.className = 'details meso-empty';
-            empty.textContent = 'Aucun exercice dans cette routine.';
-            container.appendChild(empty);
-            return container;
-        }
-
-        moves.forEach((move) => {
-            container.appendChild(renderExerciseLine(dayIndex, move));
-        });
-
-        return container;
-    }
-
-    function renderExerciseLine(dayIndex, move) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'meso-exercise';
-
-        const line = document.createElement('div');
-        line.className = 'meso-exercise-line';
-
-        const name = document.createElement('div');
-        name.className = 'meso-exercise-name';
-        name.textContent = move?.exerciseName || 'Exercice';
-
-        const status = document.createElement('div');
-        status.className = 'details meso-exercise-status';
-        const override = getExerciseOverride(dayIndex, move?.exerciseId);
-        status.textContent = override ? 'Personnalisé' : 'Modificateurs appliqués';
-        status.classList.toggle('is-custom', Boolean(override));
-
-        line.append(name, status);
-
-        wrapper.append(line);
-        return wrapper;
-    }
-
-    async function addModifierToDay(dayIndex, modifierId) {
+    async function addModifierToDay(dayIndex, metric) {
         const plan = state.plan || (await ensurePlanningPlan());
         if (!plan) {
             return;
         }
         const dayData = ensureDayData(plan, state.selectedCycle, dayIndex);
-        if (!dayData.modifiers.includes(modifierId)) {
-            dayData.modifiers.push(modifierId);
+        if (!dayData.modifiers.some((modifier) => modifier.metric === metric)) {
+            dayData.modifiers.push(createModifier(metric));
             await db.put('plans', plan);
             await renderMeso();
         }
     }
 
-    async function removeModifierFromDay(dayIndex, modifierId) {
+    async function removeModifierFromDay(dayIndex, metric) {
         const plan = state.plan || (await ensurePlanningPlan());
         if (!plan) {
             return;
         }
         const dayData = ensureDayData(plan, state.selectedCycle, dayIndex);
-        const next = dayData.modifiers.filter((id) => id !== modifierId);
+        const next = dayData.modifiers.filter((modifier) => modifier.metric !== metric);
         dayData.modifiers = next;
         await db.put('plans', plan);
         await renderMeso();
@@ -492,7 +343,81 @@
         const cycle = meso.cycles[state.selectedCycle];
         const dayKey = String(dayIndex);
         const dayData = cycle?.days?.[dayKey];
-        return Array.isArray(dayData?.modifiers) ? dayData.modifiers : [];
+        return normalizeModifiers(dayData?.modifiers);
+    }
+
+    async function updateModifierValue(dayIndex, index, metric, value) {
+        const plan = state.plan || (await ensurePlanningPlan());
+        if (!plan) {
+            return;
+        }
+        const dayData = ensureDayData(plan, state.selectedCycle, dayIndex);
+        const next = normalizeModifiers(dayData.modifiers);
+        if (!next[index]) {
+            return;
+        }
+        next[index] = {
+            metric,
+            value: normalizeModifierValue(metric, value)
+        };
+        dayData.modifiers = next;
+        await db.put('plans', plan);
+        await renderMeso();
+    }
+
+    function normalizeModifiers(modifiers) {
+        if (!Array.isArray(modifiers)) {
+            return [];
+        }
+        return modifiers
+            .map((modifier) => {
+                if (!modifier || typeof modifier !== 'object') {
+                    return null;
+                }
+                const config = getMetricConfig(modifier.metric);
+                return {
+                    metric: config.value,
+                    value: normalizeModifierValue(config.value, modifier.value ?? modifier.percent)
+                };
+            })
+            .filter(Boolean);
+    }
+
+    function createModifier(metric) {
+        const config = getMetricConfig(metric);
+        return {
+            metric: config.value,
+            value: config.defaultValue
+        };
+    }
+
+    function getMetricConfig(metric) {
+        const match = MODIFIER_OPTIONS.find((option) => option.value === metric);
+        return match || MODIFIER_OPTIONS[0];
+    }
+
+    function normalizeModifierValue(metric, value) {
+        const config = getMetricConfig(metric);
+        const numeric = Number.parseFloat(value);
+        if (!Number.isFinite(numeric)) {
+            return config.defaultValue;
+        }
+        if (metric === 'sets') {
+            return Math.round(numeric);
+        }
+        return Math.round(numeric * 10) / 10;
+    }
+
+    function formatModifierValue(metric, value) {
+        return normalizeModifierValue(metric, value);
+    }
+
+    function formatModifierLabel(modifier) {
+        const config = getMetricConfig(modifier.metric);
+        const value = normalizeModifierValue(modifier.metric, modifier.value);
+        const sign = value > 0 ? '+' : '';
+        const suffix = config.type === 'percent' ? '%' : '';
+        return `${config.label} ${sign}${value}${suffix}`;
     }
 
     function getExerciseOverride(dayIndex, exerciseId) {
@@ -569,29 +494,37 @@
             rpe: normalizeNumber(set?.rpe)
         }));
 
-        const modifiers = getDayModifiers(dayIndex)
-            .map((id) => MODIFIERS.find((item) => item.id === id))
-            .filter(Boolean);
+        const modifiers = getDayModifiers(dayIndex);
 
-        modifiers.forEach((modifier) => {
-            if (modifier.setsAdd) {
+        const setsModifier = modifiers.find((modifier) => modifier.metric === 'sets');
+        if (setsModifier) {
+            const delta = normalizeModifierValue('sets', setsModifier.value);
+            if (delta > 0) {
                 const last = next[next.length - 1] || { reps: null, weight: null, rpe: null };
-                for (let index = 0; index < modifier.setsAdd; index += 1) {
+                for (let index = 0; index < delta; index += 1) {
                     next.push({ ...last });
                 }
             }
-            if (modifier.setsDrop) {
-                next = next.slice(0, Math.max(0, next.length - modifier.setsDrop));
+            if (delta < 0) {
+                next = next.slice(0, Math.max(0, next.length + delta));
             }
-            next = next.map((set) => ({
-                reps: applyPercent(adjustValue(set.reps, modifier.repsDelta), modifier.repsPercent),
-                weight: adjustValue(
-                    applyPercent(set.weight, modifier.weightPercent),
-                    modifier.weightDelta
-                ),
-                rpe: adjustValue(set.rpe, modifier.rpeDelta)
-            }));
-        });
+        }
+
+        const repsModifier = modifiers.find((modifier) => modifier.metric === 'reps');
+        const weightModifier = modifiers.find((modifier) => modifier.metric === 'weight');
+        const rpeModifier = modifiers.find((modifier) => modifier.metric === 'rpe');
+
+        next = next.map((set) => ({
+            reps: repsModifier
+                ? applyPercent(set.reps, normalizeModifierValue('reps', repsModifier.value))
+                : set.reps,
+            weight: weightModifier
+                ? applyPercent(set.weight, normalizeModifierValue('weight', weightModifier.value))
+                : set.weight,
+            rpe: rpeModifier
+                ? adjustValue(set.rpe, normalizeModifierValue('rpe', rpeModifier.value))
+                : set.rpe
+        }));
 
         return next;
     }
@@ -629,6 +562,8 @@
         }
         if (!Array.isArray(cycle.days[dayKey].modifiers)) {
             cycle.days[dayKey].modifiers = [];
+        } else {
+            cycle.days[dayKey].modifiers = normalizeModifiers(cycle.days[dayKey].modifiers);
         }
         if (!cycle.days[dayKey].exerciseOverrides || typeof cycle.days[dayKey].exerciseOverrides !== 'object') {
             cycle.days[dayKey].exerciseOverrides = {};

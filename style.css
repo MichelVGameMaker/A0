@@ -1078,6 +1078,12 @@ textarea:focus{
     gap:6px;
     margin-top:8px;
 }
+.meso-modifier-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:8px;
+}
 .meso-modifier-menu{
     display:none;
     flex-direction:column;
@@ -1101,33 +1107,16 @@ textarea:focus{
     margin-top:8px;
 }
 .meso-modifier-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    padding:8px 10px;
-    border:1px solid var(--panelBord);
-    border-radius:var(--radius);
-    background:var(--panelBack);
+    justify-content:flex-start;
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
 }
 .meso-modifier-remove{
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    width:24px;
-    height:24px;
-    border:0;
-    border-radius:50%;
-    background:transparent;
-    color:var(--emptyColor);
-    font-size:18px;
-    line-height:1;
-    cursor:pointer;
-}
-.meso-modifier-remove:hover,
-.meso-modifier-remove:focus-visible{
-    color:var(--filledColor);
-    background:var(--clickableBack);
 }
 .meso-modifier-name{
     font-weight:var(--fw-strong);
@@ -1256,6 +1245,10 @@ textarea:focus{
     gap:8px;
     flex-wrap:wrap;
 }
+.progression-module-label{
+    min-width:90px;
+    font-weight:var(--fw-strong);
+}
 .progression-module-select{
     min-width:140px;
     flex:0 0 auto;
@@ -1278,6 +1271,8 @@ textarea:focus{
 .progression-module-actions{
     display:flex;
     justify-content:flex-start;
+    flex-wrap:wrap;
+    gap:6px;
 }
 .progression-module-summary{
     font-size:var(--fs-small);

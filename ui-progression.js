@@ -9,11 +9,11 @@
     const refs = {};
     let refsResolved = false;
     const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-    const DEFAULT_MODULE_PERCENT = 1;
     const MODULE_OPTIONS = [
-        { value: 'weight', label: 'Poids' },
-        { value: 'sets', label: 'Séries' },
-        { value: 'rpe', label: 'RPE' }
+        { value: 'reps', label: 'Reps', type: 'percent', defaultValue: 2.5, step: 0.1 },
+        { value: 'weight', label: 'Poids', type: 'percent', defaultValue: 2.5, step: 0.1 },
+        { value: 'rpe', label: 'RPE', type: 'absolute', defaultValue: -0.5, step: 0.5 },
+        { value: 'sets', label: 'Séries', type: 'absolute', defaultValue: 1, step: 1 }
     ];
     const MAX_PLAN_DAYS = 28;
     const state = {
@@ -71,8 +71,8 @@
                 title: 'Progression globale',
                 description: 'S’applique à toutes les séances sauf surcharge.',
                 modules: globalModules,
-                onAdd: async () => {
-                    await setGlobalModules([...globalModules, createEmptyModule()]);
+                onAdd: async (metric) => {
+                    await setGlobalModules([...globalModules, createModule(metric)]);
                 },
                 onUpdate: async (nextModules) => {
                     await setGlobalModules(nextModules);
@@ -164,9 +164,9 @@
                 : 'Personnalisez la progression de cette séance.',
             modules: routineModules || [],
             isInherited: routineModules === null,
-            onAdd: async () => {
+            onAdd: async (metric) => {
                 const base = routineModules === null ? [] : routineModules;
-                await setRoutineModules(routine.id, [...base, createEmptyModule()]);
+                await setRoutineModules(routine.id, [...base, createModule(metric)]);
             },
             onUpdate: async (nextModules) => {
                 await setRoutineModules(routine.id, nextModules);
@@ -177,27 +177,7 @@
             }
         });
 
-        const exercises = document.createElement('div');
-        exercises.className = 'progression-exercise-list';
-        const exercisesTitle = document.createElement('div');
-        exercisesTitle.className = 'details progression-exercise-title';
-        exercisesTitle.textContent = 'Exercices';
-        exercises.appendChild(exercisesTitle);
-        const moves = Array.isArray(routine?.moves) ? [...routine.moves] : [];
-        moves.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
-
-        if (!moves.length) {
-            const empty = document.createElement('div');
-            empty.className = 'details progression-empty';
-            empty.textContent = 'Aucun exercice dans cette routine.';
-            exercises.appendChild(empty);
-        } else {
-            moves.forEach((move) => {
-                exercises.appendChild(renderExerciseLine(move));
-            });
-        }
-
-        detailsWrapper.append(routineModulesSection, exercises);
+        detailsWrapper.append(routineModulesSection);
         body.append(header, detailsWrapper);
         const routineName = routine?.name || 'Routine';
         card.setAttribute('aria-label', `${routineName} - ${dayName}`);
@@ -220,17 +200,6 @@
             return `Progression personnalisée · ${count} ${label}`;
         }
         return `Progression globale · ${count} ${label}`;
-    }
-
-    function renderExerciseLine(move) {
-        const line = document.createElement('div');
-        line.className = 'progression-exercise-line list-line--compact';
-
-        const name = document.createElement('div');
-        name.className = 'progression-exercise-name';
-        name.textContent = move?.exerciseName || 'Exercice';
-        line.appendChild(name);
-        return line;
     }
 
     function renderModuleSection({
@@ -284,18 +253,21 @@
 
         const actions = document.createElement('div');
         actions.className = 'progression-module-actions';
-
-        const addButton = document.createElement('button');
-        addButton.type = 'button';
-        addButton.className = 'btn small';
-        addButton.textContent = 'Ajouter une progression';
-        addButton.addEventListener('click', async () => {
-            if (typeof onAdd === 'function') {
-                await onAdd();
-                await renderProgression();
-            }
+        const usedMetrics = new Set(modules.map((module) => module.metric));
+        MODULE_OPTIONS.forEach((option) => {
+            const addButton = document.createElement('button');
+            addButton.type = 'button';
+            addButton.className = 'btn small';
+            addButton.textContent = option.label;
+            addButton.disabled = usedMetrics.has(option.value);
+            addButton.addEventListener('click', async () => {
+                if (typeof onAdd === 'function') {
+                    await onAdd(option.value);
+                    await renderProgression();
+                }
+            });
+            actions.appendChild(addButton);
         });
-        actions.appendChild(addButton);
 
         wrapper.append(header, list, actions);
         return wrapper;
@@ -305,17 +277,11 @@
         const row = document.createElement('div');
         row.className = 'progression-module-row';
 
-        const select = document.createElement('select');
-        select.className = 'input progression-module-select';
-        MODULE_OPTIONS.forEach((option) => {
-            const item = document.createElement('option');
-            item.value = option.value;
-            item.textContent = option.label;
-            if (option.value === module.metric) {
-                item.selected = true;
-            }
-            select.appendChild(item);
-        });
+        const config = getMetricConfig(module.metric);
+
+        const label = document.createElement('div');
+        label.className = 'progression-module-label';
+        label.textContent = config.label;
 
         const percentWrapper = document.createElement('div');
         percentWrapper.className = 'progression-module-percent';
@@ -323,14 +289,16 @@
         const percentInput = document.createElement('input');
         percentInput.type = 'number';
         percentInput.className = 'input progression-module-input';
-        percentInput.value = String(formatPercent(module.percent));
-        percentInput.step = '0.1';
-        percentInput.min = '-100';
-        percentInput.max = '500';
+        percentInput.value = String(formatMetricValue(module.metric, module.value));
+        percentInput.step = String(config.step);
+        if (config.type === 'percent') {
+            percentInput.min = '-100';
+            percentInput.max = '500';
+        }
 
         const suffix = document.createElement('span');
         suffix.className = 'progression-module-suffix';
-        suffix.textContent = '%';
+        suffix.textContent = config.type === 'percent' ? '%' : '';
 
         percentWrapper.append(percentInput, suffix);
 
@@ -343,22 +311,21 @@
             if (typeof onUpdate !== 'function') {
                 return;
             }
-            const nextPercent = parseGoalPercent(percentInput.value);
-            percentInput.value = String(formatPercent(nextPercent));
+            const nextValue = normalizeMetricValue(module.metric, percentInput.value);
+            percentInput.value = String(formatMetricValue(module.metric, nextValue));
             const nextModules = modules.map((item, idx) => {
                 if (idx !== index) {
                     return item;
                 }
                 return {
-                    metric: select.value,
-                    percent: nextPercent
+                    metric: module.metric,
+                    value: nextValue
                 };
             });
             await onUpdate(nextModules);
             await renderProgression();
         };
 
-        select.addEventListener('change', handleChange);
         percentInput.addEventListener('change', handleChange);
 
         removeButton.addEventListener('click', async () => {
@@ -368,14 +335,15 @@
             }
         });
 
-        row.append(select, percentWrapper, removeButton);
+        row.append(label, percentWrapper, removeButton);
         return row;
     }
 
-    function createEmptyModule() {
+    function createModule(metric) {
+        const config = getMetricConfig(metric);
         return {
-            metric: MODULE_OPTIONS[0].value,
-            percent: DEFAULT_MODULE_PERCENT
+            metric: config.value,
+            value: config.defaultValue
         };
     }
 
@@ -429,12 +397,15 @@
             return [];
         }
         return modules
-            .map((module) => ({
-                metric: MODULE_OPTIONS.some((option) => option.value === module?.metric)
+            .map((module) => {
+                const metric = MODULE_OPTIONS.some((option) => option.value === module?.metric)
                     ? module.metric
-                    : MODULE_OPTIONS[0].value,
-                percent: parseGoalPercent(module?.percent)
-            }));
+                    : MODULE_OPTIONS[0].value;
+                return {
+                    metric,
+                    value: normalizeMetricValue(metric, module?.value ?? module?.percent)
+                };
+            });
     }
 
     function ensureProgressionModules(plan) {
@@ -485,20 +456,25 @@
         return DAY_LABELS[labelIndex] || `Jour ${dayIndex}`;
     }
 
-    function parseGoalPercent(value) {
-        const numeric = Number.parseFloat(value);
-        if (!Number.isFinite(numeric)) {
-            return DEFAULT_MODULE_PERCENT;
-        }
-        return numeric;
+    function getMetricConfig(metric) {
+        const match = MODULE_OPTIONS.find((option) => option.value === metric);
+        return match || MODULE_OPTIONS[0];
     }
 
-    function formatPercent(value) {
+    function normalizeMetricValue(metric, value) {
+        const config = getMetricConfig(metric);
         const numeric = Number.parseFloat(value);
         if (!Number.isFinite(numeric)) {
-            return DEFAULT_MODULE_PERCENT;
+            return config.defaultValue;
+        }
+        if (metric === 'sets') {
+            return Math.round(numeric);
         }
         return Math.round(numeric * 10) / 10;
+    }
+
+    function formatMetricValue(metric, value) {
+        return normalizeMetricValue(metric, value);
     }
 
     function ensureRefs() {
