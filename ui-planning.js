@@ -539,6 +539,11 @@
     }
 
     function buildProgressionSummary(plan) {
+        const moduleCount = getProgressionModuleCount(plan);
+        if (moduleCount > 0) {
+            const label = moduleCount === 1 ? 'module' : 'modules';
+            return `Progression modulaire · ${moduleCount} ${label}`;
+        }
         const percent = getProgressionPercent(plan);
         const formatted = formatPercentFr(percent);
         return `+ ${formatted}% de poids`;
@@ -554,6 +559,14 @@
         }
         const total = percents.reduce((sum, value) => sum + value, 0);
         return total / percents.length;
+    }
+
+    function getProgressionModuleCount(plan) {
+        const modules = plan?.progressionModules?.global;
+        if (!Array.isArray(modules)) {
+            return 0;
+        }
+        return modules.length;
     }
 
     function formatPercentFr(value) {

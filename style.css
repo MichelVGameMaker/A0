@@ -1224,6 +1224,74 @@ textarea:focus{
     flex-direction:column;
     gap:12px;
 }
+.progression-module-section{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:12px;
+    border:1px solid var(--panelBord);
+    border-radius:12px;
+    background:var(--panelBack);
+    margin-bottom:12px;
+}
+.progression-module-section__header{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+.progression-module-section__title{
+    font-weight:var(--fw-strong);
+}
+.progression-module-section__description{
+    font-size:var(--fs-small);
+}
+.progression-module-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+.progression-module-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+.progression-module-select{
+    min-width:140px;
+    flex:0 0 auto;
+}
+.progression-module-percent{
+    display:flex;
+    align-items:center;
+    gap:4px;
+}
+.progression-module-input{
+    width:90px;
+    height:32px;
+    padding:0 6px;
+    font-size:var(--fs-small);
+    font-weight:var(--fw-strong);
+}
+.progression-module-suffix{
+    font-size:var(--fs-small);
+}
+.progression-module-actions{
+    display:flex;
+    justify-content:flex-start;
+}
+.progression-module-summary{
+    font-size:var(--fs-small);
+    color:var(--filledColor);
+}
+.progression-module-empty,
+.progression-module-inherited{
+    font-size:var(--fs-small);
+    color:var(--emptyColor);
+}
+.progression-exercise-title{
+    margin-top:8px;
+    font-weight:var(--fw-strong);
+}
 .progression-card__header{
     display:flex;
     align-items:center;

@@ -9,7 +9,12 @@
     const refs = {};
     let refsResolved = false;
     const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-    const DEFAULT_GOAL_PERCENT = 1;
+    const DEFAULT_MODULE_PERCENT = 1;
+    const MODULE_OPTIONS = [
+        { value: 'weight', label: 'Poids' },
+        { value: 'sets', label: 'Séries' },
+        { value: 'rpe', label: 'RPE' }
+    ];
     const MAX_PLAN_DAYS = 28;
     const state = {
         plan: null,
@@ -30,8 +35,8 @@
     };
 
     async function renderProgression() {
-        const { progressionRoutineList } = ensureRefs();
-        if (!progressionRoutineList) {
+        const { progressionRoutineList, progressionGlobalModules } = ensureRefs();
+        if (!progressionRoutineList || !progressionGlobalModules) {
             return;
         }
 
@@ -44,6 +49,7 @@
         state.routines = routines;
 
         const routineMap = new Map(routines.map((routine) => [routine.id, routine]));
+        const globalModules = getGlobalModules();
         const dayCount = clampDayCount(plan.length);
         const assignedRoutineEntries = [];
         for (let dayIndex = 1; dayIndex <= dayCount; dayIndex += 1) {
@@ -59,6 +65,24 @@
         }
 
         progressionRoutineList.innerHTML = '';
+        progressionGlobalModules.innerHTML = '';
+        progressionGlobalModules.appendChild(
+            renderModuleSection({
+                title: 'Progression globale',
+                description: 'S’applique à toutes les séances sauf surcharge.',
+                modules: globalModules,
+                onAdd: async () => {
+                    await setGlobalModules([...globalModules, createEmptyModule()]);
+                },
+                onUpdate: async (nextModules) => {
+                    await setGlobalModules(nextModules);
+                },
+                onRemove: async (index) => {
+                    const nextModules = globalModules.filter((_, idx) => idx !== index);
+                    await setGlobalModules(nextModules);
+                }
+            })
+        );
         if (!assignedRoutineEntries.length) {
             const empty = document.createElement('div');
             empty.className = 'empty';
@@ -72,11 +96,11 @@
             if (!routine) {
                 return;
             }
-            progressionRoutineList.appendChild(renderRoutineCard(routine, dayIndex));
+            progressionRoutineList.appendChild(renderRoutineCard(routine, dayIndex, globalModules));
         });
     }
 
-    function renderRoutineCard(routine, dayIndex) {
+    function renderRoutineCard(routine, dayIndex, globalModules) {
         const structure = listCard.createStructure({
             cardClass: 'meso-card progression-card'
         });
@@ -99,15 +123,10 @@
         const dayName = getDayLabel(dayIndex, state.plan?.startDay);
         title.textContent = `${dayName} - ${routine?.name || 'Routine'}`;
 
-        const routineGoal = document.createElement('div');
-        routineGoal.className = 'progression-goal-control progression-goal-control--routine';
-        const routineGoalValue = getRoutineGoalPercent(routine.id);
-        routineGoal.appendChild(createGoalPrefix());
-        const routineInput = createGoalInput(routineGoalValue, async (value) => {
-            await setRoutineGoalPercent(routine.id, value);
-        });
-        routineGoal.appendChild(routineInput);
-        routineGoal.appendChild(createGoalSuffix());
+        const routineModules = getRoutineModules(routine.id);
+        const routineProgression = document.createElement('div');
+        routineProgression.className = 'progression-module-summary';
+        routineProgression.textContent = buildRoutineProgressionSummary(routineModules, globalModules);
 
         const summary = document.createElement('div');
         summary.className = 'details meso-card__summary progression-card__summary';
@@ -128,7 +147,7 @@
 
         const meta = document.createElement('div');
         meta.className = 'progression-card__meta';
-        meta.append(routineGoal, summary);
+        meta.append(routineProgression, summary);
 
         content.append(headline, meta);
         header.appendChild(content);
@@ -138,8 +157,32 @@
         detailsWrapper.id = detailsId;
         detailsWrapper.hidden = !isExpanded;
 
+        const routineModulesSection = renderModuleSection({
+            title: 'Progression de la séance',
+            description: routineModules === null
+                ? 'Utilise la progression globale.'
+                : 'Personnalisez la progression de cette séance.',
+            modules: routineModules || [],
+            isInherited: routineModules === null,
+            onAdd: async () => {
+                const base = routineModules === null ? [] : routineModules;
+                await setRoutineModules(routine.id, [...base, createEmptyModule()]);
+            },
+            onUpdate: async (nextModules) => {
+                await setRoutineModules(routine.id, nextModules);
+            },
+            onRemove: async (index) => {
+                const nextModules = (routineModules || []).filter((_, idx) => idx !== index);
+                await setRoutineModules(routine.id, nextModules);
+            }
+        });
+
         const exercises = document.createElement('div');
         exercises.className = 'progression-exercise-list';
+        const exercisesTitle = document.createElement('div');
+        exercisesTitle.className = 'details progression-exercise-title';
+        exercisesTitle.textContent = 'Exercices';
+        exercises.appendChild(exercisesTitle);
         const moves = Array.isArray(routine?.moves) ? [...routine.moves] : [];
         moves.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
 
@@ -150,11 +193,11 @@
             exercises.appendChild(empty);
         } else {
             moves.forEach((move) => {
-                exercises.appendChild(renderExerciseLine(routine.id, move, routineGoalValue));
+                exercises.appendChild(renderExerciseLine(move));
             });
         }
 
-        detailsWrapper.appendChild(exercises);
+        detailsWrapper.append(routineModulesSection, exercises);
         body.append(header, detailsWrapper);
         const routineName = routine?.name || 'Routine';
         card.setAttribute('aria-label', `${routineName} - ${dayName}`);
@@ -169,133 +212,242 @@
         return `${exerciseCount} ${exerciseLabel}`;
     }
 
-    function renderExerciseLine(routineId, move, routineGoalValue) {
+    function buildRoutineProgressionSummary(routineModules, globalModules) {
+        const hasCustom = Array.isArray(routineModules);
+        const count = hasCustom ? routineModules.length : globalModules.length;
+        const label = count === 1 ? 'module' : 'modules';
+        if (hasCustom) {
+            return `Progression personnalisée · ${count} ${label}`;
+        }
+        return `Progression globale · ${count} ${label}`;
+    }
+
+    function renderExerciseLine(move) {
         const line = document.createElement('div');
         line.className = 'progression-exercise-line list-line--compact';
 
         const name = document.createElement('div');
         name.className = 'progression-exercise-name';
         name.textContent = move?.exerciseName || 'Exercice';
-
-        const goalWrapper = document.createElement('div');
-        const override = getExerciseGoalPercent(routineId, move?.exerciseId);
-        goalWrapper.className = 'progression-goal-control';
-        goalWrapper.classList.toggle('is-inherited', override === null);
-        goalWrapper.classList.toggle('is-custom', override !== null);
-
-        const percentValue = override ?? routineGoalValue;
-        goalWrapper.appendChild(createGoalPrefix());
-        const input = createGoalInput(percentValue, async (value) => {
-            await setExerciseGoalPercent(routineId, move?.exerciseId, value);
-        });
-        goalWrapper.appendChild(input);
-        goalWrapper.appendChild(createGoalSuffix());
-
-        line.append(name, goalWrapper);
+        line.appendChild(name);
         return line;
     }
 
-    function createGoalPrefix() {
-        const prefix = document.createElement('span');
-        prefix.className = 'progression-goal-prefix';
-        prefix.textContent = 'poids +';
-        return prefix;
-    }
+    function renderModuleSection({
+        title,
+        description,
+        modules,
+        isInherited = false,
+        onAdd,
+        onUpdate,
+        onRemove
+    }) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'progression-module-section';
 
-    function createGoalSuffix() {
-        const suffix = document.createElement('span');
-        suffix.className = 'progression-goal-suffix';
-        suffix.textContent = '%';
-        return suffix;
-    }
+        const header = document.createElement('div');
+        header.className = 'progression-module-section__header';
 
-    function createGoalInput(value, onChange) {
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.className = 'input progression-goal-input';
-        input.value = String(formatPercent(value));
-        input.step = '0.1';
-        input.min = '-100';
-        input.max = '500';
-        input.addEventListener('change', async () => {
-            const next = parseGoalPercent(input.value);
-            input.value = String(formatPercent(next));
-            if (typeof onChange === 'function') {
-                await onChange(next);
+        const heading = document.createElement('div');
+        heading.className = 'element progression-module-section__title';
+        heading.textContent = title;
+
+        const desc = document.createElement('div');
+        desc.className = 'details progression-module-section__description';
+        desc.textContent = description;
+
+        header.append(heading, desc);
+
+        const list = document.createElement('div');
+        list.className = 'progression-module-list';
+
+        if (isInherited) {
+            const inherited = document.createElement('div');
+            inherited.className = 'details progression-module-inherited';
+            inherited.textContent = 'Aucune progression personnalisée.';
+            list.appendChild(inherited);
+        } else if (!modules.length) {
+            const empty = document.createElement('div');
+            empty.className = 'details progression-module-empty';
+            empty.textContent = 'Aucune progression définie.';
+            list.appendChild(empty);
+        }
+
+        modules.forEach((module, index) => {
+            list.appendChild(
+                renderModuleRow(module, index, modules, {
+                    onUpdate,
+                    onRemove
+                })
+            );
+        });
+
+        const actions = document.createElement('div');
+        actions.className = 'progression-module-actions';
+
+        const addButton = document.createElement('button');
+        addButton.type = 'button';
+        addButton.className = 'btn small';
+        addButton.textContent = 'Ajouter une progression';
+        addButton.addEventListener('click', async () => {
+            if (typeof onAdd === 'function') {
+                await onAdd();
                 await renderProgression();
             }
         });
-        return input;
+        actions.appendChild(addButton);
+
+        wrapper.append(header, list, actions);
+        return wrapper;
     }
 
-    function getRoutineGoalPercent(routineId) {
+    function renderModuleRow(module, index, modules, { onUpdate, onRemove }) {
+        const row = document.createElement('div');
+        row.className = 'progression-module-row';
+
+        const select = document.createElement('select');
+        select.className = 'input progression-module-select';
+        MODULE_OPTIONS.forEach((option) => {
+            const item = document.createElement('option');
+            item.value = option.value;
+            item.textContent = option.label;
+            if (option.value === module.metric) {
+                item.selected = true;
+            }
+            select.appendChild(item);
+        });
+
+        const percentWrapper = document.createElement('div');
+        percentWrapper.className = 'progression-module-percent';
+
+        const percentInput = document.createElement('input');
+        percentInput.type = 'number';
+        percentInput.className = 'input progression-module-input';
+        percentInput.value = String(formatPercent(module.percent));
+        percentInput.step = '0.1';
+        percentInput.min = '-100';
+        percentInput.max = '500';
+
+        const suffix = document.createElement('span');
+        suffix.className = 'progression-module-suffix';
+        suffix.textContent = '%';
+
+        percentWrapper.append(percentInput, suffix);
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'btn tiny progression-module-remove';
+        removeButton.textContent = 'Supprimer';
+
+        const handleChange = async () => {
+            if (typeof onUpdate !== 'function') {
+                return;
+            }
+            const nextPercent = parseGoalPercent(percentInput.value);
+            percentInput.value = String(formatPercent(nextPercent));
+            const nextModules = modules.map((item, idx) => {
+                if (idx !== index) {
+                    return item;
+                }
+                return {
+                    metric: select.value,
+                    percent: nextPercent
+                };
+            });
+            await onUpdate(nextModules);
+            await renderProgression();
+        };
+
+        select.addEventListener('change', handleChange);
+        percentInput.addEventListener('change', handleChange);
+
+        removeButton.addEventListener('click', async () => {
+            if (typeof onRemove === 'function') {
+                await onRemove(index);
+                await renderProgression();
+            }
+        });
+
+        row.append(select, percentWrapper, removeButton);
+        return row;
+    }
+
+    function createEmptyModule() {
+        return {
+            metric: MODULE_OPTIONS[0].value,
+            percent: DEFAULT_MODULE_PERCENT
+        };
+    }
+
+    function getGlobalModules() {
+        const plan = state.plan;
+        if (!plan) {
+            return [];
+        }
+        const modules = ensureProgressionModules(plan).global;
+        return normalizeModules(modules);
+    }
+
+    function getRoutineModules(routineId) {
         const plan = state.plan;
         if (!plan || !routineId) {
-            return DEFAULT_GOAL_PERCENT;
+            return null;
         }
-        const goals = ensureProgressionGoals(plan);
-        const routineGoal = goals.routines[routineId];
-        if (!routineGoal) {
-            return DEFAULT_GOAL_PERCENT;
+        const routines = ensureProgressionModules(plan).routines;
+        if (!Object.prototype.hasOwnProperty.call(routines, routineId)) {
+            return null;
         }
-        return parseGoalPercent(routineGoal.percent);
+        return normalizeModules(routines[routineId]);
     }
 
-    function getExerciseGoalPercent(routineId, exerciseId) {
+    async function setGlobalModules(modules) {
         const plan = state.plan;
-        if (!plan || !routineId || !exerciseId) {
-            return null;
+        if (!plan) {
+            return;
         }
-        const goals = ensureProgressionGoals(plan);
-        const routineGoal = goals.routines[routineId];
-        const exerciseGoals = routineGoal?.exercises;
-        if (!exerciseGoals || typeof exerciseGoals !== 'object') {
-            return null;
-        }
-        if (!Object.prototype.hasOwnProperty.call(exerciseGoals, exerciseId)) {
-            return null;
-        }
-        return parseGoalPercent(exerciseGoals[exerciseId]);
+        const progressionModules = ensureProgressionModules(plan);
+        progressionModules.global = normalizeModules(modules);
+        await db.put('plans', plan);
     }
 
-    async function setRoutineGoalPercent(routineId, percent) {
+    async function setRoutineModules(routineId, modules) {
         const plan = state.plan;
         if (!plan || !routineId) {
             return;
         }
-        const goals = ensureProgressionGoals(plan);
-        const routineGoal = goals.routines[routineId] || { percent: DEFAULT_GOAL_PERCENT, exercises: {} };
-        routineGoal.percent = parseGoalPercent(percent);
-        if (!routineGoal.exercises || typeof routineGoal.exercises !== 'object') {
-            routineGoal.exercises = {};
+        const progressionModules = ensureProgressionModules(plan);
+        if (!modules || !modules.length) {
+            delete progressionModules.routines[routineId];
+        } else {
+            progressionModules.routines[routineId] = normalizeModules(modules);
         }
-        goals.routines[routineId] = routineGoal;
         await db.put('plans', plan);
     }
 
-    async function setExerciseGoalPercent(routineId, exerciseId, percent) {
-        const plan = state.plan;
-        if (!plan || !routineId || !exerciseId) {
-            return;
+    function normalizeModules(modules) {
+        if (!Array.isArray(modules)) {
+            return [];
         }
-        const goals = ensureProgressionGoals(plan);
-        const routineGoal = goals.routines[routineId] || { percent: DEFAULT_GOAL_PERCENT, exercises: {} };
-        if (!routineGoal.exercises || typeof routineGoal.exercises !== 'object') {
-            routineGoal.exercises = {};
-        }
-        routineGoal.exercises[exerciseId] = parseGoalPercent(percent);
-        goals.routines[routineId] = routineGoal;
-        await db.put('plans', plan);
+        return modules
+            .map((module) => ({
+                metric: MODULE_OPTIONS.some((option) => option.value === module?.metric)
+                    ? module.metric
+                    : MODULE_OPTIONS[0].value,
+                percent: parseGoalPercent(module?.percent)
+            }));
     }
 
-    function ensureProgressionGoals(plan) {
-        if (!plan.progressionGoals || typeof plan.progressionGoals !== 'object') {
-            plan.progressionGoals = {};
+    function ensureProgressionModules(plan) {
+        if (!plan.progressionModules || typeof plan.progressionModules !== 'object') {
+            plan.progressionModules = {};
         }
-        if (!plan.progressionGoals.routines || typeof plan.progressionGoals.routines !== 'object') {
-            plan.progressionGoals.routines = {};
+        if (!Array.isArray(plan.progressionModules.global)) {
+            plan.progressionModules.global = [];
         }
-        return plan.progressionGoals;
+        if (!plan.progressionModules.routines || typeof plan.progressionModules.routines !== 'object') {
+            plan.progressionModules.routines = {};
+        }
+        return plan.progressionModules;
     }
 
     async function ensurePlanningPlan() {
@@ -336,7 +488,7 @@
     function parseGoalPercent(value) {
         const numeric = Number.parseFloat(value);
         if (!Number.isFinite(numeric)) {
-            return DEFAULT_GOAL_PERCENT;
+            return DEFAULT_MODULE_PERCENT;
         }
         return numeric;
     }
@@ -344,7 +496,7 @@
     function formatPercent(value) {
         const numeric = Number.parseFloat(value);
         if (!Number.isFinite(numeric)) {
-            return DEFAULT_GOAL_PERCENT;
+            return DEFAULT_MODULE_PERCENT;
         }
         return Math.round(numeric * 10) / 10;
     }
@@ -377,6 +529,7 @@
         refs.screenProgression = document.getElementById('screenProgression');
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
+        refs.progressionGlobalModules = document.getElementById('progressionGlobalModules');
         refs.progressionRoutineList = document.getElementById('progressionRoutineList');
         refs.btnProgressionBack = document.getElementById('btnProgressionBack');
         refsResolved = true;
