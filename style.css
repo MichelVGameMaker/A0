@@ -1084,6 +1084,44 @@ textarea:focus{
     gap:6px;
     margin-top:8px;
 }
+.metric-control-row{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:8px;
+    margin-top:8px;
+}
+.metric-control{
+    position:relative;
+}
+.metric-control-button{
+    width:100%;
+    justify-content:space-between;
+}
+.metric-control-menu{
+    position:absolute;
+    top:calc(100% + 4px);
+    left:0;
+    right:0;
+    display:none;
+    flex-direction:column;
+    gap:4px;
+    padding:6px;
+    border:1px solid var(--panelBord);
+    border-radius:var(--radius);
+    background:var(--panelBack);
+    z-index:5;
+}
+.metric-control-menu.is-open{
+    display:flex;
+}
+.metric-control-option{
+    border:1px solid var(--clickableBord);
+    background:var(--panelBack);
+    border-radius:var(--radius);
+    padding:6px 8px;
+    text-align:left;
+    font-size:var(--fs-small);
+}
 .meso-modifier-menu{
     display:none;
     flex-direction:column;
