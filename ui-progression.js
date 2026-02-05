@@ -10,11 +10,13 @@
     let refsResolved = false;
     const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     const MODULE_OPTIONS = [
-        { value: 'reps', label: 'Reps', type: 'percent', defaultValue: 2.5, step: 0.1 },
-        { value: 'weight', label: 'Poids', type: 'percent', defaultValue: 2.5, step: 0.1 },
-        { value: 'rpe', label: 'RPE', type: 'absolute', defaultValue: -0.5, step: 0.5 },
-        { value: 'sets', label: 'Séries', type: 'absolute', defaultValue: 1, step: 1 }
+        { value: 'reps', label: 'Reps', type: 'percent', defaultValue: 0 },
+        { value: 'weight', label: 'Poids', type: 'percent', defaultValue: 0 },
+        { value: 'rpe', label: 'RPE', type: 'absolute', defaultValue: 0 },
+        { value: 'sets', label: 'Séries', type: 'absolute', defaultValue: 0 }
     ];
+    const ABSOLUTE_VALUES = [-3, -2, -1, 0, 1, 2, 3];
+    const PERCENT_VALUES = [-10, -5, -2.5, 0, 2.5, 5, 10];
     const MAX_PLAN_DAYS = 28;
     const state = {
         plan: null,
@@ -71,14 +73,8 @@
                 title: 'Progression globale',
                 description: 'S’applique à toutes les séances sauf surcharge.',
                 modules: globalModules,
-                onAdd: async (metric) => {
-                    await setGlobalModules([...globalModules, createModule(metric)]);
-                },
+                baseModules: globalModules,
                 onUpdate: async (nextModules) => {
-                    await setGlobalModules(nextModules);
-                },
-                onRemove: async (index) => {
-                    const nextModules = globalModules.filter((_, idx) => idx !== index);
                     await setGlobalModules(nextModules);
                 }
             })
@@ -163,16 +159,9 @@
                 ? 'Utilise la progression globale.'
                 : 'Personnalisez la progression de cette séance.',
             modules: routineModules || [],
+            baseModules: routineModules === null ? globalModules : routineModules,
             isInherited: routineModules === null,
-            onAdd: async (metric) => {
-                const base = routineModules === null ? [] : routineModules;
-                await setRoutineModules(routine.id, [...base, createModule(metric)]);
-            },
             onUpdate: async (nextModules) => {
-                await setRoutineModules(routine.id, nextModules);
-            },
-            onRemove: async (index) => {
-                const nextModules = (routineModules || []).filter((_, idx) => idx !== index);
                 await setRoutineModules(routine.id, nextModules);
             }
         });
@@ -194,7 +183,9 @@
 
     function buildRoutineProgressionSummary(routineModules, globalModules) {
         const hasCustom = Array.isArray(routineModules);
-        const count = hasCustom ? routineModules.length : globalModules.length;
+        const count = hasCustom
+            ? countActiveModules(routineModules)
+            : countActiveModules(globalModules);
         const label = count === 1 ? 'module' : 'modules';
         if (hasCustom) {
             return `Progression personnalisée · ${count} ${label}`;
@@ -202,14 +193,21 @@
         return `Progression globale · ${count} ${label}`;
     }
 
+    function countActiveModules(modules) {
+        const map = buildModuleValueMap(modules);
+        return MODULE_OPTIONS.reduce((total, option) => {
+            const value = map.get(option.value) ?? 0;
+            return total + (value === 0 ? 0 : 1);
+        }, 0);
+    }
+
     function renderModuleSection({
         title,
         description,
         modules,
+        baseModules,
         isInherited = false,
-        onAdd,
-        onUpdate,
-        onRemove
+        onUpdate
     }) {
         const wrapper = document.createElement('div');
         wrapper.className = 'progression-module-section';
@@ -229,122 +227,89 @@
 
         const list = document.createElement('div');
         list.className = 'progression-module-list';
-
         if (isInherited) {
             const inherited = document.createElement('div');
             inherited.className = 'details progression-module-inherited';
-            inherited.textContent = 'Aucune progression personnalisée.';
+            inherited.textContent = 'Utilise la progression globale.';
             list.appendChild(inherited);
-        } else if (!modules.length) {
-            const empty = document.createElement('div');
-            empty.className = 'details progression-module-empty';
-            empty.textContent = 'Aucune progression définie.';
-            list.appendChild(empty);
         }
 
-        modules.forEach((module, index) => {
-            list.appendChild(
-                renderModuleRow(module, index, modules, {
-                    onUpdate,
-                    onRemove
-                })
-            );
+        const controls = renderModuleControls({
+            modules,
+            baseModules,
+            onUpdate
         });
 
-        const actions = document.createElement('div');
-        actions.className = 'progression-module-actions';
-        const usedMetrics = new Set(modules.map((module) => module.metric));
-        MODULE_OPTIONS.forEach((option) => {
-            const addButton = document.createElement('button');
-            addButton.type = 'button';
-            addButton.className = 'btn small';
-            addButton.textContent = option.label;
-            addButton.disabled = usedMetrics.has(option.value);
-            addButton.addEventListener('click', async () => {
-                if (typeof onAdd === 'function') {
-                    await onAdd(option.value);
-                    await renderProgression();
-                }
-            });
-            actions.appendChild(addButton);
-        });
-
-        wrapper.append(header, list, actions);
+        wrapper.append(header, list, controls);
         return wrapper;
     }
 
-    function renderModuleRow(module, index, modules, { onUpdate, onRemove }) {
-        const row = document.createElement('div');
-        row.className = 'progression-module-row';
+    function renderModuleControls({ modules, baseModules, onUpdate }) {
+        const controls = document.createElement('div');
+        controls.className = 'metric-control-row';
+        const valueMap = buildModuleValueMap(baseModules ?? modules);
+        MODULE_OPTIONS.forEach((option) => {
+            controls.appendChild(
+                createMetricControl({
+                    label: option.label,
+                    metric: option.value,
+                    type: option.type,
+                    value: valueMap.get(option.value) ?? 0,
+                    onSelect: async (nextValue) => {
+                        if (typeof onUpdate !== 'function') {
+                            return;
+                        }
+                        const nextMap = buildModuleValueMap(baseModules ?? modules);
+                        nextMap.set(option.value, normalizeMetricValue(option.value, nextValue));
+                        await onUpdate(moduleMapToArray(nextMap));
+                        await renderProgression();
+                    }
+                })
+            );
+        });
+        return controls;
+    }
 
-        const config = getMetricConfig(module.metric);
+    function createMetricControl({ label, metric, type, value, onSelect }) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'metric-control';
 
-        const label = document.createElement('div');
-        label.className = 'progression-module-label';
-        label.textContent = config.label;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn small metric-control-button';
+        button.textContent = `${label} ${formatMetricDisplay(metric, value)}`;
 
-        const percentWrapper = document.createElement('div');
-        percentWrapper.className = 'progression-module-percent';
+        const menu = document.createElement('div');
+        menu.className = 'metric-control-menu';
 
-        const percentInput = document.createElement('input');
-        percentInput.type = 'number';
-        percentInput.className = 'input progression-module-input';
-        percentInput.value = String(formatMetricValue(module.metric, module.value));
-        percentInput.step = String(config.step);
-        if (config.type === 'percent') {
-            percentInput.min = '-100';
-            percentInput.max = '500';
-        }
-
-        const suffix = document.createElement('span');
-        suffix.className = 'progression-module-suffix';
-        suffix.textContent = config.type === 'percent' ? '%' : '';
-
-        percentWrapper.append(percentInput, suffix);
-
-        const removeButton = document.createElement('button');
-        removeButton.type = 'button';
-        removeButton.className = 'btn tiny progression-module-remove';
-        removeButton.textContent = 'Supprimer';
-
-        const handleChange = async () => {
-            if (typeof onUpdate !== 'function') {
-                return;
-            }
-            const nextValue = normalizeMetricValue(module.metric, percentInput.value);
-            percentInput.value = String(formatMetricValue(module.metric, nextValue));
-            const nextModules = modules.map((item, idx) => {
-                if (idx !== index) {
-                    return item;
+        const options = type === 'percent' ? PERCENT_VALUES : ABSOLUTE_VALUES;
+        options.forEach((optionValue) => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = 'metric-control-option';
+            option.textContent = formatMetricDisplay(metric, optionValue);
+            option.addEventListener('click', async () => {
+                menu.classList.remove('is-open');
+                if (typeof onSelect === 'function') {
+                    await onSelect(optionValue);
                 }
-                return {
-                    metric: module.metric,
-                    value: nextValue
-                };
             });
-            await onUpdate(nextModules);
-            await renderProgression();
-        };
+            menu.appendChild(option);
+        });
 
-        percentInput.addEventListener('change', handleChange);
-
-        removeButton.addEventListener('click', async () => {
-            if (typeof onRemove === 'function') {
-                await onRemove(index);
-                await renderProgression();
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const shouldOpen = !menu.classList.contains('is-open');
+            wrapper.parentElement?.querySelectorAll('.metric-control-menu').forEach((item) => {
+                item.classList.remove('is-open');
+            });
+            if (shouldOpen) {
+                menu.classList.add('is-open');
             }
         });
 
-        row.append(label, percentWrapper, removeButton);
-        return row;
-    }
-
-    function createModule(metric) {
-        const config = getMetricConfig(metric);
-        return {
-            metric: config.value,
-            value: config.defaultValue
-        };
+        wrapper.append(button, menu);
+        return wrapper;
     }
 
     function getGlobalModules() {
@@ -406,6 +371,24 @@
                     value: normalizeMetricValue(metric, module?.value ?? module?.percent)
                 };
             });
+    }
+
+    function buildModuleValueMap(modules) {
+        const map = new Map();
+        MODULE_OPTIONS.forEach((option) => {
+            map.set(option.value, option.defaultValue);
+        });
+        normalizeModules(modules).forEach((module) => {
+            map.set(module.metric, normalizeMetricValue(module.metric, module.value));
+        });
+        return map;
+    }
+
+    function moduleMapToArray(map) {
+        return MODULE_OPTIONS.map((option) => ({
+            metric: option.value,
+            value: normalizeMetricValue(option.value, map.get(option.value))
+        }));
     }
 
     function ensureProgressionModules(plan) {
@@ -473,8 +456,15 @@
         return Math.round(numeric * 10) / 10;
     }
 
-    function formatMetricValue(metric, value) {
-        return normalizeMetricValue(metric, value);
+    function formatMetricDisplay(metric, value) {
+        const config = getMetricConfig(metric);
+        const numeric = normalizeMetricValue(metric, value);
+        if (numeric === 0) {
+            return '-';
+        }
+        const sign = numeric > 0 ? '+' : '';
+        const suffix = config.type === 'percent' ? '%' : '';
+        return `${sign}${numeric}${suffix}`;
     }
 
     function ensureRefs() {

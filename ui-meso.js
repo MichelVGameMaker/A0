@@ -20,11 +20,13 @@
     };
 
     const MODIFIER_OPTIONS = [
-        { value: 'reps', label: 'Reps', type: 'percent', defaultValue: 2.5, step: 0.1 },
-        { value: 'weight', label: 'Poids', type: 'percent', defaultValue: 2.5, step: 0.1 },
-        { value: 'rpe', label: 'RPE', type: 'absolute', defaultValue: -0.5, step: 0.5 },
-        { value: 'sets', label: 'Séries', type: 'absolute', defaultValue: 1, step: 1 }
+        { value: 'reps', label: 'Reps', type: 'percent', defaultValue: 0 },
+        { value: 'weight', label: 'Poids', type: 'percent', defaultValue: 0 },
+        { value: 'rpe', label: 'RPE', type: 'absolute', defaultValue: 0 },
+        { value: 'sets', label: 'Séries', type: 'absolute', defaultValue: 0 }
     ];
+    const ABSOLUTE_VALUES = [-3, -2, -1, 0, 1, 2, 3];
+    const PERCENT_VALUES = [-10, -5, -2.5, 0, 2.5, 5, 10];
 
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
@@ -208,10 +210,9 @@
         detailsWrapper.id = detailsId;
         detailsWrapper.hidden = !isExpanded;
 
-        const modifiersList = renderModifiers(dayIndex);
-        const modifierPicker = createModifierPicker(dayIndex);
+        const modifierControls = renderModifierControls(dayIndex);
 
-        detailsWrapper.append(modifiersList, modifierPicker);
+        detailsWrapper.append(modifierControls);
         body.append(header, detailsWrapper);
         card.setAttribute('aria-label', `Jour ${dayIndex} - ${routine?.name || 'Aucune routine'}`);
 
@@ -226,113 +227,73 @@
     }
 
     function buildModifierSummary(dayIndex) {
-        const modifiers = getDayModifiers(dayIndex);
+        const modifiers = getDayModifiers(dayIndex).filter((modifier) => modifier.value !== 0);
         if (!modifiers.length) {
             return 'Aucun modificateur';
         }
         return modifiers.map((modifier) => formatModifierLabel(modifier)).join(', ');
     }
 
-    function createModifierPicker(dayIndex) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'meso-modifier-actions';
-
-        const modifiers = getDayModifiers(dayIndex);
-        const usedMetrics = new Set(modifiers.map((modifier) => modifier.metric));
+    function renderModifierControls(dayIndex) {
+        const controls = document.createElement('div');
+        controls.className = 'metric-control-row';
+        const valueMap = buildModifierValueMap(getDayModifiers(dayIndex));
         MODIFIER_OPTIONS.forEach((option) => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'btn small';
-            button.textContent = option.label;
-            button.disabled = usedMetrics.has(option.value);
-            button.addEventListener('click', async () => {
-                await addModifierToDay(dayIndex, option.value);
-            });
-            wrapper.appendChild(button);
+            controls.appendChild(
+                createMetricControl({
+                    label: option.label,
+                    metric: option.value,
+                    type: option.type,
+                    value: valueMap.get(option.value) ?? 0,
+                    onSelect: async (nextValue) => {
+                        await setDayModifierValue(dayIndex, option.value, nextValue);
+                    }
+                })
+            );
         });
-        return wrapper;
+        return controls;
     }
 
-    function renderModifiers(dayIndex) {
-        const container = document.createElement('div');
-        container.className = 'meso-modifier-list';
-        const modifiers = getDayModifiers(dayIndex);
-        modifiers.forEach((modifier, index) => {
-            const config = getMetricConfig(modifier.metric);
-            const row = document.createElement('div');
-            row.className = 'progression-module-row meso-modifier-row';
+    function createMetricControl({ label, metric, type, value, onSelect }) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'metric-control';
 
-            const label = document.createElement('div');
-            label.className = 'progression-module-label';
-            label.textContent = config.label;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn small metric-control-button';
+        button.textContent = `${label} ${formatModifierDisplay(metric, value)}`;
 
-            const valueWrapper = document.createElement('div');
-            valueWrapper.className = 'progression-module-percent';
+        const menu = document.createElement('div');
+        menu.className = 'metric-control-menu';
 
-            const input = document.createElement('input');
-            input.type = 'number';
-            input.className = 'input progression-module-input';
-            input.value = String(formatModifierValue(modifier.metric, modifier.value));
-            input.step = String(config.step);
-            if (config.type === 'percent') {
-                input.min = '-100';
-                input.max = '500';
+        const options = type === 'percent' ? PERCENT_VALUES : ABSOLUTE_VALUES;
+        options.forEach((optionValue) => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = 'metric-control-option';
+            option.textContent = formatModifierDisplay(metric, optionValue);
+            option.addEventListener('click', async () => {
+                menu.classList.remove('is-open');
+                if (typeof onSelect === 'function') {
+                    await onSelect(optionValue);
+                }
+            });
+            menu.appendChild(option);
+        });
+
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const shouldOpen = !menu.classList.contains('is-open');
+            wrapper.parentElement?.querySelectorAll('.metric-control-menu').forEach((item) => {
+                item.classList.remove('is-open');
+            });
+            if (shouldOpen) {
+                menu.classList.add('is-open');
             }
-
-            const suffix = document.createElement('span');
-            suffix.className = 'progression-module-suffix';
-            suffix.textContent = config.type === 'percent' ? '%' : '';
-
-            valueWrapper.append(input, suffix);
-
-            const remove = document.createElement('button');
-            remove.type = 'button';
-            remove.className = 'btn tiny meso-modifier-remove';
-            remove.textContent = 'Supprimer';
-            remove.addEventListener('click', async () => {
-                await removeModifierFromDay(dayIndex, modifier.metric);
-            });
-
-            input.addEventListener('change', async () => {
-                await updateModifierValue(dayIndex, index, modifier.metric, input.value);
-            });
-
-            row.append(label, valueWrapper, remove);
-            container.appendChild(row);
         });
 
-        if (!modifiers.length) {
-            const empty = document.createElement('div');
-            empty.className = 'details meso-empty';
-            empty.textContent = 'Aucun modificateur appliqué.';
-            container.appendChild(empty);
-        }
-        return container;
-    }
-
-    async function addModifierToDay(dayIndex, metric) {
-        const plan = state.plan || (await ensurePlanningPlan());
-        if (!plan) {
-            return;
-        }
-        const dayData = ensureDayData(plan, state.selectedCycle, dayIndex);
-        if (!dayData.modifiers.some((modifier) => modifier.metric === metric)) {
-            dayData.modifiers.push(createModifier(metric));
-            await db.put('plans', plan);
-            await renderMeso();
-        }
-    }
-
-    async function removeModifierFromDay(dayIndex, metric) {
-        const plan = state.plan || (await ensurePlanningPlan());
-        if (!plan) {
-            return;
-        }
-        const dayData = ensureDayData(plan, state.selectedCycle, dayIndex);
-        const next = dayData.modifiers.filter((modifier) => modifier.metric !== metric);
-        dayData.modifiers = next;
-        await db.put('plans', plan);
-        await renderMeso();
+        wrapper.append(button, menu);
+        return wrapper;
     }
 
     function getDayModifiers(dayIndex) {
@@ -343,24 +304,22 @@
         const cycle = meso.cycles[state.selectedCycle];
         const dayKey = String(dayIndex);
         const dayData = cycle?.days?.[dayKey];
-        return normalizeModifiers(dayData?.modifiers);
+        const valueMap = buildModifierValueMap(dayData?.modifiers);
+        return MODIFIER_OPTIONS.map((option) => ({
+            metric: option.value,
+            value: valueMap.get(option.value)
+        }));
     }
 
-    async function updateModifierValue(dayIndex, index, metric, value) {
+    async function setDayModifierValue(dayIndex, metric, value) {
         const plan = state.plan || (await ensurePlanningPlan());
         if (!plan) {
             return;
         }
         const dayData = ensureDayData(plan, state.selectedCycle, dayIndex);
-        const next = normalizeModifiers(dayData.modifiers);
-        if (!next[index]) {
-            return;
-        }
-        next[index] = {
-            metric,
-            value: normalizeModifierValue(metric, value)
-        };
-        dayData.modifiers = next;
+        const valueMap = buildModifierValueMap(dayData.modifiers);
+        valueMap.set(metric, normalizeModifierValue(metric, value));
+        dayData.modifiers = modifierMapToArray(valueMap);
         await db.put('plans', plan);
         await renderMeso();
     }
@@ -383,12 +342,22 @@
             .filter(Boolean);
     }
 
-    function createModifier(metric) {
-        const config = getMetricConfig(metric);
-        return {
-            metric: config.value,
-            value: config.defaultValue
-        };
+    function buildModifierValueMap(modifiers) {
+        const map = new Map();
+        MODIFIER_OPTIONS.forEach((option) => {
+            map.set(option.value, option.defaultValue);
+        });
+        normalizeModifiers(modifiers).forEach((modifier) => {
+            map.set(modifier.metric, normalizeModifierValue(modifier.metric, modifier.value));
+        });
+        return map;
+    }
+
+    function modifierMapToArray(map) {
+        return MODIFIER_OPTIONS.map((option) => ({
+            metric: option.value,
+            value: normalizeModifierValue(option.value, map.get(option.value))
+        }));
     }
 
     function getMetricConfig(metric) {
@@ -408,16 +377,20 @@
         return Math.round(numeric * 10) / 10;
     }
 
-    function formatModifierValue(metric, value) {
-        return normalizeModifierValue(metric, value);
+    function formatModifierDisplay(metric, value) {
+        const config = getMetricConfig(metric);
+        const numeric = normalizeModifierValue(metric, value);
+        if (numeric === 0) {
+            return '-';
+        }
+        const sign = numeric > 0 ? '+' : '';
+        const suffix = config.type === 'percent' ? '%' : '';
+        return `${sign}${numeric}${suffix}`;
     }
 
     function formatModifierLabel(modifier) {
         const config = getMetricConfig(modifier.metric);
-        const value = normalizeModifierValue(modifier.metric, modifier.value);
-        const sign = value > 0 ? '+' : '';
-        const suffix = config.type === 'percent' ? '%' : '';
-        return `${config.label} ${sign}${value}${suffix}`;
+        return `${config.label} ${formatModifierDisplay(modifier.metric, modifier.value)}`;
     }
 
     function getExerciseOverride(dayIndex, exerciseId) {
