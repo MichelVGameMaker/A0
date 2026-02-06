@@ -798,10 +798,13 @@
 
         try {
             const sessions = await db.getAll('sessions');
+            const exportableSessions = Array.isArray(sessions)
+                ? sessions.map((session) => withSetStatus(session))
+                : [];
             const payload = {
                 format: 'a0-sessions',
                 exportedAt: new Date().toISOString(),
-                sessions: Array.isArray(sessions) ? sessions : []
+                sessions: exportableSessions
             };
             downloadJson('a0_seances.json', payload);
             alert('Sauvegarde des séances générée.');
@@ -813,6 +816,26 @@
                 button.disabled = false;
             }
         }
+    }
+
+    function withSetStatus(session) {
+        if (!session || typeof session !== 'object') {
+            return session;
+        }
+        if (!Array.isArray(session.exercises)) {
+            return { ...session };
+        }
+        const exercises = session.exercises.map((exercise) => {
+            if (!exercise || typeof exercise !== 'object' || !Array.isArray(exercise.sets)) {
+                return exercise;
+            }
+            const sets = exercise.sets.map((set) => ({
+                ...set,
+                status: set?.done === true ? 'fait' : 'prévu'
+            }));
+            return { ...exercise, sets };
+        });
+        return { ...session, exercises };
     }
 
     async function exportExercisesLibrary(button) {
@@ -917,7 +940,8 @@
                 throw new Error('Format invalide : sessions manquant.');
             }
 
-            const invalidIndex = sessions.findIndex((session) => !isSessionPayloadValid(session));
+            const preparedSessions = sessions.map((session) => withSetDoneStatus(session));
+            const invalidIndex = preparedSessions.findIndex((session) => !isSessionPayloadValid(session));
             if (invalidIndex !== -1) {
                 throw new Error(`Format invalide : séance ${invalidIndex + 1} incorrecte.`);
             }
@@ -936,7 +960,7 @@
 
             await clearAllSessions();
 
-            for (const session of sessions) {
+            for (const session of preparedSessions) {
                 await db.saveSession(session);
             }
 
@@ -974,6 +998,46 @@
                 button.disabled = false;
             }
         }
+    }
+
+    function withSetDoneStatus(session) {
+        if (!session || typeof session !== 'object') {
+            return session;
+        }
+        if (!Array.isArray(session.exercises)) {
+            return { ...session };
+        }
+        const exercises = session.exercises.map((exercise) => {
+            if (!exercise || typeof exercise !== 'object' || !Array.isArray(exercise.sets)) {
+                return exercise;
+            }
+            const sets = exercise.sets.map((set) => {
+                if (!set || typeof set !== 'object') {
+                    return set;
+                }
+                if (typeof set.done === 'boolean') {
+                    return set;
+                }
+                const rawStatus = typeof set.status === 'string'
+                    ? set.status
+                    : typeof set.statut === 'string'
+                        ? set.statut
+                        : '';
+                const normalized = rawStatus.trim().toLowerCase();
+                if (!normalized) {
+                    return set;
+                }
+                if (['fait', 'done'].includes(normalized)) {
+                    return { ...set, done: true };
+                }
+                if (['prévu', 'prevu', 'planned'].includes(normalized)) {
+                    return { ...set, done: false };
+                }
+                return set;
+            });
+            return { ...exercise, sets };
+        });
+        return { ...session, exercises };
     }
 
     function isSessionPayloadValid(session) {
