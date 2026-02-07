@@ -489,6 +489,7 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenPlanningRoutines = document.getElementById('screenPlanningRoutines');
         refs.screenPlanEdit = document.getElementById('screenPlanEdit');
         refs.screenPlanCycle = document.getElementById('screenPlanCycle');
         refs.screenMeso = document.getElementById('screenMeso');
@@ -536,6 +537,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanningRoutines,
             screenPlanEdit,
             screenPlanCycle,
             screenMeso,
@@ -561,6 +563,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanningRoutines,
             screenPlanEdit,
             screenPlanCycle,
             screenMeso,
