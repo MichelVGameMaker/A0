@@ -427,19 +427,24 @@
     function buildDetails(routine) {
         const moves = Array.isArray(routine?.moves) ? routine.moves : [];
         const exerciseCount = moves.length;
-        const reps = moves.reduce((total, move) => {
-            const sets = Array.isArray(move?.sets) ? move.sets : [];
-            return (
-                total +
-                sets.reduce((subtotal, set) => {
+        const totals = moves.reduce(
+            (acc, move) => {
+                const sets = Array.isArray(move?.sets) ? move.sets : [];
+                acc.sets += sets.length;
+                acc.reps += sets.reduce((subtotal, set) => {
                     const repsValue = Number.parseInt(set?.reps, 10);
                     return Number.isFinite(repsValue) ? subtotal + repsValue : subtotal;
-                }, 0)
-            );
-        }, 0);
+                }, 0);
+                return acc;
+            },
+            { sets: 0, reps: 0 }
+        );
+        const series = totals.sets;
+        const reps = totals.reps;
         const exerciseLabel = exerciseCount > 1 ? 'exercices' : 'exercice';
-        const repsLabel = reps > 1 ? 'répétitions' : 'répétition';
-        return `${exerciseCount} ${exerciseLabel} • ${reps} ${repsLabel}`;
+        const seriesLabel = series > 1 ? 'séries' : 'série';
+        const repsLabel = reps > 1 ? 'reps' : 'rep';
+        return `${exerciseCount} ${exerciseLabel} • ${series} ${seriesLabel} • ${reps} ${repsLabel}`;
     }
 
     function createRoutineId() {
@@ -479,7 +484,7 @@
 
         const button = document.createElement('button');
         button.id = 'btnAddSelectedRoutines';
-        button.className = 'btn full';
+        button.className = 'btn cta full';
         button.type = 'button';
         button.disabled = true;
         button.textContent = 'Ajouter 0 routine(s)';
@@ -511,7 +516,6 @@
         }
         const count = state.selection.size;
         refs.btnAddSelectedRoutines.disabled = count === 0;
-        refs.btnAddSelectedRoutines.classList.toggle('primary', count > 0);
         refs.btnAddSelectedRoutines.textContent = `Ajouter ${count} routine(s)`;
     }
 
