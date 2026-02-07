@@ -382,7 +382,7 @@
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.className = 'exercise-card-check';
+            checkbox.className = 'exercise-card-check app-check';
             checkbox.checked = isSelected;
             checkbox.addEventListener('click', (event) => {
                 event.stopPropagation();
