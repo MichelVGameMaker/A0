@@ -471,6 +471,7 @@
                     rpe: rpeInput.value,
                     rest: parseRestInput(restInput.value, value.rest)
                 }),
+                onSelectField: (field) => selectField?.(field),
                 onMove: (direction) => {
                     const delta = direction === 'up' ? -1 : 1;
                     const nextIndex = moveSet(currentIndex, delta, row);
@@ -538,6 +539,51 @@
             return 'default';
         };
 
+        const attachInlineKeyboard = (input, field) => {
+            if (!inlineKeyboard) {
+                return;
+            }
+            inlineKeyboard.attach(input, {
+                layout: resolveKeyboardLayout(field),
+                mode: inlineKeyboard.getMode?.() || 'input',
+                decimalSeparator: field === 'weight' ? ',' : undefined,
+                actions: buildKeyboardActions,
+                edit: {
+                    onMove: (direction) => {
+                        const delta = direction === 'up' ? -1 : 1;
+                        const nextIndex = moveSet(currentIndex, delta, row);
+                        if (nextIndex === null || nextIndex === undefined) {
+                            return;
+                        }
+                        currentIndex = nextIndex;
+                        const total = findMove()?.sets?.length ?? totalSets;
+                        ensureInlineEditor()?.reposition?.(row, {
+                            position: currentIndex + 1,
+                            total
+                        });
+                    },
+                    onDelete: () => {
+                        removeSet(currentIndex);
+                    }
+                },
+                getValue: () => input.value,
+                onChange: (next) => {
+                    input.value = next;
+                    if (field === 'rpe') {
+                        applyRpeTone(input, next);
+                    }
+                    if (field === 'weight' && /[.,]$/.test(String(next))) {
+                        return;
+                    }
+                    applyDirectChange(field, input.value);
+                },
+                onClose: () => {
+                    input.blur();
+                    ensureInlineEditor()?.close();
+                }
+            });
+        };
+
         const createInput = (getValue, field, extraClass = '', options = {}) => {
             const input = document.createElement('input');
             const { inputMode = inlineKeyboard ? 'none' : 'numeric', type = 'text' } = options;
@@ -572,45 +618,7 @@
             });
             input.addEventListener('click', () => {
                 openEditor(field);
-                inlineKeyboard?.attach?.(input, {
-                    layout: resolveKeyboardLayout(field),
-                    decimalSeparator: field === 'weight' ? ',' : undefined,
-                    actions: buildKeyboardActions(),
-                    edit: {
-                        onMove: (direction) => {
-                            const delta = direction === 'up' ? -1 : 1;
-                            const nextIndex = moveSet(currentIndex, delta, row);
-                            if (nextIndex === null || nextIndex === undefined) {
-                                return;
-                            }
-                            currentIndex = nextIndex;
-                            const total = findMove()?.sets?.length ?? totalSets;
-                            ensureInlineEditor()?.reposition?.(row, {
-                                position: currentIndex + 1,
-                                total
-                            });
-                        },
-                        onDelete: () => {
-                            removeSet(currentIndex);
-                        }
-                    },
-                    getValue: () => input.value,
-                    onChange: (next) => {
-                        input.value = next;
-                        if (field === 'rpe') {
-                            applyRpeTone(input, next);
-                        }
-                        if (field === 'weight' && /[.,]$/.test(String(next))) {
-                            return;
-                        }
-                        applyDirectChange(field, input.value);
-                    },
-                    onClose: () => {
-                        input.blur();
-                        ensureInlineEditor()?.close();
-                    }
-                });
-                inlineKeyboard?.selectTarget?.(input);
+                attachInlineKeyboard(input, field);
             });
             return input;
         };
@@ -626,6 +634,19 @@
         const restInput = createInput(() => formatRestDisplay(value.rest), 'rest', 'exec-rest-cell');
         collectInputs(repsInput, weightInput, rpeInput, restInput);
         syncRowTone();
+        const selectField = (field) => {
+            const map = {
+                reps: repsInput,
+                weight: weightInput,
+                rpe: rpeInput,
+                rest: restInput
+            };
+            const target = map[field];
+            if (!target) {
+                return;
+            }
+            attachInlineKeyboard(target, field);
+        };
 
         row.append(order, repsInput, weightInput, rpeInput, restInput);
         return row;

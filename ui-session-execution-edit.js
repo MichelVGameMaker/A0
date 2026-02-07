@@ -1095,6 +1095,50 @@
             return 'default';
         };
 
+        const attachInlineKeyboard = (input, field) => {
+            if (!inlineKeyboard) {
+                return;
+            }
+            inlineKeyboard.attach(input, {
+                layout: resolveKeyboardLayout(field),
+                mode: inlineKeyboard.getMode?.() || 'input',
+                decimalSeparator: field === 'weight' ? ',' : undefined,
+                actions: buildKeyboardActions,
+                edit: {
+                    onMove: async (direction) => {
+                        const delta = direction === 'up' ? -1 : 1;
+                        const nextIndex = await moveSet(currentIndex, delta, row);
+                        if (nextIndex === null || nextIndex === undefined) {
+                            return;
+                        }
+                        currentIndex = nextIndex;
+                        ensureInlineEditor()?.reposition?.(row, {
+                            position: currentIndex + 1,
+                            total: getExercise()?.sets?.length ?? totalSets
+                        });
+                    },
+                    onDelete: async () => {
+                        await removeSet(currentIndex);
+                    }
+                },
+                getValue: () => input.value,
+                onChange: (next) => {
+                    input.value = next;
+                    if (field === 'rpe') {
+                        applyRpeTone(input, next);
+                    }
+                    if (field === 'weight' && /[.,]$/.test(String(next))) {
+                        return;
+                    }
+                    void applyDirectChange(field, input.value);
+                },
+                onClose: () => {
+                    input.blur();
+                    ensureInlineEditor()?.close();
+                }
+            });
+        };
+
         const createInput = (getValue, field, extraClass = '', options = {}) => {
             const input = document.createElement('input');
             const { inputMode = inlineKeyboard ? 'none' : 'numeric', type = 'text', html = false } = options;
@@ -1129,44 +1173,7 @@
             });
             input.addEventListener('click', () => {
                 openEditor(field);
-                inlineKeyboard?.attach?.(input, {
-                    layout: resolveKeyboardLayout(field),
-                    decimalSeparator: field === 'weight' ? ',' : undefined,
-                    actions: buildKeyboardActions,
-                    edit: {
-                        onMove: async (direction) => {
-                            const delta = direction === 'up' ? -1 : 1;
-                            const nextIndex = await moveSet(currentIndex, delta, row);
-                            if (nextIndex === null || nextIndex === undefined) {
-                                return;
-                            }
-                            currentIndex = nextIndex;
-                            ensureInlineEditor()?.reposition?.(row, {
-                                position: currentIndex + 1,
-                                total: getExercise()?.sets?.length ?? totalSets
-                            });
-                        },
-                        onDelete: async () => {
-                            await removeSet(currentIndex);
-                        }
-                    },
-                    getValue: () => input.value,
-                    onChange: (next) => {
-                        input.value = next;
-                        if (field === 'rpe') {
-                            applyRpeTone(input, next);
-                        }
-                        if (field === 'weight' && /[.,]$/.test(String(next))) {
-                            return;
-                        }
-                        void applyDirectChange(field, input.value);
-                    },
-                    onClose: () => {
-                        input.blur();
-                        ensureInlineEditor()?.close();
-                    }
-                });
-                inlineKeyboard?.selectTarget?.(input);
+                attachInlineKeyboard(input, field);
                 requestAnimationFrame(() => {
                     requestAnimationFrame(adjustExecScrollForKeyboard);
                 });
@@ -1196,9 +1203,10 @@
             if (!target) {
                 return;
             }
-            target.focus({ preventScroll: true });
-            target.select?.();
-            inlineKeyboard?.selectTarget?.(target);
+            attachInlineKeyboard(target, field);
+            requestAnimationFrame(() => {
+                requestAnimationFrame(adjustExecScrollForKeyboard);
+            });
         };
 
         const metaCell = buildMetaCell(set, index, meta);
