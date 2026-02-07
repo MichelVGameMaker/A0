@@ -99,7 +99,7 @@
 
 /* Safe areas iOS */
 .safe-top    { padding-top:    env(safe-area-inset-top, 0); }
-.safe-bottom { padding-bottom: nv(safe-area-inset-bottom, 0); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
 
 
 /* =========================================================
