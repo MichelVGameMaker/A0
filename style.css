@@ -106,8 +106,8 @@
    ========================================================= */
  /* Reset simple */
 *{
-  box-sizing:border-box;
-  user-select:none;
+  box-sizing:          border-box;
+  user-select:         none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -120,27 +120,27 @@ html {
 body{
     height:100%;
     margin:0;
-    background: var(--bodyBack);          /* 4.Fond app */
-    color: var(--black);
+    background:  var(--bodyBack);          /* 4.Fond app */
+    color:       var(--black);
     font-family: var(--font);
-    font-size: var(--fs-base);
+    font-size:   var(--fs-base);
     font-weight: var(--fw-base);
-    -webkit-font-smoothing: antialiased;
+    -webkit-font-smoothing:  antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overscroll-behavior: none;
-    overflow: hidden;
+    overscroll-behavior:     none;
+    overflow:                hidden;
 }
 
 .app-splash {
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-splash);
-    display: grid;
-    place-items: center;
-    background: var(--emphase);
-    color: var(--white);
-    font-size: clamp(36px, 10vw, 72px);
-    font-weight: var(--fw-strong);
+    position:     fixed;
+    inset:        0;
+    z-index:      var(--z-splash);
+    display:      grid;
+    place-items:  center;
+    background:   var(--emphase);
+    color:        var(--white);
+    font-size:    clamp(36px, 10vw, 72px);
+    font-weight:  var(--fw-strong);
     letter-spacing: 0.08em;
     transition: opacity 180ms ease, visibility 180ms ease;
 }
@@ -211,7 +211,7 @@ body{
 .content {
     flex: 1;
     background: var(--contentBack);
-    padding:  8px;
+    padding:  4px;
     padding-top: var(--header-total-h);
     padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0));
     min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
@@ -1477,9 +1477,9 @@ textarea:focus{
 }
 
 .btn.cta{
-  background: var(--emphase);
+  background:   var(--emphase);
   border-color: var(--emphase);
-  color: var(--white);
+  color:        var(--white);
 }
 
 /* Supprimer */
