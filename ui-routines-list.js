@@ -17,7 +17,13 @@
         selection: new Set(),
         onAddCallback: null,
         autoAdd: false,
-        includeNone: false
+        includeNone: false,
+        filtersInited: false,
+        filters: {
+            search: '',
+            group: '',
+            type: ''
+        }
     };
 
     /* WIRE */
@@ -25,6 +31,8 @@
         ensureRefs();
         wireCreateButton();
         wireBackButton();
+        wireFilters();
+        wireValueStates();
     });
 
     /* ACTIONS */
@@ -55,7 +63,9 @@
                 }
             });
         }
-        renderList();
+        initializeFilters();
+        applyFilterStateToInputs();
+        await renderList();
         ensureSelectionBar();
         updateSelectionBar();
         switchScreen('screenRoutineList');
@@ -66,7 +76,7 @@
         await loadRoutines(true);
         state.active = refs.screenRoutineList ? !refs.screenRoutineList.hidden : state.active;
         if (state.active) {
-            renderList();
+            await renderList();
         }
     };
 
@@ -99,6 +109,9 @@
         refs.btnRoutineCreate = document.getElementById('btnRoutineCreate');
         refs.tabPlanning = document.getElementById('tabPlanning');
         refs.routineListBack = document.getElementById('routineListBack');
+        refs.routineSearch = document.getElementById('routineSearch');
+        refs.routineFilterGroup = document.getElementById('routineFilterGroup');
+        refs.routineFilterType = document.getElementById('routineFilterType');
         refs.content = document.querySelector('#screenRoutineList .content');
         refsResolved = true;
         return refs;
@@ -142,24 +155,25 @@
         return state.routines;
     }
 
-    function renderList() {
+    async function renderList() {
         const { routineCatalog } = assertRefs();
         routineCatalog.innerHTML = '';
         if (state.listMode === 'add' && state.includeNone) {
             routineCatalog.appendChild(renderNoneCard());
         }
-        if (!state.routines.length) {
+        const filtered = await getFilteredRoutines();
+        if (!filtered.length) {
             if (state.listMode === 'add' && state.includeNone) {
                 updateSelectionBar();
                 return;
             }
             const empty = document.createElement('div');
             empty.className = 'empty';
-            empty.textContent = 'Aucune routine enregistrée.';
+            empty.textContent = 'Aucune routine.';
             routineCatalog.appendChild(empty);
             return;
         }
-        const sorted = [...state.routines].sort((a, b) => {
+        const sorted = [...filtered].sort((a, b) => {
             const nameA = (a?.name || '').toLocaleLowerCase('fr-FR');
             const nameB = (b?.name || '').toLocaleLowerCase('fr-FR');
             return nameA.localeCompare(nameB);
@@ -168,6 +182,111 @@
             routineCatalog.appendChild(renderRoutineCard(routine));
         });
         updateSelectionBar();
+    }
+
+    function initializeFilters() {
+        if (state.filtersInited) {
+            return;
+        }
+        const { routineFilterGroup, routineFilterType } = assertRefs();
+        fillSelect(routineFilterGroup, CFG.musclesG2, 'Groupe musculaire');
+        const trainingTypes = ['Hypertrophie', 'Force', 'Volume', 'Salle', 'Maison'];
+        routineFilterType.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = "Type d'entraînement";
+        routineFilterType.appendChild(placeholder);
+        trainingTypes.forEach((label) => {
+            const option = document.createElement('option');
+            option.value = label.toLowerCase();
+            option.textContent = label;
+            routineFilterType.appendChild(option);
+        });
+        state.filtersInited = true;
+    }
+
+    function applyFilterStateToInputs() {
+        const { routineSearch, routineFilterGroup, routineFilterType } = assertRefs();
+        routineSearch.value = state.filters.search || '';
+        routineFilterGroup.value = state.filters.group || '';
+        routineFilterType.value = state.filters.type || '';
+        A.updateValueState?.(routineSearch);
+        A.updateValueState?.(routineFilterGroup);
+        A.updateValueState?.(routineFilterType);
+    }
+
+    function wireFilters() {
+        const { routineSearch, routineFilterGroup, routineFilterType } = assertRefs();
+        routineSearch.addEventListener('input', () => {
+            state.filters.search = routineSearch.value || '';
+            void renderList();
+        });
+        routineFilterGroup.addEventListener('change', () => {
+            state.filters.group = (routineFilterGroup.value || '').trim();
+            void renderList();
+        });
+        routineFilterType.addEventListener('change', () => {
+            state.filters.type = (routineFilterType.value || '').trim();
+            void renderList();
+        });
+    }
+
+    function wireValueStates() {
+        const { routineSearch, routineFilterGroup, routineFilterType } = assertRefs();
+        A.watchValueState?.([routineSearch, routineFilterGroup, routineFilterType]);
+    }
+
+    function normalizeSearchTerms(query) {
+        return String(query || '')
+            .toLowerCase()
+            .split(/\s+/)
+            .filter(Boolean);
+    }
+
+    function matchesRoutineSearch(routine, terms) {
+        if (!terms.length) {
+            return true;
+        }
+        const name = routine?.name || '';
+        const details = routine?.details || '';
+        const moves = Array.isArray(routine?.moves) ? routine.moves : [];
+        const moveNames = moves.map((move) => move?.exerciseName || '').filter(Boolean).join(' ');
+        const haystack = `${name} ${details} ${moveNames}`.toLowerCase();
+        return terms.every((term) => haystack.includes(term));
+    }
+
+    async function getFilteredRoutines() {
+        const query = state.filters.search.toLowerCase().trim();
+        const searchTerms = normalizeSearchTerms(query);
+        const groupFilter = state.filters.group;
+
+        let exerciseLookup = null;
+        if (groupFilter) {
+            const exercises = await db.getAll('exercises');
+            exerciseLookup = new Map(
+                (Array.isArray(exercises) ? exercises : []).map((exercise) => [
+                    exercise?.id,
+                    (exercise?.muscleGroup2 || '').toString().trim()
+                ])
+            );
+        }
+
+        return state.routines.filter((routine) => {
+            if (query && !matchesRoutineSearch(routine, searchTerms)) {
+                return false;
+            }
+            if (groupFilter) {
+                const moves = Array.isArray(routine?.moves) ? routine.moves : [];
+                const matchesGroup = moves.some((move) => {
+                    const exerciseGroup = exerciseLookup?.get(move?.exerciseId);
+                    return exerciseGroup && exerciseGroup === groupFilter;
+                });
+                if (!matchesGroup) {
+                    return false;
+                }
+            }
+            return true;
+        });
     }
 
     function renderNoneCard() {
@@ -289,6 +408,20 @@
         }
 
         return card;
+    }
+
+    function fillSelect(select, items, placeholder) {
+        select.innerHTML = '';
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = placeholder;
+        select.appendChild(option);
+        items.forEach((value) => {
+            const opt = document.createElement('option');
+            opt.value = value;
+            opt.textContent = value;
+            select.appendChild(opt);
+        });
     }
 
     function buildDetails(routine) {

@@ -86,11 +86,14 @@
             screenSettings,
             screenPreferences,
             screenData,
+            screenApplication,
+            screenAdmin,
             screenPlanning,
             screenPlanEdit,
             screenPlanCycle,
             screenMeso,
-            screenProgression
+            screenProgression,
+            screenFitHeroMapping
         } = refs;
 
         tabSessions?.addEventListener('click', async () => {
@@ -132,11 +135,14 @@
         screenSettings?.setAttribute('data-screen', 'settings');
         screenPreferences?.setAttribute('data-screen', 'preferences');
         screenData?.setAttribute('data-screen', 'data');
+        screenApplication?.setAttribute('data-screen', 'application');
+        screenAdmin?.setAttribute('data-screen', 'admin');
         screenPlanning?.setAttribute('data-screen', 'planning');
         screenPlanEdit?.setAttribute('data-screen', 'plan-edit');
         screenPlanCycle?.setAttribute('data-screen', 'plan-cycle');
         screenMeso?.setAttribute('data-screen', 'meso');
         screenProgression?.setAttribute('data-screen', 'progression');
+        screenFitHeroMapping?.setAttribute('data-screen', 'fithero-mapping');
     }
 
     function wireCalendar() {
@@ -212,11 +218,14 @@
         refs.screenSettings = document.getElementById('screenSettings');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
+        refs.screenApplication = document.getElementById('screenApplication');
+        refs.screenAdmin = document.getElementById('screenAdmin');
         refs.screenPlanning = document.getElementById('screenPlanning');
         refs.screenPlanEdit = document.getElementById('screenPlanEdit');
         refs.screenPlanCycle = document.getElementById('screenPlanCycle');
         refs.screenMeso = document.getElementById('screenMeso');
         refs.screenProgression = document.getElementById('screenProgression');
+        refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refsResolved = true;
         return refs;
     }
@@ -266,11 +275,14 @@
             screenSettings,
             screenPreferences,
             screenData,
+            screenApplication,
+            screenAdmin,
             screenPlanning,
             screenPlanEdit,
             screenPlanCycle,
             screenMeso,
-            screenProgression
+            screenProgression,
+            screenFitHeroMapping
         } = refs;
         if (screenSessions) {
             screenSessions.hidden = which !== 'sessions';
@@ -317,6 +329,12 @@
         if (screenData) {
             screenData.hidden = which !== 'data';
         }
+        if (screenApplication) {
+            screenApplication.hidden = which !== 'application';
+        }
+        if (screenAdmin) {
+            screenAdmin.hidden = which !== 'admin';
+        }
         if (screenPlanning) {
             screenPlanning.hidden = which !== 'planning';
         }
@@ -331,6 +349,9 @@
         }
         if (screenProgression) {
             screenProgression.hidden = which !== 'progression';
+        }
+        if (screenFitHeroMapping) {
+            screenFitHeroMapping.hidden = which !== 'fithero-mapping';
         }
     }
 

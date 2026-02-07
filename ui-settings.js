@@ -81,7 +81,6 @@
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
         refs.btnSettingsExercises = document.getElementById('btnSettingsExercises');
-        refs.btnSettingsRoutines = document.getElementById('btnSettingsRoutines');
         refs.btnSettingsPreferences = document.getElementById('btnSettingsPreferences');
         refs.btnSettingsData = document.getElementById('btnSettingsData');
         refs.btnSettingsApplication = document.getElementById('btnSettingsApplication');
@@ -112,7 +111,6 @@
     function wireButtons() {
         const {
             btnSettingsExercises,
-            btnSettingsRoutines,
             btnSettingsPreferences,
             btnSettingsData,
             btnSettingsApplication,
@@ -137,10 +135,6 @@
         btnSettingsExercises?.addEventListener('click', () => {
             highlightSettingsTab();
             void A.openExercises({ callerScreen: 'screenSettings' });
-        });
-        btnSettingsRoutines?.addEventListener('click', () => {
-            highlightSettingsTab();
-            void A.openPlanning?.({ section: 'routines' });
         });
         btnSettingsPreferences?.addEventListener('click', () => {
             A.openPreferences();
