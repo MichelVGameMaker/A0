@@ -1,5 +1,42 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `a0-cache-${CACHE_VERSION}`;
+const CORE_ASSETS = [
+  './',
+  './index.html',
+  './style.css',
+  './manifest.webmanifest',
+  './cfg.js',
+  './db.js',
+  './state.js',
+  './preferences.js',
+  './components/list-card.js',
+  './components/tag-group.js',
+  './components/set-editor.js',
+  './components/confirm-dialog.js',
+  './ui-week-strip.js',
+  './ui-month-calendar.js',
+  './ui-session.js',
+  './ui-exercise-read.js',
+  './ui-exercise-edit.js',
+  './ui-exercises-list.js',
+  './ui-routines-list.js',
+  './ui-routine-edit.js',
+  './ui-routine-execution-edit.js',
+  './ui-planning.js',
+  './ui-meso.js',
+  './ui-progression.js',
+  './ui-preferences.js',
+  './ui-settings.js',
+  './ui-admin.js',
+  './ui-fithero-mapping.js',
+  './ui-volume.js',
+  './ui-stats.js',
+  './ui-session-execution-edit.js',
+  './init.js',
+  './data/exercises.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
+];
 const ASSETS = [
   './',
   './index.html',
@@ -1509,7 +1546,9 @@ const ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) => Promise.allSettled(
+      CORE_ASSETS.map((asset) => cache.add(asset))
+    ))
   );
   self.skipWaiting();
 });
@@ -1548,6 +1587,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    caches.match(event.request).then((cached) => {
+      if (cached) {
+        return cached;
+      }
+      return fetch(event.request)
+        .then((response) => {
+          if (!response || response.status !== 200 || response.type === 'opaque') {
+            return response;
+          }
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => cached);
+    })
   );
 });
