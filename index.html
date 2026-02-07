@@ -220,9 +220,6 @@
                             <div class="details">Génère un fichier exercices.json pour mettre à jour la bibliothèque.</div>
                         </div>
                     </div>
-                    <div class="list-card__end">
-                        <span class="list-card__icon" aria-hidden="true">›</span>
-                    </div>
                 </div>
             </button>
         </div>
@@ -235,19 +232,23 @@
                             <div class="details">Mettre à jour la bibliothèque d'exercices depuis Internet.</div>
                         </div>
                     </div>
-                    <div class="list-card__end">
-                        <span class="list-card__icon" aria-hidden="true">›</span>
-                    </div>
                 </div>
             </button>
         </div>
         <div class="bloque">
-            <button id="btnAdminUpdateFitHeroMapping" class="btn full" type="button">
-                Mettre à jour le mapping FitHero
+            <button id="btnAdminUpdateFitHeroMapping" class="list-card clickable full" type="button">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">Mettre à jour le mapping FitHero</div>
+                            <div class="details">
+                                Génère un fichier de mapping FitHero à jour depuis les mappings en ligne et
+                                personnalisés.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </button>
-            <p class="details">
-                Génère un fichier de mapping FitHero à jour depuis les mappings en ligne et personnalisés.
-            </p>
         </div>
     </main>
 
@@ -481,6 +482,19 @@
     </header>
 
     <main class="content">
+        <div class="bloque">
+            <div class="row">
+                <input id="routineSearch" class="input full" placeholder="Rechercher une routine…" />
+            </div>
+            <div class="row">
+                <select id="routineFilterGroup" class="input flex-1">
+                    <option value="">Groupe musculaire</option>
+                </select>
+                <select id="routineFilterType" class="input flex-1">
+                    <option value="">Type d'entraînement</option>
+                </select>
+            </div>
+        </div>
         <section id="routineCatalog" class="session-list" aria-label="Routines enregistrées"></section>
 
 
@@ -679,9 +693,6 @@
         <div class="bloque">
             <div class="row">
                 <button id="btnSettingsExercises" class="btn full">📚 Exercices</button>
-            </div>
-            <div class="row">
-                <button id="btnSettingsRoutines" class="btn full">📓 Routines</button>
             </div>
             <div class="row">
                 <button id="btnSettingsPreferences" class="btn full">⚙️ Préférences</button>
@@ -897,12 +908,9 @@
                 <div class="list-card__row">
                     <div class="list-card__start">
                         <div class="list-card__body">
-                            <div class="element">⏱️ Durée de repos</div>
+                            <div class="element">Durée de repos</div>
                             <div id="prefRestSummary" class="details"></div>
                         </div>
-                    </div>
-                    <div class="list-card__end">
-                        <span class="list-card__icon" aria-hidden="true">›</span>
                     </div>
                 </div>
             </button>
@@ -912,12 +920,9 @@
                 <div class="list-card__row">
                     <div class="list-card__start">
                         <div class="list-card__body">
-                            <div class="element">🧮 Valeurs pour une nouvelle série</div>
+                            <div class="element">Valeurs pour une nouvelle série</div>
                             <div id="prefNewSetSummary" class="details"></div>
                         </div>
-                    </div>
-                    <div class="list-card__end">
-                        <span class="list-card__icon" aria-hidden="true">›</span>
                     </div>
                 </div>
             </button>
@@ -951,9 +956,6 @@
                             <div class="details">Génère un fichier des séances enregistrées.</div>
                         </div>
                     </div>
-                    <div class="list-card__end">
-                        <span class="list-card__icon" aria-hidden="true">›</span>
-                    </div>
                 </div>
             </button>
         </div>
@@ -965,9 +967,6 @@
                             <div class="element">Charger séances</div>
                             <div class="details">Charge les séances depuis un fichier.</div>
                         </div>
-                    </div>
-                    <div class="list-card__end">
-                        <span class="list-card__icon" aria-hidden="true">›</span>
                     </div>
                 </div>
             </button>
@@ -982,15 +981,12 @@
                             <div class="details">Charge les séances depuis un fichier FitHero.</div>
                         </div>
                     </div>
-                    <div class="list-card__end">
-                        <span class="list-card__icon" aria-hidden="true">›</span>
-                    </div>
                 </div>
             </button>
             <input id="inputDataImportFitHero" type="file" accept="application/json,.json" hidden>
         </div>
         <div class="bloque">
-            <button id="btnDataFitHeroMapping" class="list-card full" type="button">
+            <button id="btnDataFitHeroMapping" class="list-card clickable full" type="button">
                 <div class="list-card__row">
                     <div class="list-card__start">
                         <div class="list-card__body">
