@@ -760,7 +760,7 @@
     }
 
     function updatePlanningTabs(section) {
-        const toggleButtons = document.querySelectorAll('#screenPlanning [data-planning-section]');
+        const toggleButtons = document.querySelectorAll('#screenPlanning .stats-toggle-btn[data-planning-section]');
         toggleButtons.forEach((button) => {
             const isActive = button.dataset.planningSection === section;
             button.classList.toggle('is-active', isActive);
@@ -768,16 +768,24 @@
         });
         const plansSection = refs.planningPlansSection;
         const routinesSection = refs.planningRoutinesSection;
+        const planningHeaderPlans = refs.planningHeaderPlans;
+        const planningHeaderRoutines = refs.planningHeaderRoutines;
         if (plansSection) {
             plansSection.hidden = section !== 'plans';
         }
         if (routinesSection) {
             routinesSection.hidden = section !== 'routines';
         }
+        if (planningHeaderPlans) {
+            planningHeaderPlans.hidden = section !== 'plans';
+        }
+        if (planningHeaderRoutines) {
+            planningHeaderRoutines.hidden = section !== 'routines';
+        }
     }
 
     function wirePlanningTabs() {
-        const toggleButtons = document.querySelectorAll('#screenPlanning [data-planning-section]');
+        const toggleButtons = document.querySelectorAll('#screenPlanning .stats-toggle-btn[data-planning-section]');
         if (!toggleButtons.length) {
             return;
         }
@@ -826,6 +834,8 @@
         refs.planningPlansSection = document.getElementById('planningPlansSection');
         refs.planningRoutinesSection = document.getElementById('planningRoutinesSection');
         refs.planningRoutinesList = document.getElementById('planningRoutinesList');
+        refs.planningHeaderPlans = document.getElementById('planningHeaderPlans');
+        refs.planningHeaderRoutines = document.getElementById('planningHeaderRoutines');
         refs.btnPlanEditBack = document.getElementById('btnPlanEditBack');
         refs.planEditName = document.getElementById('planEditName');
         refs.planEditComment = document.getElementById('planEditComment');
