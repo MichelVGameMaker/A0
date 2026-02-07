@@ -101,6 +101,7 @@
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenPlanningRoutines = document.getElementById('screenPlanningRoutines');
         refs.screenPlanEdit = document.getElementById('screenPlanEdit');
         refs.screenPlanCycle = document.getElementById('screenPlanCycle');
         refs.screenMeso = document.getElementById('screenMeso');
@@ -462,6 +463,7 @@
             screenPreferences: 'tabPlanning',
             screenData: 'tabPlanning',
             screenPlanning: 'tabPlanning',
+            screenPlanningRoutines: 'tabPlanning',
             screenPlanEdit: 'tabPlanning',
             screenPlanCycle: 'tabPlanning',
             screenMeso: 'tabPlanning',
@@ -541,6 +543,7 @@
             screenPreferences,
             screenData,
             screenPlanning,
+            screenPlanningRoutines,
             screenPlanEdit,
             screenPlanCycle,
             screenMeso,
@@ -564,6 +567,7 @@
             screenPreferences,
             screenData,
             screenPlanning,
+            screenPlanningRoutines,
             screenPlanEdit,
             screenPlanCycle,
             screenMeso,

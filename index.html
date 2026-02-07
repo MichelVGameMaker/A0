@@ -709,37 +709,47 @@
 </section>
 <!-- ==================== -->
 
-<!-- ========== Planning : Plans & Routines ========== -->
+<!-- ========== Planning : Plans ========== -->
 <section id="screenPlanning" class="screen" hidden>
 
-    <header id="planningHeaderPlans" class="header planning-header" data-planning-header="plans">
+    <header class="header">
         <div class="header-left"></div>
         <div class="header-center">
-            <div class="title">Plans</div>
-        </div>
-        <div class="header-right"></div>
-    </header>
-
-    <header id="planningHeaderRoutines" class="header planning-header" data-planning-header="routines" hidden>
-        <div class="header-left"></div>
-        <div class="header-center">
-            <div class="title">Routines</div>
+            <div class="stats-toggle" role="tablist" aria-label="Planning">
+                <button class="stats-toggle-btn is-active" type="button" aria-pressed="true" data-planning-section="plans">Plans</button>
+                <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-section="routines">Routines</button>
+            </div>
         </div>
         <div class="header-right"></div>
     </header>
 
     <main class="content">
-        <div class="stats-toggle" role="tablist" aria-label="Plan d'entrainements">
-            <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-section="routines">Routines</button>
-            <button class="stats-toggle-btn is-active" type="button" aria-pressed="true" data-planning-section="plans">Plans</button>
-        </div>
         <section id="planningPlansSection" class="planning-section" data-planning-section="plans">
             <div class="bloque">
                 <div id="planningPlansList"></div>
             </div>
         </section>
+    </main>
 
-        <section id="planningRoutinesSection" class="planning-section" data-planning-section="routines" hidden>
+</section>
+<!-- ==================== -->
+
+<!-- ========== Planning : Routines ========== -->
+<section id="screenPlanningRoutines" class="screen" hidden>
+
+    <header class="header">
+        <div class="header-left"></div>
+        <div class="header-center">
+            <div class="stats-toggle" role="tablist" aria-label="Planning">
+                <button class="stats-toggle-btn" type="button" aria-pressed="false" data-planning-section="plans">Plans</button>
+                <button class="stats-toggle-btn is-active" type="button" aria-pressed="true" data-planning-section="routines">Routines</button>
+            </div>
+        </div>
+        <div class="header-right"></div>
+    </header>
+
+    <main class="content">
+        <section id="planningRoutinesSection" class="planning-section" data-planning-section="routines">
             <div class="bloque">
                 <section id="planningRoutinesList" class="session-list" aria-label="Routines enregistrées"></section>
             </div>

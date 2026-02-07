@@ -41,7 +41,7 @@
         const section = options.section || planningState.section || DEFAULT_PLANNING_SECTION;
         setPlanningSection(section);
         await renderPlanningSection(section);
-        switchScreen('screenPlanning');
+        switchScreen(getPlanningScreenId(section));
     };
 
     A.openPlanEdit = async function openPlanEdit(options = {}) {
@@ -266,7 +266,7 @@
 
         card.addEventListener('click', () => {
             const routineId = createRoutineId();
-            void A.openRoutineEdit?.({ routineId, callerScreen: 'screenPlanning' });
+            void A.openRoutineEdit?.({ routineId, callerScreen: 'screenPlanningRoutines' });
         });
 
         return card;
@@ -293,7 +293,7 @@
             if (!routine?.id) {
                 return;
             }
-            void A.openRoutineEdit?.({ routineId: routine.id, callerScreen: 'screenPlanning' });
+            void A.openRoutineEdit?.({ routineId: routine.id, callerScreen: 'screenPlanningRoutines' });
         });
 
         return card;
@@ -760,32 +760,16 @@
     }
 
     function updatePlanningTabs(section) {
-        const toggleButtons = document.querySelectorAll('#screenPlanning .stats-toggle-btn[data-planning-section]');
+        const toggleButtons = document.querySelectorAll('.stats-toggle-btn[data-planning-section]');
         toggleButtons.forEach((button) => {
             const isActive = button.dataset.planningSection === section;
             button.classList.toggle('is-active', isActive);
             button.setAttribute('aria-pressed', String(isActive));
         });
-        const plansSection = refs.planningPlansSection;
-        const routinesSection = refs.planningRoutinesSection;
-        const planningHeaderPlans = refs.planningHeaderPlans;
-        const planningHeaderRoutines = refs.planningHeaderRoutines;
-        if (plansSection) {
-            plansSection.hidden = section !== 'plans';
-        }
-        if (routinesSection) {
-            routinesSection.hidden = section !== 'routines';
-        }
-        if (planningHeaderPlans) {
-            planningHeaderPlans.hidden = section !== 'plans';
-        }
-        if (planningHeaderRoutines) {
-            planningHeaderRoutines.hidden = section !== 'routines';
-        }
     }
 
     function wirePlanningTabs() {
-        const toggleButtons = document.querySelectorAll('#screenPlanning .stats-toggle-btn[data-planning-section]');
+        const toggleButtons = document.querySelectorAll('.stats-toggle-btn[data-planning-section]');
         if (!toggleButtons.length) {
             return;
         }
@@ -796,10 +780,13 @@
         toggleButtons.forEach((button) => {
             button.addEventListener('click', () => {
                 const target = button.dataset.planningSection;
-                setPlanningSection(target);
-                void renderPlanningSection(target);
+                void A.openPlanning({ section: target });
             });
         });
+    }
+
+    function getPlanningScreenId(section) {
+        return section === 'routines' ? 'screenPlanningRoutines' : 'screenPlanning';
     }
 
     function ensureRefs() {
@@ -824,6 +811,7 @@
         refs.screenData = document.getElementById('screenData');
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenPlanningRoutines = document.getElementById('screenPlanningRoutines');
         refs.screenPlanEdit = document.getElementById('screenPlanEdit');
         refs.screenPlanCycle = document.getElementById('screenPlanCycle');
         refs.screenMeso = document.getElementById('screenMeso');
@@ -831,11 +819,7 @@
         refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.tabPlanning = document.getElementById('tabPlanning');
         refs.planningPlansList = document.getElementById('planningPlansList');
-        refs.planningPlansSection = document.getElementById('planningPlansSection');
-        refs.planningRoutinesSection = document.getElementById('planningRoutinesSection');
         refs.planningRoutinesList = document.getElementById('planningRoutinesList');
-        refs.planningHeaderPlans = document.getElementById('planningHeaderPlans');
-        refs.planningHeaderRoutines = document.getElementById('planningHeaderRoutines');
         refs.btnPlanEditBack = document.getElementById('btnPlanEditBack');
         refs.planEditName = document.getElementById('planEditName');
         refs.planEditComment = document.getElementById('planEditComment');
@@ -958,6 +942,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanningRoutines,
             screenPlanEdit,
             screenPlanCycle,
             screenMeso,
@@ -983,6 +968,7 @@
             screenData,
             screenApplication,
             screenPlanning,
+            screenPlanningRoutines,
             screenPlanEdit,
             screenPlanCycle,
             screenMeso,

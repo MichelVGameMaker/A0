@@ -89,6 +89,7 @@
             screenApplication,
             screenAdmin,
             screenPlanning,
+            screenPlanningRoutines,
             screenPlanEdit,
             screenPlanCycle,
             screenMeso,
@@ -138,6 +139,7 @@
         screenApplication?.setAttribute('data-screen', 'application');
         screenAdmin?.setAttribute('data-screen', 'admin');
         screenPlanning?.setAttribute('data-screen', 'planning');
+        screenPlanningRoutines?.setAttribute('data-screen', 'planning-routines');
         screenPlanEdit?.setAttribute('data-screen', 'plan-edit');
         screenPlanCycle?.setAttribute('data-screen', 'plan-cycle');
         screenMeso?.setAttribute('data-screen', 'meso');
@@ -221,6 +223,7 @@
         refs.screenApplication = document.getElementById('screenApplication');
         refs.screenAdmin = document.getElementById('screenAdmin');
         refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenPlanningRoutines = document.getElementById('screenPlanningRoutines');
         refs.screenPlanEdit = document.getElementById('screenPlanEdit');
         refs.screenPlanCycle = document.getElementById('screenPlanCycle');
         refs.screenMeso = document.getElementById('screenMeso');
@@ -278,6 +281,7 @@
             screenApplication,
             screenAdmin,
             screenPlanning,
+            screenPlanningRoutines,
             screenPlanEdit,
             screenPlanCycle,
             screenMeso,
@@ -337,6 +341,9 @@
         }
         if (screenPlanning) {
             screenPlanning.hidden = which !== 'planning';
+        }
+        if (screenPlanningRoutines) {
+            screenPlanningRoutines.hidden = which !== 'planning-routines';
         }
         if (screenPlanEdit) {
             screenPlanEdit.hidden = which !== 'plan-edit';
