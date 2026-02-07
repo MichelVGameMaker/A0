@@ -2614,7 +2614,7 @@ body.inline-keyboard-visible .keyboard-spacer{
 }
 
 .add-actions{
-  margin-top: var(--gap);
+  margin-top: calc(16px + var(--gap));
 }
 
 .set-editor-form{
