@@ -60,6 +60,7 @@
   --pad-y:     10px;       /* padding vertical par défaut */
   --pad-tight: 4px;        /* padding pour les éléments denses */
   --gap:       6px;        /* marge/gap par défaut entre éléments */
+  --space-margin: 16px;         
   --set-synopsis-width: calc(9ch + 4px); /* largeur fixe des tags de série (888x 888kg) */
   --set-synopsis-gap: 3px; /* espacement horizontal entre tags de série */
 
@@ -97,8 +98,8 @@
 
 
 /* Safe areas iOS */
-.safe-top    { padding-top: env(safe-area-inset-top, 0); }
-.safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0)); }
+.safe-top    { padding-top:    env(safe-area-inset-top, 0); }
+.safe-bottom { padding-bottom: nv(safe-area-inset-bottom, 0); }
 
 
 /* =========================================================
@@ -120,7 +121,7 @@ html {
 body{
     height:100%;
     margin:0;
-    background:  var(--bodyBack);          /* 4.Fond app */
+    background:  var(--bodyBack);
     color:       var(--black);
     font-family: var(--font);
     font-size:   var(--fs-base);
@@ -211,7 +212,7 @@ body{
 .content {
     flex: 1;
     background: var(--contentBack);
-    padding:  4px;
+    padding:  2px;
     padding-top: var(--header-total-h);
     padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0));
     min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
@@ -2109,7 +2110,6 @@ textarea:focus{
 .session-list{
     display:flex;
     flex-direction:column;
-    gap:12px;
     margin:16px 0; 
 }
 
