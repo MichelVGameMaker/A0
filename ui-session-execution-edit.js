@@ -1480,16 +1480,7 @@
     }
 
     function formatHistorySetLine(set, weightUnit) {
-        const reps = Number.isFinite(set?.reps) ? set.reps : null;
-        const weight = set?.weight != null ? Number(set.weight) : null;
-        const parts = [];
-        if (reps != null) {
-            parts.push(`${reps}x`);
-        }
-        if (weight != null && !Number.isNaN(weight)) {
-            parts.push(`${formatNumber(weight)}${weightUnit}`);
-        }
-        return parts.length ? parts.join(' ') : '—';
+        return formatSetLineDetails(set, weightUnit);
     }
 
     function formatHistoryDateLabel(dateKey) {

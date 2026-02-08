@@ -433,15 +433,12 @@
                 close: false,
                 onClick: () => inlineKeyboard?.setMode?.(isEdit ? 'input' : 'edit')
             };
-            if (isEdit) {
-                return [toggleAction];
-            }
             return [
                 toggleAction,
                 {
                     label: 'prévu',
-                    className: 'inline-keyboard-action--span-3',
-                    span: 3,
+                    className: 'inline-keyboard-action--span-2',
+                    span: 2,
                     onClick: () => {
                         applySetEditorResult(currentIndex, {
                             reps: value.reps,
@@ -450,6 +447,9 @@
                             rest: value.rest
                         });
                     }
+                },
+                {
+                    label: 'fermer clavier ⬇️'
                 }
             ];
         };
