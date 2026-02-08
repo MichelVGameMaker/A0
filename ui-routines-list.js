@@ -25,6 +25,10 @@
             type: ''
         }
     };
+    const routineListScrollState = {
+        top: 0,
+        pendingRestore: false
+    };
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -128,6 +132,40 @@
         return refs;
     }
 
+    function getRoutineListScrollContainer() {
+        const { content, screenRoutineList } = ensureRefs();
+        if (content) {
+            return content;
+        }
+        const container = screenRoutineList?.querySelector('.content') || null;
+        refs.content = container;
+        return container;
+    }
+
+    function storeRoutineListScroll() {
+        const container = getRoutineListScrollContainer();
+        if (!container) {
+            return;
+        }
+        routineListScrollState.top = container.scrollTop || 0;
+        routineListScrollState.pendingRestore = true;
+    }
+
+    function restoreRoutineListScroll() {
+        if (!routineListScrollState.pendingRestore) {
+            return;
+        }
+        const container = getRoutineListScrollContainer();
+        if (!container) {
+            return;
+        }
+        container.scrollTop = routineListScrollState.top;
+        routineListScrollState.pendingRestore = false;
+    }
+
+    A.storeRoutineListScroll = () => storeRoutineListScroll();
+    A.restoreRoutineListScroll = () => restoreRoutineListScroll();
+
     function wireCreateButton() {
         const { btnRoutineCreate } = ensureRefs();
         if (!btnRoutineCreate) {
@@ -136,6 +174,7 @@
         btnRoutineCreate.addEventListener('click', () => {
             const id = createRoutineId();
             highlightCallerTab(state.callerScreen);
+            storeRoutineListScroll();
             A.openRoutineEdit({ routineId: id, callerScreen: state.callerScreen });
         });
     }
@@ -166,12 +205,14 @@
         if (!filtered.length) {
             if (state.listMode === 'add' && state.includeNone) {
                 updateSelectionBar();
+                restoreRoutineListScroll();
                 return;
             }
             const empty = document.createElement('div');
             empty.className = 'empty';
             empty.textContent = 'Aucune routine.';
             routineCatalog.appendChild(empty);
+            restoreRoutineListScroll();
             return;
         }
         const sorted = [...filtered].sort((a, b) => {
@@ -182,6 +223,7 @@
         sorted.forEach((routine) => {
             routineCatalog.appendChild(renderRoutineCard(routine));
         });
+        restoreRoutineListScroll();
         updateSelectionBar();
     }
 
@@ -404,6 +446,7 @@
 
             card.addEventListener('click', () => {
                 highlightCallerTab(state.callerScreen);
+                storeRoutineListScroll();
                 A.openRoutineEdit({ routineId: routine?.id, callerScreen: state.callerScreen });
             });
         }
