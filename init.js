@@ -37,6 +37,7 @@
     /* STATE */
     const refs = {};
     let refsResolved = false;
+    const ORM_RECALC_KEY = 'ormRecalcPending';
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -61,12 +62,58 @@
             console.warn('Import exercices ignoré:', error);
         }
         await ensureSeed();
+        await recalcOrmIfNeeded();
 
         setActiveTab('tabSessions');
         showOnly('sessions');
         await A.renderWeek();
         await A.renderSession();
         hideSplash();
+    }
+
+    async function recalcOrmIfNeeded() {
+        if (!localStorage.getItem(ORM_RECALC_KEY)) {
+            return;
+        }
+        localStorage.removeItem(ORM_RECALC_KEY);
+        if (!db?.getAll || !db?.saveSession || !A?.calculateOrm) {
+            return;
+        }
+        const sessions = await db.getAll('sessions');
+        const list = Array.isArray(sessions) ? sessions : [];
+        for (const session of list) {
+            let changed = false;
+            const exercises = Array.isArray(session?.exercises) ? session.exercises : [];
+            exercises.forEach((exercise) => {
+                const sets = Array.isArray(exercise?.sets) ? exercise.sets : [];
+                sets.forEach((set) => {
+                    if (!set || typeof set !== 'object') {
+                        return;
+                    }
+                    if (set.done === true) {
+                        const nextOrm = A.calculateOrm(set.weight, set.reps);
+                        const nextOrmRpe = A.calculateOrmWithRpe(set.weight, set.reps, set.rpe);
+                        if (set.orm !== nextOrm) {
+                            set.orm = nextOrm;
+                            changed = true;
+                        }
+                        if (set.ormRpe !== nextOrmRpe) {
+                            set.ormRpe = nextOrmRpe;
+                            changed = true;
+                        }
+                    } else {
+                        if (set.orm != null || set.ormRpe != null) {
+                            set.orm = null;
+                            set.ormRpe = null;
+                            changed = true;
+                        }
+                    }
+                });
+            });
+            if (changed) {
+                await db.saveSession(session);
+            }
+        }
     }
 
     function wireNavigation() {

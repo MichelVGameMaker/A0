@@ -1262,13 +1262,15 @@
         return map;
     }
 
+    function resolveSetOrm(value) {
+        return Number.isFinite(value) ? value : null;
+    }
+
     function buildRecordSetMap(sets, weightUnit) {
         const bestByPos = new Map();
         (Array.isArray(sets) ? sets : []).forEach((set, index) => {
             const pos = safeInt(set?.pos, index + 1);
-            const weight = sanitizeWeight(set?.weight);
-            const reps = safePositiveInt(set?.reps);
-            const orm = estimateOrm(weight, reps);
+            const orm = resolveSetOrm(set?.orm);
             if (orm == null) {
                 return;
             }
@@ -1315,7 +1317,7 @@
             if (weight != null) {
                 maxWeight = Math.max(maxWeight, weight);
             }
-            const orm = estimateOrm(weight, reps);
+            const orm = resolveSetOrm(set?.orm);
             if (orm != null) {
                 maxOrm = Math.max(maxOrm, orm);
             }
@@ -1355,7 +1357,7 @@
                 medals.push('weight');
                 weightRecordAssigned = true;
             }
-            const orm = estimateOrm(weight, reps);
+            const orm = resolveSetOrm(set?.orm);
             if (!ormRecordAssigned && orm != null && orm > maxOrm) {
                 medals.push('orm');
                 ormRecordAssigned = true;
@@ -1403,6 +1405,9 @@
                         reps: safePositiveInt(set?.reps),
                         weight: sanitizeWeight(set?.weight),
                         rpe: set?.rpe ?? null,
+                        rest: safeInt(set?.rest, null),
+                        orm: resolveSetOrm(set?.orm),
+                        ormRpe: resolveSetOrm(set?.ormRpe),
                         dateKey: date
                     });
                 });
@@ -1414,13 +1419,6 @@
     function normalizeWeightKey(weight) {
         const normalized = Math.round(Number(weight) * 100) / 100;
         return String(normalized);
-    }
-
-    function estimateOrm(weight, reps) {
-        if (weight == null || reps == null || reps <= 0) {
-            return null;
-        }
-        return weight * (1 + reps / 30);
     }
 
     async function findPreviousSessionForHistory(exerciseId, dateKey = state.dateKey) {
@@ -1444,9 +1442,22 @@
         return null;
     }
 
-    function formatHistorySetLine(set, weightUnit) {
+    function formatSetOrmSummary(set, weightUnit) {
+        const orm = resolveSetOrm(set?.orm);
+        const ormRpe = resolveSetOrm(set?.ormRpe);
+        if (orm == null && ormRpe == null) {
+            return '';
+        }
+        const left = orm != null ? `${formatNumber(orm)}${weightUnit}` : `—${weightUnit}`;
+        const right = ormRpe != null ? `${formatNumber(ormRpe)}${weightUnit}` : `—${weightUnit}`;
+        return `= ${left} / ${right}`;
+    }
+
+    function formatSetLineDetails(set, weightUnit) {
         const reps = Number.isFinite(set?.reps) ? set.reps : null;
         const weight = set?.weight != null ? Number(set.weight) : null;
+        const rpe = set?.rpe != null && set?.rpe !== '' ? set.rpe : null;
+        const rest = safeInt(set?.rest, null);
         const parts = [];
         if (reps != null) {
             parts.push(`${reps}x`);
@@ -1454,7 +1465,22 @@
         if (weight != null && !Number.isNaN(weight)) {
             parts.push(`${formatNumber(weight)}${weightUnit}`);
         }
-        return parts.length ? parts.join(' ') : '—';
+        if (rpe != null) {
+            parts.push(`@rpe${formatRpeValue(rpe)}`);
+        }
+        let detail = parts.length ? parts.join(' ') : '—';
+        if (rest != null && rest > 0) {
+            detail += ` - ${formatRestDisplay(rest)}`;
+        }
+        const ormSummary = formatSetOrmSummary(set, weightUnit);
+        if (ormSummary) {
+            detail += ` ${ormSummary}`;
+        }
+        return detail;
+    }
+
+    function formatHistorySetLine(set, weightUnit) {
+        return formatSetLineDetails(set, weightUnit);
     }
 
     function formatHistoryDateLabel(dateKey) {
@@ -1475,21 +1501,8 @@
     function formatHistoryDetailLine(set, weightUnit) {
         const dateLabel = formatHistoryDateLabel(set?.dateKey);
         const pos = safeInt(set?.pos, null);
-        const reps = Number.isFinite(set?.reps) ? set.reps : null;
-        const weight = set?.weight != null ? Number(set.weight) : null;
-        const rpe = set?.rpe != null && set?.rpe !== '' ? set.rpe : null;
-        const parts = [];
-        if (reps != null) {
-            parts.push(`${reps}x`);
-        }
-        if (weight != null && !Number.isNaN(weight)) {
-            parts.push(`${formatNumber(weight)}${weightUnit}`);
-        }
-        if (rpe != null) {
-            parts.push(`@${formatRpeValue(rpe)}`);
-        }
         const setLabel = pos ? `#${pos}` : '#—';
-        const detail = parts.length ? parts.join(' ') : '—';
+        const detail = formatSetLineDetails(set, weightUnit);
         return `${dateLabel}, ${setLabel} - ${detail}`;
     }
 
@@ -1708,14 +1721,21 @@
         const nextDone = options.done ?? sets[index].done ?? false;
         const rest = Math.max(0, safeInt(values.rest, getDefaultRest()));
         updateLastRestDuration(rest);
+        const reps = safePositiveInt(values.reps);
+        const weight = sanitizeWeight(values.weight);
+        const rpe = values.rpe != null && values.rpe !== '' ? clampRpe(values.rpe) : null;
+        const orm = nextDone ? A.calculateOrm(weight, reps) : null;
+        const ormRpe = nextDone ? A.calculateOrmWithRpe(weight, reps, rpe) : null;
         sets[index] = {
             ...sets[index],
             pos: index + 1,
-            reps: safePositiveInt(values.reps),
-            weight: sanitizeWeight(values.weight),
-            rpe: values.rpe != null && values.rpe !== '' ? clampRpe(values.rpe) : null,
+            reps,
+            weight,
+            rpe,
             rest,
             done: nextDone,
+            orm,
+            ormRpe,
             date: new Date().toISOString(),
             setType: null
         };
