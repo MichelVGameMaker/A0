@@ -283,15 +283,22 @@
 
         try {
             const exercises = await db.getAll('exercises');
-            const names = Array.isArray(exercises)
+            const entries = Array.isArray(exercises)
                 ? exercises
-                    .map((exercise) => (exercise?.name || exercise?.exercise || exercise?.exerciseId || exercise?.id || '').trim())
+                    .map((exercise) => {
+                        const name = (exercise?.name || exercise?.exercise || exercise?.exerciseId || exercise?.id || '').trim();
+                        const exerciseId = String(exercise?.id || exercise?.exerciseId || '').trim();
+                        if (!name || !exerciseId) {
+                            return null;
+                        }
+                        return { name, exerciseId };
+                    })
                     .filter(Boolean)
                 : [];
-            names.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+            entries.sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
 
-            const text = buildExercisesShareText(names);
-            downloadText('exercices_whatsapp.txt', text);
+            const text = buildExercisesShareText(entries);
+            downloadText('ListeExercices.txt', text);
 
             const copied = await tryCopyToClipboard(text);
             const message = copied
@@ -317,12 +324,12 @@
         }
     }
 
-    function buildExercisesShareText(names) {
-        if (!Array.isArray(names) || !names.length) {
+    function buildExercisesShareText(entries) {
+        if (!Array.isArray(entries) || !entries.length) {
             return 'Liste des exercices\n\nAucun exercice disponible.';
         }
-        const header = `Liste des exercices (${names.length})`;
-        const lines = names.map((name, index) => `${index + 1}. ${name}`);
+        const header = `Liste des exercices (${entries.length})`;
+        const lines = entries.map((entry, index) => `${index + 1}. ${entry.name} — ${entry.exerciseId}`);
         return `${header}\n\n${lines.join('\n')}`;
     }
 
