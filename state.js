@@ -92,7 +92,7 @@
         if (!Number.isFinite(load) || !Number.isFinite(count) || count <= 0) {
             return null;
         }
-        const rawRpe = Number.isFinite(Number(rpe)) ? Number(rpe) : 9.5;
+        const rawRpe = Number.isFinite(Number(rpe)) ? Number(rpe) : 10;
         const normalizedRpe = Math.min(10, Math.max(0, rawRpe));
         const repsInReserve = Math.max(0, 9.5 - normalizedRpe);
         return existing.calculateOrm(load, count + repsInReserve);
