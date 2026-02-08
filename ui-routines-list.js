@@ -249,7 +249,7 @@
             return true;
         }
         const name = routine?.name || '';
-        const details = routine?.details || '';
+        const details = routine?.instructions_routine_global || routine?.details || '';
         const moves = Array.isArray(routine?.moves) ? routine.moves : [];
         const moveNames = moves.map((move) => move?.exerciseName || '').filter(Boolean).join(' ');
         const haystack = `${name} ${details} ${moveNames}`.toLowerCase();

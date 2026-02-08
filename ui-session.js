@@ -204,7 +204,7 @@
         }
     }
 
-    function showDetailsPopover(target, detailsText) {
+    function showDetailsPopover(target, instructionsText, commentsText) {
         if (!target) {
             return;
         }
@@ -213,7 +213,22 @@
         popover.className = 'exec-medal-popover exec-details-popover';
         const text = document.createElement('div');
         text.className = 'exec-details-popover__text';
-        text.textContent = detailsText || 'Aucun détail.';
+        const instructions = typeof instructionsText === 'string' ? instructionsText.trim() : '';
+        const comments = typeof commentsText === 'string' ? commentsText.trim() : '';
+        if (!instructions && !comments) {
+            text.textContent = 'Aucune instructions / commentaires';
+        } else {
+            if (instructions) {
+                const instructionsNode = document.createElement('div');
+                instructionsNode.textContent = `Instructions : ${instructions}`;
+                text.appendChild(instructionsNode);
+            }
+            if (comments) {
+                const commentsNode = document.createElement('div');
+                commentsNode.textContent = `Commentaires : ${comments}`;
+                text.appendChild(commentsNode);
+            }
+        }
         popover.append(text);
         document.body.appendChild(popover);
         const rect = target.getBoundingClientRect();
@@ -576,11 +591,16 @@
             detailsButton.type = 'button';
             detailsButton.className = 'exercise-card-menu-button';
             detailsButton.textContent = 'ⓘ';
-            detailsButton.setAttribute('aria-label', "Afficher les détails de l'exercice");
+            detailsButton.setAttribute('aria-label', "Afficher les instructions et commentaires de l'exercice");
             detailsButton.addEventListener('click', (event) => {
                 event.stopPropagation();
-                const details = typeof exercise.details === 'string' ? exercise.details.trim() : '';
-                showDetailsPopover(detailsButton, details);
+                const instructions = typeof exercise.instructions_routine_exercice === 'string'
+                    ? exercise.instructions_routine_exercice.trim()
+                    : '';
+                const comments = typeof exercise.comments_session_exercice === 'string'
+                    ? exercise.comments_session_exercice.trim()
+                    : '';
+                showDetailsPopover(detailsButton, instructions, comments);
             });
             end.appendChild(detailsButton);
             const setsWrapper = document.createElement('div');
@@ -918,7 +938,7 @@
                 exerciseId: exercise.id,
                 exerciseName: exercise.name || 'Exercice',
                 routineInstructions: '',
-                note: '',
+                comments: '',
                 sort: (session.exercises?.length || 0) + 1,
                 sets: []
             });
@@ -969,9 +989,12 @@
                     sessionId: session.id,
                     exerciseId: move.exerciseId,
                     exerciseName: move.exerciseName,
-                    routineInstructions: typeof move.instructions === 'string' ? move.instructions : '',
-                    note: '',
-                    details: typeof move.details === 'string' ? move.details : '',
+                    routineInstructions: typeof move.instructions_routine_exercice === 'string'
+                        ? move.instructions_routine_exercice
+                        : typeof move.instructions === 'string'
+                            ? move.instructions
+                            : '',
+                    comments: '',
                     sort: session.exercises.length + 1,
                     sets: move.sets.map((set) => ({
                         pos: set.pos,
@@ -1003,7 +1026,7 @@
         return {
             id: A.sessionId(date),
             date: A.sessionISO(date),
-            comments: '',
+            comments_session_global: '',
             exercises: []
         };
     }
@@ -1015,8 +1038,7 @@
             exerciseId,
             exerciseName,
             routineInstructions,
-            note,
-            details,
+            comments,
             sort,
             sets
         } = options;
@@ -1026,9 +1048,8 @@
             sort,
             exercise_id: exerciseId,
             exercise_name: exerciseName || 'Exercice',
-            routine_instructions: routineInstructions || '',
-            exercise_note: note || '',
-            details: details || '',
+            instructions_routine_exercice: routineInstructions || '',
+            comments_session_exercice: comments || '',
             date,
             type: exerciseId,
             category: 'weight_reps',
@@ -1526,7 +1547,7 @@
             if (!sessionCommentState.session) {
                 return;
             }
-            sessionCommentState.session.comments = sessionCommentInput.value;
+            sessionCommentState.session.comments_session_global = sessionCommentInput.value;
             updateSessionCommentsPreview(sessionCommentState.session);
             scheduleSessionCommentSave();
         });
@@ -1664,7 +1685,7 @@
         }
         const session = await ensureSessionForDate(A.activeDate);
         sessionCommentState.session = session;
-        sessionCommentInput.value = session.comments || '';
+        sessionCommentInput.value = session.comments_session_global || '';
         sessionCommentState.initialComments = sessionCommentInput.value;
         dlgSessionComment.showModal();
         focusTextareaAtEnd(sessionCommentInput);
@@ -1676,7 +1697,7 @@
             return;
         }
         if (revert && sessionCommentState.session) {
-            sessionCommentState.session.comments = sessionCommentState.initialComments || '';
+            sessionCommentState.session.comments_session_global = sessionCommentState.initialComments || '';
             sessionCommentInput.value = sessionCommentState.initialComments || '';
             updateSessionCommentsPreview(sessionCommentState.session);
         }
@@ -1713,7 +1734,9 @@
         if (!sessionCommentsPreview) {
             return;
         }
-        const comment = typeof session?.comments === 'string' ? session.comments.trim() : '';
+        const comment = typeof session?.comments_session_global === 'string'
+            ? session.comments_session_global.trim()
+            : '';
         sessionCommentsPreview.textContent = comment;
         sessionCommentsPreview.dataset.empty = comment ? 'false' : 'true';
     }
@@ -1803,7 +1826,9 @@
             pos: index + 1,
             exerciseId: exercise.exercise_id,
             exerciseName: exercise.exercise_name || 'Exercice',
-            instructions: typeof exercise.routine_instructions === 'string' ? exercise.routine_instructions : '',
+            instructions_routine_exercice: typeof exercise.instructions_routine_exercice === 'string'
+                ? exercise.instructions_routine_exercice
+                : '',
             sets: Array.isArray(exercise.sets)
                 ? exercise.sets.map((set, setIndex) => ({
                     pos: safeInt(set?.pos, setIndex + 1),
@@ -1819,7 +1844,7 @@
             id: routineId,
             name: `Routine du ${dateLabel}`,
             icon: '🏋️',
-            details: '',
+            instructions_routine_global: '',
             moves
         };
     }

@@ -557,8 +557,8 @@
 
     <main class="content">
         <div class="session-comments-header">
-            <button id="btnRoutineDetails" class="session-comments-content" type="button" aria-label="Ajouter des détails de routine">
-                <span id="routineDetailsPreview" class="session-comments-text details" data-empty="true" data-placeholder="détails"></span>
+            <button id="btnRoutineDetails" class="session-comments-content" type="button" aria-label="Ajouter des instructions de routine">
+                <span id="routineDetailsPreview" class="session-comments-text details" data-empty="true" data-placeholder="Instructions de routine"></span>
             </button>
             <button id="routineEditMenu" class="btn ghost session-comments-more" type="button" aria-label="Actions de routine">...</button>
         </div>
@@ -1299,14 +1299,14 @@
 <dialog id="dlgRoutineDetails" class="modal modal-fixed modal-centered modal-top">
     <form method="dialog" class="modal-form">
         <div class="modal-header">
-            <div class="title modal-title">Détails de routine</div>
+            <div class="title modal-title">Instructions de routine</div>
             <button id="routineDetailsCancel" class="btn ghost modal-close" type="button">✕</button>
         </div>
         <div class="modal-body">
             <div class="bloque">
                 <div class="vstack">
-                    <label class="lbl" for="routineDetailsInput">Détails</label>
-                    <textarea id="routineDetailsInput" class="input session-comment-textarea" rows="8" placeholder="Ajouter des détails sur la routine"></textarea>
+                    <label class="lbl" for="routineDetailsInput">Instructions de routine</label>
+                    <textarea id="routineDetailsInput" class="input session-comment-textarea" rows="8" placeholder="Ajouter des instructions de routine"></textarea>
                 </div>
             </div>
         </div>
@@ -1353,7 +1353,7 @@
     <form method="dialog" class="modal-context-form">
         <button id="routineMoveUp" class="modal-context-action" type="button">Remonter</button>
         <button id="routineMoveDown" class="modal-context-action" type="button">Descendre</button>
-        <button id="routineMoveAnnotate" class="modal-context-action" type="button">Anoter</button>
+        <button id="routineMoveAnnotate" class="modal-context-action" type="button">Expliquer</button>
         <button id="routineMoveDuplicate" class="modal-context-action" type="button">Dupliquer</button>
         <button id="routineMoveReplace" class="modal-context-action" type="button">Remplacer</button>
         <button id="routineMoveDelete" class="modal-context-action is-danger" type="button">Supprimer</button>
@@ -1385,7 +1385,7 @@
     <form method="dialog" class="modal-context-form">
         <button id="execMoveUp" class="modal-context-action" type="button">Remonter</button>
         <button id="execMoveDown" class="modal-context-action" type="button">Descendre</button>
-        <button id="execMoveAnnotate" class="modal-context-action" type="button">Anoter</button>
+        <button id="execMoveAnnotate" class="modal-context-action" type="button">Commenter</button>
         <button id="execMoveDuplicate" class="modal-context-action" type="button">Dupliquer</button>
         <button id="execReplaceExercise" class="modal-context-action" type="button">Remplacer</button>
         <button id="execDelete" class="modal-context-action is-danger" type="button">Supprimer</button>
@@ -1429,14 +1429,14 @@
 <dialog id="dlgExecDetails" class="modal modal-fixed modal-centered modal-top">
     <form method="dialog" class="modal-form">
         <div class="modal-header">
-            <div class="title modal-title">Détails</div>
+            <div class="title modal-title">Instructions et commentaire d’exercice</div>
             <button id="execDetailsCancel" class="btn ghost modal-close" type="button">✕</button>
         </div>
         <div class="modal-body">
             <div class="bloque">
                 <div class="vstack">
-                    <label class="lbl" for="execDetailsInput">Détails</label>
-                    <textarea id="execDetailsInput" class="input session-comment-textarea" rows="8" placeholder="Ajouter des détails sur l'exercice"></textarea>
+                    <label class="lbl" for="execDetailsInput">Commentaires</label>
+                    <textarea id="execDetailsInput" class="input session-comment-textarea" rows="8" placeholder="Ajouter des commentaires sur l'exercice"></textarea>
                 </div>
             </div>
         </div>
@@ -1451,14 +1451,14 @@
 <dialog id="dlgRoutineMoveDetails" class="modal modal-fixed modal-centered modal-top">
     <form method="dialog" class="modal-form">
         <div class="modal-header">
-            <div class="title modal-title">Détails</div>
+            <div class="title modal-title">Instructions d’exercice</div>
             <button id="routineMoveDetailsCancel" class="btn ghost modal-close" type="button">✕</button>
         </div>
         <div class="modal-body">
             <div class="bloque">
                 <div class="vstack">
-                    <label class="lbl" for="routineMoveDetailsInput">Détails</label>
-                    <textarea id="routineMoveDetailsInput" class="input session-comment-textarea" rows="8" placeholder="Ajouter des détails sur l'exercice"></textarea>
+                    <label class="lbl" for="routineMoveDetailsInput">Instructions</label>
+                    <textarea id="routineMoveDetailsInput" class="input session-comment-textarea" rows="8" placeholder="Ajouter des instructions sur l'exercice"></textarea>
                 </div>
             </div>
         </div>

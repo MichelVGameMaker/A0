@@ -271,11 +271,17 @@
         if (!target.exercise_name && source.exercise_name) {
             target.exercise_name = source.exercise_name;
         }
-        if (!target.routine_instructions && source.routine_instructions) {
-            target.routine_instructions = source.routine_instructions;
+        if (!target.instructions_routine_exercice && source.instructions_routine_exercice) {
+            target.instructions_routine_exercice = source.instructions_routine_exercice;
         }
-        if (!target.exercise_note && source.exercise_note) {
-            target.exercise_note = source.exercise_note;
+        if (!target.instructions_routine_exercice && source.routine_instructions) {
+            target.instructions_routine_exercice = source.routine_instructions;
+        }
+        if (!target.comments_session_exercice && source.comments_session_exercice) {
+            target.comments_session_exercice = source.comments_session_exercice;
+        }
+        if (!target.comments_session_exercice && source.exercise_note) {
+            target.comments_session_exercice = source.exercise_note;
         }
         const targetSets = Array.isArray(target.sets) ? target.sets : [];
         const sourceSets = Array.isArray(source.sets) ? source.sets : [];
