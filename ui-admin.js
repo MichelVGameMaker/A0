@@ -477,7 +477,11 @@
             id: typeof routine.id === 'string' && routine.id.trim() ? routine.id.trim() : uid('routine'),
             name,
             icon: typeof routine.icon === 'string' && routine.icon.trim() ? routine.icon.trim() : '🏋️',
-            details: typeof routine.details === 'string' ? routine.details : '',
+            instructions_routine_global: typeof routine.instructions_routine_global === 'string'
+                ? routine.instructions_routine_global
+                : typeof routine.details === 'string'
+                    ? routine.details
+                    : '',
             moves: normalizedMoves.filter(Boolean)
         };
     }
@@ -491,8 +495,13 @@
             pos: safeInt(move.pos, index + 1),
             exerciseId: typeof move.exerciseId === 'string' ? move.exerciseId : '',
             exerciseName: typeof move.exerciseName === 'string' ? move.exerciseName : '',
-            instructions: typeof move.instructions === 'string' ? move.instructions : '',
-            details: typeof move.details === 'string' ? move.details : '',
+            instructions_routine_exercice: typeof move.instructions_routine_exercice === 'string'
+                ? move.instructions_routine_exercice
+                : typeof move.instructions === 'string'
+                    ? move.instructions
+                    : typeof move.details === 'string'
+                        ? move.details
+                        : '',
             sets: Array.isArray(move.sets)
                 ? move.sets.map((set, setIndex) => ({
                     pos: safeInt(set?.pos, setIndex + 1),

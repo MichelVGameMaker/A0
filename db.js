@@ -764,6 +764,15 @@ const db = (() => {
         return value.trim().length ? value : null;
     }
 
+    function pickOptionalText(...values) {
+        for (const value of values) {
+            if (typeof value === 'string' && value.trim().length) {
+                return value;
+            }
+        }
+        return null;
+    }
+
     function hasDoneSet(session) {
         if (!session || !Array.isArray(session.exercises)) {
             return false;
@@ -800,7 +809,9 @@ const db = (() => {
                 session.date = iso;
             }
         }
-        session.comments = normalizeOptionalText(session.comments);
+        const sessionComments = pickOptionalText(session.comments_session_global, session.comments);
+        session.comments_session_global = normalizeOptionalText(sessionComments);
+        delete session.comments;
         if (Array.isArray(session.exercises)) {
             session.exercises = normalizeSessionExercises(session);
         }
@@ -829,16 +840,18 @@ const db = (() => {
             ? exercise.id
             : buildSessionExerciseId(sessionId, exerciseName || exerciseId);
 
-        const routineInstructions = typeof exercise.routine_instructions === 'string'
-            ? exercise.routine_instructions
-            : typeof exercise.routineInstructions === 'string'
-                ? exercise.routineInstructions
-                : null;
-        const exerciseNote = typeof exercise.exercise_note === 'string'
-            ? exercise.exercise_note
-            : typeof exercise.note === 'string'
-                ? exercise.note
-                : null;
+        const routineInstructions = pickOptionalText(
+            exercise.instructions_routine_exercice,
+            exercise.routine_instructions,
+            exercise.routineInstructions,
+            exercise.instructions
+        );
+        const exerciseComments = pickOptionalText(
+            exercise.comments_session_exercice,
+            exercise.exercise_note,
+            exercise.note,
+            exercise.details
+        );
 
         const normalized = {
             ...exercise,
@@ -846,8 +859,8 @@ const db = (() => {
             sort: sortValue,
             exercise_id: exerciseId,
             exercise_name: exerciseName,
-            routine_instructions: normalizeOptionalText(routineInstructions),
-            exercise_note: normalizeOptionalText(exerciseNote),
+            instructions_routine_exercice: normalizeOptionalText(routineInstructions),
+            comments_session_exercice: normalizeOptionalText(exerciseComments),
             date,
             type: typeof exercise.type === 'string' && exercise.type.length ? exercise.type : exerciseId,
             category: typeof exercise.category === 'string' && exercise.category.length ? exercise.category : 'weight_reps',
@@ -867,6 +880,9 @@ const db = (() => {
         delete normalized.exerciseName;
         delete normalized.routineInstructions;
         delete normalized.note;
+        delete normalized.details;
+        delete normalized.routine_instructions;
+        delete normalized.exercise_note;
         delete normalized.pos;
 
         return normalized;

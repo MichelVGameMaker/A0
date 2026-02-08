@@ -1730,7 +1730,7 @@
         return {
             id: sessionId,
             date: sessionDate,
-            comments: typeof workout.comments === 'string' ? workout.comments : '',
+            comments_session_global: typeof workout.comments === 'string' ? workout.comments : '',
             exercises
         };
     }
@@ -1841,7 +1841,7 @@
             category: 'weight_reps',
             weight_unit: 'metric',
             distance_unit: 'metric',
-            comments: typeof exercise.comments === 'string' ? exercise.comments : null,
+            comments_session_exercice: typeof exercise.comments === 'string' ? exercise.comments : '',
             exercise_note: typeof exercise.comments === 'string' ? exercise.comments : ''
         };
     }

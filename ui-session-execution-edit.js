@@ -14,9 +14,9 @@
         pendingFocus: null,
         replaceCallerScreen: 'screenExecEdit'
     };
-    const detailsState = {
+    const commentsState = {
         exercise: null,
-        initialDetails: '',
+        initialComments: '',
         saveTimer: null
     };
     let medalPopover = null;
@@ -358,8 +358,13 @@
                 return;
             }
             const exercise = getExercise();
-            const details = typeof exercise?.details === 'string' ? exercise.details.trim() : '';
-            showDetailsPopover(btnExecDetails, details);
+            const instructions = typeof exercise?.instructions_routine_exercice === 'string'
+                ? exercise.instructions_routine_exercice.trim()
+                : '';
+            const comments = typeof exercise?.comments_session_exercice === 'string'
+                ? exercise.comments_session_exercice.trim()
+                : '';
+            showDetailsPopover(btnExecDetails, instructions, comments);
         });
         execDetailsClose?.addEventListener('click', () => {
             void closeExecDetailsDialog({ revert: false });
@@ -371,11 +376,11 @@
             void flushExecDetailsSave();
         });
         execDetailsInput?.addEventListener('input', () => {
-            if (!detailsState.exercise) {
+            if (!commentsState.exercise) {
                 return;
             }
-            detailsState.exercise.details = execDetailsInput.value;
-            updateExecDetailsPreview(detailsState.exercise);
+            commentsState.exercise.comments_session_exercice = execDetailsInput.value;
+            updateExecDetailsPreview(commentsState.exercise);
             scheduleExecDetailsSave();
         });
     }
@@ -446,9 +451,11 @@
         if (!dlgExecDetails || !execDetailsInput || !exercise) {
             return;
         }
-        detailsState.exercise = exercise;
-        execDetailsInput.value = typeof exercise.details === 'string' ? exercise.details : '';
-        detailsState.initialDetails = execDetailsInput.value;
+        commentsState.exercise = exercise;
+        execDetailsInput.value = typeof exercise.comments_session_exercice === 'string'
+            ? exercise.comments_session_exercice
+            : '';
+        commentsState.initialComments = execDetailsInput.value;
         dlgExecDetails.showModal();
         focusTextareaAtEnd(execDetailsInput);
     }
@@ -458,11 +465,11 @@
         if (!dlgExecDetails || !execDetailsInput) {
             return;
         }
-        if (detailsState.exercise) {
-            const nextDetails = revert ? detailsState.initialDetails || '' : execDetailsInput.value;
-            detailsState.exercise.details = nextDetails;
+        if (commentsState.exercise) {
+            const nextDetails = revert ? commentsState.initialComments || '' : execDetailsInput.value;
+            commentsState.exercise.comments_session_exercice = nextDetails;
             execDetailsInput.value = nextDetails;
-            updateExecDetailsPreview(detailsState.exercise);
+            updateExecDetailsPreview(commentsState.exercise);
         }
         await flushExecDetailsSave();
         if (A.closeDialog) {
@@ -476,20 +483,20 @@
     }
 
     function scheduleExecDetailsSave() {
-        if (detailsState.saveTimer) {
-            clearTimeout(detailsState.saveTimer);
+        if (commentsState.saveTimer) {
+            clearTimeout(commentsState.saveTimer);
         }
-        detailsState.saveTimer = setTimeout(() => {
+        commentsState.saveTimer = setTimeout(() => {
             void flushExecDetailsSave();
         }, 300);
     }
 
     async function flushExecDetailsSave() {
-        if (detailsState.saveTimer) {
-            clearTimeout(detailsState.saveTimer);
-            detailsState.saveTimer = null;
+        if (commentsState.saveTimer) {
+            clearTimeout(commentsState.saveTimer);
+            commentsState.saveTimer = null;
         }
-        if (!detailsState.exercise || !state.session) {
+        if (!commentsState.exercise || !state.session) {
             return;
         }
         await persistSession(false);
@@ -500,9 +507,11 @@
         if (!execDetailsPreview) {
             return;
         }
-        const details = typeof exercise?.details === 'string' ? exercise.details.trim() : '';
-        execDetailsPreview.textContent = details;
-        execDetailsPreview.dataset.empty = details ? 'false' : 'true';
+        const comments = typeof exercise?.comments_session_exercice === 'string'
+            ? exercise.comments_session_exercice.trim()
+            : '';
+        execDetailsPreview.textContent = comments;
+        execDetailsPreview.dataset.empty = comments ? 'false' : 'true';
     }
 
     function focusTextareaAtEnd(textarea) {
@@ -560,9 +569,16 @@
     }
 
     function normalizeExerciseSets(exercise) {
-        exercise.exercise_note = typeof exercise.exercise_note === 'string' ? exercise.exercise_note : '';
-        exercise.routine_instructions =
-            typeof exercise.routine_instructions === 'string' ? exercise.routine_instructions : '';
+        exercise.comments_session_exercice = typeof exercise.comments_session_exercice === 'string'
+            ? exercise.comments_session_exercice
+            : typeof exercise.exercise_note === 'string'
+                ? exercise.exercise_note
+                : '';
+        exercise.instructions_routine_exercice = typeof exercise.instructions_routine_exercice === 'string'
+            ? exercise.instructions_routine_exercice
+            : typeof exercise.routine_instructions === 'string'
+                ? exercise.routine_instructions
+                : '';
         const defaultRest = getDefaultRest();
         const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
         const normalized = sets.map((set, index) => ({
@@ -772,7 +788,7 @@
         }, 0);
     }
 
-    function showDetailsPopover(target, detailsText) {
+    function showDetailsPopover(target, instructionsText, commentsText) {
         if (!target) {
             return;
         }
@@ -781,7 +797,22 @@
         popover.className = 'exec-medal-popover exec-details-popover';
         const text = document.createElement('div');
         text.className = 'exec-details-popover__text';
-        text.textContent = detailsText || 'Aucun détail.';
+        const instructions = typeof instructionsText === 'string' ? instructionsText.trim() : '';
+        const comments = typeof commentsText === 'string' ? commentsText.trim() : '';
+        if (!instructions && !comments) {
+            text.textContent = 'Aucune instructions / commentaires';
+        } else {
+            if (instructions) {
+                const instructionsNode = document.createElement('div');
+                instructionsNode.textContent = `Instructions : ${instructions}`;
+                text.appendChild(instructionsNode);
+            }
+            if (comments) {
+                const commentsNode = document.createElement('div');
+                commentsNode.textContent = `Commentaires : ${comments}`;
+                text.appendChild(commentsNode);
+            }
+        }
         const actions = document.createElement('div');
         actions.className = 'exec-details-popover__actions';
         const editButton = document.createElement('button');

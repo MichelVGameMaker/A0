@@ -376,7 +376,7 @@
         popover.className = 'exec-medal-popover exec-details-popover';
         const text = document.createElement('div');
         text.className = 'exec-details-popover__text';
-        text.textContent = detailsText || 'Aucun détail.';
+        text.textContent = detailsText || 'Aucune instructions';
         popover.append(text);
         document.body.appendChild(popover);
         const rect = target.getBoundingClientRect();
@@ -515,14 +515,15 @@
             id: uid('routine'),
             name: `${base.name || 'Routine'} (copie)`,
             icon: base.icon,
-            details: base.details || '',
+            instructions_routine_global: base.instructions_routine_global || '',
             moves: base.moves.map((move, index) => ({
                 id: uid('move'),
                 pos: safeInt(move.pos, index + 1),
                 exerciseId: move.exerciseId,
                 exerciseName: move.exerciseName,
-                instructions: typeof move.instructions === 'string' ? move.instructions : '',
-                details: typeof move.details === 'string' ? move.details : '',
+                instructions_routine_exercice: typeof move.instructions_routine_exercice === 'string'
+                    ? move.instructions_routine_exercice
+                    : '',
                 sets: Array.isArray(move.sets)
                     ? move.sets.map((set, idx) => ({
                         pos: safeInt(set.pos, idx + 1),
@@ -590,7 +591,16 @@
     }
 
     function createEmptyRoutine(id) {
-        return { id, name: 'Routine', icon: ICONS[0], details: '', moves: [] };
+        return { id, name: 'Routine', icon: ICONS[0], instructions_routine_global: '', moves: [] };
+    }
+
+    function pickTextValue(...values) {
+        for (const value of values) {
+            if (typeof value === 'string') {
+                return value;
+            }
+        }
+        return '';
     }
 
     function normalizeRoutine(routine) {
@@ -601,7 +611,7 @@
             id: routine.id || state.routineId,
             name: routine.name || 'Routine',
             icon: routine.icon || ICONS[0],
-            details: routine.details || '',
+            instructions_routine_global: pickTextValue(routine.instructions_routine_global, routine.details),
             moves: Array.isArray(routine.moves) ? [...routine.moves] : []
         };
         normalized.moves = normalized.moves.map((move, index) => ({
@@ -609,8 +619,11 @@
             pos: safeInt(move.pos, index + 1),
             exerciseId: move.exerciseId,
             exerciseName: move.exerciseName || 'Exercice',
-            instructions: typeof move.instructions === 'string' ? move.instructions : '',
-            details: typeof move.details === 'string' ? move.details : '',
+            instructions_routine_exercice: pickTextValue(
+                move.instructions_routine_exercice,
+                move.details,
+                move.instructions
+            ),
             sets: Array.isArray(move.sets)
                 ? move.sets.map((set, idx) => ({
                     pos: safeInt(set.pos, idx + 1),
@@ -719,7 +732,7 @@
             if (!state.routine) {
                 return;
             }
-            routineDetailsSnapshot = state.routine.details || '';
+            routineDetailsSnapshot = state.routine.instructions_routine_global || '';
             routineDetailsInput.value = routineDetailsSnapshot;
             dlgRoutineDetails.showModal();
         });
@@ -727,7 +740,7 @@
             if (!state.routine) {
                 return;
             }
-            state.routine.details = routineDetailsInput.value;
+            state.routine.instructions_routine_global = routineDetailsInput.value;
             updateRoutineDetailsPreview(state.routine);
             scheduleSave();
         });
@@ -749,7 +762,7 @@
                 clearTimeout(state.pendingSave);
                 state.pendingSave = null;
             }
-            state.routine.details = routineDetailsSnapshot;
+            state.routine.instructions_routine_global = routineDetailsSnapshot;
             routineDetailsInput.value = routineDetailsSnapshot;
             updateRoutineDetailsPreview(state.routine);
             void persistRoutine();
@@ -796,8 +809,7 @@
                 pos: state.routine.moves.length + 1,
                 exerciseId: exercise.id,
                 exerciseName: exercise.name || 'Exercice',
-                instructions: '',
-                details: '',
+                instructions_routine_exercice: '',
                 sets: []
             };
             state.routine.moves.push(move);
@@ -824,7 +836,7 @@
         routineName.value = state.routine.name || '';
         routineIcon.value = state.routine.icon || ICONS[0];
         if (routineDetailsInput) {
-            routineDetailsInput.value = state.routine.details || '';
+            routineDetailsInput.value = state.routine.instructions_routine_global || '';
         }
         if (routineEditTitle) {
             routineEditTitle.textContent = state.routine.name || 'Routine';
@@ -839,9 +851,9 @@
         if (!routineDetailsPreview) {
             return;
         }
-        const details = routine?.details || '';
-        routineDetailsPreview.textContent = details;
-        routineDetailsPreview.dataset.empty = details.trim() ? 'false' : 'true';
+        const instructions = routine?.instructions_routine_global || '';
+        routineDetailsPreview.textContent = instructions;
+        routineDetailsPreview.dataset.empty = instructions.trim() ? 'false' : 'true';
     }
 
     function renderIconPreview() {
@@ -912,11 +924,13 @@
         detailsButton.type = 'button';
         detailsButton.className = 'exercise-card-menu-button';
         detailsButton.textContent = 'ⓘ';
-        detailsButton.setAttribute('aria-label', "Afficher les détails de l'exercice");
+        detailsButton.setAttribute('aria-label', "Afficher les instructions de l'exercice");
         detailsButton.addEventListener('click', (event) => {
             event.stopPropagation();
-            const details = typeof move.details === 'string' ? move.details.trim() : '';
-            showDetailsPopover(detailsButton, details);
+            const instructions = typeof move.instructions_routine_exercice === 'string'
+                ? move.instructions_routine_exercice.trim()
+                : '';
+            showDetailsPopover(detailsButton, instructions);
         });
         end.appendChild(detailsButton);
         const setsWrapper = document.createElement('div');
@@ -1274,14 +1288,15 @@
             id: routine.id,
             name: routine.name,
             icon: routine.icon,
-            details: routine.details || '',
+            instructions_routine_global: routine.instructions_routine_global || '',
             moves: routine.moves.map((move, index) => ({
                 id: move.id,
                 pos: safeInt(move.pos, index + 1),
                 exerciseId: move.exerciseId,
                 exerciseName: move.exerciseName,
-                instructions: typeof move.instructions === 'string' ? move.instructions : '',
-                details: typeof move.details === 'string' ? move.details : '',
+                instructions_routine_exercice: typeof move.instructions_routine_exercice === 'string'
+                    ? move.instructions_routine_exercice
+                    : '',
                 sets: Array.isArray(move.sets)
                     ? move.sets.map((set, idx) => ({
                         pos: safeInt(set.pos, idx + 1),

@@ -15,7 +15,7 @@
         pendingFocus: null,
         replaceCallerScreen: 'screenRoutineMoveEdit'
     };
-    const detailsState = {
+    const instructionsState = {
         move: null,
         initialDetails: ''
     };
@@ -253,10 +253,10 @@
             void flushRoutineMoveDetailsSave();
         });
         routineMoveDetailsInput.addEventListener('input', () => {
-            if (!detailsState.move) {
+            if (!instructionsState.move) {
                 return;
             }
-            detailsState.move.details = routineMoveDetailsInput.value;
+            instructionsState.move.instructions_routine_exercice = routineMoveDetailsInput.value;
             scheduleSave();
         });
     }
@@ -294,17 +294,19 @@
         if (!move) {
             return;
         }
-        detailsState.move = move;
-        routineMoveDetailsInput.value = typeof move.details === 'string' ? move.details : '';
-        detailsState.initialDetails = routineMoveDetailsInput.value;
+        instructionsState.move = move;
+        routineMoveDetailsInput.value = typeof move.instructions_routine_exercice === 'string'
+            ? move.instructions_routine_exercice
+            : '';
+        instructionsState.initialDetails = routineMoveDetailsInput.value;
         dlgRoutineMoveDetails.showModal();
     }
 
     async function closeRoutineMoveDetailsDialog({ revert }) {
         const { dlgRoutineMoveDetails, routineMoveDetailsInput } = assertRefs();
-        if (detailsState.move) {
-            const nextDetails = revert ? detailsState.initialDetails || '' : routineMoveDetailsInput.value;
-            detailsState.move.details = nextDetails;
+        if (instructionsState.move) {
+            const nextDetails = revert ? instructionsState.initialDetails || '' : routineMoveDetailsInput.value;
+            instructionsState.move.instructions_routine_exercice = nextDetails;
             routineMoveDetailsInput.value = nextDetails;
         }
         await flushRoutineMoveDetailsSave({ refresh: !revert });
@@ -313,12 +315,12 @@
         } else {
             dlgRoutineMoveDetails.close();
         }
-        detailsState.move = null;
+        instructionsState.move = null;
     }
 
     async function flushRoutineMoveDetailsSave(options = {}) {
         const { refresh = false } = options;
-        if (!detailsState.move || !state.routine) {
+        if (!instructionsState.move || !state.routine) {
             return;
         }
         await persistRoutine({ refresh });
@@ -832,8 +834,9 @@
             ...move,
             id: uid('move'),
             pos: move.pos + 1,
-            instructions: typeof move.instructions === 'string' ? move.instructions : '',
-            details: typeof move.details === 'string' ? move.details : '',
+            instructions_routine_exercice: typeof move.instructions_routine_exercice === 'string'
+                ? move.instructions_routine_exercice
+                : '',
             sets: Array.isArray(move.sets)
                 ? move.sets.map((set, idx) => ({
                     pos: safeInt(set.pos, idx + 1),
@@ -976,6 +979,15 @@
         A.ensureRoutineMoveInView?.(state.moveId);
     }
 
+    function pickTextValue(...values) {
+        for (const value of values) {
+            if (typeof value === 'string') {
+                return value;
+            }
+        }
+        return '';
+    }
+
     function normalizeRoutine(routine) {
         if (!routine) {
             return null;
@@ -984,15 +996,18 @@
             id: routine.id,
             name: routine.name || 'Routine',
             icon: routine.icon || '🏋️',
-            details: routine.details || '',
+            instructions_routine_global: pickTextValue(routine.instructions_routine_global, routine.details),
             moves: Array.isArray(routine.moves)
                 ? routine.moves.map((move, index) => ({
                     id: move.id || uid('move'),
                     pos: safeInt(move.pos, index + 1),
                     exerciseId: move.exerciseId,
                     exerciseName: move.exerciseName || 'Exercice',
-                    instructions: typeof move.instructions === 'string' ? move.instructions : '',
-                    details: typeof move.details === 'string' ? move.details : '',
+                    instructions_routine_exercice: pickTextValue(
+                        move.instructions_routine_exercice,
+                        move.details,
+                        move.instructions
+                    ),
                     sets: Array.isArray(move.sets)
                         ? move.sets.map((set, idx) => ({
                             pos: safeInt(set.pos, idx + 1),
@@ -1012,15 +1027,16 @@
             id: routine.id,
             name: routine.name,
             icon: routine.icon,
-            details: routine.details || '',
+            instructions_routine_global: routine.instructions_routine_global || '',
             moves: Array.isArray(routine.moves)
                 ? routine.moves.map((move, index) => ({
                     id: move.id || uid('move'),
                     pos: safeInt(move.pos, index + 1),
                     exerciseId: move.exerciseId,
                     exerciseName: move.exerciseName,
-                    instructions: typeof move.instructions === 'string' ? move.instructions : '',
-                    details: typeof move.details === 'string' ? move.details : '',
+                    instructions_routine_exercice: typeof move.instructions_routine_exercice === 'string'
+                        ? move.instructions_routine_exercice
+                        : '',
                     sets: Array.isArray(move.sets)
                         ? move.sets.map((set, idx) => ({
                             pos: safeInt(set.pos, idx + 1),
