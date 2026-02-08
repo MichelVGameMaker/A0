@@ -629,7 +629,7 @@
         const layouts = {
             default: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     '.',   '0',  'del'],
             integer: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     null,  '0',  'del'],
-            rpe:     ['5',  '5.5', '6', '6.5', '7', '7.5', '8',    '8.5', '9',     '9.5', '10', 'del'],
+            rpe:     ['5',  '5.5', '6', '6.5', '7', '7.5', '8',    '8.5', '9',     '9.5', '10', '-'],
             time:    ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     ':',   '0',  'del'],
             edit:    ['up', null, null, 'down', null, 'trash', null, null, null]
         };
@@ -666,7 +666,7 @@
                     button.dataset.tall = 'true';
                     button.classList.add('inline-keyboard-key--danger');
                 }
-                if (layout === 'rpe' && key !== 'del') {
+                if (layout === 'rpe' && key !== '-') {
                     button.dataset.rpe = key;
                 }
                 button.addEventListener('click', (event) => {
@@ -865,7 +865,7 @@
             if (key === 'del') {
                 next = shouldReplace ? '' : current.slice(0, -1);
             } else if (layout === 'rpe') {
-                next = key;
+                next = key === '-' ? '' : key;
             } else if (layout === 'time' && key === ':') {
                 if (!base.includes(':')) {
                     next = `${base || '0'}:`;
