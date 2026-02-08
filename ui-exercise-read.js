@@ -533,7 +533,8 @@
         const reps = Number.isFinite(set?.reps) ? set.reps : null;
         const weight = set?.weight != null ? Number(set.weight) : null;
         const rpe = set?.rpe != null ? set.rpe : null;
-        const rest = Number.isFinite(set?.rest) ? set.rest : null;
+        const orm = Number.isFinite(set?.orm) ? set.orm : null;
+        const ormRpe = Number.isFinite(set?.ormRpe) ? set.ormRpe : null;
         const parts = [];
         if (reps != null) {
             parts.push(`${reps}x`);
@@ -542,12 +543,33 @@
             parts.push(`${formatNumber(weight)}${weightUnit}`);
         }
         if (rpe != null && rpe !== '') {
-            parts.push(`@rpe${rpe}`);
+            parts.push(`@${formatRpeValue(rpe)}`);
         }
-        if (rest != null && rest > 0) {
-            parts.push(`- rest ${formatRest(rest)}`);
+        const line = parts.length ? parts.join(' ') : '—';
+        const ormSummary = formatOrmSummary(orm, ormRpe, weightUnit);
+        return ormSummary ? `${line} ${ormSummary}` : line;
+    }
+
+    function formatRpeValue(value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return '—';
         }
-        return parts.length ? parts.join(' ') : '—';
+        if (Number.isInteger(numeric)) {
+            return String(numeric);
+        }
+        return numeric
+            .toFixed(1)
+            .replace(/\.0$/, '');
+    }
+
+    function formatOrmSummary(orm, ormRpe, weightUnit) {
+        if (orm == null && ormRpe == null) {
+            return '';
+        }
+        const left = orm != null ? `${formatNumber(orm)}${weightUnit}` : `—${weightUnit}`;
+        const right = ormRpe != null ? `${formatNumber(ormRpe)}${weightUnit}` : `—${weightUnit}`;
+        return `= ${left} / ${right}`;
     }
 
     function formatRest(seconds) {
