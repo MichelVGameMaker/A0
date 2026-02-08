@@ -1029,7 +1029,7 @@
         const sets = Array.isArray(move.sets) ? move.sets : [];
         const previous = sets.length ? sets[sets.length - 1] : null;
         const restForNewSet = getRestForNewSet(previous?.rest);
-        const preferredValues = await resolveNewSetValuesForRoutine(move.exerciseId, sets, previous);
+        const preferredValues = previous ? sanitizeSetValues(previous) : null;
         const newSet = {
             pos: sets.length + 1,
             reps: preferredValues?.reps ?? 8,
@@ -1047,75 +1047,12 @@
         }
     }
 
-    async function resolveNewSetValuesForRoutine(exerciseId, sets, previous) {
-        const source = A.preferences?.getNewSetValueSource?.() ?? 'last_set';
-        if (source === 'last_session') {
-            const fromLastSession = await findLastSessionSet(exerciseId, sets.length + 1);
-            if (fromLastSession) {
-                return sanitizeSetValues(fromLastSession);
-            }
-            if (previous) {
-                return sanitizeSetValues(previous);
-            }
-            const lastFromHistory = await findLastSessionLastSet(exerciseId);
-            if (lastFromHistory) {
-                return sanitizeSetValues(lastFromHistory);
-            }
-            return null;
-        }
-        if (previous) {
-            return sanitizeSetValues(previous);
-        }
-        const lastFromHistory = await findLastSessionLastSet(exerciseId);
-        if (lastFromHistory) {
-            return sanitizeSetValues(lastFromHistory);
-        }
-        return null;
-    }
-
     function sanitizeSetValues(source) {
         return {
             reps: safePositiveInt(source?.reps),
             weight: sanitizeWeight(source?.weight),
             rpe: source?.rpe != null && source?.rpe !== '' ? clampRpe(source?.rpe) : null
         };
-    }
-
-    async function findLastSessionSet(exerciseId, position) {
-        const exercise = await findLastSessionExercise(exerciseId);
-        if (!exercise) {
-            return null;
-        }
-        return findSetByPosition(exercise.sets, position);
-    }
-
-    async function findLastSessionLastSet(exerciseId) {
-        const exercise = await findLastSessionExercise(exerciseId);
-        if (!exercise) {
-            return null;
-        }
-        return findLastSet(exercise.sets);
-    }
-
-    async function findLastSessionExercise(exerciseId) {
-        if (!exerciseId) {
-            return null;
-        }
-        const sessions = await db.listSessionDates();
-        const orderedDates = sessions
-            .map((entry) => entry.date)
-            .filter(Boolean)
-            .sort((a, b) => b.localeCompare(a));
-        for (const date of orderedDates) {
-            const session = await db.getSession(date);
-            const exercise = Array.isArray(session?.exercises)
-                ? session.exercises.find((item) => item.exercise_id === exerciseId)
-                : null;
-            if (exercise && Array.isArray(exercise.sets) && exercise.sets.length) {
-                return exercise;
-            }
-        }
-        return null;
     }
 
     function findSetByPosition(sets, position) {
