@@ -939,6 +939,9 @@
                 exerciseName: exercise.name || 'Exercice',
                 routineInstructions: '',
                 comments: '',
+                isRoutine: false,
+                routineId: '',
+                routineName: '',
                 sort: (session.exercises?.length || 0) + 1,
                 sets: []
             });
@@ -995,6 +998,9 @@
                             ? move.instructions
                             : '',
                     comments: '',
+                    isRoutine: true,
+                    routineId: routine.id,
+                    routineName: routine.name || 'Routine',
                     sort: session.exercises.length + 1,
                     sets: move.sets.map((set) => ({
                         pos: set.pos,
@@ -1027,6 +1033,7 @@
             id: A.sessionId(date),
             date: A.sessionISO(date),
             comments_session_global: '',
+            instructions_routine_global: '',
             exercises: []
         };
     }
@@ -1039,6 +1046,9 @@
             exerciseName,
             routineInstructions,
             comments,
+            isRoutine,
+            routineId,
+            routineName,
             sort,
             sets
         } = options;
@@ -1050,6 +1060,9 @@
             exercise_name: exerciseName || 'Exercice',
             instructions_routine_exercice: routineInstructions || '',
             comments_session_exercice: comments || '',
+            is_routine: Boolean(isRoutine),
+            routine_id: routineId || '',
+            routine_name: routineName || '',
             date,
             type: exerciseId,
             category: 'weight_reps',

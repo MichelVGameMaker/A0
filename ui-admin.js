@@ -270,7 +270,7 @@
     async function exportExerciseLibraryText(button) {
         if (!db?.getAll) {
             void showAlert({
-                title: 'Export exercices',
+                title: 'Export des exercices',
                 message: 'L’export en texte est indisponible.',
                 variant: 'error'
             });
@@ -298,22 +298,24 @@
             entries.sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
 
             const text = buildExercisesShareText(entries);
-            downloadText('ListeExercices.txt', text);
-
-            const copied = await tryCopyToClipboard(text);
-            const message = copied
-                ? 'Texte des exercices copié et fichier exporté.'
-                : 'Fichier texte des exercices exporté.';
-
-            void showAlert({
-                title: 'Export exercices',
-                message,
-                variant: 'info'
+            const filename = `KroM_list_${formatDateStamp()}.txt`;
+            await showExportInfoModal({
+                title: 'Export des exercices',
+                message: buildExportMessage({
+                    count: entries.length,
+                    singular: 'exercice',
+                    plural: 'exercices',
+                    verbSingular: 'exporté',
+                    verbPlural: 'exportés',
+                    filename
+                })
             });
+            downloadText(filename, text);
+            await tryCopyToClipboard(text);
         } catch (error) {
             console.warn('Export texte des exercices échoué :', error);
             void showAlert({
-                title: 'Export exercices',
+                title: 'Export des exercices',
                 message: 'L’export texte des exercices a échoué.',
                 variant: 'error'
             });
@@ -336,7 +338,7 @@
     async function exportRoutines(button) {
         if (!db?.getAll) {
             void showAlert({
-                title: 'Export routines',
+                title: 'Sauvegarde des routines',
                 message: 'L’export des routines est indisponible.',
                 variant: 'error'
             });
@@ -352,18 +354,27 @@
             const payload = {
                 format: 'a0-routines',
                 exportedAt: new Date().toISOString(),
-                routines: Array.isArray(routines) ? routines : []
+                routines: Array.isArray(routines)
+                    ? routines.map((routine) => toExportableRoutine(routine))
+                    : []
             };
-            downloadJson('routines.json', payload);
-            void showAlert({
-                title: 'Export routines',
-                message: 'Export des routines généré.',
-                variant: 'info'
+            const filename = `KroM_workout_routines_${formatDateStamp()}.json`;
+            await showExportInfoModal({
+                title: 'Sauvegarde des routines',
+                message: buildExportMessage({
+                    count: payload.routines.length,
+                    singular: 'séance',
+                    plural: 'séances',
+                    verbSingular: 'exportée',
+                    verbPlural: 'exportées',
+                    filename
+                })
             });
+            downloadJson(filename, payload);
         } catch (error) {
             console.warn('Export routines échoué :', error);
             void showAlert({
-                title: 'Export routines',
+                title: 'Sauvegarde des routines',
                 message: 'L’export des routines a échoué.',
                 variant: 'error'
             });
@@ -486,6 +497,8 @@
             icon: typeof routine.icon === 'string' && routine.icon.trim() ? routine.icon.trim() : '🏋️',
             instructions_routine_global: typeof routine.instructions_routine_global === 'string'
                 ? routine.instructions_routine_global
+                : typeof routine.instructions === 'string'
+                    ? routine.instructions
                 : typeof routine.details === 'string'
                     ? routine.details
                     : '',
@@ -557,6 +570,32 @@
         return `${prefix}-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
     }
 
+    function toExportableRoutine(routine) {
+        if (!routine || typeof routine !== 'object') {
+            return routine;
+        }
+        return {
+            id: routine.id,
+            name: routine.name,
+            icon: routine.icon,
+            instructions: typeof routine.instructions_routine_global === 'string'
+                ? routine.instructions_routine_global
+                : '',
+            moves: Array.isArray(routine.moves)
+                ? routine.moves.map((move) => ({
+                    id: move.id,
+                    pos: move.pos,
+                    exerciseId: move.exerciseId,
+                    exerciseName: move.exerciseName,
+                    instructions: typeof move.instructions_routine_exercice === 'string'
+                        ? move.instructions_routine_exercice
+                        : '',
+                    sets: Array.isArray(move.sets) ? move.sets : []
+                }))
+                : []
+        };
+    }
+
     function downloadJson(filename, data) {
         const payload = JSON.stringify(data, null, 2);
         const blob = new Blob([payload], { type: 'application/json' });
@@ -589,6 +628,31 @@
             console.warn('Copie presse-papier impossible :', error);
             return false;
         }
+    }
+
+    async function showExportInfoModal({ title, message }) {
+        if (A.components?.confirmDialog?.alert) {
+            await A.components.confirmDialog.alert({
+                title,
+                message,
+                variant: 'info'
+            });
+        } else {
+            alert(message);
+        }
+    }
+
+    function buildExportMessage({ count, singular, plural, verbSingular, verbPlural, filename }) {
+        const label = count > 1 ? plural : singular;
+        const verb = count > 1 ? verbPlural : verbSingular;
+        return `${count} ${label} sont ${verb} dans le fichier ${filename}.`;
+    }
+
+    function formatDateStamp(date = new Date()) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}${month}${day}`;
     }
 
     async function showAlert({ title, message, variant }) {

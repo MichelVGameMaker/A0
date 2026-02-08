@@ -793,17 +793,32 @@
         }
 
         try {
-            const sessions = await db.getAll('sessions');
+            const [sessions, routines] = await Promise.all([
+                db.getAll('sessions'),
+                db.getAll('routines')
+            ]);
+            const routineIndex = buildRoutineIndex(routines);
             const exportableSessions = Array.isArray(sessions)
-                ? sessions.map((session) => withSetStatus(session))
+                ? sessions.map((session) => toExportableSession(session, routineIndex))
                 : [];
             const payload = {
                 format: 'a0-sessions',
                 exportedAt: new Date().toISOString(),
                 sessions: exportableSessions
             };
-            downloadJson('a0_seances.json', payload);
-            alert('Sauvegarde des séances générée.');
+            const filename = `KroM_workout_sessions_${formatDateStamp()}.json`;
+            await showExportInfoModal({
+                title: 'Sauvegarde des séances',
+                message: buildExportMessage({
+                    count: exportableSessions.length,
+                    singular: 'séance',
+                    plural: 'séances',
+                    verbSingular: 'exportée',
+                    verbPlural: 'exportées',
+                    filename
+                })
+            });
+            downloadJson(filename, payload);
         } catch (error) {
             console.warn('Sauvegarde des séances échouée :', error);
             alert('La sauvegarde des séances a échoué.');
@@ -812,6 +827,42 @@
                 button.disabled = false;
             }
         }
+    }
+
+    function toExportableSession(session, routineIndex) {
+        const normalized = withSetStatus(session);
+        if (!normalized || typeof normalized !== 'object') {
+            return normalized;
+        }
+        const exercises = Array.isArray(normalized.exercises)
+            ? normalized.exercises.map((exercise) => toExportableSessionExercise(exercise))
+            : normalized.exercises;
+        return {
+            ...normalized,
+            instructions_routine: resolveSessionRoutineInstructions(normalized, routineIndex),
+            comments: typeof normalized.comments_session_global === 'string'
+                ? normalized.comments_session_global
+                : '',
+            exercises
+        };
+    }
+
+    function toExportableSessionExercise(exercise) {
+        if (!exercise || typeof exercise !== 'object') {
+            return exercise;
+        }
+        return {
+            ...exercise,
+            is_routine: Boolean(exercise.is_routine),
+            routine_id: typeof exercise.routine_id === 'string' ? exercise.routine_id : '',
+            routine_name: typeof exercise.routine_name === 'string' ? exercise.routine_name : '',
+            instructions_routine: typeof exercise.instructions_routine_exercice === 'string'
+                ? exercise.instructions_routine_exercice
+                : '',
+            comments: typeof exercise.comments_session_exercice === 'string'
+                ? exercise.comments_session_exercice
+                : ''
+        };
     }
 
     function withSetStatus(session) {
@@ -834,6 +885,53 @@
         return { ...session, exercises };
     }
 
+    function resolveSessionRoutineInstructions(session, routineIndex) {
+        const direct = typeof session?.instructions_routine_global === 'string'
+            ? session.instructions_routine_global.trim()
+            : '';
+        if (direct) {
+            return direct;
+        }
+        if (!routineIndex?.size || !Array.isArray(session?.exercises)) {
+            return '';
+        }
+        const routineIds = new Set(
+            session.exercises
+                .map((exercise) => exercise?.routine_id)
+                .filter((id) => typeof id === 'string' && id.trim())
+        );
+        const routines = Array.from(routineIds)
+            .map((id) => routineIndex.get(id))
+            .filter(Boolean);
+        if (!routines.length) {
+            return '';
+        }
+        if (routines.length === 1) {
+            return typeof routines[0].instructions_routine_global === 'string'
+                ? routines[0].instructions_routine_global
+                : '';
+        }
+        return routines
+            .map((routine) => {
+                const text = typeof routine.instructions_routine_global === 'string'
+                    ? routine.instructions_routine_global.trim()
+                    : '';
+                if (!text) {
+                    return '';
+                }
+                return routine.name ? `${routine.name} : ${text}` : text;
+            })
+            .filter(Boolean)
+            .join('\n\n');
+    }
+
+    function buildRoutineIndex(routines) {
+        if (!Array.isArray(routines)) {
+            return new Map();
+        }
+        return new Map(routines.map((routine) => [routine.id, routine]));
+    }
+
     async function exportExercisesLibrary(button) {
         if (!db?.getAll) {
             alert('L’export de la bibliothèque est indisponible.');
@@ -851,8 +949,19 @@
                     .map((exercise) => toExportableExercise(exercise))
                     .filter(Boolean)
                 : [];
-            downloadJson('exercices.json', payload);
-            alert('Export de la bibliothèque généré.');
+            const filename = `KroM_exercises_${formatDateStamp()}.json`;
+            await showExportInfoModal({
+                title: 'Sauvegarde de la bibliothèque d’exercices',
+                message: buildExportMessage({
+                    count: payload.length,
+                    singular: 'exercice',
+                    plural: 'exercices',
+                    verbSingular: 'exporté',
+                    verbPlural: 'exportés',
+                    filename
+                })
+            });
+            downloadJson(filename, payload);
         } catch (error) {
             console.warn('Export de la bibliothèque échoué :', error);
             alert('L’export de la bibliothèque a échoué.');
@@ -936,7 +1045,7 @@
                 throw new Error('Format invalide : sessions manquant.');
             }
 
-            const preparedSessions = sessions.map((session) => withSetDoneStatus(session));
+            const preparedSessions = sessions.map((session) => normalizeImportedSession(session));
             const invalidIndex = preparedSessions.findIndex((session) => !isSessionPayloadValid(session));
             if (invalidIndex !== -1) {
                 throw new Error(`Format invalide : séance ${invalidIndex + 1} incorrecte.`);
@@ -1036,6 +1145,61 @@
         return { ...session, exercises };
     }
 
+    function normalizeImportedSession(session) {
+        if (!session || typeof session !== 'object') {
+            return session;
+        }
+        const normalized = {
+            ...session,
+            comments_session_global: typeof session.comments_session_global === 'string'
+                ? session.comments_session_global
+                : typeof session.comments === 'string'
+                    ? session.comments
+                    : '',
+            instructions_routine_global: typeof session.instructions_routine_global === 'string'
+                ? session.instructions_routine_global
+                : typeof session.instructions_routine === 'string'
+                    ? session.instructions_routine
+                    : ''
+        };
+        if (Array.isArray(session.exercises)) {
+            normalized.exercises = session.exercises.map((exercise) => normalizeImportedSessionExercise(exercise));
+        }
+        return withSetDoneStatus(normalized);
+    }
+
+    function normalizeImportedSessionExercise(exercise) {
+        if (!exercise || typeof exercise !== 'object') {
+            return exercise;
+        }
+        return {
+            ...exercise,
+            is_routine: typeof exercise.is_routine === 'boolean'
+                ? exercise.is_routine
+                : Boolean(exercise.routine_id || exercise.routine_name),
+            routine_id: typeof exercise.routine_id === 'string'
+                ? exercise.routine_id
+                : typeof exercise.routineId === 'string'
+                    ? exercise.routineId
+                    : '',
+            routine_name: typeof exercise.routine_name === 'string'
+                ? exercise.routine_name
+                : typeof exercise.routineName === 'string'
+                    ? exercise.routineName
+                    : '',
+            instructions_routine_exercice: typeof exercise.instructions_routine_exercice === 'string'
+                ? exercise.instructions_routine_exercice
+                : typeof exercise.instructions_routine === 'string'
+                    ? exercise.instructions_routine
+                    : '',
+            comments_session_exercice: typeof exercise.comments_session_exercice === 'string'
+                ? exercise.comments_session_exercice
+                : typeof exercise.comments === 'string'
+                    ? exercise.comments
+                    : ''
+        };
+    }
+
     function isSessionPayloadValid(session) {
         if (!session || typeof session !== 'object') {
             return false;
@@ -1054,6 +1218,31 @@
         link.download = filename;
         link.click();
         URL.revokeObjectURL(url);
+    }
+
+    async function showExportInfoModal({ title, message }) {
+        if (A.components?.confirmDialog?.alert) {
+            await A.components.confirmDialog.alert({
+                title,
+                message,
+                variant: 'info'
+            });
+        } else {
+            alert(message);
+        }
+    }
+
+    function buildExportMessage({ count, singular, plural, verbSingular, verbPlural, filename }) {
+        const label = count > 1 ? plural : singular;
+        const verb = count > 1 ? verbPlural : verbSingular;
+        return `${count} ${label} sont ${verb} dans le fichier ${filename}.`;
+    }
+
+    function formatDateStamp(date = new Date()) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}${month}${day}`;
     }
 
     const FIT_HERO_MISSING_STORAGE_KEY = A.fitHeroMissingStorageKey || 'fithero_missing_exercises';
