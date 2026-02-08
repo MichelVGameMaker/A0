@@ -25,15 +25,15 @@
     const METRIC_DEFINITIONS = [
         {
             key: 'orm',
-            tagLabel: '1RM est',
+            tagLabel: '1RM',
             label: '1RM estimé',
             axisUnit: 'kg',
             format: formatKilograms
         },
         {
             key: 'tenrm',
-            tagLabel: '10RM est',
-            label: '10RM estimé',
+            tagLabel: '1RM-rpe',
+            label: '1RM estimé avec RPE',
             axisUnit: 'kg',
             format: formatKilograms
         },
@@ -1594,7 +1594,7 @@
         let totalReps = 0;
         let maxWeight = 0;
         let maxOrm = 0;
-        let maxTenRm = 0;
+        let maxOrmRpe = 0;
         let maxTenRmReal = null;
         let totalVolume = 0;
         let setCount = 0;
@@ -1627,14 +1627,16 @@
             }
             if (Number.isFinite(weight) && weight > 0 && Number.isFinite(reps) && reps > 0) {
                 totalVolume += reps * weight;
-                const estimatedOrm = weight * (1 + reps / 30);
-                if (estimatedOrm > maxOrm) {
-                    maxOrm = estimatedOrm;
-                }
-                const estimatedTenRm = estimatedOrm / (1 + 10 / 30);
-                if (estimatedTenRm > maxTenRm) {
-                    maxTenRm = estimatedTenRm;
-                }
+                hasData = true;
+            }
+            const orm = Number.isFinite(set?.orm) ? set.orm : null;
+            if (orm != null && orm > maxOrm) {
+                maxOrm = orm;
+                hasData = true;
+            }
+            const ormRpe = Number.isFinite(set?.ormRpe) ? set.ormRpe : null;
+            if (ormRpe != null && ormRpe > maxOrmRpe) {
+                maxOrmRpe = ormRpe;
                 hasData = true;
             }
         });
@@ -1642,7 +1644,7 @@
             reps: totalReps,
             weight: maxWeight,
             orm: maxOrm,
-            tenrm: maxTenRm,
+            tenrm: maxOrmRpe,
             tenrmReal: maxTenRmReal,
             volume: totalVolume,
             setCount,

@@ -65,6 +65,40 @@
     };
 
     /**
+     * Calcule un 1RM estimé à partir du poids et des répétitions.
+     * @param {number} weight Charge utilisée.
+     * @param {number} reps Répétitions réalisées.
+     * @returns {number|null} 1RM estimé ou `null`.
+     */
+    existing.calculateOrm = function calculateOrm(weight, reps) {
+        const load = Number(weight);
+        const count = Number(reps);
+        if (!Number.isFinite(load) || !Number.isFinite(count) || count <= 0) {
+            return null;
+        }
+        return load * (1 + count / 30);
+    };
+
+    /**
+     * Calcule un 1RM estimé en tenant compte du RPE.
+     * @param {number} weight Charge utilisée.
+     * @param {number} reps Répétitions réalisées.
+     * @param {number} rpe RPE enregistré.
+     * @returns {number|null} 1RM estimé ou `null`.
+     */
+    existing.calculateOrmWithRpe = function calculateOrmWithRpe(weight, reps, rpe) {
+        const load = Number(weight);
+        const count = Number(reps);
+        if (!Number.isFinite(load) || !Number.isFinite(count) || count <= 0) {
+            return null;
+        }
+        const rawRpe = Number.isFinite(Number(rpe)) ? Number(rpe) : 9.5;
+        const normalizedRpe = Math.min(10, Math.max(0, rawRpe));
+        const repsInReserve = Math.max(0, 9.5 - normalizedRpe);
+        return existing.calculateOrm(load, count + repsInReserve);
+    };
+
+    /**
      * Retourne la date du jour sans composante horaire.
      * @returns {Date} Date du jour.
      */

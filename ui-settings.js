@@ -701,6 +701,7 @@
         }
 
         try {
+            localStorage.setItem('ormRecalcPending', '1');
             await clearAppCache();
         } catch (error) {
             console.warn('Update échoué :', error);
