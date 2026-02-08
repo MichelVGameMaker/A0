@@ -567,9 +567,17 @@
         if (orm == null && ormRpe == null) {
             return '';
         }
-        const left = orm != null ? `${formatNumber(orm)}${weightUnit}` : `—${weightUnit}`;
-        const right = ormRpe != null ? `${formatNumber(ormRpe)}${weightUnit}` : `—${weightUnit}`;
+        const left = orm != null ? `${formatOrmValue(orm)}${weightUnit}` : `—${weightUnit}`;
+        const right = ormRpe != null ? `${formatOrmValue(ormRpe)}${weightUnit}` : `—${weightUnit}`;
         return `= ${left} / ${right}`;
+    }
+
+    function formatOrmValue(value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return '—';
+        }
+        return numeric.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     }
 
     function formatRest(seconds) {
