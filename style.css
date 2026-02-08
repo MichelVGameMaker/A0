@@ -1682,6 +1682,7 @@ textarea:focus{
 }
 
 .session-card-sets-row{
+  --set-line-color: var(--panelBord);
   width:100%;
   height: var(--small-h);
   display:grid;
@@ -1705,11 +1706,13 @@ textarea:focus{
 .session-card-sets-row[data-rpe]{
   background: color-mix(in srgb, var(--rpe-bg) 35%, transparent);
   border-color: color-mix(in srgb, var(--rpe-border) 50%, var(--panelBord));
+  --set-line-color: color-mix(in srgb, var(--rpe-border) 50%, var(--panelBord));
 }
 .session-card-sets-row--planned{
   background: color-mix(in srgb, var(--rpe-bg) 20%, transparent);
   color: color-mix(in srgb, var(--black) 65%, transparent);
   font-weight: var(--fw-light);
+  --set-line-color: var(--panelBord);
 }
 .session-card-sets-row--planned .session-card-set-cell{
   color: inherit;
@@ -1722,6 +1725,7 @@ textarea:focus{
 }
 .session-card-sets-row--planned[data-rpe]{
   border-color: color-mix(in srgb, var(--rpe-border) 35%, var(--panelBord));
+  --set-line-color: color-mix(in srgb, var(--rpe-border) 35%, var(--panelBord));
 }
 .session-card-sets-row--planned .session-card-set-cell[data-rpe]{
   background: color-mix(in srgb, var(--rpe-bg) 40%, transparent);
@@ -1753,6 +1757,11 @@ textarea:focus{
   border:1px solid transparent;
   background:transparent;
   font-size:var(--fs-small);
+}
+.session-card-set-cell--reps,
+.session-card-set-cell--weight{
+  border-color: var(--set-line-color);
+  border-radius:6px;
 }
 .session-card-sets-row .session-card-set-cell{
   font-weight: var(--fw-base);
