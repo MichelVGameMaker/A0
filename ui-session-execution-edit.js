@@ -1442,15 +1442,36 @@
         return null;
     }
 
+    function formatOrmValue(value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return '0,0';
+        }
+        return numeric.toFixed(1).replace('.', ',');
+    }
+
     function formatSetOrmSummary(set, weightUnit) {
         const orm = resolveSetOrm(set?.orm);
         const ormRpe = resolveSetOrm(set?.ormRpe);
         if (orm == null && ormRpe == null) {
             return '';
         }
-        const left = orm != null ? `${formatNumber(orm)}${weightUnit}` : `—${weightUnit}`;
-        const right = ormRpe != null ? `${formatNumber(ormRpe)}${weightUnit}` : `—${weightUnit}`;
+        const left = orm != null ? `${formatOrmValue(orm)}${weightUnit}` : `—${weightUnit}`;
+        const right = ormRpe != null ? `${formatOrmValue(ormRpe)}${weightUnit}` : `—${weightUnit}`;
         return `= ${left} / ${right}`;
+    }
+
+    function formatMetaSetLine(set, weightUnit) {
+        const reps = Number.isFinite(set?.reps) ? set.reps : null;
+        const weight = set?.weight != null ? Number(set.weight) : null;
+        const parts = [];
+        if (reps != null) {
+            parts.push(`${reps}x`);
+        }
+        if (weight != null && !Number.isNaN(weight)) {
+            parts.push(`${formatNumber(weight)}${weightUnit}`);
+        }
+        return parts.length ? parts.join(' ') : '—';
     }
 
     function formatSetLineDetails(set, weightUnit) {
@@ -1480,7 +1501,7 @@
     }
 
     function formatHistorySetLine(set, weightUnit) {
-        return formatSetLineDetails(set, weightUnit);
+        return formatMetaSetLine(set, weightUnit);
     }
 
     function formatHistoryDateLabel(dateKey) {
@@ -1515,20 +1536,7 @@
     }
 
     function formatDetailedSetLine(set, weightUnit) {
-        const reps = Number.isFinite(set?.reps) ? set.reps : null;
-        const weight = set?.weight != null ? Number(set.weight) : null;
-        const rpe = set?.rpe != null && set?.rpe !== '' ? set.rpe : null;
-        const parts = [];
-        if (reps != null) {
-            parts.push(`${reps}x`);
-        }
-        if (weight != null && !Number.isNaN(weight)) {
-            parts.push(`${formatNumber(weight)}${weightUnit}`);
-        }
-        if (rpe != null) {
-            parts.push(`@${rpe}`);
-        }
-        return parts.length ? parts.join(' ') : '—';
+        return formatMetaSetLine(set, weightUnit);
     }
 
     function formatRecordDateLabel(dateKey) {
