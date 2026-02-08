@@ -1292,6 +1292,7 @@
         refs.sessionDelete = document.getElementById('sessionDelete');
         refs.sessionShare = document.getElementById('sessionShare');
         refs.dlgSessionComment = document.getElementById('dlgSessionComment');
+        refs.sessionCommentInstructions = document.getElementById('sessionCommentInstructions');
         refs.sessionCommentInput = document.getElementById('sessionCommentInput');
         refs.sessionCommentClose = document.getElementById('sessionCommentClose');
         refs.sessionCommentCancel = document.getElementById('sessionCommentCancel');
@@ -1679,14 +1680,16 @@
     }
 
     async function openSessionCommentDialog() {
-        const { dlgSessionComment, sessionCommentInput } = ensureRefs();
-        if (!dlgSessionComment || !sessionCommentInput) {
+        const { dlgSessionComment, sessionCommentInput, sessionCommentInstructions } = ensureRefs();
+        if (!dlgSessionComment || !sessionCommentInput || !sessionCommentInstructions) {
             return;
         }
         const session = await ensureSessionForDate(A.activeDate);
         sessionCommentState.session = session;
         sessionCommentInput.value = session.comments_session_global || '';
         sessionCommentState.initialComments = sessionCommentInput.value;
+        const instructions = await resolveSessionInstructionsText();
+        updateSessionInstructionsPreview(instructions);
         dlgSessionComment.showModal();
         focusTextareaAtEnd(sessionCommentInput);
     }
@@ -1739,6 +1742,43 @@
             : '';
         sessionCommentsPreview.textContent = comment;
         sessionCommentsPreview.dataset.empty = comment ? 'false' : 'true';
+    }
+
+    async function resolveSessionInstructionsText() {
+        if (typeof A.getPlannedRoutineIds !== 'function') {
+            return '';
+        }
+        const routineIds = await A.getPlannedRoutineIds(A.activeDate);
+        if (!routineIds.length) {
+            return '';
+        }
+        const routines = await Promise.all(routineIds.map((routineId) => db.get('routines', routineId)));
+        const blocks = routines.flatMap((routine) => {
+            if (!routine) {
+                return [];
+            }
+            const text = typeof routine.instructions_routine_global === 'string'
+                ? routine.instructions_routine_global.trim()
+                : '';
+            if (!text) {
+                return [];
+            }
+            if (routineIds.length > 1 && routine.name) {
+                return [`${routine.name} : ${text}`];
+            }
+            return [text];
+        });
+        return blocks.join('\n\n');
+    }
+
+    function updateSessionInstructionsPreview(text) {
+        const { sessionCommentInstructions } = ensureRefs();
+        if (!sessionCommentInstructions) {
+            return;
+        }
+        const instructions = typeof text === 'string' ? text.trim() : '';
+        sessionCommentInstructions.textContent = instructions;
+        sessionCommentInstructions.dataset.empty = instructions ? 'false' : 'true';
     }
 
     function focusTextareaAtEnd(textarea) {

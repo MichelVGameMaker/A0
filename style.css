@@ -2123,6 +2123,17 @@ textarea:focus{
     min-height: 180px;
     resize: vertical;
 }
+.session-comment-instructions{
+    min-height: 120px;
+    height: auto;
+    padding: 12px var(--pad-x);
+    white-space: pre-wrap;
+    cursor: default;
+}
+.session-comment-instructions[data-empty="true"]::before{
+    content: attr(data-placeholder);
+    color: var(--muted);
+}
 .session-list{
     display:flex;
     flex-direction:column;
