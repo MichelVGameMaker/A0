@@ -212,6 +212,18 @@
 
     <main class="content">
         <div class="bloque">
+            <article id="btnAdminExportExercisesText" class="exercise-card list-card clickable" role="button" aria-label="Exporter la liste des exercices en texte">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">Exporter liste d’exercices (texte)</div>
+                            <div class="details">Génère un texte prêt à partager (WhatsApp, SMS...).</div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+        <div class="bloque">
             <article id="btnDataExportExercises" class="exercise-card list-card clickable" role="button" aria-label="Exporter bibliothèque d'exercices">
                 <div class="list-card__row">
                     <div class="list-card__start">
@@ -222,6 +234,31 @@
                     </div>
                 </div>
             </article>
+        </div>
+        <div class="bloque">
+            <article id="btnAdminExportRoutines" class="exercise-card list-card clickable" role="button" aria-label="Exporter toutes les routines">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">Exporter toutes les routines</div>
+                            <div class="details">Génère un fichier routines.json avec toutes les routines.</div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+        <div class="bloque">
+            <article id="btnAdminImportRoutines" class="exercise-card list-card clickable" role="button" aria-label="Importer des routines">
+                <div class="list-card__row">
+                    <div class="list-card__start">
+                        <div class="list-card__body">
+                            <div class="element">Importer des routines</div>
+                            <div class="details">Ajoute des routines depuis un fichier JSON.</div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            <input id="inputAdminImportRoutines" type="file" accept="application/json" hidden>
         </div>
         <div class="bloque">
             <article id="btnDataReloadExercises" class="exercise-card list-card clickable" role="button" aria-label="Synchroniser la bibliothèque d'exercices">

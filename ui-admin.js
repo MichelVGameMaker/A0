@@ -44,12 +44,24 @@
         refs.btnSettingsAdmin = document.getElementById('btnSettingsAdmin');
         refs.btnAdminBack = document.getElementById('btnAdminBack');
         refs.btnAdminUpdateFitHeroMapping = document.getElementById('btnAdminUpdateFitHeroMapping');
+        refs.btnAdminExportExercisesText = document.getElementById('btnAdminExportExercisesText');
+        refs.btnAdminExportRoutines = document.getElementById('btnAdminExportRoutines');
+        refs.btnAdminImportRoutines = document.getElementById('btnAdminImportRoutines');
+        refs.inputAdminImportRoutines = document.getElementById('inputAdminImportRoutines');
         refsResolved = true;
         return refs;
     }
 
     function wireButtons() {
-        const { btnSettingsAdmin, btnAdminBack, btnAdminUpdateFitHeroMapping } = ensureRefs();
+        const {
+            btnSettingsAdmin,
+            btnAdminBack,
+            btnAdminUpdateFitHeroMapping,
+            btnAdminExportExercisesText,
+            btnAdminExportRoutines,
+            btnAdminImportRoutines,
+            inputAdminImportRoutines
+        } = ensureRefs();
 
         btnSettingsAdmin?.addEventListener('click', () => {
             A.openAdmin();
@@ -61,6 +73,22 @@
 
         btnAdminUpdateFitHeroMapping?.addEventListener('click', () => {
             void generateFitHeroMappingFile(btnAdminUpdateFitHeroMapping);
+        });
+
+        btnAdminExportExercisesText?.addEventListener('click', () => {
+            void exportExerciseLibraryText(btnAdminExportExercisesText);
+        });
+
+        btnAdminExportRoutines?.addEventListener('click', () => {
+            void exportRoutines(btnAdminExportRoutines);
+        });
+
+        btnAdminImportRoutines?.addEventListener('click', () => {
+            inputAdminImportRoutines?.click();
+        });
+
+        inputAdminImportRoutines?.addEventListener('change', () => {
+            void importRoutines({ input: inputAdminImportRoutines, button: btnAdminImportRoutines });
         });
     }
 
@@ -237,5 +265,325 @@
         link.download = 'mapping_fithero.json';
         link.click();
         URL.revokeObjectURL(url);
+    }
+
+    async function exportExerciseLibraryText(button) {
+        if (!db?.getAll) {
+            void showAlert({
+                title: 'Export exercices',
+                message: 'L’export en texte est indisponible.',
+                variant: 'error'
+            });
+            return;
+        }
+
+        if (button) {
+            button.disabled = true;
+        }
+
+        try {
+            const exercises = await db.getAll('exercises');
+            const names = Array.isArray(exercises)
+                ? exercises
+                    .map((exercise) => (exercise?.name || exercise?.exercise || exercise?.exerciseId || exercise?.id || '').trim())
+                    .filter(Boolean)
+                : [];
+            names.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+
+            const text = buildExercisesShareText(names);
+            downloadText('exercices_whatsapp.txt', text);
+
+            const copied = await tryCopyToClipboard(text);
+            const message = copied
+                ? 'Texte des exercices copié et fichier exporté.'
+                : 'Fichier texte des exercices exporté.';
+
+            void showAlert({
+                title: 'Export exercices',
+                message,
+                variant: 'info'
+            });
+        } catch (error) {
+            console.warn('Export texte des exercices échoué :', error);
+            void showAlert({
+                title: 'Export exercices',
+                message: 'L’export texte des exercices a échoué.',
+                variant: 'error'
+            });
+        } finally {
+            if (button) {
+                button.disabled = false;
+            }
+        }
+    }
+
+    function buildExercisesShareText(names) {
+        if (!Array.isArray(names) || !names.length) {
+            return 'Liste des exercices\n\nAucun exercice disponible.';
+        }
+        const header = `Liste des exercices (${names.length})`;
+        const lines = names.map((name, index) => `${index + 1}. ${name}`);
+        return `${header}\n\n${lines.join('\n')}`;
+    }
+
+    async function exportRoutines(button) {
+        if (!db?.getAll) {
+            void showAlert({
+                title: 'Export routines',
+                message: 'L’export des routines est indisponible.',
+                variant: 'error'
+            });
+            return;
+        }
+
+        if (button) {
+            button.disabled = true;
+        }
+
+        try {
+            const routines = await db.getAll('routines');
+            const payload = {
+                format: 'a0-routines',
+                exportedAt: new Date().toISOString(),
+                routines: Array.isArray(routines) ? routines : []
+            };
+            downloadJson('routines.json', payload);
+            void showAlert({
+                title: 'Export routines',
+                message: 'Export des routines généré.',
+                variant: 'info'
+            });
+        } catch (error) {
+            console.warn('Export routines échoué :', error);
+            void showAlert({
+                title: 'Export routines',
+                message: 'L’export des routines a échoué.',
+                variant: 'error'
+            });
+        } finally {
+            if (button) {
+                button.disabled = false;
+            }
+        }
+    }
+
+    async function importRoutines({ input, button } = {}) {
+        const file = input?.files?.[0];
+        if (!file) {
+            return;
+        }
+
+        if (input) {
+            input.value = '';
+        }
+
+        if (!db?.getAll || !db?.put) {
+            void showAlert({
+                title: 'Import routines',
+                message: 'L’import des routines est indisponible.',
+                variant: 'error'
+            });
+            return;
+        }
+
+        if (button) {
+            button.disabled = true;
+        }
+
+        try {
+            const rawText = await file.text();
+            const parsed = JSON.parse(rawText);
+            const routines = extractRoutinesFromPayload(parsed);
+            if (!routines.length) {
+                void showAlert({
+                    title: 'Import routines',
+                    message: 'Aucune routine valide trouvée.',
+                    variant: 'error'
+                });
+                return;
+            }
+
+            const existing = await db.getAll('routines');
+            const nameSet = new Set(
+                Array.isArray(existing)
+                    ? existing.map((routine) => (routine?.name || '').trim()).filter(Boolean)
+                    : []
+            );
+            const idSet = new Set(
+                Array.isArray(existing)
+                    ? existing.map((routine) => routine?.id).filter(Boolean)
+                    : []
+            );
+
+            let importedCount = 0;
+            for (let index = 0; index < routines.length; index += 1) {
+                const normalized = normalizeImportedRoutine(routines[index], index);
+                if (!normalized) {
+                    continue;
+                }
+                if (idSet.has(normalized.id)) {
+                    normalized.id = uid('routine');
+                }
+                normalized.name = ensureUniqueRoutineName(normalized.name, nameSet);
+                nameSet.add(normalized.name);
+                idSet.add(normalized.id);
+                await db.put('routines', normalized);
+                importedCount += 1;
+            }
+
+            const message = importedCount
+                ? `${importedCount} routine(s) importée(s).`
+                : 'Aucune routine importée.';
+            void showAlert({
+                title: 'Import routines',
+                message,
+                variant: importedCount ? 'info' : 'error'
+            });
+        } catch (error) {
+            console.warn('Import routines échoué :', error);
+            void showAlert({
+                title: 'Import routines',
+                message: 'L’import des routines a échoué.',
+                variant: 'error'
+            });
+        } finally {
+            if (button) {
+                button.disabled = false;
+            }
+        }
+    }
+
+    function extractRoutinesFromPayload(payload) {
+        if (Array.isArray(payload)) {
+            return payload;
+        }
+        if (payload && typeof payload === 'object' && Array.isArray(payload.routines)) {
+            return payload.routines;
+        }
+        return [];
+    }
+
+    function normalizeImportedRoutine(routine, index) {
+        if (!routine || typeof routine !== 'object') {
+            return null;
+        }
+        const name = typeof routine.name === 'string' && routine.name.trim()
+            ? routine.name.trim()
+            : `Routine ${index + 1}`;
+        const normalizedMoves = Array.isArray(routine.moves)
+            ? routine.moves.map((move, moveIndex) => normalizeImportedMove(move, moveIndex))
+            : [];
+        return {
+            id: typeof routine.id === 'string' && routine.id.trim() ? routine.id.trim() : uid('routine'),
+            name,
+            icon: typeof routine.icon === 'string' && routine.icon.trim() ? routine.icon.trim() : '🏋️',
+            details: typeof routine.details === 'string' ? routine.details : '',
+            moves: normalizedMoves.filter(Boolean)
+        };
+    }
+
+    function normalizeImportedMove(move, index) {
+        if (!move || typeof move !== 'object') {
+            return null;
+        }
+        return {
+            id: typeof move.id === 'string' && move.id.trim() ? move.id.trim() : uid('move'),
+            pos: safeInt(move.pos, index + 1),
+            exerciseId: typeof move.exerciseId === 'string' ? move.exerciseId : '',
+            exerciseName: typeof move.exerciseName === 'string' ? move.exerciseName : '',
+            instructions: typeof move.instructions === 'string' ? move.instructions : '',
+            details: typeof move.details === 'string' ? move.details : '',
+            sets: Array.isArray(move.sets)
+                ? move.sets.map((set, setIndex) => ({
+                    pos: safeInt(set?.pos, setIndex + 1),
+                    reps: safeIntOrNull(set?.reps),
+                    weight: safeFloatOrNull(set?.weight),
+                    rpe: safeFloatOrNull(set?.rpe),
+                    rest: safeIntOrNull(set?.rest)
+                }))
+                : []
+        };
+    }
+
+    function ensureUniqueRoutineName(name, existingNames) {
+        const base = name.trim() || 'Routine';
+        if (!existingNames.has(base)) {
+            return base;
+        }
+        let suffix = 1;
+        let candidate = `${base} (import)`;
+        while (existingNames.has(candidate)) {
+            suffix += 1;
+            candidate = `${base} (import ${suffix})`;
+        }
+        return candidate;
+    }
+
+    function safeInt(value, fallback) {
+        const parsed = Number.parseInt(value, 10);
+        if (Number.isFinite(parsed)) {
+            return parsed;
+        }
+        return fallback;
+    }
+
+    function safeIntOrNull(value) {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function safeFloatOrNull(value) {
+        const parsed = Number.parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function uid(prefix) {
+        return `${prefix}-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
+    }
+
+    function downloadJson(filename, data) {
+        const payload = JSON.stringify(data, null, 2);
+        const blob = new Blob([payload], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function downloadText(filename, data) {
+        const blob = new Blob([data], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    async function tryCopyToClipboard(text) {
+        if (!navigator?.clipboard?.writeText) {
+            return false;
+        }
+        try {
+            await navigator.clipboard.writeText(text);
+            return true;
+        } catch (error) {
+            console.warn('Copie presse-papier impossible :', error);
+            return false;
+        }
+    }
+
+    async function showAlert({ title, message, variant }) {
+        if (A.components?.confirmDialog?.alert) {
+            await A.components.confirmDialog.alert({
+                title,
+                message,
+                variant
+            });
+        } else {
+            alert(message);
+        }
     }
 })();
