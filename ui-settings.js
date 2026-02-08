@@ -834,11 +834,15 @@
         if (!normalized || typeof normalized !== 'object') {
             return normalized;
         }
+        const routineMeta = resolveSessionRoutineMeta(normalized);
         const exercises = Array.isArray(normalized.exercises)
             ? normalized.exercises.map((exercise) => toExportableSessionExercise(exercise))
             : normalized.exercises;
         return {
             ...normalized,
+            is_routine: routineMeta.is_routine,
+            routine_id: routineMeta.routine_id,
+            routine_name: routineMeta.routine_name,
             instructions_routine: resolveSessionRoutineInstructions(normalized, routineIndex),
             comments: typeof normalized.comments_session_global === 'string'
                 ? normalized.comments_session_global
@@ -923,6 +927,40 @@
             })
             .filter(Boolean)
             .join('\n\n');
+    }
+
+    function resolveSessionRoutineMeta(session) {
+        const exercises = Array.isArray(session?.exercises) ? session.exercises : [];
+        const routineIds = [];
+        const routineNames = [];
+        const routineIdSet = new Set();
+        const routineNameSet = new Set();
+        let isRoutine = false;
+
+        exercises.forEach((exercise) => {
+            if (!exercise || typeof exercise !== 'object') {
+                return;
+            }
+            if (exercise.is_routine === true) {
+                isRoutine = true;
+            }
+            const routineId = typeof exercise.routine_id === 'string' ? exercise.routine_id.trim() : '';
+            if (routineId && !routineIdSet.has(routineId)) {
+                routineIdSet.add(routineId);
+                routineIds.push(routineId);
+            }
+            const routineName = typeof exercise.routine_name === 'string' ? exercise.routine_name.trim() : '';
+            if (routineName && !routineNameSet.has(routineName)) {
+                routineNameSet.add(routineName);
+                routineNames.push(routineName);
+            }
+        });
+
+        return {
+            is_routine: isRoutine,
+            routine_id: routineIds,
+            routine_name: routineNames
+        };
     }
 
     function buildRoutineIndex(routines) {
@@ -1165,6 +1203,10 @@
         if (Array.isArray(session.exercises)) {
             normalized.exercises = session.exercises.map((exercise) => normalizeImportedSessionExercise(exercise));
         }
+        const routineMeta = resolveSessionRoutineMeta(normalized);
+        normalized.is_routine = routineMeta.is_routine;
+        normalized.routine_id = routineMeta.routine_id;
+        normalized.routine_name = routineMeta.routine_name;
         return withSetDoneStatus(normalized);
     }
 

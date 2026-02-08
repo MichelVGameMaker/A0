@@ -815,6 +815,7 @@ const db = (() => {
         if (Array.isArray(session.exercises)) {
             session.exercises = normalizeSessionExercises(session);
         }
+        applySessionRoutineMeta(session);
         return session;
     }
 
@@ -886,6 +887,42 @@ const db = (() => {
         delete normalized.pos;
 
         return normalized;
+    }
+
+    function applySessionRoutineMeta(session) {
+        if (!session || typeof session !== 'object') {
+            return session;
+        }
+        const exercises = Array.isArray(session.exercises) ? session.exercises : [];
+        const routineIds = [];
+        const routineNames = [];
+        const routineIdSet = new Set();
+        const routineNameSet = new Set();
+        let isRoutine = false;
+
+        exercises.forEach((exercise) => {
+            if (!exercise || typeof exercise !== 'object') {
+                return;
+            }
+            if (exercise.is_routine === true) {
+                isRoutine = true;
+            }
+            const routineId = typeof exercise.routine_id === 'string' ? exercise.routine_id.trim() : '';
+            if (routineId && !routineIdSet.has(routineId)) {
+                routineIdSet.add(routineId);
+                routineIds.push(routineId);
+            }
+            const routineName = typeof exercise.routine_name === 'string' ? exercise.routine_name.trim() : '';
+            if (routineName && !routineNameSet.has(routineName)) {
+                routineNameSet.add(routineName);
+                routineNames.push(routineName);
+            }
+        });
+
+        session.is_routine = isRoutine;
+        session.routine_id = routineIds;
+        session.routine_name = routineNames;
+        return session;
     }
 
     function normalizeSessionExerciseSets(sets, context = {}) {
