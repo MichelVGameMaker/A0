@@ -644,7 +644,8 @@
             routineIcon,
             dlgRoutineEditor,
             routineEditorClose,
-            routineEditorCancel
+            routineEditorCancel,
+            routineEditTitle
         } = assertRefs();
         routineName.addEventListener('input', () => {
             if (!state.routine) {
@@ -652,6 +653,9 @@
             }
             const nextName = routineName.value;
             state.routine.name = nextName.trim() ? nextName : 'Routine';
+            if (routineEditTitle) {
+                routineEditTitle.textContent = state.routine.name;
+            }
             scheduleSave();
         });
         routineIcon.addEventListener('change', () => {
