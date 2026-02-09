@@ -965,28 +965,34 @@
      * @param {string} routineId Identifiant de routine.
      * @returns {Promise<void>} Promesse résolue après sauvegarde.
      */
-    A.addRoutineToSession = async function addRoutineToSession(routineIds) {
+    A.addRoutineToSession = async function addRoutineToSession(routineIds, options = {}) {
         const ids = Array.isArray(routineIds) ? routineIds : [routineIds];
         const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
         if (!uniqueIds.length) {
             return;
         }
 
+        const mode = options.mode === 'rpe' ? 'rpe' : 'template';
         const dateKey = A.ymd(A.activeDate);
         const session = (await db.getSession(dateKey)) || createSession(A.activeDate);
         const existingIds = new Set((session.exercises || []).map((exercise) => exercise.exercise_id));
         let firstAddedId = null;
+        const sessionDates = mode === 'rpe' ? await db.listSessionDates() : [];
+        const ormMeanCache = new Map();
 
         for (const routineId of uniqueIds) {
             const routine = await db.get('routines', routineId);
             if (!routine) {
                 continue;
             }
-            routine.moves.forEach((move) => {
+            for (const move of routine.moves) {
                 if (existingIds.has(move.exerciseId)) {
-                    return;
+                    continue;
                 }
                 existingIds.add(move.exerciseId);
+                const ormMean = mode === 'rpe'
+                    ? await resolveExerciseOrmMean(move.exerciseId, dateKey, sessionDates, ormMeanCache)
+                    : null;
                 const created = createSessionExercise({
                     date: session.date,
                     sessionId: session.id,
@@ -1005,7 +1011,7 @@
                     sets: move.sets.map((set) => ({
                         pos: set.pos,
                         reps: set.reps ?? null,
-                        weight: null,
+                        weight: mode === 'rpe' ? resolveRoutineSetWeight(ormMean, set) : null,
                         rpe: set.rpe ?? null,
                         rest: set.rest ?? null,
                         done: false
@@ -1015,7 +1021,7 @@
                     firstAddedId = created.id;
                 }
                 session.exercises.push(created);
-            });
+            }
         }
 
         await db.saveSession(session);
@@ -1026,6 +1032,116 @@
         await A.renderWeek();
         await A.renderSession();
     };
+
+    async function resolveRoutineAddMode() {
+        const message = [
+            "Choisir le mode d'ajout :",
+            '• Template : reprend les séries telles que définies.',
+            '• RPE/1RM : calcule les poids à partir du template.'
+        ].join('\n');
+        if (A.components?.confirmDialog?.confirm) {
+            const useRpe = await A.components.confirmDialog.confirm({
+                title: 'Ajouter une routine',
+                message,
+                confirmLabel: 'Calculer les poids',
+                cancelLabel: 'Utiliser le template'
+            });
+            return useRpe ? 'rpe' : 'template';
+        }
+        const useRpe = window.confirm(
+            `${message}\n\nOK = Calculer les poids\nAnnuler = Utiliser le template`
+        );
+        return useRpe ? 'rpe' : 'template';
+    }
+
+    async function resolveExerciseOrmMean(exerciseId, dateKey, sessionDates, cache) {
+        if (!exerciseId || !dateKey) {
+            return null;
+        }
+        if (cache?.has(exerciseId)) {
+            return cache.get(exerciseId);
+        }
+        const baseDate = new Date(dateKey);
+        const thresholdKey = Number.isNaN(baseDate.getTime())
+            ? null
+            : A.ymd(A.addDays(baseDate, -35));
+        const dates = (Array.isArray(sessionDates) ? sessionDates : [])
+            .map((entry) => entry.date)
+            .filter((date) => date && date < dateKey)
+            .sort((a, b) => b.localeCompare(a));
+        let bestRecent = null;
+        let lastMean = null;
+        for (const date of dates) {
+            const session = await db.getSession(date);
+            const exercise = Array.isArray(session?.exercises)
+                ? session.exercises.find((item) => item.exercise_id === exerciseId)
+                : null;
+            if (!exercise?.sets?.length) {
+                continue;
+            }
+            const mean = computeSessionOrmMean(exercise.sets);
+            if (mean == null) {
+                continue;
+            }
+            if (lastMean == null) {
+                lastMean = mean;
+            }
+            if (thresholdKey && date >= thresholdKey) {
+                bestRecent = bestRecent == null ? mean : Math.max(bestRecent, mean);
+            }
+        }
+        const resolved = bestRecent ?? lastMean ?? null;
+        cache?.set(exerciseId, resolved);
+        return resolved;
+    }
+
+    function computeSessionOrmMean(sets) {
+        const values = (Array.isArray(sets) ? sets : [])
+            .map((set) => resolveSetOrmValue(set))
+            .filter((value) => Number.isFinite(value));
+        if (!values.length) {
+            return null;
+        }
+        const total = values.reduce((sum, value) => sum + value, 0);
+        return total / values.length;
+    }
+
+    function resolveSetOrmValue(set) {
+        const ormRpe = Number.isFinite(set?.ormRpe) ? set.ormRpe : null;
+        if (ormRpe != null) {
+            return ormRpe;
+        }
+        const orm = Number.isFinite(set?.orm) ? set.orm : null;
+        if (orm != null) {
+            return orm;
+        }
+        const weight = Number(set?.weight);
+        const reps = Number(set?.reps);
+        if (!Number.isFinite(weight) || !Number.isFinite(reps) || reps <= 0) {
+            return null;
+        }
+        if (Number.isFinite(Number(set?.rpe))) {
+            return A.calculateOrmWithRpe?.(weight, reps, set?.rpe) ?? null;
+        }
+        return A.calculateOrm?.(weight, reps) ?? null;
+    }
+
+    function resolveRoutineSetWeight(ormMean, set) {
+        const baseOrm = Number(ormMean);
+        const reps = Number(set?.reps);
+        const rpe = Number(set?.rpe);
+        if (!Number.isFinite(baseOrm) || !Number.isFinite(reps) || reps <= 0 || !Number.isFinite(rpe)) {
+            return null;
+        }
+        const normalizedRpe = Math.min(9.5, Math.max(0, rpe));
+        const repsInReserve = Math.max(0, 9.5 - normalizedRpe);
+        const totalReps = reps + repsInReserve;
+        const weight = baseOrm / (1 + totalReps / 30);
+        if (!Number.isFinite(weight) || weight <= 0) {
+            return null;
+        }
+        return Math.round(weight * 100) / 100;
+    }
 
     /* UTILS */
     function createSession(date) {
@@ -1436,7 +1552,11 @@
                 callerScreen: 'screenSessions',
                 preselectedIds,
                 onAdd: async (ids) => {
-                    await A.addRoutineToSession(ids);
+                    const mode = await resolveRoutineAddMode();
+                    if (!mode) {
+                        return;
+                    }
+                    await A.addRoutineToSession(ids, { mode });
                 }
             });
         });
