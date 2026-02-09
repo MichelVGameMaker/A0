@@ -1106,6 +1106,9 @@
             for (const session of preparedSessions) {
                 await db.saveSession(session);
             }
+            if (typeof A.recalculateAllOrm === 'function') {
+                await A.recalculateAllOrm();
+            }
 
             const label = sessions.length > 1 ? 'séances' : 'séance';
             const successMessage = `${sessions.length} ${label} chargée${sessions.length > 1 ? 's' : ''}.`;
@@ -1377,6 +1380,9 @@
             }
 
             updateMissingFitHeroExercises(missingEntries);
+            if (typeof A.recalculateAllOrm === 'function') {
+                await A.recalculateAllOrm();
+            }
 
             const label = imported > 1 ? 'séances' : 'séance';
             const uniqueExercises = mappingStats.unique?.size ?? 0;
