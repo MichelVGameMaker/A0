@@ -71,11 +71,7 @@
         hideSplash();
     }
 
-    async function recalcOrmIfNeeded() {
-        if (!localStorage.getItem(ORM_RECALC_KEY)) {
-            return;
-        }
-        localStorage.removeItem(ORM_RECALC_KEY);
+    A.recalculateAllOrm = async function recalculateAllOrm() {
         if (!db?.getAll || !db?.saveSession || !A?.calculateOrm) {
             return;
         }
@@ -114,6 +110,14 @@
                 await db.saveSession(session);
             }
         }
+    };
+
+    async function recalcOrmIfNeeded() {
+        if (!localStorage.getItem(ORM_RECALC_KEY)) {
+            return;
+        }
+        localStorage.removeItem(ORM_RECALC_KEY);
+        await A.recalculateAllOrm();
     }
 
     function wireNavigation() {
