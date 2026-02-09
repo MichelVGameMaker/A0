@@ -92,6 +92,13 @@
         refs.screenStatMusclesDetail = document.getElementById('screenStatMusclesDetail');
         refs.screenPreferences = document.getElementById('screenPreferences');
         refs.screenData = document.getElementById('screenData');
+        refs.screenPlanning = document.getElementById('screenPlanning');
+        refs.screenPlanningRoutines = document.getElementById('screenPlanningRoutines');
+        refs.screenPlanEdit = document.getElementById('screenPlanEdit');
+        refs.screenPlanCycle = document.getElementById('screenPlanCycle');
+        refs.screenMeso = document.getElementById('screenMeso');
+        refs.screenProgression = document.getElementById('screenProgression');
+        refs.screenFitHeroMapping = document.getElementById('screenFitHeroMapping');
         refs.routineName = document.getElementById('routineName');
         refs.routineIcon = document.getElementById('routineIcon');
         refs.btnRoutineDetails = document.getElementById('btnRoutineDetails');
@@ -1555,7 +1562,14 @@
             screenStatMuscles,
             screenStatMusclesDetail,
             screenPreferences,
-            screenData
+            screenData,
+            screenPlanning,
+            screenPlanningRoutines,
+            screenPlanEdit,
+            screenPlanCycle,
+            screenMeso,
+            screenProgression,
+            screenFitHeroMapping
         } = assertRefs();
         const { screenStatExercises, screenStatExercisesDetail } = refs;
         const map = {
@@ -1573,7 +1587,14 @@
             screenStatMuscles,
             screenStatMusclesDetail,
             screenPreferences,
-            screenData
+            screenData,
+            screenPlanning,
+            screenPlanningRoutines,
+            screenPlanEdit,
+            screenPlanCycle,
+            screenMeso,
+            screenProgression,
+            screenFitHeroMapping
         };
         Object.entries(map).forEach(([key, element]) => {
             if (element) {
