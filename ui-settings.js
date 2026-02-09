@@ -834,19 +834,17 @@
         if (!normalized || typeof normalized !== 'object') {
             return normalized;
         }
+        const { comments, instructions_routine, ...rest } = normalized;
         const routineMeta = resolveSessionRoutineMeta(normalized);
         const exercises = Array.isArray(normalized.exercises)
             ? normalized.exercises.map((exercise) => toExportableSessionExercise(exercise))
             : normalized.exercises;
         return {
-            ...normalized,
+            ...rest,
             is_routine: routineMeta.is_routine,
             routine_id: routineMeta.routine_id,
             routine_name: routineMeta.routine_name,
-            instructions_routine: resolveSessionRoutineInstructions(normalized, routineIndex),
-            comments: typeof normalized.comments_session_global === 'string'
-                ? normalized.comments_session_global
-                : '',
+            instructions_routine_global: resolveSessionRoutineInstructions(normalized, routineIndex),
             exercises
         };
     }
@@ -855,17 +853,12 @@
         if (!exercise || typeof exercise !== 'object') {
             return exercise;
         }
+        const { comments, instructions_routine, ...rest } = exercise;
         return {
-            ...exercise,
+            ...rest,
             is_routine: Boolean(exercise.is_routine),
             routine_id: typeof exercise.routine_id === 'string' ? exercise.routine_id : '',
-            routine_name: typeof exercise.routine_name === 'string' ? exercise.routine_name : '',
-            instructions_routine: typeof exercise.instructions_routine_exercice === 'string'
-                ? exercise.instructions_routine_exercice
-                : '',
-            comments: typeof exercise.comments_session_exercice === 'string'
-                ? exercise.comments_session_exercice
-                : ''
+            routine_name: typeof exercise.routine_name === 'string' ? exercise.routine_name : ''
         };
     }
 
@@ -1194,14 +1187,10 @@
             ...session,
             comments_session_global: typeof session.comments_session_global === 'string'
                 ? session.comments_session_global
-                : typeof session.comments === 'string'
-                    ? session.comments
-                    : '',
+                : '',
             instructions_routine_global: typeof session.instructions_routine_global === 'string'
                 ? session.instructions_routine_global
-                : typeof session.instructions_routine === 'string'
-                    ? session.instructions_routine
-                    : ''
+                : ''
         };
         if (Array.isArray(session.exercises)) {
             normalized.exercises = session.exercises.map((exercise) => normalizeImportedSessionExercise(exercise));
@@ -1234,14 +1223,10 @@
                     : '',
             instructions_routine_exercice: typeof exercise.instructions_routine_exercice === 'string'
                 ? exercise.instructions_routine_exercice
-                : typeof exercise.instructions_routine === 'string'
-                    ? exercise.instructions_routine
-                    : '',
+                : '',
             comments_session_exercice: typeof exercise.comments_session_exercice === 'string'
                 ? exercise.comments_session_exercice
-                : typeof exercise.comments === 'string'
-                    ? exercise.comments
-                    : ''
+                : ''
         };
     }
 
