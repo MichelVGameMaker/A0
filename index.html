@@ -106,33 +106,45 @@
     </header>
 
     <main class="content">
-        <div class="exec-date-row">
-            <div class="details" id="execDate">—</div>
-            <button id="btnExecDetails" class="exec-details-inline" type="button" aria-label="Afficher les détails">
-                <span id="execDetailsPreview" class="session-comments-text details" data-empty="true" data-placeholder="détails"></span>
-            </button>
+        <div id="execEditTabs" class="tags exercise-read-tabs" role="tablist">
+            <button type="button" id="execEditDateTab" class="tag selected" data-tab="session" role="tab" aria-selected="true">—</button>
+            <button type="button" class="tag" data-tab="exec" role="tab" aria-selected="false">Exécution</button>
+            <button type="button" class="tag" data-tab="history" role="tab" aria-selected="false">Historique</button>
+            <button type="button" class="tag" data-tab="stats" role="tab" aria-selected="false">Statistiques</button>
         </div>
 
-        <div id="execSetsLayout" class="exec-sets-layout">
-            <div class="exec-sets-column exec-sets-current">
-                <div class="exec-grid exec-head routine-set-grid routine-set-head routine-set-grid--with-meta">
-                    <div class="lbl">#</div>
-                    <div class="lbl">Reps</div>
-                    <div class="lbl">Poids</div>
-                    <div class="lbl">RPE</div>
-                    <div class="lbl">Repos</div>
-                    <button id="execMetaToggle" class="exec-meta-toggle lbl" type="button" aria-pressed="true">Historique</button>
+        <section id="execEditTabSession" class="exercise-read-tab" data-tab-panel="session">
+            <div id="execSetsLayout" class="exec-sets-layout">
+                <div class="exec-sets-column exec-sets-current">
+                    <div class="exec-grid exec-head routine-set-grid routine-set-head routine-set-grid--with-meta">
+                        <div class="lbl">#</div>
+                        <div class="lbl">Reps</div>
+                        <div class="lbl">Poids</div>
+                        <div class="lbl">RPE</div>
+                        <div class="lbl">Repos</div>
+                        <button id="execMetaToggle" class="exec-meta-toggle lbl" type="button" aria-pressed="true">Historique</button>
+                    </div>
+
+                    <div id="execSets"></div>
                 </div>
-
-                <div id="execSets"></div>
             </div>
+            <div class="add-actions">
+                <button id="execAddSet" class="btn cta full">+ Ajouter une série</button>
+            </div>
+            <div class="keyboard-spacer" aria-hidden="true"></div>
+        </section>
 
-        </div>
+        <section id="execEditTabExec" class="exercise-read-tab" data-tab-panel="exec" hidden>
+            <div id="execReadExecContent" class="panel exercise-read-panel"></div>
+        </section>
 
-        <div class="add-actions">
-            <button id="execAddSet" class="btn cta full">+ Ajouter une série</button>
-        </div>
-        <div class="keyboard-spacer" aria-hidden="true"></div>
+        <section id="execEditTabHistory" class="exercise-read-tab" data-tab-panel="history" hidden>
+            <div id="execReadHistoryContent" class="panel exercise-read-panel"></div>
+        </section>
+
+        <section id="execEditTabStats" class="exercise-read-tab" data-tab-panel="stats" hidden>
+            <div id="execReadStatsContent" class="panel exercise-read-panel"></div>
+        </section>
     </main>
 
 </section>
