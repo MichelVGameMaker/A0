@@ -10,6 +10,7 @@
         exerciseId: null,
         callerScreen: 'screenSessions',
         session: null,
+        activeTab: 'session',
         metaMode: 'history',
         pendingFocus: null,
         replaceCallerScreen: 'screenExecEdit'
@@ -142,10 +143,13 @@
         } else {
             state.pendingFocus = null;
         }
-        const { execTitle, execDate } = assertRefs();
+        const { execTitle, execEditDateTab } = assertRefs();
         execTitle.textContent = exercise.exercise_name || 'Exercice';
-        execDate.textContent = A.fmtUI(date);
-        updateExecDetailsPreview(exercise);
+        if (execEditDateTab) {
+            execEditDateTab.textContent = formatExecDateTab(date);
+        }
+        await renderExerciseDuplicateTabs(exercise);
+        setExecActiveTab('session');
         setMetaMode('history');
         A.setTimerVisibility?.({ hidden: true });
         updateTimerUI();
@@ -214,7 +218,15 @@
         refs.tabSessions = document.getElementById('tabSessions');
         refs.execBack = document.getElementById('execBack');
         refs.execTitle = document.getElementById('execTitle');
-        refs.execDate = document.getElementById('execDate');
+        refs.execEditTabs = document.getElementById('execEditTabs');
+        refs.execEditDateTab = document.getElementById('execEditDateTab');
+        refs.execEditTabSession = document.getElementById('execEditTabSession');
+        refs.execEditTabExec = document.getElementById('execEditTabExec');
+        refs.execEditTabHistory = document.getElementById('execEditTabHistory');
+        refs.execEditTabStats = document.getElementById('execEditTabStats');
+        refs.execReadExecContent = document.getElementById('execReadExecContent');
+        refs.execReadHistoryContent = document.getElementById('execReadHistoryContent');
+        refs.execReadStatsContent = document.getElementById('execReadStatsContent');
         refs.execDelete = document.getElementById('execDelete');
         refs.execAddSet = document.getElementById('execAddSet');
         refs.execSets = document.getElementById('execSets');
@@ -257,7 +269,15 @@
             'screenExecEdit',
             'execBack',
             'execTitle',
-            'execDate',
+            'execEditTabs',
+            'execEditDateTab',
+            'execEditTabSession',
+            'execEditTabExec',
+            'execEditTabHistory',
+            'execEditTabStats',
+            'execReadExecContent',
+            'execReadHistoryContent',
+            'execReadStatsContent',
             'execDelete',
             'execAddSet',
             'execSets',
@@ -275,8 +295,6 @@
             'execMoveDuplicate',
             'execReplaceExercise',
             'execMetaToggle',
-            'btnExecDetails',
-            'execDetailsPreview',
             'dlgExecDetails',
             'execDetailsInput',
             'execDetailsClose',
@@ -290,10 +308,20 @@
     }
 
     function wireNavigation() {
-        const { execBack } = assertRefs();
+        const { execBack, execEditTabs } = assertRefs();
         execBack.addEventListener('click', () => {
             inlineKeyboard?.detach?.();
             backToCaller();
+        });
+        execEditTabs?.addEventListener('click', (event) => {
+            const target = event.target.closest('[data-tab]');
+            if (!target) {
+                return;
+            }
+            const tab = target.getAttribute('data-tab');
+            if (tab) {
+                setExecActiveTab(tab);
+            }
         });
     }
 
@@ -383,6 +411,181 @@
             updateExecDetailsPreview(commentsState.exercise);
             scheduleExecDetailsSave();
         });
+    }
+
+    function setExecActiveTab(nextTab) {
+        const {
+            execEditTabs,
+            execEditTabSession,
+            execEditTabExec,
+            execEditTabHistory,
+            execEditTabStats
+        } = assertRefs();
+        const allowed = ['session', 'exec', 'history', 'stats'];
+        const tab = allowed.includes(nextTab) ? nextTab : 'session';
+        state.activeTab = tab;
+        execEditTabs.querySelectorAll('[data-tab]').forEach((button) => {
+            const isActive = button.getAttribute('data-tab') === tab;
+            button.classList.toggle('selected', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        execEditTabSession.hidden = tab !== 'session';
+        execEditTabExec.hidden = tab !== 'exec';
+        execEditTabHistory.hidden = tab !== 'history';
+        execEditTabStats.hidden = tab !== 'stats';
+    }
+
+    async function renderExerciseDuplicateTabs(exercise) {
+        const { execReadExecContent, execReadHistoryContent, execReadStatsContent } = assertRefs();
+        if (!exercise) {
+            return;
+        }
+        renderExecDuplicate(exercise, execReadExecContent);
+        await renderHistoryDuplicate(exercise, execReadHistoryContent);
+        renderStatsDuplicate(exercise, execReadStatsContent);
+    }
+
+    function renderExecDuplicate(exercise, container) {
+        if (!container) {
+            return;
+        }
+        const steps = Array.isArray(exercise.instructions) ? exercise.instructions : [];
+        const secondary = Array.isArray(exercise.secondaryMuscles) ? exercise.secondaryMuscles.filter(Boolean).join(', ') : '';
+        const image = exercise.image || new URL('icons/placeholder-64.png', document.baseURI).href;
+        const main = exercise.muscle || exercise.muscleGroup2 || exercise.muscleGroup3 || '—';
+        const items = steps.length
+            ? steps.map((step) => `<li>${escapeHtml(String(step).replace(/^Step:\s*\d+\s*/i, '').replace(/^\s*\d+\s*[\).:-]\s*/, '').replace(/^\s*\d+\s+/, '').trim() || '—')}</li>`).join('')
+            : '<li>—</li>';
+        container.innerHTML = `
+            <img src="${escapeAttribute(image)}" alt="aperçu exercice" class="image_big" />
+            <div class="lbl">Principal : ${escapeHtml(formatMainMuscle(main))}</div>
+            <div class="lbl">Secondaires : ${escapeHtml(secondary || '—')}</div>
+            <div>
+                <ol class="listing listing-instructions">${items}</ol>
+            </div>
+        `;
+    }
+
+    async function renderHistoryDuplicate(exercise, container) {
+        if (!container || !state.exerciseId) {
+            return;
+        }
+        const sessionsRaw = await db.getAll('sessions');
+        const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : [];
+        const items = sessions
+            .map((session) => {
+                const exercises = Array.isArray(session?.exercises) ? session.exercises : [];
+                const match = exercises.find((item) => item?.exercise_id === state.exerciseId);
+                if (!match || !Array.isArray(match.sets) || !match.sets.length) {
+                    return null;
+                }
+                return {
+                    session,
+                    sets: match.sets.filter((set) => set && (set.reps || set.weight || set.rpe || set.rest))
+                };
+            })
+            .filter(Boolean)
+            .sort((a, b) => new Date(b.session?.date || b.session?.id || 0) - new Date(a.session?.date || a.session?.id || 0));
+        const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
+        if (!items.length) {
+            container.innerHTML = '<div class="empty">Aucune séance enregistrée.</div>';
+            return;
+        }
+        container.innerHTML = '';
+        items.forEach(({ session, sets }) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'exercise-history-session';
+            const dateLabel = document.createElement('div');
+            dateLabel.className = 'lbl';
+            dateLabel.textContent = formatSessionDate(session);
+            wrapper.appendChild(dateLabel);
+            (sets.length ? sets : [{}]).forEach((set) => {
+                const line = document.createElement('div');
+                line.className = 'details';
+                line.textContent = sets.length ? formatSetLine(set, weightUnit) : '—';
+                wrapper.appendChild(line);
+            });
+            container.appendChild(wrapper);
+        });
+    }
+
+    function renderStatsDuplicate(exercise, container) {
+        if (!container) {
+            return;
+        }
+        container.innerHTML = '';
+        const subtitle = document.createElement('div');
+        subtitle.className = 'details';
+        subtitle.textContent = 'Statistiques de cet exercice';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn full';
+        button.textContent = 'Ouvrir les statistiques';
+        button.addEventListener('click', () => {
+            if (exercise?.exercise_id) {
+                void A.openExerciseRead?.({ currentId: exercise.exercise_id, callerScreen: 'screenExecEdit', tab: 'stats' });
+            }
+        });
+        container.appendChild(subtitle);
+        container.appendChild(button);
+    }
+
+    function formatExecDateTab(date) {
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+            return '—';
+        }
+        return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })
+            .format(date)
+            .replace('.', '');
+    }
+
+    function formatSessionDate(session) {
+        const dateValue = session?.date || session?.id;
+        const date = dateValue ? new Date(dateValue) : null;
+        if (!date || Number.isNaN(date.getTime())) {
+            return '—';
+        }
+        return typeof A.fmtUI === 'function' ? A.fmtUI(date) : date.toLocaleDateString('fr-FR');
+    }
+
+    function formatSetLine(set, weightUnit) {
+        const reps = Number.isFinite(set?.reps) ? set.reps : null;
+        const weight = set?.weight != null ? Number(set.weight) : null;
+        const rpe = set?.rpe != null ? set.rpe : null;
+        const parts = [];
+        if (reps != null) {
+            parts.push(`${reps}x`);
+        }
+        if (weight != null && !Number.isNaN(weight)) {
+            parts.push(`${Number(weight).toLocaleString('fr-FR')}${weightUnit}`);
+        }
+        if (rpe != null && rpe !== '') {
+            parts.push(`@${rpe}`);
+        }
+        return parts.length ? parts.join(' ') : '—';
+    }
+
+
+
+    function formatMainMuscle(value) {
+        const text = String(value || '—').trim();
+        if (!text || text === '—') {
+            return '—';
+        }
+        return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function escapeAttribute(value) {
+        return escapeHtml(value);
     }
 
     function wireMetaDialog() {
