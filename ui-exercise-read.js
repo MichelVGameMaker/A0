@@ -44,14 +44,25 @@
 
         state.exercise = exercise;
         refs.exReadTitle.textContent = exercise.name || 'Exercice';
-        refs.exReadOrigin.textContent = formatExerciseOrigin(exercise);
-        updateHero(exercise);
-        updateMuscles(exercise);
-        updateInstructions(exercise);
-        await updateHistory(exercise);
+        renderExerciseExecPanel(exercise);
+        await renderExerciseHistoryPanel({
+            exercise,
+            exerciseId: state.currentId,
+            container: refs.exReadHistoryList
+        });
         setActiveTab(tab);
 
         switchScreen('screenExerciseRead');
+    };
+
+    A.renderExerciseReadExecPanel = function renderExerciseReadExecPanel(options = {}) {
+        const { exercise, container, originLabel } = options;
+        renderExerciseExecPanel(exercise, { container, originLabel });
+    };
+
+    A.renderExerciseReadHistoryPanel = async function renderExerciseReadHistoryPanel(options = {}) {
+        const { exercise, exerciseId, container } = options;
+        await renderExerciseHistoryPanel({ exercise, exerciseId, container });
     };
 
     /* UTILS */
@@ -393,46 +404,59 @@
         }
     }
 
-    function updateHero(exercise) {
-        const { exReadHero } = assertRefs();
-        if (exercise.image) {
-            exReadHero.src = exercise.image;
-            exReadHero.classList.remove('exercise-hero-placeholder');
-        } else {
-            exReadHero.src = new URL('icons/placeholder-64.png', document.baseURI).href;
-            exReadHero.classList.add('exercise-hero-placeholder');
+    function renderExerciseExecPanel(exercise, options = {}) {
+        if (!exercise) {
+            return;
         }
-        exReadHero.alt = exercise.name || 'exercice';
-    }
-
-    function updateMuscles(exercise) {
-        const { exReadMuscleMain, exReadMuscleSecondary } = assertRefs();
+        const { container = null, originLabel = formatExerciseOrigin(exercise) } = options;
+        if (!container) {
+            const { exReadOrigin, exReadHero, exReadMuscleMain, exReadMuscleSecondary, exReadInstruc } = assertRefs();
+            if (exercise.image) {
+                exReadHero.src = exercise.image;
+                exReadHero.classList.remove('exercise-hero-placeholder');
+            } else {
+                exReadHero.src = new URL('icons/placeholder-64.png', document.baseURI).href;
+                exReadHero.classList.add('exercise-hero-placeholder');
+            }
+            exReadHero.alt = exercise.name || 'exercice';
+            const main = exercise.muscle || exercise.muscleGroup2 || exercise.muscleGroup3 || '—';
+            const secondary = toArray(exercise.secondaryMuscles).filter(Boolean).join(', ');
+            exReadMuscleMain.textContent = `Principal : ${ucFirst(main)}`;
+            exReadMuscleSecondary.textContent = `Secondaires : ${secondary || '—'}`;
+            exReadOrigin.textContent = originLabel;
+            exReadInstruc.innerHTML = '';
+            const steps = toArray(exercise.instructions);
+            if (steps.length) {
+                steps.forEach((step) => {
+                    const li = document.createElement('li');
+                    li.textContent = cleanInstructionStep(step) || '—';
+                    exReadInstruc.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = '—';
+                exReadInstruc.appendChild(li);
+            }
+            return;
+        }
+        const image = exercise.image || new URL('icons/placeholder-64.png', document.baseURI).href;
         const main = exercise.muscle || exercise.muscleGroup2 || exercise.muscleGroup3 || '—';
         const secondary = toArray(exercise.secondaryMuscles).filter(Boolean).join(', ');
-        exReadMuscleMain.textContent = `Principal : ${ucFirst(main)}`;
-        exReadMuscleSecondary.textContent = `Secondaires : ${secondary || '—'}`;
-    }
-
-    function updateInstructions(exercise) {
-        const { exReadInstruc } = assertRefs();
-        exReadInstruc.innerHTML = '';
         const steps = toArray(exercise.instructions);
-        if (steps.length) {
-            steps.forEach((step) => {
-                const li = document.createElement('li');
-                const cleaned = String(step)
-                    .replace(/^Step:\s*\d+\s*/i, '')
-                    .replace(/^\s*\d+\s*[\).:-]\s*/, '')
-                    .replace(/^\s*\d+\s+/, '')
-                    .trim();
-                li.textContent = cleaned || '—';
-                exReadInstruc.appendChild(li);
-            });
-        } else {
-            const li = document.createElement('li');
-            li.textContent = '—';
-            exReadInstruc.appendChild(li);
-        }
+        const instructionItems = steps.length
+            ? steps.map((step) => `<li>${escapeHtml(cleanInstructionStep(step) || '—')}</li>`).join('')
+            : '<li>—</li>';
+        container.innerHTML = `
+            <div class="panel exercise-read-panel">
+                <img src="${escapeAttribute(image)}" alt="aperçu exercice" class="image_big" />
+                <div class="lbl">Principal : ${escapeHtml(ucFirst(main))}</div>
+                <div class="lbl">Secondaires : ${escapeHtml(secondary || '—')}</div>
+                <div class="details">${escapeHtml(originLabel || '')}</div>
+                <div>
+                    <ol class="listing listing-instructions">${instructionItems}</ol>
+                </div>
+            </div>
+        `;
     }
 
     function setActiveTab(nextTab) {
@@ -457,8 +481,15 @@
     }
 
     async function updateHistory(exercise) {
-        const { exReadHistoryList } = assertRefs();
-        if (!state.currentId || !exReadHistoryList) {
+        await renderExerciseHistoryPanel({
+            exercise,
+            exerciseId: state.currentId,
+            container: assertRefs().exReadHistoryList
+        });
+    }
+
+    async function renderExerciseHistoryPanel({ exercise, exerciseId, container }) {
+        if (!exerciseId || !container) {
             return;
         }
         const sessionsRaw = await db.getAll('sessions');
@@ -466,7 +497,7 @@
         const items = sessions
             .map((session) => {
                 const exercises = Array.isArray(session?.exercises) ? session.exercises : [];
-                const match = exercises.find((item) => item?.exercise_id === state.currentId);
+                const match = exercises.find((item) => item?.exercise_id === exerciseId);
                 if (!match || !Array.isArray(match.sets) || match.sets.length === 0) {
                     return null;
                 }
@@ -483,12 +514,12 @@
             return timeB - timeA;
         });
 
-        exReadHistoryList.innerHTML = '';
+        container.innerHTML = '';
         if (!items.length) {
             const empty = document.createElement('div');
             empty.className = 'empty';
             empty.textContent = 'Aucune séance enregistrée.';
-            exReadHistoryList.appendChild(empty);
+            container.appendChild(empty);
             return;
         }
 
@@ -516,8 +547,16 @@
                 });
             }
 
-            exReadHistoryList.appendChild(wrapper);
+            container.appendChild(wrapper);
         });
+    }
+
+    function cleanInstructionStep(step) {
+        return String(step)
+            .replace(/^Step:\s*\d+\s*/i, '')
+            .replace(/^\s*\d+\s*[\).:-]\s*/, '')
+            .replace(/^\s*\d+\s+/, '')
+            .trim();
     }
 
     function formatSessionDate(session) {
@@ -652,6 +691,19 @@
                 element.hidden = key !== target;
             }
         });
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function escapeAttribute(value) {
+        return escapeHtml(value);
     }
 
     function toArray(value) {
