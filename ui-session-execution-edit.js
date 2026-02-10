@@ -440,94 +440,49 @@
         if (!exercise) {
             return;
         }
-        renderExecDuplicate(exercise, execReadExecContent);
-        await renderHistoryDuplicate(exercise, execReadHistoryContent);
-        renderStatsDuplicate(exercise, execReadStatsContent);
-    }
+        const baseExercise = exercise.exercise_id ? await db.get('exercises', exercise.exercise_id) : null;
+        const mergedExercise = {
+            ...(baseExercise || {}),
+            ...(exercise || {}),
+            name: exercise.exercise_name || baseExercise?.name || 'Exercice'
+        };
 
-    function renderExecDuplicate(exercise, container) {
-        if (!container) {
-            return;
-        }
-        const steps = Array.isArray(exercise.instructions) ? exercise.instructions : [];
-        const secondary = Array.isArray(exercise.secondaryMuscles) ? exercise.secondaryMuscles.filter(Boolean).join(', ') : '';
-        const image = exercise.image || new URL('icons/placeholder-64.png', document.baseURI).href;
-        const main = exercise.muscle || exercise.muscleGroup2 || exercise.muscleGroup3 || '—';
-        const items = steps.length
-            ? steps.map((step) => `<li>${escapeHtml(String(step).replace(/^Step:\s*\d+\s*/i, '').replace(/^\s*\d+\s*[\).:-]\s*/, '').replace(/^\s*\d+\s+/, '').trim() || '—')}</li>`).join('')
-            : '<li>—</li>';
-        container.innerHTML = `
-            <img src="${escapeAttribute(image)}" alt="aperçu exercice" class="image_big" />
-            <div class="lbl">Principal : ${escapeHtml(formatMainMuscle(main))}</div>
-            <div class="lbl">Secondaires : ${escapeHtml(secondary || '—')}</div>
-            <div>
-                <ol class="listing listing-instructions">${items}</ol>
-            </div>
-        `;
-    }
-
-    async function renderHistoryDuplicate(exercise, container) {
-        if (!container || !state.exerciseId) {
-            return;
-        }
-        const sessionsRaw = await db.getAll('sessions');
-        const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : [];
-        const items = sessions
-            .map((session) => {
-                const exercises = Array.isArray(session?.exercises) ? session.exercises : [];
-                const match = exercises.find((item) => item?.exercise_id === state.exerciseId);
-                if (!match || !Array.isArray(match.sets) || !match.sets.length) {
-                    return null;
-                }
-                return {
-                    session,
-                    sets: match.sets.filter((set) => set && (set.reps || set.weight || set.rpe || set.rest))
-                };
-            })
-            .filter(Boolean)
-            .sort((a, b) => new Date(b.session?.date || b.session?.id || 0) - new Date(a.session?.date || a.session?.id || 0));
-        const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
-        if (!items.length) {
-            container.innerHTML = '<div class="empty">Aucune séance enregistrée.</div>';
-            return;
-        }
-        container.innerHTML = '';
-        items.forEach(({ session, sets }) => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'exercise-history-session';
-            const dateLabel = document.createElement('div');
-            dateLabel.className = 'lbl';
-            dateLabel.textContent = formatSessionDate(session);
-            wrapper.appendChild(dateLabel);
-            (sets.length ? sets : [{}]).forEach((set) => {
-                const line = document.createElement('div');
-                line.className = 'details';
-                line.textContent = sets.length ? formatSetLine(set, weightUnit) : '—';
-                wrapper.appendChild(line);
+        if (typeof A.renderExerciseReadExecPanel === 'function') {
+            A.renderExerciseReadExecPanel({
+                exercise: mergedExercise,
+                container: execReadExecContent
             });
-            container.appendChild(wrapper);
-        });
+        }
+        if (typeof A.renderExerciseReadHistoryPanel === 'function') {
+            await A.renderExerciseReadHistoryPanel({
+                exercise: mergedExercise,
+                exerciseId: state.exerciseId,
+                container: execReadHistoryContent
+            });
+        }
+        await renderStatsDuplicate(mergedExercise, execReadStatsContent);
     }
 
-    function renderStatsDuplicate(exercise, container) {
+    async function renderStatsDuplicate(exercise, container) {
         if (!container) {
             return;
         }
         container.innerHTML = '';
-        const subtitle = document.createElement('div');
-        subtitle.className = 'details';
-        subtitle.textContent = 'Statistiques de cet exercice';
+        if (!exercise?.exercise_id) {
+            container.innerHTML = '<div class="empty">Aucun exercice lié.</div>';
+            return;
+        }
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'btn full';
-        button.textContent = 'Ouvrir les statistiques';
+        button.textContent = 'Afficher les stats détaillées';
         button.addEventListener('click', () => {
-            if (exercise?.exercise_id) {
-                void A.openExerciseRead?.({ currentId: exercise.exercise_id, callerScreen: 'screenExecEdit', tab: 'stats' });
-            }
+            void A.openExerciseRead?.({ currentId: exercise.exercise_id, callerScreen: 'screenExecEdit', tab: 'stats' });
         });
-        container.appendChild(subtitle);
-        container.appendChild(button);
+        const subtitle = document.createElement('div');
+        subtitle.className = 'details';
+        subtitle.textContent = 'Même écran que l’onglet stats de la fiche exercice.';
+        container.append(subtitle, button);
     }
 
     function formatExecDateTab(date) {
@@ -537,55 +492,6 @@
         return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })
             .format(date)
             .replace('.', '');
-    }
-
-    function formatSessionDate(session) {
-        const dateValue = session?.date || session?.id;
-        const date = dateValue ? new Date(dateValue) : null;
-        if (!date || Number.isNaN(date.getTime())) {
-            return '—';
-        }
-        return typeof A.fmtUI === 'function' ? A.fmtUI(date) : date.toLocaleDateString('fr-FR');
-    }
-
-    function formatSetLine(set, weightUnit) {
-        const reps = Number.isFinite(set?.reps) ? set.reps : null;
-        const weight = set?.weight != null ? Number(set.weight) : null;
-        const rpe = set?.rpe != null ? set.rpe : null;
-        const parts = [];
-        if (reps != null) {
-            parts.push(`${reps}x`);
-        }
-        if (weight != null && !Number.isNaN(weight)) {
-            parts.push(`${Number(weight).toLocaleString('fr-FR')}${weightUnit}`);
-        }
-        if (rpe != null && rpe !== '') {
-            parts.push(`@${rpe}`);
-        }
-        return parts.length ? parts.join(' ') : '—';
-    }
-
-
-
-    function formatMainMuscle(value) {
-        const text = String(value || '—').trim();
-        if (!text || text === '—') {
-            return '—';
-        }
-        return text.charAt(0).toUpperCase() + text.slice(1);
-    }
-
-    function escapeHtml(value) {
-        return String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
-    function escapeAttribute(value) {
-        return escapeHtml(value);
     }
 
     function wireMetaDialog() {

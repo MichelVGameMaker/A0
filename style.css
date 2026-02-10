@@ -1417,6 +1417,10 @@ textarea:focus{
 /* =========================================================
    7 ter) Fiche exercice (onglets)
    ========================================================= */
+#execEditTabs{
+    --tag-columns: 4;
+}
+
 .exercise-read-tabs{
     --tag-columns: 3;
     position: sticky;
