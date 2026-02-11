@@ -1468,6 +1468,8 @@
         sessionScrollState.pendingRestore = true;
     }
 
+    const SESSION_SCROLL_TOP_GAP_PX = 10;
+
     function restoreSessionScroll() {
         if (!sessionScrollState.pendingRestore) {
             return;
@@ -1484,7 +1486,7 @@
             if (target) {
                 const containerRect = container.getBoundingClientRect();
                 const targetRect = target.getBoundingClientRect();
-                container.scrollTop = container.scrollTop + (targetRect.top - containerRect.top);
+                container.scrollTop = container.scrollTop + (targetRect.top - containerRect.top) - SESSION_SCROLL_TOP_GAP_PX;
                 restored = true;
             }
             sessionScrollState.targetExerciseId = null;
@@ -1512,8 +1514,9 @@
         }
         const containerRect = container.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
-        if (targetRect.top < containerRect.top) {
-            container.scrollTop += targetRect.top - containerRect.top;
+        const targetTopLimit = containerRect.top + SESSION_SCROLL_TOP_GAP_PX;
+        if (targetRect.top < targetTopLimit) {
+            container.scrollTop += targetRect.top - targetTopLimit;
         } else if (targetRect.bottom > containerRect.bottom) {
             container.scrollTop += targetRect.bottom - containerRect.bottom;
         }
