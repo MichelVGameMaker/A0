@@ -511,15 +511,7 @@
             await A.renderExerciseStatsEmbedded(exerciseId);
             return;
         }
-
-        const wasHidden = exReadTabStats.hidden;
-        exReadTabStats.hidden = false;
-        await A.renderExerciseStatsEmbedded(exerciseId);
-        target.innerHTML = '';
-        while (exReadTabStats.firstChild) {
-            target.appendChild(exReadTabStats.firstChild);
-        }
-        exReadTabStats.hidden = wasHidden;
+        await A.renderExerciseStatsEmbedded(exerciseId, { container: target });
     }
 
     async function renderExerciseHistoryPanel({ exercise, exerciseId, container }) {

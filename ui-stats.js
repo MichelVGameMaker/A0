@@ -153,12 +153,16 @@
         await A.openVolume?.();
     };
 
-    A.renderExerciseStatsEmbedded = async function renderExerciseStatsEmbedded(exerciseId) {
+    A.renderExerciseStatsEmbedded = async function renderExerciseStatsEmbedded(exerciseId, options = {}) {
+        const { container = null } = options;
         ensureRefs();
         await loadData(true);
         const exercise = state.exercises.find((item) => item.id === exerciseId) || (await db.get('exercises', exerciseId));
         state.activeExercise = exercise || null;
         renderExerciseDetail();
+        if (container) {
+            renderEmbeddedStatsContent(container, exerciseId);
+        }
     };
 
     /* UTILS */
@@ -422,6 +426,87 @@
         updateExerciseHistoryTitle(statsTimelineTitle);
         renderChart();
         renderTimeline();
+    }
+
+    function renderEmbeddedStatsContent(container, exerciseId) {
+        if (!container) {
+            return;
+        }
+        const {
+            statsMetricTags,
+            statsChart,
+            statsChartEmpty,
+            statsRangeTags,
+            statsTimeline,
+            statsExerciseTitle,
+            statsExerciseSubtitle,
+            statsTimelineTitle
+        } = assertStatsRefs();
+        container.innerHTML = '';
+
+        const heading = document.createElement('div');
+        heading.className = 'bloque';
+        heading.innerHTML = `
+            <div class="element">${escapeHtml(statsExerciseTitle.textContent || 'Exercice')}</div>
+            <div class="details">${escapeHtml(statsExerciseSubtitle.textContent || '')}</div>
+        `;
+        container.appendChild(heading);
+
+        appendClonedParent(container, statsMetricTags.closest('.stats-tags-group'));
+        appendClonedParent(container, statsChart.closest('.stats-chart-card'));
+        appendClonedParent(container, statsRangeTags.closest('.stats-tags-group'));
+        appendClonedParent(container, statsTimeline.closest('section'));
+
+        const embeddedTimelineTitle = container.querySelector('.stats-section-title');
+        if (embeddedTimelineTitle) {
+            embeddedTimelineTitle.textContent = statsTimelineTitle.textContent || 'Historique';
+        }
+
+        const embeddedChartEmpty = container.querySelector('.stats-chart-empty');
+        if (embeddedChartEmpty) {
+            embeddedChartEmpty.textContent = statsChartEmpty.textContent || 'Aucune donnée enregistrée.';
+            embeddedChartEmpty.hidden = statsChartEmpty.hidden;
+        }
+
+        if (!container.dataset.statsEmbeddedWired) {
+            container.addEventListener('click', (event) => {
+                const metricButton = event.target.closest('[data-metric]');
+                if (metricButton) {
+                    const nextMetric = metricButton.getAttribute('data-metric');
+                    if (nextMetric && METRIC_MAP[nextMetric]) {
+                        state.activeMetric = nextMetric;
+                        void A.renderExerciseStatsEmbedded(exerciseId, { container });
+                    }
+                    return;
+                }
+                const rangeButton = event.target.closest('[data-range]');
+                if (!rangeButton) {
+                    return;
+                }
+                const nextRange = rangeButton.getAttribute('data-range');
+                if (nextRange && RANGE_MAP[nextRange]) {
+                    state.activeRange = nextRange;
+                    void A.renderExerciseStatsEmbedded(exerciseId, { container });
+                }
+            });
+            container.dataset.statsEmbeddedWired = 'true';
+        }
+    }
+
+    function appendClonedParent(container, element) {
+        if (!element) {
+            return;
+        }
+        container.appendChild(element.cloneNode(true));
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
     }
 
     function wireGoalDialogEvents() {
