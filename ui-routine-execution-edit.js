@@ -1075,6 +1075,9 @@
         } else {
             refs.dlgRoutineMoveEditor?.close();
         }
+        if (state.moveId) {
+            A.setRoutineEditScrollTarget?.(state.moveId);
+        }
         const { screenRoutineMoveEdit } = assertRefs();
         if (screenRoutineMoveEdit?.classList.contains('is-active')) {
             screenRoutineMoveEdit.classList.remove('is-active');

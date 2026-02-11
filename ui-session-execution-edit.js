@@ -2284,6 +2284,9 @@
         } else {
             refs.dlgExecMoveEditor?.close();
         }
+        if (state.currentId) {
+            A.setSessionScrollTarget?.(state.currentId);
+        }
         switchScreen(state.callerScreen || 'screenSessions');
         void refreshSessionViews();
     }
