@@ -436,7 +436,7 @@
     }
 
     async function renderExerciseDuplicateTabs(exercise) {
-        const { execReadExecContent, execReadHistoryContent, execReadStatsContent } = assertRefs();
+        const { execReadExecContent, execReadHistoryContent, execEditTabStats } = assertRefs();
         if (!exercise) {
             return;
         }
@@ -456,11 +456,11 @@
         if (typeof A.renderExerciseReadHistoryPanel === 'function') {
             await A.renderExerciseReadHistoryPanel({
                 exercise: mergedExercise,
-                exerciseId: state.exerciseId,
+                exerciseId: mergedExercise.exercise_id,
                 container: execReadHistoryContent
             });
         }
-        await renderStatsDuplicate(mergedExercise, execReadStatsContent);
+        await renderStatsDuplicate(mergedExercise, execEditTabStats);
     }
 
     async function renderStatsDuplicate(exercise, container) {
