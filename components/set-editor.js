@@ -837,6 +837,21 @@
             active.replaceOnInput = Boolean(select);
         };
 
+        const normalizeTimeInput = (value) => {
+            const source = String(value ?? '');
+            const [leftRaw = '0', rightRaw = '0'] = source.split(':', 2);
+            const minutesText = leftRaw.replace(/\D/g, '') || '0';
+            const secondsText = rightRaw.replace(/\D/g, '') || '0';
+            const minutes = Number.parseInt(minutesText, 10);
+            const seconds = Number.parseInt(secondsText, 10);
+            return {
+                minutesText,
+                secondsText,
+                minutes: Number.isFinite(minutes) ? Math.max(0, minutes) : 0,
+                seconds: Number.isFinite(seconds) ? Math.max(0, Math.min(59, seconds)) : 0
+            };
+        };
+
         const handleInput = (key) => {
             if (!active) {
                 return;
@@ -859,6 +874,60 @@
             }
             const current = String(active.getValue?.() ?? '');
             const layout = active.layout || 'default';
+
+            if (layout === 'time') {
+                const normalized = normalizeTimeInput(current);
+                const target = active.target;
+                const hasSelection = target
+                    && typeof target.selectionStart === 'number'
+                    && typeof target.selectionEnd === 'number'
+                    && target.selectionEnd > target.selectionStart;
+                const colonIndex = current.indexOf(':') >= 0 ? current.indexOf(':') : normalized.minutesText.length;
+                const cursor = typeof target?.selectionStart === 'number' ? target.selectionStart : current.length;
+                const minuteSide = hasSelection ? true : cursor <= colonIndex;
+
+                if (key === ':') {
+                    if (minuteSide) {
+                        active.onChange?.(
+                            `${normalized.minutes}:${String(normalized.seconds).padStart(2, '0')}`,
+                            { caretPosition: String(normalized.minutes).length + 1 }
+                        );
+                    }
+                    return;
+                }
+
+                let nextMinutes = normalized.minutes;
+                let nextSeconds = normalized.seconds;
+                if (key === 'del') {
+                    if (minuteSide) {
+                        const trimmed = normalized.minutesText.slice(0, -1);
+                        nextMinutes = Number.parseInt(trimmed || '0', 10);
+                    } else {
+                        const trimmed = normalized.secondsText.slice(0, -1);
+                        nextSeconds = Number.parseInt(trimmed || '0', 10);
+                    }
+                } else if (/^\d$/.test(key)) {
+                    if (minuteSide) {
+                        const baseText = hasSelection ? '' : normalized.minutesText;
+                        nextMinutes = Number.parseInt(`${baseText}${key}` || '0', 10);
+                    } else {
+                        const baseText = hasSelection ? '' : normalized.secondsText;
+                        nextSeconds = Number.parseInt(`${baseText}${key}` || '0', 10);
+                    }
+                } else {
+                    return;
+                }
+
+                nextMinutes = Number.isFinite(nextMinutes) ? Math.max(0, nextMinutes) : 0;
+                nextSeconds = Number.isFinite(nextSeconds) ? Math.max(0, Math.min(59, nextSeconds)) : 0;
+                const minutesText = String(nextMinutes);
+                const next = `${minutesText}:${String(nextSeconds).padStart(2, '0')}`;
+                const caretPosition = minuteSide ? minutesText.length : minutesText.length + 1 + String(nextSeconds).length;
+                active.replaceOnInput = false;
+                active.onChange?.(next, { caretPosition });
+                return;
+            }
+
             const shouldReplace = active.replaceOnInput || hasFullSelection(current);
             const base = shouldReplace ? '' : current;
             let next = base;

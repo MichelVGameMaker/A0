@@ -472,17 +472,14 @@
             container.innerHTML = '<div class="empty">Aucun exercice lié.</div>';
             return;
         }
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'btn full';
-        button.textContent = 'Afficher les stats détaillées';
-        button.addEventListener('click', () => {
-            void A.openExerciseRead?.({ currentId: exercise.exercise_id, callerScreen: 'screenExecEdit', tab: 'stats' });
+        if (typeof A.renderExerciseReadStatsPanel !== 'function') {
+            container.innerHTML = '<div class="empty">Statistiques indisponibles.</div>';
+            return;
+        }
+        await A.renderExerciseReadStatsPanel({
+            exerciseId: exercise.exercise_id,
+            container
         });
-        const subtitle = document.createElement('div');
-        subtitle.className = 'details';
-        subtitle.textContent = 'Même écran que l’onglet stats de la fiche exercice.';
-        container.append(subtitle, button);
     }
 
     function formatExecDateTab(date) {
@@ -1262,8 +1259,14 @@
                     }
                 },
                 getValue: () => input.value,
-                onChange: (next) => {
+                onChange: (next, meta = {}) => {
                     input.value = next;
+                    if (typeof meta?.caretPosition === 'number') {
+                        const position = Math.max(0, Math.min(String(next).length, meta.caretPosition));
+                        requestAnimationFrame(() => {
+                            input.setSelectionRange(position, position);
+                        });
+                    }
                     if (field === 'rpe') {
                         applyRpeTone(input, next);
                     }
@@ -1330,6 +1333,11 @@
         );
         const rpeInput = createInput(() => (value.rpe == null ? '' : String(value.rpe)), 'rpe', 'exec-rpe-cell');
         const restInput = createInput(() => formatRestDisplay(value.rest), 'rest', 'exec-rest-cell');
+        restInput.addEventListener('focus', () => {
+            const colon = restInput.value.indexOf(':');
+            const end = colon >= 0 ? colon : restInput.value.length;
+            restInput.setSelectionRange(0, end);
+        });
         collectInputs(repsInput, weightInput, rpeInput, restInput);
         syncRowTone();
         selectField = (field) => {
