@@ -65,6 +65,11 @@
         await renderExerciseHistoryPanel({ exercise, exerciseId, container });
     };
 
+    A.renderExerciseReadStatsPanel = async function renderExerciseReadStatsPanel(options = {}) {
+        const { exerciseId, container } = options;
+        await renderExerciseStatsPanel({ exerciseId, container });
+    };
+
     /* UTILS */
     function ensureRefs() {
         if (refsResolved) {
@@ -475,8 +480,8 @@
         if (tab === 'history') {
             void updateHistory(state.exercise);
         }
-        if (tab === 'stats' && state.currentId && typeof A.renderExerciseStatsEmbedded === 'function') {
-            void A.renderExerciseStatsEmbedded(state.currentId);
+        if (tab === 'stats' && state.currentId) {
+            void renderExerciseStatsPanel({ exerciseId: state.currentId });
         }
     }
 
@@ -486,6 +491,40 @@
             exerciseId: state.currentId,
             container: assertRefs().exReadHistoryList
         });
+    }
+
+
+    async function renderExerciseStatsPanel({ exerciseId, container = null }) {
+        if (!exerciseId) {
+            return;
+        }
+        const target = container || assertRefs().exReadTabStats;
+        if (!target) {
+            return;
+        }
+        if (typeof A.renderExerciseStatsEmbedded !== 'function') {
+            target.innerHTML = '<div class="empty">Statistiques indisponibles.</div>';
+            return;
+        }
+        const { exReadTabStats } = assertRefs();
+        if (target === exReadTabStats) {
+            await A.renderExerciseStatsEmbedded(exerciseId);
+            return;
+        }
+
+        const wasHidden = exReadTabStats.hidden;
+        exReadTabStats.hidden = false;
+        await A.renderExerciseStatsEmbedded(exerciseId);
+        target.innerHTML = '';
+        Array.from(exReadTabStats.children).forEach((child) => {
+            const clone = child.cloneNode(true);
+            clone.querySelectorAll?.('[id]').forEach((node) => node.removeAttribute('id'));
+            if (clone.hasAttribute?.('id')) {
+                clone.removeAttribute('id');
+            }
+            target.appendChild(clone);
+        });
+        exReadTabStats.hidden = wasHidden;
     }
 
     async function renderExerciseHistoryPanel({ exercise, exerciseId, container }) {

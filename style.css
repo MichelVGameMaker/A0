@@ -2231,6 +2231,11 @@ textarea:focus{
 
 .exec-row .exec-rest-cell{
   grid-column: 5;
+  align-self: stretch;
+  height: 100%;
+  background: var(--panelBord);
+  border-color: var(--black);
+  color: var(--black);
 }
 
 .exec-row .exec-meta-cell{
