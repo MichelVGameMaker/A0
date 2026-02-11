@@ -516,14 +516,9 @@
         exReadTabStats.hidden = false;
         await A.renderExerciseStatsEmbedded(exerciseId);
         target.innerHTML = '';
-        Array.from(exReadTabStats.children).forEach((child) => {
-            const clone = child.cloneNode(true);
-            clone.querySelectorAll?.('[id]').forEach((node) => node.removeAttribute('id'));
-            if (clone.hasAttribute?.('id')) {
-                clone.removeAttribute('id');
-            }
-            target.appendChild(clone);
-        });
+        while (exReadTabStats.firstChild) {
+            target.appendChild(exReadTabStats.firstChild);
+        }
         exReadTabStats.hidden = wasHidden;
     }
 
