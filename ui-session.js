@@ -1097,6 +1097,7 @@
 
     function computeSessionOrmMean(sets) {
         const values = (Array.isArray(sets) ? sets : [])
+            .filter((set) => isSetEligibleForOrmMean(set))
             .map((set) => resolveSetOrmValue(set))
             .filter((value) => Number.isFinite(value));
         if (!values.length) {
@@ -1104,6 +1105,11 @@
         }
         const total = values.reduce((sum, value) => sum + value, 0);
         return total / values.length;
+    }
+
+    function isSetEligibleForOrmMean(set) {
+        const rpe = Number(set?.rpe);
+        return Number.isFinite(rpe) && rpe >= 7;
     }
 
     function resolveSetOrmValue(set) {
@@ -1140,7 +1146,7 @@
         if (!Number.isFinite(weight) || weight <= 0) {
             return null;
         }
-        return Math.round(weight * 100) / 100;
+        return Math.round(weight * 2) / 2;
     }
 
     /* UTILS */
