@@ -432,6 +432,9 @@
         if (!container) {
             return;
         }
+        if (exerciseId) {
+            container.dataset.statsExerciseId = exerciseId;
+        }
         const {
             statsMetricTags,
             statsChart,
@@ -475,7 +478,8 @@
                     const nextMetric = metricButton.getAttribute('data-metric');
                     if (nextMetric && METRIC_MAP[nextMetric]) {
                         state.activeMetric = nextMetric;
-                        void A.renderExerciseStatsEmbedded(exerciseId, { container });
+                        const targetExerciseId = container.dataset.statsExerciseId || exerciseId;
+                        void A.renderExerciseStatsEmbedded(targetExerciseId, { container });
                     }
                     return;
                 }
@@ -486,7 +490,8 @@
                 const nextRange = rangeButton.getAttribute('data-range');
                 if (nextRange && RANGE_MAP[nextRange]) {
                     state.activeRange = nextRange;
-                    void A.renderExerciseStatsEmbedded(exerciseId, { container });
+                    const targetExerciseId = container.dataset.statsExerciseId || exerciseId;
+                    void A.renderExerciseStatsEmbedded(targetExerciseId, { container });
                 }
             });
             container.dataset.statsEmbeddedWired = 'true';
