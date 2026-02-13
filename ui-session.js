@@ -1034,25 +1034,80 @@
     };
 
     async function resolveRoutineAddMode() {
-        const message = [
-            "Choisir le mode d'ajout :",
-            '• Template : reprend les séries telles que définies.',
-            '• RPE/1RM : calcule les poids à partir du template.'
-        ].join('\n');
-        if (A.components?.confirmDialog?.confirm) {
-            const useRpe = await A.components.confirmDialog.confirm({
-                title: 'Ajouter une routine',
-                message,
-                confirmLabel: 'Calculer les poids',
-                cancelLabel: 'Utiliser le template'
-            });
-            return useRpe ? 'rpe' : 'template';
+        const {
+            dlgRoutineAddMode,
+            routineAddModeTemplate,
+            routineAddModeRpe,
+            routineAddModeCancel,
+            routineAddModeConfirm
+        } = ensureRefs();
+        if (!dlgRoutineAddMode || !routineAddModeTemplate || !routineAddModeRpe) {
+            return null;
         }
-        const useRpe = window.confirm(
-            `${message}\n\nOK = Calculer les poids\nAnnuler = Utiliser le template`
-        );
-        return useRpe ? 'rpe' : 'template';
+        routineAddModeTemplate.checked = true;
+        routineAddModeRpe.checked = false;
+
+        const setMode = (mode) => {
+            const isRpe = mode === 'rpe';
+            routineAddModeTemplate.checked = !isRpe;
+            routineAddModeRpe.checked = isRpe;
+        };
+
+        return await new Promise((resolve) => {
+            const closeWith = (result) => {
+                cleanup();
+                if (A.closeDialog) {
+                    A.closeDialog(dlgRoutineAddMode);
+                } else {
+                    dlgRoutineAddMode.close();
+                }
+                resolve(result);
+            };
+            const onTemplateChange = () => {
+                if (routineAddModeTemplate.checked) {
+                    setMode('template');
+                } else if (!routineAddModeRpe.checked) {
+                    routineAddModeTemplate.checked = true;
+                }
+            };
+            const onRpeChange = () => {
+                if (routineAddModeRpe.checked) {
+                    setMode('rpe');
+                } else if (!routineAddModeTemplate.checked) {
+                    routineAddModeRpe.checked = true;
+                }
+            };
+            const onCancel = () => closeWith(null);
+            const onConfirm = () => closeWith(routineAddModeRpe.checked ? 'rpe' : 'template');
+            const onBackdropClick = (event) => {
+                if (event.target === dlgRoutineAddMode) {
+                    closeWith(null);
+                }
+            };
+            const onCancelEvent = (event) => {
+                event.preventDefault();
+                closeWith(null);
+            };
+            const cleanup = () => {
+                routineAddModeTemplate.removeEventListener('change', onTemplateChange);
+                routineAddModeRpe.removeEventListener('change', onRpeChange);
+                routineAddModeCancel?.removeEventListener('click', onCancel);
+                routineAddModeConfirm?.removeEventListener('click', onConfirm);
+                dlgRoutineAddMode.removeEventListener('click', onBackdropClick);
+                dlgRoutineAddMode.removeEventListener('cancel', onCancelEvent);
+            };
+
+            routineAddModeTemplate.addEventListener('change', onTemplateChange);
+            routineAddModeRpe.addEventListener('change', onRpeChange);
+            routineAddModeCancel?.addEventListener('click', onCancel);
+            routineAddModeConfirm?.addEventListener('click', onConfirm);
+            dlgRoutineAddMode.addEventListener('click', onBackdropClick);
+            dlgRoutineAddMode.addEventListener('cancel', onCancelEvent);
+
+            dlgRoutineAddMode.showModal();
+        });
     }
+    A.resolveRoutineAddMode = resolveRoutineAddMode;
 
     async function resolveExerciseOrmMean(exerciseId, dateKey, sessionDates, cache) {
         if (!exerciseId || !dateKey) {
@@ -1431,6 +1486,11 @@
         refs.sessionCommentInput = document.getElementById('sessionCommentInput');
         refs.sessionCommentClose = document.getElementById('sessionCommentClose');
         refs.sessionCommentCancel = document.getElementById('sessionCommentCancel');
+        refs.dlgRoutineAddMode = document.getElementById('dlgRoutineAddMode');
+        refs.routineAddModeTemplate = document.getElementById('routineAddModeTemplate');
+        refs.routineAddModeRpe = document.getElementById('routineAddModeRpe');
+        refs.routineAddModeCancel = document.getElementById('routineAddModeCancel');
+        refs.routineAddModeConfirm = document.getElementById('routineAddModeConfirm');
         refsResolved = true;
         return refs;
     }
