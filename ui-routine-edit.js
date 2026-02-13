@@ -113,6 +113,7 @@
         refs.routineEditMenu = document.getElementById('routineEditMenu');
         refs.dlgRoutineMoveEditor = document.getElementById('dlgRoutineMoveEditor');
         refs.dlgRoutineActions = document.getElementById('dlgRoutineActions');
+        refs.routineUseAction = document.getElementById('routineUseAction');
         refs.routineShare = document.getElementById('routineShare');
         refs.routineDuplicateAction = document.getElementById('routineDuplicateAction');
         refs.routineDeleteAction = document.getElementById('routineDeleteAction');
@@ -448,6 +449,7 @@
         const {
             routineEditMenu,
             dlgRoutineActions,
+            routineUseAction,
             routineShare,
             routineDuplicateAction,
             routineDeleteAction
@@ -474,6 +476,10 @@
         routineShare?.addEventListener('click', () => {
             closeRoutineActions();
             void shareRoutine();
+        });
+        routineUseAction?.addEventListener('click', () => {
+            closeRoutineActions();
+            void useRoutine();
         });
         routineDuplicateAction?.addEventListener('click', () => {
             closeRoutineActions();
@@ -514,6 +520,22 @@
             await A.populateRoutineSelect();
         }
         void A.openRoutineList({ callerScreen: state.callerScreen });
+    }
+
+    async function useRoutine() {
+        if (!state.routine?.id) {
+            return;
+        }
+        const mode = await A.resolveRoutineAddMode?.();
+        if (!mode) {
+            return;
+        }
+        if (typeof A.openSessionForDate === 'function') {
+            await A.openSessionForDate(A.activeDate || new Date());
+        } else {
+            switchScreen('screenSessions');
+        }
+        await A.addRoutineToSession?.([state.routine.id], { mode });
     }
 
     async function duplicateRoutine() {
