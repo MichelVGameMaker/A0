@@ -303,7 +303,9 @@
             }
             const dateObj = parseDate(date);
             executed.forEach((item) => {
-                const sets = Array.isArray(item?.sets) ? item.sets : [];
+                const sets = (Array.isArray(item?.sets) ? item.sets : []).filter(
+                    (set) => set?.done === true
+                );
                 if (!sets.length) {
                     return;
                 }
