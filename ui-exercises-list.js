@@ -120,7 +120,13 @@
      * @returns {Promise<void>} Promesse résolue après rendu.
      */
     A.openExercises = async function openExercises(options = {}) {
-        const { mode = 'view', callerScreen = 'screenExercises', onAdd = null, selectionLimit = null } = options;
+        const {
+            mode = 'view',
+            callerScreen = 'screenExercises',
+            onAdd = null,
+            selectionLimit = null,
+            presetGroupFilter = null
+        } = options;
         ensureRefs();
         assertRefs();
 
@@ -163,6 +169,10 @@
         if (!preserveContext) {
             clearFilterState();
             state.selection.clear();
+        }
+
+        if (typeof presetGroupFilter === 'string' && presetGroupFilter.trim()) {
+            state.filters.group = presetGroupFilter.trim();
         }
 
         switchScreen('screenExercises');

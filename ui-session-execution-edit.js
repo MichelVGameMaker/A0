@@ -1974,23 +1974,17 @@
             sessionDates,
             new Map()
         );
-        if (!Number.isFinite(ormMean)) {
-            return;
-        }
-        let changed = false;
-        exercise.sets = exercise.sets.map((set) => {
-            if (set?.done) {
-                return set;
-            }
-            const nextWeight = resolveRoutineSetWeightForSessionEdit(ormMean, set);
-            if (!Number.isFinite(nextWeight) || set?.weight === nextWeight) {
-                return set;
-            }
-            changed = true;
-            return { ...set, weight: nextWeight };
-        });
-        if (!changed) {
-            return;
+        if (Number.isFinite(ormMean)) {
+            exercise.sets = exercise.sets.map((set) => {
+                if (set?.done) {
+                    return set;
+                }
+                const nextWeight = resolveRoutineSetWeightForSessionEdit(ormMean, set);
+                if (!Number.isFinite(nextWeight)) {
+                    return set;
+                }
+                return { ...set, weight: nextWeight };
+            });
         }
         await persistSession(false);
         if (A.closeDialog) {
@@ -1998,6 +1992,7 @@
         } else {
             refs.dlgExecMoveEditor?.close();
         }
+        await refreshSessionViews();
         await renderSets();
     }
 
@@ -2178,10 +2173,17 @@
         } else {
             refs.dlgExecMoveEditor?.close();
         }
+        const defaultMuscleGroup = (
+            exercise.muscleGroup2
+            || exercise.muscle
+            || exercise.muscleGroup3
+            || ''
+        ).toString().trim();
         A.openExercises({
             mode: 'add',
             callerScreen: state.replaceCallerScreen || 'screenExecEdit',
             selectionLimit: 1,
+            presetGroupFilter: defaultMuscleGroup,
             onAdd: (ids) => {
                 const [nextId] = ids;
                 if (nextId) {
