@@ -1963,15 +1963,6 @@
 
 
     async function prefillExercisePendingSets() {
-        if (A.closeDialog) {
-            A.closeDialog(refs.dlgExecMoveEditor);
-        } else {
-            refs.dlgExecMoveEditor?.close();
-        }
-        const shouldPrefill = await confirmPrefillMode();
-        if (!shouldPrefill) {
-            return;
-        }
         const exercise = getExercise();
         if (!exercise || !Array.isArray(exercise.sets) || !state.dateKey) {
             return;
@@ -1984,7 +1975,6 @@
             new Map()
         );
         if (!Number.isFinite(ormMean)) {
-            await notifyPrefillResult("Aucune base de calcul disponible pour préremplir les poids.");
             return;
         }
         let changed = false;
@@ -2000,41 +1990,15 @@
             return { ...set, weight: nextWeight };
         });
         if (!changed) {
-            await notifyPrefillResult("Aucun poids à mettre à jour sur les séries non faites.");
             return;
         }
         await persistSession(false);
+        if (A.closeDialog) {
+            A.closeDialog(refs.dlgExecMoveEditor);
+        } else {
+            refs.dlgExecMoveEditor?.close();
+        }
         await renderSets();
-    }
-
-    async function confirmPrefillMode() {
-        const message = [
-            'Préremplir les séries non faites avec le calcul RPE/1RM ?',
-            'Le calcul utilise le même précalcul que lors de l\'import de routine.'
-        ].join('\n');
-        if (A.components?.confirmDialog?.confirm) {
-            return A.components.confirmDialog.confirm({
-                title: 'Préremplir les poids',
-                message,
-                confirmLabel: 'Calculer les poids',
-                cancelLabel: 'Annuler'
-            });
-        }
-        return window.confirm(`${message}\n\nOK = Calculer les poids\nAnnuler = Annuler`);
-    }
-
-    async function notifyPrefillResult(message) {
-        if (!message) {
-            return;
-        }
-        if (A.components?.confirmDialog?.alert) {
-            await A.components.confirmDialog.alert({
-                title: 'Préremplissage',
-                message
-            });
-            return;
-        }
-        window.alert(message);
     }
 
     async function resolveExerciseOrmMeanForSessionEdit(exerciseId, dateKey, sessionDates, cache) {

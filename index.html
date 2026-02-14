@@ -1300,6 +1300,7 @@
 <!-- ========== Routine : actions ========== -->
 <dialog id="dlgRoutineActions" class="modal modal-context">
     <form method="dialog" class="modal-context-form">
+        <button id="routineUseAction" class="modal-context-action" type="button">utiliser</button>
         <button id="routineShare" class="modal-context-action" type="button">partager</button>
         <button id="routineDuplicateAction" class="modal-context-action" type="button">dupliquer</button>
         <button id="routineDeleteAction" class="modal-context-action is-danger" type="button">supprimer</button>
@@ -1386,6 +1387,33 @@
             <div class="modal-actions" data-role="confirm-actions">
                 <button class="btn danger" type="button" data-action="cancel">annuler</button>
                 <button class="btn cta" type="button" data-action="confirm">confirmer</button>
+            </div>
+        </div>
+    </form>
+</dialog>
+<!-- ==================== -->
+
+<dialog id="dlgRoutineAddMode" class="modal modal-fixed modal-centered modal-top">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Ajouter une routine</div>
+        </div>
+        <div class="modal-body">
+            <div class="bloque vstack routine-add-mode-options">
+                <label class="hstack routine-add-mode-option" for="routineAddModeTemplate">
+                    <input id="routineAddModeTemplate" class="app-check" type="checkbox" />
+                    <span>Template : reprend les séries telles que définies.</span>
+                </label>
+                <label class="hstack routine-add-mode-option" for="routineAddModeRpe">
+                    <input id="routineAddModeRpe" class="app-check" type="checkbox" />
+                    <span>RPE/1RM : calcule les poids à partir du template.</span>
+                </label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <div class="modal-actions">
+                <button id="routineAddModeCancel" class="btn danger" type="button">Annuler</button>
+                <button id="routineAddModeConfirm" class="btn cta" type="button">Ajouter</button>
             </div>
         </div>
     </form>

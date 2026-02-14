@@ -529,10 +529,14 @@
                 }
                 return {
                     session,
-                    sets: match.sets.filter((set) => set && (set.reps || set.weight || set.rpe || set.rest))
+                    sets: match.sets.filter(
+                        (set) =>
+                            set?.done === true &&
+                            (set.reps || set.weight || set.rpe || set.rest)
+                    )
                 };
             })
-            .filter(Boolean);
+            .filter((item) => item && item.sets.length > 0);
 
         items.sort((a, b) => {
             const timeA = new Date(a.session?.date || a.session?.id || 0).getTime();
