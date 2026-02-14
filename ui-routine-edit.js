@@ -526,8 +526,8 @@
         if (!state.routine?.id) {
             return;
         }
-        const mode = await A.resolveRoutineAddMode?.();
-        if (!mode) {
+        const options = await A.resolveRoutineAddMode?.();
+        if (!options) {
             return;
         }
         if (typeof A.openSessionForDate === 'function') {
@@ -535,7 +535,7 @@
         } else {
             switchScreen('screenSessions');
         }
-        await A.addRoutineToSession?.([state.routine.id], { mode });
+        await A.addRoutineToSession?.([state.routine.id], options);
     }
 
     async function duplicateRoutine() {

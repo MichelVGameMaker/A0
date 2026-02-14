@@ -27,6 +27,14 @@
         targetExerciseId: null
     };
     let activeContextCard = null;
+    const ROUTINE_ADD_MODIFIER_OPTIONS = [
+        { value: 'reps', label: 'Reps', type: 'percent' },
+        { value: 'weight', label: 'Poids', type: 'percent' },
+        { value: 'rpe', label: 'RPE', type: 'absolute' },
+        { value: 'sets', label: 'Séries', type: 'absolute' }
+    ];
+    const ROUTINE_ADD_PERCENT_VALUES = [-10, -5, -2.5, 0, 2.5, 5, 10];
+    const ROUTINE_ADD_ABSOLUTE_VALUES = [-3, -2, -1, 0, 1, 2, 3];
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
@@ -973,6 +981,7 @@
         }
 
         const mode = options.mode === 'rpe' ? 'rpe' : 'template';
+        const modifiers = normalizeRoutineAddModifiers(options?.modifiers);
         const dateKey = A.ymd(A.activeDate);
         const session = (await db.getSession(dateKey)) || createSession(A.activeDate);
         const existingIds = new Set((session.exercises || []).map((exercise) => exercise.exercise_id));
@@ -1008,14 +1017,17 @@
                     routineId: routine.id,
                     routineName: routine.name || 'Routine',
                     sort: session.exercises.length + 1,
-                    sets: move.sets.map((set) => ({
-                        pos: set.pos,
-                        reps: set.reps ?? null,
-                        weight: mode === 'rpe' ? resolveRoutineSetWeight(ormMean, set) : null,
-                        rpe: set.rpe ?? null,
-                        rest: set.rest ?? null,
-                        done: false
-                    }))
+                    sets: applyRoutineAddModifiers(
+                        move.sets.map((set) => ({
+                            pos: set.pos,
+                            reps: set.reps ?? null,
+                            weight: mode === 'rpe' ? resolveRoutineSetWeight(ormMean, set) : null,
+                            rpe: set.rpe ?? null,
+                            rest: set.rest ?? null,
+                            done: false
+                        })),
+                        modifiers
+                    )
                 });
                 if (!firstAddedId) {
                     firstAddedId = created.id;
@@ -1039,13 +1051,22 @@
             routineAddModeTemplate,
             routineAddModeRpe,
             routineAddModeCancel,
-            routineAddModeConfirm
+            routineAddModeConfirm,
+            routineAddModeModifiers
         } = ensureRefs();
         if (!dlgRoutineAddMode || !routineAddModeTemplate || !routineAddModeRpe) {
             return null;
         }
         routineAddModeTemplate.checked = true;
         routineAddModeRpe.checked = false;
+
+        const modifierState = {
+            reps: 0,
+            weight: 0,
+            rpe: 0,
+            sets: 0
+        };
+        renderRoutineAddModeModifierControls(routineAddModeModifiers, modifierState);
 
         const setMode = (mode) => {
             const isRpe = mode === 'rpe';
@@ -1078,7 +1099,10 @@
                 }
             };
             const onCancel = () => closeWith(null);
-            const onConfirm = () => closeWith(routineAddModeRpe.checked ? 'rpe' : 'template');
+            const onConfirm = () => closeWith({
+                mode: routineAddModeRpe.checked ? 'rpe' : 'template',
+                modifiers: normalizeRoutineAddModifiers(modifierState)
+            });
             const onBackdropClick = (event) => {
                 if (event.target === dlgRoutineAddMode) {
                     closeWith(null);
@@ -1108,6 +1132,169 @@
         });
     }
     A.resolveRoutineAddMode = resolveRoutineAddMode;
+
+    function renderRoutineAddModeModifierControls(container, stateMap) {
+        if (!container) {
+            return;
+        }
+        container.innerHTML = '';
+        ROUTINE_ADD_MODIFIER_OPTIONS.forEach((option) => {
+            container.appendChild(
+                createRoutineAddModeMetricControl({
+                    label: option.label,
+                    metric: option.value,
+                    type: option.type,
+                    value: stateMap[option.value] ?? 0,
+                    onSelect: (nextValue) => {
+                        stateMap[option.value] = normalizeRoutineAddModifierValue(option.value, nextValue);
+                    }
+                })
+            );
+        });
+    }
+
+    function createRoutineAddModeMetricControl({ label, metric, type, value, onSelect }) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'metric-control';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn small metric-control-button';
+
+        const updateButtonText = (nextValue) => {
+            button.textContent = `${label} ${formatRoutineAddModifierDisplay(metric, nextValue)}`;
+        };
+        updateButtonText(value);
+
+        const menu = document.createElement('div');
+        menu.className = 'metric-control-menu';
+
+        const options = type === 'percent' ? ROUTINE_ADD_PERCENT_VALUES : ROUTINE_ADD_ABSOLUTE_VALUES;
+        options.forEach((optionValue) => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = 'metric-control-option';
+            option.textContent = formatRoutineAddModifierDisplay(metric, optionValue);
+            option.addEventListener('click', () => {
+                menu.classList.remove('is-open');
+                const normalized = normalizeRoutineAddModifierValue(metric, optionValue);
+                updateButtonText(normalized);
+                if (typeof onSelect === 'function') {
+                    onSelect(normalized);
+                }
+            });
+            menu.appendChild(option);
+        });
+
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const shouldOpen = !menu.classList.contains('is-open');
+            wrapper.parentElement?.querySelectorAll('.metric-control-menu').forEach((item) => {
+                item.classList.remove('is-open');
+            });
+            if (shouldOpen) {
+                menu.classList.add('is-open');
+            }
+        });
+
+        wrapper.append(button, menu);
+        return wrapper;
+    }
+
+    function formatRoutineAddModifierDisplay(metric, value) {
+        const numeric = Number(value);
+        const safeValue = Number.isFinite(numeric) ? numeric : 0;
+        if (metric === 'reps' || metric === 'weight') {
+            if (safeValue === 0) {
+                return '0%';
+            }
+            return `${safeValue > 0 ? '+' : ''}${safeValue}%`;
+        }
+        if (safeValue === 0) {
+            return '0';
+        }
+        return `${safeValue > 0 ? '+' : ''}${safeValue}`;
+    }
+
+    function normalizeRoutineAddModifierValue(metric, value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return 0;
+        }
+        if (metric === 'reps' || metric === 'weight') {
+            return Math.round(numeric * 10) / 10;
+        }
+        return Math.round(numeric);
+    }
+
+    function normalizeRoutineAddModifiers(modifiers) {
+        const source = modifiers && typeof modifiers === 'object' ? modifiers : {};
+        return {
+            reps: normalizeRoutineAddModifierValue('reps', source.reps),
+            weight: normalizeRoutineAddModifierValue('weight', source.weight),
+            rpe: normalizeRoutineAddModifierValue('rpe', source.rpe),
+            sets: normalizeRoutineAddModifierValue('sets', source.sets)
+        };
+    }
+
+    function applyRoutineAddModifiers(sets, modifiers) {
+        const sourceSets = Array.isArray(sets) ? sets : [];
+        const normalized = normalizeRoutineAddModifiers(modifiers);
+        const baseSets = sourceSets.map((set, index) => ({
+            ...set,
+            pos: index + 1
+        }));
+
+        let nextSets = baseSets;
+        if (normalized.sets < 0) {
+            const removeCount = Math.min(baseSets.length, Math.abs(normalized.sets));
+            nextSets = baseSets.slice(0, Math.max(0, baseSets.length - removeCount));
+        } else if (normalized.sets > 0) {
+            nextSets = baseSets.slice();
+            const fallback = baseSets.length ? baseSets[baseSets.length - 1] : {
+                reps: null,
+                weight: null,
+                rpe: null,
+                rest: null,
+                done: false
+            };
+            for (let index = 0; index < normalized.sets; index += 1) {
+                const source = nextSets.length ? nextSets[nextSets.length - 1] : fallback;
+                nextSets.push({ ...source });
+            }
+        }
+
+        return nextSets.map((set, index) => {
+            const nextSet = {
+                ...set,
+                pos: index + 1
+            };
+
+            const baseRpe = Number(nextSet.rpe);
+            if (Number.isFinite(baseRpe)) {
+                const adjustedRpe = baseRpe + normalized.rpe;
+                nextSet.rpe = Math.min(10, Math.max(5, adjustedRpe));
+            }
+
+            if (normalized.reps !== 0) {
+                const baseReps = Number(nextSet.reps);
+                if (Number.isFinite(baseReps)) {
+                    const adjustedReps = baseReps * (1 + (normalized.reps / 100));
+                    nextSet.reps = Math.max(0, Math.round(adjustedReps * 10) / 10);
+                }
+            }
+
+            if (normalized.weight !== 0) {
+                const baseWeight = Number(nextSet.weight);
+                if (Number.isFinite(baseWeight)) {
+                    const adjustedWeight = baseWeight * (1 + (normalized.weight / 100));
+                    nextSet.weight = Math.max(0, Math.round(adjustedWeight * 10) / 10);
+                }
+            }
+
+            return nextSet;
+        });
+    }
 
     async function resolveExerciseOrmMean(exerciseId, dateKey, sessionDates, cache) {
         if (!exerciseId || !dateKey) {
@@ -1491,6 +1678,7 @@
         refs.routineAddModeRpe = document.getElementById('routineAddModeRpe');
         refs.routineAddModeCancel = document.getElementById('routineAddModeCancel');
         refs.routineAddModeConfirm = document.getElementById('routineAddModeConfirm');
+        refs.routineAddModeModifiers = document.getElementById('routineAddModeModifiers');
         refsResolved = true;
         return refs;
     }
@@ -1621,11 +1809,11 @@
                 callerScreen: 'screenSessions',
                 preselectedIds,
                 onAdd: async (ids) => {
-                    const mode = await resolveRoutineAddMode();
-                    if (!mode) {
+                    const options = await resolveRoutineAddMode();
+                    if (!options) {
                         return;
                     }
-                    await A.addRoutineToSession(ids, { mode });
+                    await A.addRoutineToSession(ids, options);
                 }
             });
         });

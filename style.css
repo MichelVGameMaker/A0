@@ -1103,7 +1103,8 @@ textarea:focus{
     display:grid;
     grid-template-columns:repeat(4, minmax(0, 1fr));
     gap:8px;
-    margin-top:8px;
+    margin-top:4px;
+    align-items:start;
 }
 .metric-control{
     position:relative;
@@ -1111,6 +1112,7 @@ textarea:focus{
 .metric-control-button{
     width:100%;
     justify-content:space-between;
+    min-height:40px;
 }
 .metric-control-menu{
     position:absolute;
@@ -1351,7 +1353,7 @@ textarea:focus{
 }
 .progression-card__meta{
     display:flex;
-    align-items:center;
+    align-items:flex-start;
     gap:12px;
     flex-wrap:wrap;
 }
@@ -1982,6 +1984,10 @@ textarea:focus{
 .routine-add-mode-option{
   gap:10px;
   align-items:flex-start;
+}
+
+.routine-add-mode-modifiers{
+  margin-top:2px;
 }
 .exercise-selection-bar.hidden{ display:none; }
 .exercise-list-section{
