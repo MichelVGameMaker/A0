@@ -244,6 +244,7 @@
         refs.execMoveAnnotate = document.getElementById('execMoveAnnotate');
         refs.execMoveDuplicate = document.getElementById('execMoveDuplicate');
         refs.execReplaceExercise = document.getElementById('execReplaceExercise');
+        refs.execMovePrefill = document.getElementById('execMovePrefill');
         refs.execMetaToggle = document.getElementById('execMetaToggle');
         refs.btnExecDetails = document.getElementById('btnExecDetails');
         refs.execDetailsPreview = document.getElementById('execDetailsPreview');
@@ -294,6 +295,7 @@
             'execMoveAnnotate',
             'execMoveDuplicate',
             'execReplaceExercise',
+            'execMovePrefill',
             'execMetaToggle',
             'dlgExecDetails',
             'execDetailsInput',
@@ -334,7 +336,8 @@
             execMoveUp,
             execMoveDown,
             execMoveAnnotate,
-            execMoveDuplicate
+            execMoveDuplicate,
+            execMovePrefill
         } = assertRefs();
         execAddSet.addEventListener('click', () => {
             void addSet();
@@ -362,6 +365,9 @@
         });
         execMoveDuplicate.addEventListener('click', () => {
             void duplicateExerciseInSession();
+        });
+        execMovePrefill.addEventListener('click', () => {
+            void prefillExercisePendingSets();
         });
         execMetaToggle.addEventListener('click', () => {
             const nextMode = getNextMetaMode();
@@ -1953,6 +1959,177 @@
         }
         updateMoveOrderControls();
         A.ensureSessionCardInView?.(state.exerciseId);
+    }
+
+
+    async function prefillExercisePendingSets() {
+        if (A.closeDialog) {
+            A.closeDialog(refs.dlgExecMoveEditor);
+        } else {
+            refs.dlgExecMoveEditor?.close();
+        }
+        const shouldPrefill = await confirmPrefillMode();
+        if (!shouldPrefill) {
+            return;
+        }
+        const exercise = getExercise();
+        if (!exercise || !Array.isArray(exercise.sets) || !state.dateKey) {
+            return;
+        }
+        const sessionDates = await db.listSessionDates();
+        const ormMean = await resolveExerciseOrmMeanForSessionEdit(
+            exercise.exercise_id,
+            state.dateKey,
+            sessionDates,
+            new Map()
+        );
+        if (!Number.isFinite(ormMean)) {
+            await notifyPrefillResult("Aucune base de calcul disponible pour préremplir les poids.");
+            return;
+        }
+        let changed = false;
+        exercise.sets = exercise.sets.map((set) => {
+            if (set?.done) {
+                return set;
+            }
+            const nextWeight = resolveRoutineSetWeightForSessionEdit(ormMean, set);
+            if (!Number.isFinite(nextWeight) || set?.weight === nextWeight) {
+                return set;
+            }
+            changed = true;
+            return { ...set, weight: nextWeight };
+        });
+        if (!changed) {
+            await notifyPrefillResult("Aucun poids à mettre à jour sur les séries non faites.");
+            return;
+        }
+        await persistSession(false);
+        await renderSets();
+    }
+
+    async function confirmPrefillMode() {
+        const message = [
+            'Préremplir les séries non faites avec le calcul RPE/1RM ?',
+            'Le calcul utilise le même précalcul que lors de l\'import de routine.'
+        ].join('\n');
+        if (A.components?.confirmDialog?.confirm) {
+            return A.components.confirmDialog.confirm({
+                title: 'Préremplir les poids',
+                message,
+                confirmLabel: 'Calculer les poids',
+                cancelLabel: 'Annuler'
+            });
+        }
+        return window.confirm(`${message}\n\nOK = Calculer les poids\nAnnuler = Annuler`);
+    }
+
+    async function notifyPrefillResult(message) {
+        if (!message) {
+            return;
+        }
+        if (A.components?.confirmDialog?.alert) {
+            await A.components.confirmDialog.alert({
+                title: 'Préremplissage',
+                message
+            });
+            return;
+        }
+        window.alert(message);
+    }
+
+    async function resolveExerciseOrmMeanForSessionEdit(exerciseId, dateKey, sessionDates, cache) {
+        if (!exerciseId || !dateKey) {
+            return null;
+        }
+        if (cache?.has(exerciseId)) {
+            return cache.get(exerciseId);
+        }
+        const baseDate = new Date(dateKey);
+        const thresholdKey = Number.isNaN(baseDate.getTime())
+            ? null
+            : A.ymd(A.addDays(baseDate, -35));
+        const dates = (Array.isArray(sessionDates) ? sessionDates : [])
+            .map((entry) => entry.date)
+            .filter((date) => date && date < dateKey)
+            .sort((a, b) => b.localeCompare(a));
+        let bestRecent = null;
+        let lastMean = null;
+        for (const date of dates) {
+            const session = await db.getSession(date);
+            const previousExercise = Array.isArray(session?.exercises)
+                ? session.exercises.find((item) => item.exercise_id === exerciseId)
+                : null;
+            if (!previousExercise?.sets?.length) {
+                continue;
+            }
+            const mean = computeSessionOrmMeanForSessionEdit(previousExercise.sets);
+            if (mean == null) {
+                continue;
+            }
+            if (lastMean == null) {
+                lastMean = mean;
+            }
+            if (thresholdKey && date >= thresholdKey) {
+                bestRecent = bestRecent == null ? mean : Math.max(bestRecent, mean);
+            }
+        }
+        const resolved = bestRecent ?? lastMean ?? null;
+        cache?.set(exerciseId, resolved);
+        return resolved;
+    }
+
+    function computeSessionOrmMeanForSessionEdit(sets) {
+        const values = (Array.isArray(sets) ? sets : [])
+            .filter((set) => isSetEligibleForOrmMeanForSessionEdit(set))
+            .map((set) => resolveSetOrmValueForSessionEdit(set))
+            .filter((value) => Number.isFinite(value));
+        if (!values.length) {
+            return null;
+        }
+        const total = values.reduce((sum, value) => sum + value, 0);
+        return total / values.length;
+    }
+
+    function isSetEligibleForOrmMeanForSessionEdit(set) {
+        const rpe = Number(set?.rpe);
+        return Number.isFinite(rpe) && rpe >= 7;
+    }
+
+    function resolveSetOrmValueForSessionEdit(set) {
+        const ormRpe = Number.isFinite(set?.ormRpe) ? set.ormRpe : null;
+        if (ormRpe != null) {
+            return ormRpe;
+        }
+        const orm = Number.isFinite(set?.orm) ? set.orm : null;
+        if (orm != null) {
+            return orm;
+        }
+        const weight = Number(set?.weight);
+        const reps = Number(set?.reps);
+        if (!Number.isFinite(weight) || !Number.isFinite(reps) || reps <= 0) {
+            return null;
+        }
+        if (Number.isFinite(Number(set?.rpe))) {
+            return A.calculateOrmWithRpe?.(weight, reps, set?.rpe) ?? null;
+        }
+        return A.calculateOrm?.(weight, reps) ?? null;
+    }
+
+    function resolveRoutineSetWeightForSessionEdit(ormMean, set) {
+        const baseOrm = Number(ormMean);
+        const reps = Number(set?.reps);
+        const rpe = Number(set?.rpe);
+        if (!Number.isFinite(baseOrm) || !Number.isFinite(reps) || reps <= 0 || !Number.isFinite(rpe)) {
+            return null;
+        }
+        const normalizedRpe = Math.min(9.5, Math.max(0, rpe));
+        const repsInReserve = Math.max(0, 9.5 - normalizedRpe);
+        const totalReps = reps + repsInReserve;
+        const weight = baseOrm / (1 + totalReps / 30);
+        if (!Number.isFinite(weight) || weight <= 0) {
+            return null;
+        }
+        return Math.round(weight * 2) / 2;
     }
 
     async function removeExercise() {
