@@ -930,7 +930,7 @@ textarea:focus{
 }
 
 .tag.selected{
-    background: var(--selectedBack);
+    background:   var(--selectedBack);
     border-color: var(--selectedBord);
 }
 
@@ -2069,24 +2069,24 @@ textarea:focus{
         padding:       var(--pad-tight);
         border-radius: var(--radius);
         /* Cliquable */
-        border: 1px solid var(--clickableBord);
-        background: var(--clickableBack); 
-        color: var(--black);
-        cursor: pointer;
+        border:       1px solid var(--clickableBord);
+        background:   var(--clickableBack); 
+        color:        var(--black);
+        cursor:       pointer;
         touch-action: manipulation;       /* coupe le geste double-tap=zoom */    
         /* Contenu */
         text-align:center;
     }
     .day-cell.placeholder{
-        background:   transparent;
-        border-color: transparent;
-        cursor:       default;
+        background:     transparent;
+        border-color:   transparent;
+        cursor:         default;
         pointer-events: none;
     }
     
 /* ========= Etats ========= */
     .day-cell.planned{
-        background:   var(--selectedBack);
+        background:   var(--clickableBack);
         color:        var(--selectedColor);
         border-color: var(--selectedBord);
     }
@@ -2096,10 +2096,10 @@ textarea:focus{
         border-color: var(--selectedBord);
     }
     .day-cell.selected{
-        /* Focusé */
         background:   var(--focusedBack);
         font-weight:  var(--fw-strong);
         color:        var(--emphase);
+        border-color: var(--selectedBord);
     }
 
 /* =========================================================
