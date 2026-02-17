@@ -351,6 +351,7 @@
         const LONG_PRESS_DELAY = 450;
         let pressTimer = null;
         let longPressFired = false;
+        let suppressClickUntil = 0;
         let startX = 0;
         let startY = 0;
         const clearPress = () => {
@@ -360,7 +361,7 @@
             }
         };
         const shouldIgnoreDown = (event) =>
-            Boolean(event.target.closest('button, a, input, textarea, select, .exercise-card-name'));
+            Boolean(event.target.closest('.exercise-card-menu-button, .session-card-add-set, a, input, textarea, select'));
         const shouldIgnoreShortPress = (event) =>
             Boolean(
                 event.target.closest(
@@ -383,6 +384,7 @@
             if (!exerciseId) {
                 return;
             }
+            suppressClickUntil = Date.now() + 800;
             setSessionScrollTarget(exerciseId);
             setActiveContextCard(card);
             void A.openExecMoveMeta?.({
@@ -432,12 +434,20 @@
         const onPointerCancel = () => {
             clearPress();
         };
+        const onClickCapture = (event) => {
+            if (Date.now() > suppressClickUntil) {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+        };
 
         card.addEventListener('pointerdown', onPointerDown);
         card.addEventListener('pointermove', onPointerMove);
         card.addEventListener('pointerup', onPointerUp);
         card.addEventListener('pointercancel', onPointerCancel);
         card.addEventListener('pointerleave', onPointerCancel);
+        card.addEventListener('click', onClickCapture, true);
     }
 
     function setSessionScrollTarget(exerciseId) {
