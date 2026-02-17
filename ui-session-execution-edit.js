@@ -781,30 +781,6 @@
         }
     }
 
-    function adjustExecScrollForKeyboard() {
-        const { execAddSet, screenExecEdit } = assertRefs();
-        const keyboard = document.querySelector('.inline-keyboard');
-        const content = screenExecEdit?.querySelector?.('.content');
-        if (!execAddSet || !keyboard || !content || keyboard.hidden) {
-            return;
-        }
-        const keyboardRect = keyboard.getBoundingClientRect();
-        if (!keyboardRect.height) {
-            return;
-        }
-        const gap = 8;
-        const desiredBottom = window.innerHeight - keyboardRect.height - gap;
-        const addRect = execAddSet.getBoundingClientRect();
-        if (addRect.bottom <= desiredBottom) {
-            return;
-        }
-        const delta = addRect.bottom - desiredBottom;
-        content.scrollTo({
-            top: content.scrollTop + delta,
-            behavior: 'smooth'
-        });
-    }
-
     async function refreshSetMetaFrom(startIndex = 0, metaOverride = null) {
         const exercise = getExercise();
         if (!exercise) {
@@ -1323,9 +1299,6 @@
             input.addEventListener('click', () => {
                 openEditor(field);
                 attachInlineKeyboard(input, field);
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(adjustExecScrollForKeyboard);
-                });
             });
             return input;
         };
@@ -1358,9 +1331,6 @@
                 return;
             }
             attachInlineKeyboard(target, field);
-            requestAnimationFrame(() => {
-                requestAnimationFrame(adjustExecScrollForKeyboard);
-            });
         };
 
         const metaCell = buildMetaCell(set, index, meta);
