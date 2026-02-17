@@ -1740,7 +1740,7 @@
             weight: preferredValues?.weight ?? null,
             rpe: preferredValues?.rpe ?? null,
             rest: restForNewSet,
-            done: true,
+            done: false,
             date: now,
             time: previous?.time ?? null,
             distance: previous?.distance ?? null,
