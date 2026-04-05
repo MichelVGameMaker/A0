@@ -2143,10 +2143,14 @@
         } else {
             refs.dlgExecMoveEditor?.close();
         }
+        const sourceExercise = exercise.exercise_id ? await db.get('exercises', exercise.exercise_id) : null;
         const defaultMuscleGroup = (
             exercise.muscleGroup2
             || exercise.muscle
             || exercise.muscleGroup3
+            || sourceExercise?.muscleGroup2
+            || sourceExercise?.muscle
+            || sourceExercise?.muscleGroup3
             || ''
         ).toString().trim();
         A.openExercises({
