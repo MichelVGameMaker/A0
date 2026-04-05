@@ -1454,6 +1454,21 @@ textarea:focus{
     border-radius: var(--radius);
     background: var(--panelBack);
 }
+.exercise-history-set-line{
+    display:grid;
+    grid-template-columns: 3ch 6ch 4.5ch auto auto auto auto;
+    column-gap: .35rem;
+    align-items: baseline;
+}
+.exercise-history-set-line__reps,
+.exercise-history-set-line__weight,
+.exercise-history-set-line__rpe{
+    text-align: right;
+}
+.exercise-history-set-line__sep,
+.exercise-history-set-line__slash{
+    text-align: center;
+}
 
 /* =========================================================
    8) Boutons

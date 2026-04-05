@@ -570,9 +570,7 @@
                 wrapper.appendChild(emptyLine);
             } else {
                 sets.forEach((set) => {
-                    const line = document.createElement('div');
-                    line.className = 'details';
-                    line.textContent = formatSetLine(set, weightUnit);
+                    const line = buildHistorySetLine(set, weightUnit);
                     wrapper.appendChild(line);
                 });
             }
@@ -617,6 +615,38 @@
         const line = parts.length ? parts.join(' ') : '—';
         const ormSummary = formatOrmSummary(orm, ormRpe, weightUnit);
         return ormSummary ? `${line} ${ormSummary}` : line;
+    }
+
+    function buildHistorySetLine(set, weightUnit) {
+        const line = document.createElement('div');
+        line.className = 'details exercise-history-set-line';
+
+        const reps = Number.isFinite(set?.reps) ? `${set.reps}x` : '—';
+        const weight = set?.weight != null && !Number.isNaN(Number(set.weight))
+            ? `${formatNumber(Number(set.weight))}${weightUnit}`
+            : '—';
+        const rpe = set?.rpe != null && set?.rpe !== '' ? `@${formatRpeValue(set.rpe)}` : '—';
+        const orm = Number.isFinite(set?.orm) ? `${formatOrmValue(set.orm)}${weightUnit}` : `—${weightUnit}`;
+        const ormRpe = Number.isFinite(set?.ormRpe) ? `${formatOrmValue(set.ormRpe)}${weightUnit}` : `—${weightUnit}`;
+
+        line.append(
+            createHistoryPart('exercise-history-set-line__reps', reps),
+            createHistoryPart('exercise-history-set-line__weight', weight),
+            createHistoryPart('exercise-history-set-line__rpe', rpe),
+            createHistoryPart('exercise-history-set-line__sep', '='),
+            createHistoryPart('exercise-history-set-line__orm', orm),
+            createHistoryPart('exercise-history-set-line__slash', '/'),
+            createHistoryPart('exercise-history-set-line__orm-rpe', ormRpe)
+        );
+
+        return line;
+    }
+
+    function createHistoryPart(className, text) {
+        const part = document.createElement('span');
+        part.className = className;
+        part.textContent = text;
+        return part;
     }
 
     function formatRpeValue(value) {
