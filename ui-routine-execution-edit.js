@@ -201,7 +201,7 @@
             removeMove();
         });
         routineMoveReplace.addEventListener('click', () => {
-            replaceMoveExercise();
+            void replaceMoveExercise();
         });
         routineMoveUp.addEventListener('click', () => {
             void moveRoutineExercise(-1);
@@ -875,7 +875,7 @@
         A.ensureRoutineMoveInView?.(copy.id);
     }
 
-    function replaceMoveExercise() {
+    async function replaceMoveExercise() {
         const move = findMove();
         if (!move) {
             return;
@@ -885,10 +885,21 @@
         } else {
             refs.dlgRoutineMoveEditor?.close();
         }
+        const sourceExercise = move.exerciseId ? await db.get('exercises', move.exerciseId) : null;
+        const defaultMuscleGroup = (
+            move.muscleGroup2
+            || move.muscle
+            || move.muscleGroup3
+            || sourceExercise?.muscleGroup2
+            || sourceExercise?.muscle
+            || sourceExercise?.muscleGroup3
+            || ''
+        ).toString().trim();
         A.openExercises({
             mode: 'add',
             callerScreen: state.replaceCallerScreen || 'screenRoutineMoveEdit',
             selectionLimit: 1,
+            presetGroupFilter: defaultMuscleGroup,
             onAdd: (ids) => {
                 const [nextId] = ids;
                 if (nextId) {
