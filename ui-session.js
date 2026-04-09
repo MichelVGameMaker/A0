@@ -107,6 +107,65 @@
         return `@${formatSynopsisRpe(value)}`;
     }
 
+    function formatExerciseMetric(value, suffix = '') {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return '—';
+        }
+        return `${formatSynopsisNumber(numeric)}${suffix}`;
+    }
+
+    function computeExerciseStatsLine(sets) {
+        const eligibleSets = (Array.isArray(sets) ? sets : []).filter((set) => {
+            const rpe = Number(set?.rpe);
+            const reps = Number(set?.reps);
+            const weight = Number(set?.weight);
+            return Number.isFinite(rpe) && rpe >= 7 && Number.isFinite(reps) && reps > 0 && Number.isFinite(weight) && weight > 0;
+        });
+        if (!eligibleSets.length) {
+            return {
+                orm: null,
+                ormRpe: null,
+                rpeAvg: null
+            };
+        }
+        let ormSum = 0;
+        let ormCount = 0;
+        let ormRpeSum = 0;
+        let ormRpeCount = 0;
+        let rpeSum = 0;
+        let rpeCount = 0;
+        eligibleSets.forEach((set) => {
+            const reps = Number(set?.reps);
+            const weight = Number(set?.weight);
+            const rpe = Number(set?.rpe);
+            const orm = A.calculateOrm?.(weight, reps);
+            if (Number.isFinite(orm)) {
+                ormSum += orm;
+                ormCount += 1;
+            }
+            const ormRpe = A.calculateOrmWithRpe?.(weight, reps, rpe);
+            if (Number.isFinite(ormRpe)) {
+                ormRpeSum += ormRpe;
+                ormRpeCount += 1;
+            }
+            if (Number.isFinite(rpe)) {
+                rpeSum += rpe;
+                rpeCount += 1;
+            }
+        });
+        return {
+            orm: ormCount ? ormSum / ormCount : null,
+            ormRpe: ormRpeCount ? ormRpeSum / ormRpeCount : null,
+            rpeAvg: rpeCount ? rpeSum / rpeCount : null
+        };
+    }
+
+    function formatExerciseStatsText(sets) {
+        const stats = computeExerciseStatsLine(sets);
+        return `1RM ${formatExerciseMetric(stats.orm, 'kg')} · 1RMrpe ${formatExerciseMetric(stats.ormRpe, 'kg')} · RPE moyen ${formatExerciseMetric(stats.rpeAvg)}`;
+    }
+
     function normalizeFocusField(field) {
         if (field === 'weight' || field === 'rpe' || field === 'reps') {
             return field;
@@ -605,6 +664,9 @@
             const titleRow = document.createElement('div');
             titleRow.className = 'exercise-card-title-row';
             titleRow.appendChild(name);
+            const statsLine = document.createElement('div');
+            statsLine.className = 'exercise-card-stats';
+            statsLine.textContent = formatExerciseStatsText(exercise.sets);
             const detailsButton = document.createElement('button');
             detailsButton.type = 'button';
             detailsButton.className = 'exercise-card-menu-button';
@@ -624,7 +686,7 @@
             const setsWrapper = document.createElement('div');
             setsWrapper.className = 'session-card-sets';
             await renderSessionCardSets({ exercise, setsWrapper, dateKey: key });
-            body.append(titleRow, setsWrapper);
+            body.append(titleRow, statsLine, setsWrapper);
 
             card.setAttribute('aria-label', exerciseName);
             attachSessionCardPressHandlers(card);
@@ -735,8 +797,12 @@
             return false;
         }
         const setsWrapper = card.querySelector('.session-card-sets');
+        const statsLine = card.querySelector('.exercise-card-stats');
         if (!setsWrapper) {
             return false;
+        }
+        if (statsLine) {
+            statsLine.textContent = formatExerciseStatsText(exercise?.sets);
         }
         await renderSessionCardSets({ exercise, setsWrapper, dateKey });
         return true;
