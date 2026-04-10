@@ -2534,7 +2534,17 @@
     }
 
     async function openExerciseDefinitionEdit() {
-        if (!state.exerciseRefId || typeof A.openExerciseEdit !== 'function') {
+        if (!state.exerciseRefId) {
+            return;
+        }
+        if (typeof A.openExerciseActionsDialog === 'function') {
+            await A.openExerciseActionsDialog({
+                currentId: state.exerciseRefId,
+                callerScreen: 'screenExecEdit'
+            });
+            return;
+        }
+        if (typeof A.openExerciseEdit !== 'function') {
             return;
         }
         await A.openExerciseEdit({
