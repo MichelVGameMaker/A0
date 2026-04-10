@@ -460,6 +460,13 @@
         appendClonedParent(container, statsMetricTags.closest('.stats-tags-group'));
         appendClonedParent(container, statsChart.closest('.stats-chart-card'));
         appendClonedParent(container, statsRangeTags.closest('.stats-tags-group'));
+        const goalButton = document.createElement('button');
+        goalButton.type = 'button';
+        goalButton.className = 'btn primary full';
+        goalButton.setAttribute('data-stats-goal', 'true');
+        goalButton.title = 'Objectif';
+        goalButton.textContent = 'Objectif';
+        container.appendChild(goalButton);
         appendClonedParent(container, statsTimeline.closest('section'));
 
         const embeddedTimelineTitle = container.querySelector('.stats-section-title');
@@ -487,6 +494,10 @@
                 }
                 const rangeButton = event.target.closest('[data-range]');
                 if (!rangeButton) {
+                    const goalButtonTarget = event.target.closest('[data-stats-goal]');
+                    if (goalButtonTarget) {
+                        openGoalDialog();
+                    }
                     return;
                 }
                 const nextRange = rangeButton.getAttribute('data-range');
