@@ -8,9 +8,11 @@
     const state = {
         dateKey: null,
         exerciseId: null,
+        exerciseRefId: null,
         callerScreen: 'screenSessions',
         session: null,
         activeTab: 'session',
+        showSessionTab: true,
         metaMode: 'history',
         pendingFocus: null,
         replaceCallerScreen: 'screenExecEdit'
@@ -106,34 +108,50 @@
     A.openExecEdit = async function openExecEdit(options = {}) {
         const {
             currentId,
+            exerciseRefId = null,
             callerScreen = 'screenSessions',
             focusSetIndex = null,
             focusField = null,
-            openMeta = false
+            openMeta = false,
+            showSessionTab = true,
+            initialTab = 'session'
         } = options;
-        if (!currentId) {
+        if (!currentId && !exerciseRefId) {
             return;
         }
-
-        const date = A.activeDate || A.today();
-        const dateKey = A.ymd(date);
-        const session = await db.getSession(dateKey);
-        if (!session) {
-            alert('Aucune séance pour cette date.');
-            return;
+        const hasSessionContext = Boolean(currentId);
+        let exercise = null;
+        let session = null;
+        let date = A.activeDate || A.today();
+        if (hasSessionContext) {
+            const dateKey = A.ymd(date);
+            session = await db.getSession(dateKey);
+            if (!session) {
+                alert('Aucune séance pour cette date.');
+                return;
+            }
+            exercise = Array.isArray(session.exercises) ? session.exercises.find((item) => item.id === currentId) : null;
+            if (!exercise) {
+                alert('Exercice introuvable dans la séance.');
+                return;
+            }
+            normalizeExerciseSets(exercise);
+            state.dateKey = dateKey;
+            state.exerciseId = currentId;
+            state.exerciseRefId = exercise.exercise_id || null;
+        } else {
+            exercise = await db.get('exercises', exerciseRefId);
+            if (!exercise) {
+                alert('Exercice introuvable.');
+                return;
+            }
+            state.dateKey = null;
+            state.exerciseId = null;
+            state.exerciseRefId = exercise.id;
         }
-        const exercise = Array.isArray(session.exercises) ? session.exercises.find((item) => item.id === currentId) : null;
-        if (!exercise) {
-            alert('Exercice introuvable dans la séance.');
-            return;
-        }
-
-        normalizeExerciseSets(exercise);
-
-        state.dateKey = dateKey;
-        state.exerciseId = currentId;
         state.callerScreen = callerScreen;
         state.session = session;
+        state.showSessionTab = Boolean(showSessionTab && hasSessionContext);
         state.replaceCallerScreen = 'screenExecEdit';
         if (Number.isInteger(focusSetIndex) && focusSetIndex >= 0) {
             state.pendingFocus = {
@@ -144,17 +162,21 @@
             state.pendingFocus = null;
         }
         const { execTitle, execEditDateTab } = assertRefs();
-        execTitle.textContent = exercise.exercise_name || 'Exercice';
+        execTitle.textContent = exercise.exercise_name || exercise.name || 'Exercice';
         if (execEditDateTab) {
             execEditDateTab.textContent = formatExecDateTab(date);
         }
+        setSessionTabVisibility(state.showSessionTab);
         await renderExerciseDuplicateTabs(exercise);
-        setExecActiveTab('session');
+        const nextTab = state.showSessionTab ? initialTab : (initialTab === 'session' ? 'exec' : initialTab);
+        setExecActiveTab(nextTab);
         setMetaMode('history');
         A.setTimerVisibility?.({ hidden: true });
         updateTimerUI();
         switchScreen('screenExecEdit');
-        await renderSets();
+        if (state.showSessionTab) {
+            await renderSets();
+        }
         if (openMeta) {
             setTimeout(() => {
                 if (state.exerciseId === currentId) {
@@ -422,15 +444,19 @@
     function setExecActiveTab(nextTab) {
         const {
             execEditTabs,
+            execEditDateTab,
             execEditTabSession,
             execEditTabExec,
             execEditTabHistory,
             execEditTabStats
         } = assertRefs();
-        const allowed = ['session', 'exec', 'history', 'stats'];
-        const tab = allowed.includes(nextTab) ? nextTab : 'session';
+        const allowed = state.showSessionTab ? ['session', 'exec', 'history', 'stats'] : ['exec', 'history', 'stats'];
+        const tab = allowed.includes(nextTab) ? nextTab : allowed[0];
         state.activeTab = tab;
         execEditTabs.querySelectorAll('[data-tab]').forEach((button) => {
+            if (!state.showSessionTab && button === execEditDateTab) {
+                return;
+            }
             const isActive = button.getAttribute('data-tab') === tab;
             button.classList.toggle('selected', isActive);
             button.setAttribute('aria-selected', isActive ? 'true' : 'false');
@@ -441,12 +467,23 @@
         execEditTabStats.hidden = tab !== 'stats';
     }
 
+    function setSessionTabVisibility(visible) {
+        const { execEditDateTab, execEditTabSession } = assertRefs();
+        if (execEditDateTab) {
+            execEditDateTab.hidden = !visible;
+        }
+        if (!visible && execEditTabSession) {
+            execEditTabSession.hidden = true;
+        }
+    }
+
     async function renderExerciseDuplicateTabs(exercise) {
         const { execReadExecContent, execReadHistoryContent, execEditTabStats } = assertRefs();
         if (!exercise) {
             return;
         }
-        const baseExercise = exercise.exercise_id ? await db.get('exercises', exercise.exercise_id) : null;
+        const linkedExerciseId = exercise.exercise_id || exercise.id || state.exerciseRefId || null;
+        const baseExercise = linkedExerciseId ? await db.get('exercises', linkedExerciseId) : null;
         const mergedExercise = {
             ...(baseExercise || {}),
             ...(exercise || {}),
@@ -462,19 +499,19 @@
         if (typeof A.renderExerciseReadHistoryPanel === 'function') {
             await A.renderExerciseReadHistoryPanel({
                 exercise: mergedExercise,
-                exerciseId: mergedExercise.exercise_id,
+                exerciseId: linkedExerciseId,
                 container: execReadHistoryContent
             });
         }
-        await renderStatsDuplicate(mergedExercise, execEditTabStats);
+        await renderStatsDuplicate(mergedExercise, execEditTabStats, linkedExerciseId);
     }
 
-    async function renderStatsDuplicate(exercise, container) {
+    async function renderStatsDuplicate(exercise, container, exerciseId) {
         if (!container) {
             return;
         }
         container.innerHTML = '';
-        if (!exercise?.exercise_id) {
+        if (!exerciseId) {
             container.innerHTML = '<div class="empty">Aucun exercice lié.</div>';
             return;
         }
@@ -483,7 +520,7 @@
             return;
         }
         await A.renderExerciseReadStatsPanel({
-            exerciseId: exercise.exercise_id,
+            exerciseId,
             container
         });
     }
@@ -2373,7 +2410,11 @@
             if (!exercise.exercise_id) {
                 return;
             }
-            void A.openExerciseRead({ currentId: exercise.exercise_id, callerScreen: 'screenSessions' });
+            void A.openExecEdit({
+                currentId: exercise.id || exercise.exercise_id,
+                callerScreen: 'screenSessions',
+                initialTab: 'exec'
+            });
         });
         const oldName = card.querySelector('.exercise-card-name');
         if (titleRow && oldName) {
@@ -2401,8 +2442,8 @@
         } else {
             refs.dlgExecMoveEditor?.close();
         }
-        if (state.currentId) {
-            A.setSessionScrollTarget?.(state.currentId);
+        if (state.exerciseId) {
+            A.setSessionScrollTarget?.(state.exerciseId);
         }
         switchScreen(state.callerScreen || 'screenSessions');
         void refreshSessionViews();

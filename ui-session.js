@@ -659,7 +659,11 @@
                     return;
                 }
                 setSessionScrollTarget(exerciseInstanceId);
-                void A.openExerciseRead({ currentId: exercise.exercise_id, callerScreen: 'screenSessions' });
+                void A.openExecEdit({
+                    currentId: exerciseInstanceId,
+                    callerScreen: 'screenSessions',
+                    initialTab: 'exec'
+                });
             });
             const titleRow = document.createElement('div');
             titleRow.className = 'exercise-card-title-row';
