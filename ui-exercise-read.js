@@ -499,6 +499,7 @@
         exReadTabs.querySelectorAll('[data-tab]').forEach((button) => {
             const isActive = button.getAttribute('data-tab') === tab;
             button.classList.toggle('selected', isActive);
+            button.classList.toggle('is-active', isActive);
             button.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
         exReadTabExec.hidden = tab !== 'exec';

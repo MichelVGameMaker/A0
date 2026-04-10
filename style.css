@@ -934,6 +934,33 @@ textarea:focus{
     border-color: var(--selectedBord);
 }
 
+.stats-toggle{
+    display:flex;
+    gap:6px;
+    width:100%;
+}
+.stats-toggle-btn{
+    flex:1;
+    height:var(--control-h);
+    min-height:0;
+    padding:0 var(--pad-x);
+    border-radius:999px;
+    border:1px solid var(--clickableBord);
+    background:var(--clickableBack);
+    cursor:pointer;
+    touch-action:manipulation;
+    color:var(--black);
+    font-weight:var(--fw-strong);
+    font:inherit;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+.stats-toggle-btn.is-active{
+    color:var(--emphase);
+    border-color:var(--emphase);
+}
+
 /* =========================================================
    7 bis) Planning (sous-onglets)
    ========================================================= */
@@ -1420,17 +1447,21 @@ textarea:focus{
    7 ter) Fiche exercice (onglets)
    ========================================================= */
 #execEditTabs{
-    --tag-columns: 4;
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
 }
 
 .exercise-read-tabs{
-    --tag-columns: 3;
     position: sticky;
     top: 0;
     z-index: 2;
     background: var(--contentBack);
     padding: 8px 0;
     border-bottom: 1px solid var(--panelBord);
+}
+#exReadTabs{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
 }
 .exercise-read-panel{
     display:flex;
