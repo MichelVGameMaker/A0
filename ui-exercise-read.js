@@ -572,6 +572,9 @@
             dateLabel.textContent = formatSessionDate(session);
             wrapper.appendChild(dateLabel);
 
+            const statsLine = buildHistoryStatsLine(sets, weightUnit);
+            wrapper.appendChild(statsLine);
+
             if (!sets.length) {
                 const emptyLine = document.createElement('div');
                 emptyLine.className = 'details';
@@ -649,6 +652,65 @@
         );
 
         return line;
+    }
+
+    function buildHistoryStatsLine(sets, weightUnit) {
+        const line = document.createElement('div');
+        line.className = 'details exercise-history-set-line exercise-history-stats-line';
+        const stats = computeHistorySessionStats(sets);
+        const rpeAvg = Number.isFinite(stats?.rpeAvg) ? formatRpeValue(stats.rpeAvg) : '—';
+        const orm = Number.isFinite(stats?.orm) ? `${formatOrmValue(stats.orm)}${weightUnit}` : `—${weightUnit}`;
+        const ormRpe = Number.isFinite(stats?.ormRpe) ? `${formatOrmValue(stats.ormRpe)}${weightUnit}` : `—${weightUnit}`;
+
+        line.append(
+            createHistoryPart('exercise-history-set-line__reps', ''),
+            createHistoryPart('exercise-history-set-line__weight', ''),
+            createHistoryPart('exercise-history-set-line__rpe', rpeAvg),
+            createHistoryPart('exercise-history-set-line__sep', ''),
+            createHistoryPart('exercise-history-set-line__orm', orm),
+            createHistoryPart('exercise-history-set-line__slash', ''),
+            createHistoryPart('exercise-history-set-line__orm-rpe', ormRpe)
+        );
+        return line;
+    }
+
+    function computeHistorySessionStats(sets) {
+        const eligibleSets = (Array.isArray(sets) ? sets : []).filter((set) => {
+            const rpe = Number(set?.rpe);
+            const reps = Number(set?.reps);
+            const weight = Number(set?.weight);
+            return Number.isFinite(rpe) && rpe >= 7 && Number.isFinite(reps) && reps > 0 && Number.isFinite(weight) && weight > 0;
+        });
+        if (!eligibleSets.length) {
+            return { rpeAvg: null, orm: null, ormRpe: null };
+        }
+
+        let rpeSum = 0;
+        let ormSum = 0;
+        let ormCount = 0;
+        let ormRpeSum = 0;
+        let ormRpeCount = 0;
+        eligibleSets.forEach((set) => {
+            const rpe = Number(set?.rpe);
+            const reps = Number(set?.reps);
+            const weight = Number(set?.weight);
+            rpeSum += rpe;
+            const orm = A.calculateOrm?.(weight, reps);
+            if (Number.isFinite(orm)) {
+                ormSum += orm;
+                ormCount += 1;
+            }
+            const ormRpe = A.calculateOrmWithRpe?.(weight, reps, rpe);
+            if (Number.isFinite(ormRpe)) {
+                ormRpeSum += ormRpe;
+                ormRpeCount += 1;
+            }
+        });
+        return {
+            rpeAvg: rpeSum / eligibleSets.length,
+            orm: ormCount ? ormSum / ormCount : null,
+            ormRpe: ormRpeCount ? ormRpeSum / ormRpeCount : null
+        };
     }
 
     function createHistoryPart(className, text) {
