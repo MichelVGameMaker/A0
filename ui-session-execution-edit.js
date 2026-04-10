@@ -14,6 +14,9 @@
         activeTab: 'session',
         showSessionTab: true,
         metaMode: 'history',
+        historyCursor: 0,
+        historyLabel: 'Historique',
+        historySessionCount: 0,
         pendingFocus: null,
         replaceCallerScreen: 'screenExecEdit'
     };
@@ -397,8 +400,12 @@
             void prefillExercisePendingSets();
         });
         execMetaToggle.addEventListener('click', () => {
-            const nextMode = getNextMetaMode();
-            setMetaMode(nextMode);
+            if (state.metaMode !== 'history') {
+                const nextMode = getNextMetaMode();
+                setMetaMode(nextMode);
+                return;
+            }
+            cycleHistorySession();
         });
     }
 
@@ -686,23 +693,14 @@
     }
 
     function getMetaModeLabel(mode = state.metaMode) {
-        switch (mode) {
-            case 'goals':
-                return 'Objectifs';
-            case 'medals':
-                return 'Médailles';
-            case 'record':
-                return 'Record';
-            default:
-                return 'Historique';
+        if (mode !== 'history') {
+            return 'Historique';
         }
+        return state.historyLabel || 'Historique';
     }
 
     function getNextMetaMode() {
-        const order = ['history', 'goals', 'medals', 'record'];
-        const currentIndex = order.indexOf(state.metaMode);
-        const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % order.length;
-        return order[nextIndex];
+        return 'history';
     }
 
     function setMetaMode(nextMode) {
@@ -719,6 +717,17 @@
         closeInlineInputs();
         clearMedalPopover();
         clearDetailsPopover();
+        void refreshSetMetaFrom(0);
+    }
+
+    function cycleHistorySession() {
+        if (state.historySessionCount <= 1) {
+            return;
+        }
+        state.historyCursor = (state.historyCursor + 1) % state.historySessionCount;
+        const { execMetaToggle } = assertRefs();
+        execMetaToggle.textContent = getMetaHeaderLabel();
+        execMetaToggle.setAttribute('aria-label', getMetaHeaderLabel());
         void refreshSetMetaFrom(0);
     }
 
@@ -772,6 +781,7 @@
             return;
         }
         const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+        state.historyCursor = 0;
         const meta = await buildSetMeta(exercise, sets);
         if (execMetaToggle) {
             execMetaToggle.textContent = getMetaHeaderLabel();
@@ -834,6 +844,13 @@
             return;
         }
         const meta = metaOverride || (await buildSetMeta(exercise, sets));
+        state.historyLabel = meta?.activeHistoryLabel || 'Historique';
+        state.historySessionCount = safeInt(meta?.historySessions?.length, 0);
+        const { execMetaToggle } = assertRefs();
+        if (execMetaToggle) {
+            execMetaToggle.textContent = getMetaHeaderLabel();
+            execMetaToggle.setAttribute('aria-label', getMetaHeaderLabel());
+        }
         const rows = Array.from(execSets.querySelectorAll('.exec-set-row'));
         rows.forEach((row, index) => {
             if (index < startIndex || !sets[index]) {
@@ -1413,8 +1430,13 @@
         const { dateKey = state.dateKey } = options;
         const exerciseId = exercise?.exercise_id;
         const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
-        const previous = await findPreviousSessionForHistory(exerciseId, dateKey);
-        const previousSets = Array.isArray(previous?.exercise?.sets) ? [...previous.exercise.sets] : [];
+        const historySessions = await collectPreviousSessionsForHistory(exerciseId, dateKey, 6);
+        const sessionCount = historySessions.length;
+        if (state.historyCursor >= sessionCount) {
+            state.historyCursor = 0;
+        }
+        const activeHistory = historySessions[state.historyCursor] || null;
+        const previousSets = Array.isArray(activeHistory?.exercise?.sets) ? [...activeHistory.exercise.sets] : [];
         previousSets.sort((a, b) => safeInt(a?.pos, 0) - safeInt(b?.pos, 0));
         const historyByPos = buildHistorySetMap(previousSets, weightUnit);
         const goalsByPos = buildHistorySetMap(previousSets, weightUnit);
@@ -1422,7 +1444,19 @@
         const recordByPos = buildRecordSetMap(previousAllSets, weightUnit);
         const medalsByPos = await buildMedalMap(exerciseId, currentSets, dateKey, previousAllSets);
         const historyDetailsByPos = buildHistoryDetailsMap(previousAllSets, weightUnit);
-        return { historyByPos, goalsByPos, recordByPos, medalsByPos, historyDetailsByPos, weightUnit };
+        const activeHistoryLabel = activeHistory?.date ? formatDateKeyForMeta(activeHistory.date) : 'Historique';
+        state.historyLabel = activeHistoryLabel;
+        state.historySessionCount = sessionCount;
+        return {
+            historyByPos,
+            goalsByPos,
+            recordByPos,
+            medalsByPos,
+            historyDetailsByPos,
+            historySessions,
+            activeHistoryLabel,
+            weightUnit
+        };
     }
 
     function buildHistorySetMap(sets, weightUnit) {
@@ -1616,25 +1650,41 @@
         return String(normalized);
     }
 
-    async function findPreviousSessionForHistory(exerciseId, dateKey = state.dateKey) {
+    async function collectPreviousSessionsForHistory(exerciseId, dateKey = state.dateKey, limit = 6) {
         if (!exerciseId || !dateKey) {
-            return null;
+            return [];
         }
         const sessions = await db.listSessionDates();
         const previousDates = sessions
             .map((entry) => entry.date)
             .filter((date) => date && date < dateKey)
             .sort((a, b) => b.localeCompare(a));
+        const results = [];
         for (const date of previousDates) {
             const session = await db.getSession(date);
             const exercise = Array.isArray(session?.exercises)
                 ? session.exercises.find((item) => item.exercise_id === exerciseId)
                 : null;
             if (exercise && Array.isArray(exercise.sets) && exercise.sets.length) {
-                return { date, session, exercise };
+                results.push({ date, session, exercise });
+                if (results.length >= limit) {
+                    break;
+                }
             }
         }
-        return null;
+        return results;
+    }
+
+    function formatDateKeyForMeta(dateKey) {
+        if (!dateKey || typeof dateKey !== 'string') {
+            return 'Historique';
+        }
+        const [year, month, day] = dateKey.split('-').map((part) => Number(part));
+        const date = new Date(year, (month || 1) - 1, day || 1);
+        if (Number.isNaN(date.getTime())) {
+            return 'Historique';
+        }
+        return formatExecDateTab(date);
     }
 
     function formatOrmValue(value) {
