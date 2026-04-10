@@ -571,7 +571,13 @@
                 getValue: () => input.value,
                 onChange: (next, meta = {}) => {
                     input.value = next;
-                    if (typeof meta?.caretPosition === 'number') {
+                    if (field === 'rest' && typeof meta?.caretPosition === 'number') {
+                        const colonIndex = String(next).indexOf(':');
+                        const onMinutes = colonIndex < 0 || meta.caretPosition <= colonIndex;
+                        requestAnimationFrame(() => {
+                            selectInput(input, 'rest', { restPart: onMinutes ? 'minutes' : 'seconds' });
+                        });
+                    } else if (typeof meta?.caretPosition === 'number') {
                         const position = Math.max(0, Math.min(String(next).length, meta.caretPosition));
                         requestAnimationFrame(() => {
                             input.setSelectionRange(position, position);
@@ -592,6 +598,32 @@
             });
         };
 
+        const selectInput = (input, field, options = {}) => {
+            if (!input) {
+                return;
+            }
+            requestAnimationFrame(() => {
+                input.focus({ preventScroll: true });
+                if (field !== 'rest') {
+                    input.select();
+                    return;
+                }
+                const restPart = options.restPart === 'seconds' ? 'seconds' : 'minutes';
+                const valueText = String(input.value ?? '');
+                const colonIndex = valueText.indexOf(':');
+                if (colonIndex < 0) {
+                    input.select();
+                    return;
+                }
+                if (restPart === 'seconds') {
+                    const start = colonIndex + 1;
+                    input.setSelectionRange(start, valueText.length);
+                    return;
+                }
+                input.setSelectionRange(0, colonIndex);
+            });
+        };
+
         const createInput = (getValue, field, extraClass = '', options = {}) => {
             const input = document.createElement('input');
             const { inputMode = inlineKeyboard ? 'none' : 'numeric', type = 'text' } = options;
@@ -609,7 +641,7 @@
             input._update = update;
             update();
             input.addEventListener('focus', () => {
-                input.select();
+                selectInput(input, field);
             });
             const commit = () => {
                 if (field === 'rpe') {
@@ -627,6 +659,7 @@
             input.addEventListener('click', () => {
                 openEditor(field);
                 attachInlineKeyboard(input, field);
+                selectInput(input, field, field === 'rest' ? { restPart: 'minutes' } : {});
             });
             return input;
         };
@@ -640,11 +673,6 @@
         );
         const rpeInput = createInput(() => (value.rpe == null ? '' : String(value.rpe)), 'rpe', 'exec-rpe-cell');
         const restInput = createInput(() => formatRestDisplay(value.rest), 'rest', 'exec-rest-cell');
-        restInput.addEventListener('focus', () => {
-            const colon = restInput.value.indexOf(':');
-            const end = colon >= 0 ? colon : restInput.value.length;
-            restInput.setSelectionRange(0, end);
-        });
         collectInputs(repsInput, weightInput, rpeInput, restInput);
         syncRowTone();
         const selectField = (field) => {
@@ -659,6 +687,7 @@
                 return;
             }
             attachInlineKeyboard(target, field);
+            selectInput(target, field, field === 'rest' ? { restPart: 'minutes' } : {});
         };
 
         row.append(order, repsInput, weightInput, rpeInput, restInput);
