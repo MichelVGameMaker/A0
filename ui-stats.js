@@ -437,25 +437,11 @@
         if (exerciseId) {
             container.dataset.statsExerciseId = exerciseId;
         }
-        const {
-            statsMetricTags,
-            statsChart,
-            statsChartEmpty,
-            statsRangeTags,
-            statsTimeline,
-            statsExerciseTitle,
-            statsExerciseSubtitle,
-            statsTimelineTitle
-        } = assertStatsRefs();
+        const { statsMetricTags, statsChart, statsChartEmpty, statsRangeTags, statsTimeline, statsExerciseSubtitle, statsTimelineTitle } =
+            assertStatsRefs();
         container.innerHTML = '';
 
-        const heading = document.createElement('div');
-        heading.className = 'bloque';
-        heading.innerHTML = `
-            <div class="element">${escapeHtml(statsExerciseTitle.textContent || 'Exercice')}</div>
-            <div class="details">${escapeHtml(statsExerciseSubtitle.textContent || '')}</div>
-        `;
-        container.appendChild(heading);
+        appendClonedParent(container, statsExerciseSubtitle.closest('.stats-header'));
 
         appendClonedParent(container, statsMetricTags.closest('.stats-tags-group'));
         appendClonedParent(container, statsChart.closest('.stats-chart-card'));
@@ -479,6 +465,16 @@
             embeddedChartEmpty.textContent = statsChartEmpty.textContent || 'Aucune donnée enregistrée.';
             embeddedChartEmpty.hidden = statsChartEmpty.hidden;
         }
+        const embeddedChart = container.querySelector('.stats-chart');
+        const embeddedSubtitle = container.querySelector('.stats-subtitle');
+        if (embeddedSubtitle) {
+            embeddedSubtitle.textContent = statsExerciseSubtitle.textContent || '';
+        }
+        renderChart({
+            statsChart: embeddedChart || statsChart,
+            statsChartEmpty: embeddedChartEmpty || statsChartEmpty,
+            statsExerciseSubtitle: embeddedSubtitle || statsExerciseSubtitle
+        });
 
         if (!container.dataset.statsEmbeddedWired) {
             container.addEventListener('click', (event) => {
@@ -516,15 +512,6 @@
             return;
         }
         container.appendChild(element.cloneNode(true));
-    }
-
-    function escapeHtml(value) {
-        return String(value)
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#39;');
     }
 
     function wireGoalDialogEvents() {
@@ -910,8 +897,11 @@
         element.textContent = `${count} ${sessionLabel}`;
     }
 
-    function renderChart() {
-        const { statsChart, statsChartEmpty, statsExerciseSubtitle } = assertStatsRefs();
+    function renderChart(context = {}) {
+        const { statsChart, statsChartEmpty, statsExerciseSubtitle } = {
+            ...assertStatsRefs(),
+            ...context
+        };
         statsChart.innerHTML = '';
         statsChart.removeAttribute('aria-label');
         const exercise = state.activeExercise;
@@ -1215,10 +1205,11 @@
         }
         const startEntry = findGoalStartEntry(usage, startDate);
         const startValue = Number.isFinite(manualStartValue) ? manualStartValue : startEntry?.metrics?.orm;
-        if (!startEntry || !Number.isFinite(startValue) || startValue <= 0) {
+        const startPointDate = startEntry?.dateObj || startDate;
+        if (!Number.isFinite(startValue) || startValue <= 0) {
             return [];
         }
-        if (targetDate.getTime() <= startEntry.dateObj.getTime()) {
+        if (targetDate.getTime() <= startPointDate.getTime()) {
             return [];
         }
         const delta = targetValue - startValue;
@@ -1226,14 +1217,14 @@
         const upperTarget = startValue + delta * 1.02;
         return [
             {
-                startDate: startEntry.dateObj,
+                startDate: startPointDate,
                 startValue,
                 endDate: targetDate,
                 endValue: lowerTarget,
                 variant: 'min'
             },
             {
-                startDate: startEntry.dateObj,
+                startDate: startPointDate,
                 startValue,
                 endDate: targetDate,
                 endValue: upperTarget,
