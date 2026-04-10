@@ -2570,6 +2570,18 @@ textarea:focus{
   outline-offset: 0;
 }
 
+.set-editor-highlight .set-edit-input,
+.set-editor-highlight .set-edit-button,
+.set-editor-highlight .routine-set-order,
+.set-editor-highlight .exec-meta-chip{
+  color: var(--emphase);
+}
+
+.set-editor-highlight .set-edit-input,
+.set-editor-highlight .set-edit-button{
+  border-color: var(--emphase);
+}
+
 .inline-set-editor-row{
   margin-top: 4px;
 }

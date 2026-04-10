@@ -1306,10 +1306,10 @@
                 onChange: (next, meta = {}) => {
                     input.value = next;
                     if (field === 'rest' && typeof meta?.caretPosition === 'number') {
-                        const colonIndex = String(next).indexOf(':');
-                        const onMinutes = colonIndex < 0 || meta.caretPosition <= colonIndex;
+                        const caretPosition = Math.max(0, Math.min(String(next).length, meta.caretPosition));
                         requestAnimationFrame(() => {
-                            selectInput(input, 'rest', { restPart: onMinutes ? 'minutes' : 'seconds' });
+                            input.focus({ preventScroll: true });
+                            input.setSelectionRange(caretPosition, caretPosition);
                         });
                     } else if (typeof meta?.caretPosition === 'number') {
                         const position = Math.max(0, Math.min(String(next).length, meta.caretPosition));
