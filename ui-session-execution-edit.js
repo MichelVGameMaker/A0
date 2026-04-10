@@ -71,7 +71,8 @@
         startSec: 0,
         remainSec: 0,
         intervalId: null,
-        attachment: null
+        attachment: null,
+        lastTickAt: null
     });
 
     const defaultTimerVisibility = () => ({
@@ -87,6 +88,7 @@
         execTimer.remainSec = safeInt(execTimer.remainSec, 0);
         execTimer.intervalId = execTimer.intervalId ?? null;
         execTimer.attachment = execTimer.attachment ?? null;
+        execTimer.lastTickAt = Number.isFinite(execTimer.lastTickAt) ? Number(execTimer.lastTickAt) : null;
     }
     A.execTimer = execTimer;
     let timerVisibility = A.timerVisibility;
@@ -2930,6 +2932,7 @@
         timer.remainSec = seconds;
         timer.running = true;
         timer.intervalId = window.setInterval(runTick, 1000);
+        timer.lastTickAt = Date.now();
         timer.attachment = buildTimerAttachment(options);
         updateTimerUI();
     }
@@ -2937,6 +2940,7 @@
     function pauseTimer() {
         const timer = ensureSharedTimer();
         timer.running = false;
+        timer.lastTickAt = null;
         updateTimerUI();
     }
 
@@ -2946,6 +2950,7 @@
         if (!timer.intervalId) {
             timer.intervalId = window.setInterval(runTick, 1000);
         }
+        timer.lastTickAt = Date.now();
         updateTimerUI();
     }
 
@@ -2956,6 +2961,7 @@
         }
         timer.intervalId = null;
         timer.running = false;
+        timer.lastTickAt = null;
     }
 
     function runTick() {
@@ -2963,13 +2969,18 @@
         if (!timer.running) {
             return;
         }
-        timer.remainSec -= 1;
+        const now = Date.now();
+        const lastTickAt = Number.isFinite(timer.lastTickAt) ? timer.lastTickAt : now;
+        const elapsedSec = Math.max(1, Math.floor((now - lastTickAt) / 1000));
+        timer.lastTickAt = lastTickAt + elapsedSec * 1000;
+        const previousRemain = timer.remainSec;
+        timer.remainSec -= elapsedSec;
         if (timer.remainSec <= -5 * 60) {
             stopTimer();
             updateTimerUI();
             return;
         }
-        if (timer.remainSec === 0 && navigator.vibrate) {
+        if (previousRemain > 0 && timer.remainSec <= 0 && navigator.vibrate) {
             try {
                 navigator.vibrate(200);
             } catch {
