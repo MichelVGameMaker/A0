@@ -64,6 +64,24 @@
         switchScreen('screenExerciseRead');
     };
 
+    A.openExerciseActionsDialog = async function openExerciseActionsDialog(options = {}) {
+        const { currentId, callerScreen = 'screenExercises' } = options;
+        if (!currentId) {
+            return;
+        }
+        ensureRefs();
+        assertRefs();
+        const exercise = await db.get('exercises', currentId);
+        if (!exercise) {
+            alert('Exercice introuvable.');
+            return;
+        }
+        state.currentId = currentId;
+        state.callerScreen = callerScreen;
+        state.exercise = exercise;
+        openExerciseActions();
+    };
+
     A.renderExerciseReadExecPanel = function renderExerciseReadExecPanel(options = {}) {
         const { exercise, container, originLabel } = options;
         renderExerciseExecPanel(exercise, { container, originLabel });
