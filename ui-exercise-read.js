@@ -30,6 +30,15 @@
         if (!currentId) {
             return;
         }
+        if (typeof A.openExecEdit === 'function') {
+            await A.openExecEdit({
+                exerciseRefId: currentId,
+                callerScreen,
+                showSessionTab: false,
+                initialTab: tab
+            });
+            return;
+        }
         ensureRefs();
         assertRefs();
 
