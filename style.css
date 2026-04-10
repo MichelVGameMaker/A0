@@ -1469,6 +1469,9 @@ textarea:focus{
 .exercise-history-set-line__slash{
     text-align: center;
 }
+.exercise-history-stats-line{
+    color: var(--mutedText);
+}
 
 /* =========================================================
    8) Boutons
