@@ -367,7 +367,7 @@
             void addSet();
         });
         execExerciseEdit?.addEventListener('click', () => {
-            void openExerciseActionsDialog();
+            void openExerciseDefinitionEdit();
         });
         execDelete.addEventListener('click', () => {
             void removeExercise();
@@ -2483,18 +2483,8 @@
         void refreshSessionViews();
     }
 
-    async function openExerciseActionsDialog() {
-        if (!state.exerciseRefId) {
-            return;
-        }
-        if (typeof A.openExerciseActionsDialog === 'function') {
-            await A.openExerciseActionsDialog({
-                currentId: state.exerciseRefId,
-                callerScreen: 'screenExecEdit'
-            });
-            return;
-        }
-        if (typeof A.openExerciseEdit !== 'function') {
+    async function openExerciseDefinitionEdit() {
+        if (!state.exerciseRefId || typeof A.openExerciseEdit !== 'function') {
             return;
         }
         await A.openExerciseEdit({
