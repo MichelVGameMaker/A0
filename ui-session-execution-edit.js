@@ -239,6 +239,7 @@
         refs.screenData = document.getElementById('screenData');
         refs.tabSessions = document.getElementById('tabSessions');
         refs.execBack = document.getElementById('execBack');
+        refs.execExerciseEdit = document.getElementById('execExerciseEdit');
         refs.execTitle = document.getElementById('execTitle');
         refs.execEditTabs = document.getElementById('execEditTabs');
         refs.execEditDateTab = document.getElementById('execEditDateTab');
@@ -352,6 +353,7 @@
     function wireActions() {
         const {
             execAddSet,
+            execExerciseEdit,
             execDelete,
             execReplaceExercise,
             execMetaToggle,
@@ -363,6 +365,9 @@
         } = assertRefs();
         execAddSet.addEventListener('click', () => {
             void addSet();
+        });
+        execExerciseEdit?.addEventListener('click', () => {
+            void openExerciseActionsDialog();
         });
         execDelete.addEventListener('click', () => {
             void removeExercise();
@@ -2476,6 +2481,26 @@
         }
         switchScreen(state.callerScreen || 'screenSessions');
         void refreshSessionViews();
+    }
+
+    async function openExerciseActionsDialog() {
+        if (!state.exerciseRefId) {
+            return;
+        }
+        if (typeof A.openExerciseActionsDialog === 'function') {
+            await A.openExerciseActionsDialog({
+                currentId: state.exerciseRefId,
+                callerScreen: 'screenExecEdit'
+            });
+            return;
+        }
+        if (typeof A.openExerciseEdit !== 'function') {
+            return;
+        }
+        await A.openExerciseEdit({
+            currentId: state.exerciseRefId,
+            callerScreen: 'screenExerciseRead'
+        });
     }
 
     function switchScreen(target) {
