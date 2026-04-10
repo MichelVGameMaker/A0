@@ -1084,16 +1084,15 @@
             updateSubtitleForPoint(point);
         };
 
-        const handlePointerDown = (event) => {
+        const findClosestPoint = (clientX) => {
             if (!points.length) {
-                return;
+                return null;
             }
-            event.preventDefault();
             const rect = svg.getBoundingClientRect();
             if (!rect.width) {
-                return;
+                return null;
             }
-            const chartX = ((event.clientX - rect.left) / rect.width) * width;
+            const chartX = ((clientX - rect.left) / rect.width) * width;
             let closest = points[0];
             let minDistance = Math.abs(points[0].x - chartX);
             for (let i = 1; i < points.length; i += 1) {
@@ -1104,10 +1103,38 @@
                     closest = candidate;
                 }
             }
+            return closest;
+        };
+
+        const handlePointerDown = (event) => {
+            if (!points.length) {
+                return;
+            }
+            event.preventDefault();
+            const closest = findClosestPoint(event.clientX);
+            if (!closest) {
+                return;
+            }
             updateFocusAtPoint(closest);
         };
 
+        const handlePointerMove = (event) => {
+            const closest = findClosestPoint(event.clientX);
+            if (!closest) {
+                return;
+            }
+            updateFocusAtPoint(closest);
+        };
+
+        const clearFocus = () => {
+            focusGroup.setAttribute('data-visible', 'false');
+            points.forEach((item) => item.element?.classList.remove('is-active'));
+            updateExerciseSummary(statsExerciseSubtitle);
+        };
+
         svg.addEventListener('pointerdown', handlePointerDown);
+        svg.addEventListener('pointermove', handlePointerMove);
+        svg.addEventListener('pointerleave', clearFocus);
 
         points.forEach((point) => {
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -1118,6 +1145,8 @@
             point.element = circle;
             svg.appendChild(circle);
         });
+
+        updateFocusAtPoint(points[points.length - 1]);
 
         statsChart.setAttribute(
             'aria-label',
