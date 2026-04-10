@@ -888,12 +888,10 @@
                 const minuteSide = hasSelection ? selectionStart <= colonIndex : cursor <= colonIndex;
 
                 if (key === ':') {
-                    if (minuteSide) {
-                        active.onChange?.(
-                            `${normalized.minutes}:${String(normalized.seconds).padStart(2, '0')}`,
-                            { caretPosition: String(normalized.minutes).length + 1 }
-                        );
-                    }
+                    const minutesText = String(normalized.minutes);
+                    const secondsText = String(normalized.seconds).padStart(2, '0');
+                    const caretPosition = minuteSide ? minutesText.length + 1 : minutesText.length;
+                    active.onChange?.(`${minutesText}:${secondsText}`, { caretPosition });
                     return;
                 }
 
