@@ -106,11 +106,11 @@
     </header>
 
     <main class="content">
-        <div id="execEditTabs" class="tags exercise-read-tabs" role="tablist">
-            <button type="button" id="execEditDateTab" class="tag selected" data-tab="session" role="tab" aria-selected="true">—</button>
-            <button type="button" class="tag" data-tab="exec" role="tab" aria-selected="false">Exécution</button>
-            <button type="button" class="tag" data-tab="history" role="tab" aria-selected="false">Histo</button>
-            <button type="button" class="tag" data-tab="stats" role="tab" aria-selected="false">Stats</button>
+        <div id="execEditTabs" class="stats-toggle exercise-read-tabs" role="tablist">
+            <button type="button" id="execEditDateTab" class="stats-toggle-btn is-active" data-tab="session" role="tab" aria-selected="true">—</button>
+            <button type="button" class="stats-toggle-btn" data-tab="exec" role="tab" aria-selected="false">Exécution</button>
+            <button type="button" class="stats-toggle-btn" data-tab="history" role="tab" aria-selected="false">Histo</button>
+            <button type="button" class="stats-toggle-btn" data-tab="stats" role="tab" aria-selected="false">Stats</button>
         </div>
 
         <section id="execEditTabSession" class="exercise-read-tab" data-tab-panel="session">
@@ -369,10 +369,10 @@
 	<!-- Corps de l'écran Consulter un Exercice) -->
 	<main class="content">
 
-        <div id="exReadTabs" class="tags exercise-read-tabs" role="tablist">
-            <button type="button" class="tag selected" data-tab="exec" role="tab" aria-selected="true">Exécution</button>
-            <button type="button" class="tag" data-tab="history" role="tab" aria-selected="false">Historique</button>
-            <button type="button" class="tag" data-tab="stats" role="tab" aria-selected="false">Statistiques</button>
+        <div id="exReadTabs" class="stats-toggle exercise-read-tabs" role="tablist">
+            <button type="button" class="stats-toggle-btn is-active" data-tab="exec" role="tab" aria-selected="true">Exécution</button>
+            <button type="button" class="stats-toggle-btn" data-tab="history" role="tab" aria-selected="false">Historique</button>
+            <button type="button" class="stats-toggle-btn" data-tab="stats" role="tab" aria-selected="false">Statistiques</button>
         </div>
 
         <section id="exReadTabExec" class="exercise-read-tab" data-tab-panel="exec">
