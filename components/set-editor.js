@@ -884,7 +884,8 @@
                     && target.selectionEnd > target.selectionStart;
                 const colonIndex = current.indexOf(':') >= 0 ? current.indexOf(':') : normalized.minutesText.length;
                 const cursor = typeof target?.selectionStart === 'number' ? target.selectionStart : current.length;
-                const minuteSide = hasSelection ? true : cursor <= colonIndex;
+                const selectionStart = typeof target?.selectionStart === 'number' ? target.selectionStart : cursor;
+                const minuteSide = hasSelection ? selectionStart <= colonIndex : cursor <= colonIndex;
 
                 if (key === ':') {
                     if (minuteSide) {
