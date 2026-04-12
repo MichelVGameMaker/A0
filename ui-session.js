@@ -107,12 +107,12 @@
         return `@${formatSynopsisRpe(value)}`;
     }
 
-    function formatExerciseMetric(value, suffix = '') {
+    function formatExerciseMetricSingleDecimal(value, suffix = '') {
         const numeric = Number(value);
         if (!Number.isFinite(numeric)) {
             return '—';
         }
-        return `${formatSynopsisNumber(numeric)}${suffix}`;
+        return `${numeric.toFixed(1).replace('.', ',')}${suffix}`;
     }
 
     function computeExerciseStatsLine(sets) {
@@ -161,9 +161,34 @@
         };
     }
 
-    function formatExerciseStatsText(sets) {
+    function formatExerciseStatsValues(sets) {
         const stats = computeExerciseStatsLine(sets);
-        return `1RM ${formatExerciseMetric(stats.orm, 'kg')} · 1RMrpe ${formatExerciseMetric(stats.ormRpe, 'kg')} · RPE moyen ${formatExerciseMetric(stats.rpeAvg)}`;
+        return {
+            orm: formatExerciseMetricSingleDecimal(stats.orm, 'kg'),
+            ormRpe: formatExerciseMetricSingleDecimal(stats.ormRpe, 'kg'),
+            rpeAvg: formatExerciseMetricSingleDecimal(stats.rpeAvg)
+        };
+    }
+
+    function renderExerciseStatsLine(element, sets) {
+        if (!element) {
+            return;
+        }
+        const values = formatExerciseStatsValues(sets);
+        element.innerHTML = '';
+        const spacer = document.createElement('span');
+        spacer.className = 'exercise-card-stats-cell exercise-card-stats-cell--spacer';
+        spacer.setAttribute('aria-hidden', 'true');
+        const orm = document.createElement('span');
+        orm.className = 'exercise-card-stats-cell';
+        orm.textContent = values.orm;
+        const ormRpe = document.createElement('span');
+        ormRpe.className = 'exercise-card-stats-cell';
+        ormRpe.textContent = values.ormRpe;
+        const rpe = document.createElement('span');
+        rpe.className = 'exercise-card-stats-cell';
+        rpe.textContent = values.rpeAvg;
+        element.append(spacer, orm, ormRpe, rpe);
     }
 
     function normalizeFocusField(field) {
@@ -670,7 +695,7 @@
             titleRow.appendChild(name);
             const statsLine = document.createElement('div');
             statsLine.className = 'exercise-card-stats';
-            statsLine.textContent = formatExerciseStatsText(exercise.sets);
+            renderExerciseStatsLine(statsLine, exercise.sets);
             const detailsButton = document.createElement('button');
             detailsButton.type = 'button';
             detailsButton.className = 'exercise-card-menu-button';
@@ -806,7 +831,7 @@
             return false;
         }
         if (statsLine) {
-            statsLine.textContent = formatExerciseStatsText(exercise?.sets);
+            renderExerciseStatsLine(statsLine, exercise?.sets);
         }
         await renderSessionCardSets({ exercise, setsWrapper, dateKey });
         return true;
