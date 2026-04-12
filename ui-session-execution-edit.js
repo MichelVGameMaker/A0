@@ -1303,20 +1303,8 @@
                     }
                 },
                 getValue: () => input.value,
-                onChange: (next, meta = {}) => {
+                onChange: (next) => {
                     input.value = next;
-                    if (field === 'rest' && typeof meta?.caretPosition === 'number') {
-                        const caretPosition = Math.max(0, Math.min(String(next).length, meta.caretPosition));
-                        requestAnimationFrame(() => {
-                            input.focus({ preventScroll: true });
-                            input.setSelectionRange(caretPosition, caretPosition);
-                        });
-                    } else if (typeof meta?.caretPosition === 'number') {
-                        const position = Math.max(0, Math.min(String(next).length, meta.caretPosition));
-                        requestAnimationFrame(() => {
-                            input.setSelectionRange(position, position);
-                        });
-                    }
                     if (field === 'rpe') {
                         applyRpeTone(input, next);
                     }
@@ -1329,32 +1317,6 @@
                     input.blur();
                     ensureInlineEditor()?.close();
                 }
-            });
-        };
-
-        const selectInput = (input, field, options = {}) => {
-            if (!input) {
-                return;
-            }
-            requestAnimationFrame(() => {
-                input.focus({ preventScroll: true });
-                if (field !== 'rest') {
-                    input.select();
-                    return;
-                }
-                const restPart = options.restPart === 'seconds' ? 'seconds' : 'minutes';
-                const valueText = String(input.value ?? '');
-                const colonIndex = valueText.indexOf(':');
-                if (colonIndex < 0) {
-                    input.select();
-                    return;
-                }
-                if (restPart === 'seconds') {
-                    const start = colonIndex + 1;
-                    input.setSelectionRange(start, valueText.length);
-                    return;
-                }
-                input.setSelectionRange(0, colonIndex);
             });
         };
 
@@ -1374,9 +1336,6 @@
             };
             input._update = update;
             update();
-            input.addEventListener('focus', () => {
-                selectInput(input, field);
-            });
             const commit = () => {
                 if (field === 'rpe') {
                     applyRpeTone(input, input.value);
@@ -1393,7 +1352,6 @@
             input.addEventListener('click', () => {
                 openEditor(field);
                 attachInlineKeyboard(input, field);
-                selectInput(input, field, field === 'rest' ? { restPart: 'minutes' } : {});
             });
             return input;
         };
@@ -1421,7 +1379,7 @@
                 return;
             }
             attachInlineKeyboard(target, field);
-            selectInput(target, field, field === 'rest' ? { restPart: 'minutes' } : {});
+            target.focus({ preventScroll: true });
         };
 
         const metaCell = buildMetaCell(set, index, meta);
