@@ -470,8 +470,8 @@ header .header-left .btn{
     gap:6px;
 }
 .modal-context-action{
-    min-height: 36px;
-    padding: 6px 12px;
+    min-height: 45px;
+    padding: 8px 12px;
     border-radius: var(--radius);
     border: 0;
     background: transparent;
