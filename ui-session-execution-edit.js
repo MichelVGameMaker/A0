@@ -1709,15 +1709,20 @@
         return `= ${left} / ${right}`;
     }
 
-    function formatMetaSetLine(set, weightUnit) {
+    function formatMetaSetLine(set, weightUnit, options = {}) {
+        const { includeRpe = false } = options;
         const reps = Number.isFinite(set?.reps) ? set.reps : null;
         const weight = set?.weight != null ? Number(set.weight) : null;
+        const rpe = set?.rpe != null && set?.rpe !== '' ? Number(set.rpe) : null;
         const parts = [];
         if (reps != null) {
             parts.push(`${reps}x`);
         }
         if (weight != null && !Number.isNaN(weight)) {
             parts.push(`${formatNumber(weight)}${weightUnit}`);
+        }
+        if (includeRpe && rpe != null && !Number.isNaN(rpe)) {
+            parts.push(`@${formatNumber(rpe)}`);
         }
         return parts.length ? parts.join(' ') : '—';
     }
@@ -1749,7 +1754,7 @@
     }
 
     function formatHistorySetLine(set, weightUnit) {
-        return formatMetaSetLine(set, weightUnit);
+        return formatMetaSetLine(set, weightUnit, { includeRpe: true });
     }
 
     function formatHistoryDateLabel(dateKey) {
