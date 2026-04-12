@@ -1415,6 +1415,7 @@
             medalsByPos,
             historyDetailsByPos,
             historySessions,
+            activeHistorySets: previousSets,
             activeHistoryLabel,
             weightUnit
         };

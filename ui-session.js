@@ -170,7 +170,7 @@
         };
     }
 
-    function renderExerciseStatsLine(element, sets) {
+    function renderExerciseStatsLine(element, sets, historyLabel = 'Historique') {
         if (!element) {
             return;
         }
@@ -187,8 +187,11 @@
         ormRpe.textContent = values.ormRpe;
         const rpe = document.createElement('span');
         rpe.className = 'exercise-card-stats-cell';
-        rpe.textContent = values.rpeAvg;
-        element.append(spacer, orm, ormRpe, rpe);
+        rpe.textContent = `@${values.rpeAvg}`;
+        const history = document.createElement('span');
+        history.className = 'exercise-card-stats-cell exercise-card-stats-cell--history';
+        history.textContent = historyLabel || 'Historique';
+        element.append(spacer, orm, ormRpe, rpe, history);
     }
 
     function normalizeFocusField(field) {
@@ -693,9 +696,16 @@
             const titleRow = document.createElement('div');
             titleRow.className = 'exercise-card-title-row';
             titleRow.appendChild(name);
+            const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
+            sets.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
+            const meta =
+                typeof A.buildSessionExerciseMeta === 'function'
+                    ? await A.buildSessionExerciseMeta(exercise, sets, { dateKey: key })
+                    : { goalsByPos: new Map(), activeHistoryLabel: 'Historique', activeHistorySets: [] };
+            const statsSourceSets = Array.isArray(meta?.activeHistorySets) ? meta.activeHistorySets : [];
             const statsLine = document.createElement('div');
             statsLine.className = 'exercise-card-stats';
-            renderExerciseStatsLine(statsLine, exercise.sets);
+            renderExerciseStatsLine(statsLine, statsSourceSets, meta?.activeHistoryLabel);
             const detailsButton = document.createElement('button');
             detailsButton.type = 'button';
             detailsButton.className = 'exercise-card-menu-button';
@@ -714,7 +724,7 @@
             end.appendChild(detailsButton);
             const setsWrapper = document.createElement('div');
             setsWrapper.className = 'session-card-sets';
-            await renderSessionCardSets({ exercise, setsWrapper, dateKey: key });
+            await renderSessionCardSets({ exercise, setsWrapper, dateKey: key, meta });
             body.append(titleRow, statsLine, setsWrapper);
 
             card.setAttribute('aria-label', exerciseName);
@@ -725,7 +735,7 @@
         restoreSessionScroll();
     };
 
-    async function renderSessionCardSets({ exercise, setsWrapper, dateKey }) {
+    async function renderSessionCardSets({ exercise, setsWrapper, dateKey, meta: providedMeta = null }) {
         if (!exercise || !setsWrapper) {
             return;
         }
@@ -734,9 +744,10 @@
         const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
         sets.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
         const meta =
-            typeof A.buildSessionExerciseMeta === 'function'
+            providedMeta
+            || (typeof A.buildSessionExerciseMeta === 'function'
                 ? await A.buildSessionExerciseMeta(exercise, sets, { dateKey })
-                : { goalsByPos: new Map(), medalsByPos: new Map() };
+                : { goalsByPos: new Map(), medalsByPos: new Map(), activeHistorySets: [], activeHistoryLabel: 'Historique' });
         if (sets.length) {
             sets.forEach((set, index) => {
                 const line = document.createElement('div');
@@ -828,10 +839,17 @@
         if (!setsWrapper) {
             return false;
         }
+        const sets = Array.isArray(exercise?.sets) ? [...exercise.sets] : [];
+        sets.sort((a, b) => (a?.pos ?? 0) - (b?.pos ?? 0));
+        const meta =
+            typeof A.buildSessionExerciseMeta === 'function'
+                ? await A.buildSessionExerciseMeta(exercise, sets, { dateKey })
+                : { goalsByPos: new Map(), medalsByPos: new Map(), activeHistorySets: [], activeHistoryLabel: 'Historique' };
         if (statsLine) {
-            renderExerciseStatsLine(statsLine, exercise?.sets);
+            const statsSourceSets = Array.isArray(meta?.activeHistorySets) ? meta.activeHistorySets : [];
+            renderExerciseStatsLine(statsLine, statsSourceSets, meta?.activeHistoryLabel);
         }
-        await renderSessionCardSets({ exercise, setsWrapper, dateKey });
+        await renderSessionCardSets({ exercise, setsWrapper, dateKey, meta });
         return true;
     }
 
