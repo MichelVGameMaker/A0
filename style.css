@@ -1689,6 +1689,25 @@ textarea:focus{
   line-height: 1.35;
   color: var(--muted);
   margin: -2px 0 4px;
+  width:100%;
+  display:grid;
+  grid-template-columns:
+    minmax(0, 0.4fr)
+    minmax(0, 1.0fr)
+    minmax(0, 1.0fr)
+    minmax(0, 0.7fr);
+  column-gap:6px;
+  align-items:center;
+}
+.exercise-card-stats-cell{
+  min-width:0;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.exercise-card-stats-cell--spacer{
+  visibility:hidden;
 }
 .exercise-card--full-sets .exercise-card-name{
   padding: 0;
