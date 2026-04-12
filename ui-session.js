@@ -769,7 +769,6 @@
                     text: goalInfo?.text ?? '—',
                     rpeValue: goalInfo?.rpe ?? null
                 });
-                const medalsCell = createSetMedalsCell(meta?.medalsByPos?.get?.(pos) || []);
                 line.append(
                     createSetCell({
                         label: formatSetIndex(pos),
@@ -795,8 +794,7 @@
                         rpeValue: set?.rpe,
                         onClick: stopAndOpen('rpe')
                     }),
-                    goalCell,
-                    medalsCell
+                    goalCell
                 );
                 setsWrapper.appendChild(line);
             });
