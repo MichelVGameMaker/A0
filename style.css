@@ -1771,8 +1771,7 @@ textarea:focus{
     minmax(0, 1.0fr)
     minmax(0, 1.0fr)
     minmax(0, 0.7fr)
-    minmax(0, 1.0fr)
-    minmax(0, 0.5fr);
+    minmax(0, 1.8fr);
   column-gap:6px;
   row-gap:   2px;
   justify-content:center;
