@@ -2709,6 +2709,12 @@ body.inline-keyboard-visible .keyboard-spacer{
   color: var(--black);
 }
 
+
+.inline-keyboard-action--close{
+  white-space: pre-line;
+  line-height: 1.1;
+}
+
 .inline-keyboard-action--span-2{
   grid-row: span 2;
 }

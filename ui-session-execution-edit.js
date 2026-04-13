@@ -1179,7 +1179,8 @@
                     }
                 },
                 {
-                    label: 'fermer clavier ⬇️'
+                    label: 'fermer\n▼',
+                    className: 'inline-keyboard-action--close'
                 }
             ];
         };
