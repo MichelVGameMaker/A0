@@ -7,6 +7,7 @@
     let refsResolved = false;
     let pickerMonth = null;
     let pickerOptions = null;
+    let calendarContext = null;
 
     /* WIRE */
     document.addEventListener('DOMContentLoaded', ensureRefs);
@@ -19,6 +20,10 @@
     A.openCalendar = async function openCalendar() {
         const base =
             A.calendarMonth || new Date(A.activeDate.getFullYear(), A.activeDate.getMonth(), 1);
+        calendarContext = {
+            mode: 'main',
+            baseMonth: new Date(base.getFullYear(), base.getMonth(), 1)
+        };
         await renderCalendar({
             base,
             selectedDate: A.activeDate,
@@ -42,6 +47,11 @@
         if (!pickerMonth || options.resetMonth) {
             pickerMonth = options.baseDate || new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
         }
+        calendarContext = {
+            mode: 'picker',
+            baseMonth: new Date(pickerMonth.getFullYear(), pickerMonth.getMonth(), 1),
+            selectedDate
+        };
         await renderCalendar({
             base: pickerMonth,
             selectedDate,
@@ -56,6 +66,41 @@
                 await A.openCalendarPicker(pickerOptions || {});
             }
         });
+    };
+
+    A.calendarGoToPrevMonth = async function calendarGoToPrevMonth() {
+        const context = calendarContext;
+        if (!context?.baseMonth) {
+            return;
+        }
+        const nextMonth = new Date(context.baseMonth.getFullYear(), context.baseMonth.getMonth() - 1, 1);
+        if (context.mode === 'picker') {
+            pickerMonth = nextMonth;
+            await A.openCalendarPicker(pickerOptions || {});
+            return;
+        }
+        A.calendarMonth = nextMonth;
+        await A.openCalendar();
+    };
+
+    A.calendarGoToNextMonth = async function calendarGoToNextMonth() {
+        const context = calendarContext;
+        if (!context?.baseMonth) {
+            return;
+        }
+        const nextMonth = new Date(context.baseMonth.getFullYear(), context.baseMonth.getMonth() + 1, 1);
+        if (context.mode === 'picker') {
+            pickerMonth = nextMonth;
+            await A.openCalendarPicker(pickerOptions || {});
+            return;
+        }
+        A.calendarMonth = nextMonth;
+        await A.openCalendar();
+    };
+
+    A.closeCalendarModal = function closeCalendarModal() {
+        const { dlgCalendar } = assertRefs();
+        dlgCalendar.close();
     };
 
     /* UTILS */

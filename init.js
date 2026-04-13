@@ -202,13 +202,21 @@
         const { btnDateNav, dlgClose, calPrev, calNext } = refs;
 
         btnDateNav?.addEventListener('click', () => A.openCalendar());
-        dlgClose?.addEventListener('click', () => refs.dlgCalendar?.close());
+        dlgClose?.addEventListener('click', () => A.closeCalendarModal?.() || refs.dlgCalendar?.close());
 
         calPrev?.addEventListener('click', async () => {
+            if (typeof A.calendarGoToPrevMonth === 'function') {
+                await A.calendarGoToPrevMonth();
+                return;
+            }
             A.calendarMonth = new Date(A.calendarMonth.getFullYear(), A.calendarMonth.getMonth() - 1, 1);
             await A.openCalendar();
         });
         calNext?.addEventListener('click', async () => {
+            if (typeof A.calendarGoToNextMonth === 'function') {
+                await A.calendarGoToNextMonth();
+                return;
+            }
             A.calendarMonth = new Date(A.calendarMonth.getFullYear(), A.calendarMonth.getMonth() + 1, 1);
             await A.openCalendar();
         });
