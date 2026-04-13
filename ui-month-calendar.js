@@ -47,6 +47,7 @@
         if (!pickerMonth || options.resetMonth) {
             pickerMonth = options.baseDate || new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
         }
+        delete pickerOptions.resetMonth;
         calendarContext = {
             mode: 'picker',
             baseMonth: new Date(pickerMonth.getFullYear(), pickerMonth.getMonth(), 1),
@@ -63,7 +64,7 @@
             },
             onMonthChange: async (nextMonth) => {
                 pickerMonth = nextMonth;
-                await A.openCalendarPicker(pickerOptions || {});
+                await A.openCalendarPicker({ ...(pickerOptions || {}), resetMonth: false });
             }
         });
     };
@@ -76,7 +77,7 @@
         const nextMonth = new Date(context.baseMonth.getFullYear(), context.baseMonth.getMonth() - 1, 1);
         if (context.mode === 'picker') {
             pickerMonth = nextMonth;
-            await A.openCalendarPicker(pickerOptions || {});
+            await A.openCalendarPicker({ ...(pickerOptions || {}), resetMonth: false });
             return;
         }
         A.calendarMonth = nextMonth;
@@ -91,7 +92,7 @@
         const nextMonth = new Date(context.baseMonth.getFullYear(), context.baseMonth.getMonth() + 1, 1);
         if (context.mode === 'picker') {
             pickerMonth = nextMonth;
-            await A.openCalendarPicker(pickerOptions || {});
+            await A.openCalendarPicker({ ...(pickerOptions || {}), resetMonth: false });
             return;
         }
         A.calendarMonth = nextMonth;
