@@ -3061,6 +3061,10 @@ input[type="number"]{ -moz-appearance:textfield; }
     gap: 8px;
 }
 
+.stats-goal-orm-row + .stats-goal-orm-row {
+    margin-top: 6px;
+}
+
 .stats-goal-orm-label {
     width: 56px;
     margin: 0;
