@@ -1252,16 +1252,28 @@
             <div class="bloque">
                 <label class="lbl">1RM estimé</label>
                 <div class="vstack">
-                    <div class="row stats-goal-date-row">
-                        <input id="statsGoalOrmStart" class="input stats-goal-date" type="text" placeholder="Date de départ" readonly aria-label="Date de départ pour l'objectif 1RM" />
-                        <button id="statsGoalOrmStartPick" class="btn ghost" type="button" aria-label="Choisir la date de départ">📅</button>
+                    <div class="row stats-goal-orm-row">
+                        <label class="lbl stats-goal-orm-label" for="statsGoalOrmStartValue">Départ</label>
+                        <div class="stats-goal-orm-value-wrap">
+                            <input id="statsGoalOrmStartValue" class="input" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Kg" aria-label="Valeur de départ 1RM estimé" />
+                            <span class="stats-goal-orm-unit">kg</span>
+                        </div>
+                        <button id="statsGoalOrmStartPick" class="btn ghost stats-goal-date-pick" type="button" aria-label="Choisir la date de départ">
+                            <span id="statsGoalOrmStart" class="stats-goal-date">Date de départ</span>
+                            <span aria-hidden="true">▼</span>
+                        </button>
                     </div>
-                    <input id="statsGoalOrmStartValue" class="input" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Valeur de départ" aria-label="Valeur de départ 1RM estimé" />
-                    <div class="row stats-goal-date-row">
-                        <input id="statsGoalOrmTargetDate" class="input stats-goal-date" type="text" placeholder="Date cible" readonly aria-label="Date cible pour l'objectif 1RM" />
-                        <button id="statsGoalOrmTargetDatePick" class="btn ghost" type="button" aria-label="Choisir la date cible">📅</button>
+                    <div class="row stats-goal-orm-row">
+                        <label class="lbl stats-goal-orm-label" for="statsGoalOrmTargetValue">Cible</label>
+                        <div class="stats-goal-orm-value-wrap">
+                            <input id="statsGoalOrmTargetValue" class="input" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Kg" aria-label="Valeur cible 1RM estimé" />
+                            <span class="stats-goal-orm-unit">kg</span>
+                        </div>
+                        <button id="statsGoalOrmTargetDatePick" class="btn ghost stats-goal-date-pick" type="button" aria-label="Choisir la date cible">
+                            <span id="statsGoalOrmTargetDate" class="stats-goal-date">Date cible</span>
+                            <span aria-hidden="true">▼</span>
+                        </button>
                     </div>
-                    <input id="statsGoalOrmTargetValue" class="input" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Valeur cible" aria-label="Valeur cible 1RM estimé" />
                 </div>
             </div>
         </div>

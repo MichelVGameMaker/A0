@@ -772,13 +772,15 @@
         if (!input) {
             return;
         }
+        const fallbackLabel = input.dataset.placeholder || input.textContent || 'Date';
+        input.dataset.placeholder = fallbackLabel;
         if (!(dateObj instanceof Date)) {
-            input.value = '';
+            input.textContent = fallbackLabel;
             delete input.dataset.date;
             return;
         }
         input.dataset.date = typeof A.ymd === 'function' ? A.ymd(dateObj) : '';
-        input.value = typeof A.fmtUI === 'function' ? A.fmtUI(dateObj) : dateObj.toLocaleDateString('fr-FR');
+        input.textContent = typeof A.fmtUI === 'function' ? A.fmtUI(dateObj) : dateObj.toLocaleDateString('fr-FR');
     }
 
     function getGoalDateInput(input) {
@@ -1822,10 +1824,13 @@
     }
 
     function parseDate(key) {
+        if (!key || typeof key !== 'string') {
+            return null;
+        }
         const iso = key.includes('T') ? key : `${key}T00:00:00`;
         const parsed = new Date(iso);
         if (Number.isNaN(parsed.getTime())) {
-            return new Date();
+            return null;
         }
         return parsed;
     }
