@@ -1455,9 +1455,15 @@ textarea:focus{
     position: sticky;
     top: 0;
     z-index: 2;
-    background: var(--contentBack);
-    padding: 8px 0;
+    background: #fff;
+    padding: 0 0 8px;
     border-bottom: 1px solid var(--panelBord);
+}
+#screenExecEdit .exercise-read-tabs{
+    margin-top: 0;
+}
+#screenExecEdit .content{
+    padding-top: calc(var(--header-total-h) - 2px);
 }
 #exReadTabs{
     display:grid;
@@ -2286,7 +2292,7 @@ textarea:focus{
   font-weight: var(--fw-strong);
 }
 .exec-row .input{
-  height: var(--control-h); width:100%;
+  height: calc(var(--control-h) * 0.95); width:100%;
   text-align:center; margin:0; padding:0;
 }
 .exec-row{
@@ -2340,7 +2346,7 @@ textarea:focus{
   align-items: stretch;
   justify-content: center;
   gap: 6px;
-  min-height: var(--control-h);
+  min-height: calc(var(--control-h) * 0.95);
   text-align: center;
 }
 
