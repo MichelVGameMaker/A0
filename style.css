@@ -2940,6 +2940,24 @@ input[type="number"]{ -moz-appearance:textfield; }
     gap: 6px;
 }
 
+#exEquip .tag,
+#exSecMuscles .tag,
+#statsMetricTags .tag,
+#statsRangeTags .tag,
+#volumeRangeTags .tag,
+#volumeMuscleRangeTags .tag {
+    color: var(--labelColor);
+}
+
+#exEquip .tag.selected,
+#exSecMuscles .tag.selected,
+#statsMetricTags .tag.selected,
+#statsRangeTags .tag.selected,
+#volumeRangeTags .tag.selected,
+#volumeMuscleRangeTags .tag.selected {
+    color: var(--selectedColor);
+}
+
 .stats-chart {
     width: 100%;
     min-height: 240px;
