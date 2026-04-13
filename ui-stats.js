@@ -1066,7 +1066,8 @@
             if (!statsExerciseSubtitle) {
                 return;
             }
-            statsExerciseSubtitle.textContent = buildSummaryText(metricDefinition, point.value, point.date);
+            const goalValue = getGoalValueAtDate(state.activeMetric, point.date, exercise, usage);
+            statsExerciseSubtitle.textContent = buildSummaryText(metricDefinition, point.value, point.date, goalValue);
         };
 
         const updateFocusAtPoint = (point) => {
@@ -1107,6 +1108,8 @@
             return closest;
         };
 
+        let isSelectionLocked = false;
+
         const handlePointerDown = (event) => {
             if (!points.length) {
                 return;
@@ -1116,10 +1119,14 @@
             if (!closest) {
                 return;
             }
+            isSelectionLocked = true;
             updateFocusAtPoint(closest);
         };
 
         const handlePointerMove = (event) => {
+            if (isSelectionLocked) {
+                return;
+            }
             const closest = findClosestPoint(event.clientX);
             if (!closest) {
                 return;
@@ -1128,6 +1135,9 @@
         };
 
         const clearFocus = () => {
+            if (isSelectionLocked) {
+                return;
+            }
             focusGroup.setAttribute('data-visible', 'false');
             points.forEach((item) => item.element?.classList.remove('is-active'));
             updateExerciseSummary(statsExerciseSubtitle);
@@ -1193,44 +1203,72 @@
     }
 
     function buildOrmGoalTrends(usage, ormGoal) {
-        if (!ormGoal) {
+        const trend = resolveOrmGoalTrend(usage, ormGoal);
+        if (!trend) {
             return [];
+        }
+        const delta = trend.endValue - trend.startValue;
+        const lowerTarget = trend.startValue + delta * 0.98;
+        const upperTarget = trend.startValue + delta * 1.02;
+        return [
+            {
+                startDate: trend.startDate,
+                startValue: trend.startValue,
+                endDate: trend.endDate,
+                endValue: lowerTarget,
+                variant: 'min'
+            },
+            {
+                startDate: trend.startDate,
+                startValue: trend.startValue,
+                endDate: trend.endDate,
+                endValue: upperTarget,
+                variant: 'max'
+            }
+        ];
+    }
+
+    function resolveOrmGoalTrend(usage, ormGoal) {
+        if (!ormGoal) {
+            return null;
         }
         const startDate = parseGoalDate(ormGoal.startDate);
         const targetDate = parseGoalDate(ormGoal.targetDate);
         const targetValue = normalizeGoalNumber(ormGoal.targetValue);
         const manualStartValue = normalizeGoalNumber(ormGoal.startValue);
         if (!(startDate instanceof Date) || !(targetDate instanceof Date) || !Number.isFinite(targetValue)) {
-            return [];
+            return null;
         }
         const startEntry = findGoalStartEntry(usage, startDate);
         const startValue = Number.isFinite(manualStartValue) ? manualStartValue : startEntry?.metrics?.orm;
         const startPointDate = startEntry?.dateObj || startDate;
-        if (!Number.isFinite(startValue) || startValue <= 0) {
-            return [];
+        if (!Number.isFinite(startValue) || startValue <= 0 || targetDate.getTime() <= startPointDate.getTime()) {
+            return null;
         }
-        if (targetDate.getTime() <= startPointDate.getTime()) {
-            return [];
+        return {
+            startDate: startPointDate,
+            startValue,
+            endDate: targetDate,
+            endValue: targetValue
+        };
+    }
+
+    function getGoalValueAtDate(metricKey, dateObj, exercise, usage) {
+        if (metricKey !== 'orm' || !(dateObj instanceof Date)) {
+            return null;
         }
-        const delta = targetValue - startValue;
-        const lowerTarget = startValue + delta * 0.98;
-        const upperTarget = startValue + delta * 1.02;
-        return [
-            {
-                startDate: startPointDate,
-                startValue,
-                endDate: targetDate,
-                endValue: lowerTarget,
-                variant: 'min'
-            },
-            {
-                startDate: startPointDate,
-                startValue,
-                endDate: targetDate,
-                endValue: upperTarget,
-                variant: 'max'
-            }
-        ];
+        const trend = resolveOrmGoalTrend(usage, exercise?.goals?.orm);
+        if (!trend) {
+            return null;
+        }
+        const startTime = trend.startDate.getTime();
+        const endTime = trend.endDate.getTime();
+        const currentTime = dateObj.getTime();
+        if (currentTime < startTime || currentTime > endTime) {
+            return null;
+        }
+        const ratio = (currentTime - startTime) / (endTime - startTime);
+        return trend.startValue + (trend.endValue - trend.startValue) * ratio;
     }
 
     function findGoalStartEntry(usage, startDate) {
@@ -1882,9 +1920,13 @@
             .replace(/\u00a0/g, ' ');
     }
 
-    function buildSummaryText(definition, metricValue, dateObj) {
+    function buildSummaryText(definition, metricValue, dateObj, goalValue = null) {
         const metricText = formatMetricValue(metricValue, state.activeMetric);
         const dateText = formatSummaryDate(dateObj);
+        if (Number.isFinite(goalValue)) {
+            const goalText = formatMetricValue(goalValue, state.activeMetric);
+            return `${definition.label} : ${metricText} vs ${goalText} - ${dateText}`;
+        }
         return `${definition.label} : ${metricText} - ${dateText}`;
     }
 
