@@ -535,6 +535,10 @@
                 dlgStatsGoal.close();
             });
         }
+        dlgStatsGoal.addEventListener('close', () => {
+            fillGoalDialog(state.activeExercise);
+            renderExerciseDetail();
+        });
         if (statsGoalSave) {
             statsGoalSave.addEventListener('click', () => {
                 void saveGoalDialog();
@@ -557,8 +561,6 @@
             statsGoalOrmStartValue.addEventListener('input', () => {
                 if (!statsGoalOrmStartValue.value) {
                     delete statsGoalOrmStartValue.dataset.userEdited;
-                    const startDate = getGoalDateInput(refs.statsGoalOrmStart);
-                    updateGoalStartValueFromDate(startDate, { force: true });
                     return;
                 }
                 statsGoalOrmStartValue.dataset.userEdited = 'true';
@@ -726,16 +728,23 @@
         const ormTargetDate = getGoalDateInput(statsGoalOrmTargetDate);
         const ormStartValue = toGoalNumber(statsGoalOrmStartValue?.value);
         const ormTargetValue = toGoalNumber(statsGoalOrmTargetValue?.value);
+        const hasCompleteOrmGoal =
+            ormStart instanceof Date &&
+            ormTargetDate instanceof Date &&
+            Number.isFinite(ormStartValue) &&
+            Number.isFinite(ormTargetValue);
         return {
             setsWeek: buildGoalRange(statsGoalSetsMin?.value, statsGoalSetsMax?.value),
             volume: buildGoalRange(statsGoalVolumeMin?.value, statsGoalVolumeMax?.value),
             reps: buildGoalRange(statsGoalRepsMin?.value, statsGoalRepsMax?.value),
-            orm: {
-                startDate: ormStart && typeof A.ymd === 'function' ? A.ymd(ormStart) : null,
-                targetDate: ormTargetDate && typeof A.ymd === 'function' ? A.ymd(ormTargetDate) : null,
-                startValue: Number.isFinite(ormStartValue) ? ormStartValue : null,
-                targetValue: Number.isFinite(ormTargetValue) ? ormTargetValue : null
-            }
+            orm: hasCompleteOrmGoal
+                ? {
+                      startDate: typeof A.ymd === 'function' ? A.ymd(ormStart) : null,
+                      targetDate: typeof A.ymd === 'function' ? A.ymd(ormTargetDate) : null,
+                      startValue: ormStartValue,
+                      targetValue: ormTargetValue
+                  }
+                : null
         };
     }
 
@@ -1241,15 +1250,17 @@
         if (!(startDate instanceof Date) || !(targetDate instanceof Date) || !Number.isFinite(targetValue)) {
             return null;
         }
-        const startEntry = findGoalStartEntry(usage, startDate);
-        const startValue = Number.isFinite(manualStartValue) ? manualStartValue : startEntry?.metrics?.orm;
-        const startPointDate = startEntry?.dateObj || startDate;
-        if (!Number.isFinite(startValue) || startValue <= 0 || targetDate.getTime() <= startPointDate.getTime()) {
+        const startPointDate = startDate;
+        if (
+            !Number.isFinite(manualStartValue) ||
+            manualStartValue <= 0 ||
+            targetDate.getTime() <= startPointDate.getTime()
+        ) {
             return null;
         }
         return {
             startDate: startPointDate,
-            startValue,
+            startValue: manualStartValue,
             endDate: targetDate,
             endValue: targetValue
         };
