@@ -702,10 +702,9 @@
                 typeof A.buildSessionExerciseMeta === 'function'
                     ? await A.buildSessionExerciseMeta(exercise, sets, { dateKey: key })
                     : { goalsByPos: new Map(), activeHistoryLabel: 'Historique', activeHistorySets: [] };
-            const statsSourceSets = Array.isArray(meta?.activeHistorySets) ? meta.activeHistorySets : [];
             const statsLine = document.createElement('div');
             statsLine.className = 'exercise-card-stats';
-            renderExerciseStatsLine(statsLine, statsSourceSets, meta?.activeHistoryLabel);
+            renderExerciseStatsLine(statsLine, sets, meta?.activeHistoryLabel);
             const detailsButton = document.createElement('button');
             detailsButton.type = 'button';
             detailsButton.className = 'exercise-card-menu-button';
@@ -846,8 +845,7 @@
                 ? await A.buildSessionExerciseMeta(exercise, sets, { dateKey })
                 : { goalsByPos: new Map(), medalsByPos: new Map(), activeHistorySets: [], activeHistoryLabel: 'Historique' };
         if (statsLine) {
-            const statsSourceSets = Array.isArray(meta?.activeHistorySets) ? meta.activeHistorySets : [];
-            renderExerciseStatsLine(statsLine, statsSourceSets, meta?.activeHistoryLabel);
+            renderExerciseStatsLine(statsLine, sets, meta?.activeHistoryLabel);
         }
         await renderSessionCardSets({ exercise, setsWrapper, dateKey, meta });
         return true;
