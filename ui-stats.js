@@ -1790,7 +1790,7 @@
                 maxWeight = weight;
                 hasData = true;
             }
-            if (Number.isFinite(rpe) && rpe >= 5 && rpe <= 10) {
+            if (Number.isFinite(rpe) && rpe >= 7 && rpe <= 10) {
                 rpeSum += rpe;
                 rpeCount += 1;
                 hasData = true;
