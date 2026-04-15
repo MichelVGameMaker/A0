@@ -856,6 +856,12 @@
             if (!active) {
                 return;
             }
+            if (typeof active.onKey === 'function') {
+                const handled = active.onKey(key, { mode: active.mode, layout: active.layout });
+                if (handled) {
+                    return;
+                }
+            }
             if (active.mode === 'edit') {
                 const edit = active.edit || {};
                 if (key === 'up') {
@@ -874,6 +880,29 @@
             }
             const current = String(active.getValue?.() ?? '');
             const layout = active.layout || 'default';
+            const splitTimeField = Boolean(active.splitTimeField);
+
+            if (layout === 'time' && splitTimeField) {
+                if (key === ':') {
+                    active.onTimeToggle?.();
+                    return;
+                }
+                if (key !== 'del' && !/^\d$/.test(key)) {
+                    return;
+                }
+                const digitsOnly = current.replace(/\D/g, '');
+                const shouldReplace = active.replaceOnInput || hasFullSelection(current);
+                const base = shouldReplace ? '' : digitsOnly;
+                let next = base;
+                if (key === 'del') {
+                    next = base.slice(0, -1);
+                } else {
+                    next = `${base}${key}`;
+                }
+                active.replaceOnInput = false;
+                active.onChange?.(next);
+                return;
+            }
 
             if (layout === 'time') {
                 const normalized = normalizeTimeInput(current);

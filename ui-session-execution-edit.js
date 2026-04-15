@@ -1201,7 +1201,8 @@
                     reps: repsInput.value,
                     weight: weightInput.value,
                     rpe: rpeInput.value,
-                    rest: parseRestInput(restInput.value, value.rest)
+                    minutes: restMinutesInput.value,
+                    seconds: restSecondsInput.value
                 }),
                 onSelectField: (field) => selectField?.(field),
                 onMove: async (direction) => {
@@ -1252,6 +1253,12 @@
                 case 'rest':
                     next.rest = parseRestInput(rawValue, value.rest);
                     break;
+                case 'minutes':
+                    next.rest = composeRestFromParts(rawValue, restSecondsInput.value);
+                    break;
+                case 'seconds':
+                    next.rest = composeRestFromParts(restMinutesInput.value, rawValue);
+                    break;
                 default:
                     return;
             }
@@ -1271,7 +1278,7 @@
             if (field === 'rpe') {
                 return 'rpe';
             }
-            if (field === 'rest') {
+            if (field === 'rest' || field === 'minutes' || field === 'seconds') {
                 return 'time';
             }
             return 'default';
@@ -1285,6 +1292,14 @@
                 layout: resolveKeyboardLayout(field),
                 mode: inlineKeyboard.getMode?.() || 'input',
                 decimalSeparator: field === 'weight' ? ',' : undefined,
+                splitTimeField: field === 'minutes' || field === 'seconds',
+                onKey: (key) => {
+                    if (key === ':' && (field === 'minutes' || field === 'seconds')) {
+                        selectField?.(field === 'minutes' ? 'seconds' : 'minutes');
+                        return true;
+                    }
+                    return false;
+                },
                 actions: buildKeyboardActions,
                 edit: {
                     onMove: async (direction) => {
@@ -1365,15 +1380,25 @@
             { inputMode: 'decimal', type: 'text' }
         );
         const rpeInput = createInput(() => (value.rpe == null ? '' : String(value.rpe)), 'rpe', 'exec-rpe-cell');
-        const restInput = createInput(() => formatRestDisplay(value.rest), 'rest', 'exec-rest-cell');
-        collectInputs(repsInput, weightInput, rpeInput, restInput);
+        const restMinutesInput = createInput(() => splitRest(value.rest).minutes, 'minutes', 'exec-rest-minute-cell');
+        const restSecondsInput = createInput(
+            () => String(splitRest(value.rest).seconds).padStart(2, '0'),
+            'seconds',
+            'exec-rest-second-cell'
+        );
+        const restContainer = document.createElement('div');
+        restContainer.className = 'exec-rest-cell';
+        restContainer.append(restMinutesInput, restSecondsInput);
+        collectInputs(repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
         syncRowTone();
         selectField = (field) => {
             const map = {
                 reps: repsInput,
                 weight: weightInput,
                 rpe: rpeInput,
-                rest: restInput
+                rest: restMinutesInput,
+                minutes: restMinutesInput,
+                seconds: restSecondsInput
             };
             const target = map[field];
             if (!target) {
@@ -1384,7 +1409,7 @@
         };
 
         const metaCell = buildMetaCell(set, index, meta);
-        row.append(order, repsInput, weightInput, rpeInput, restInput, metaCell);
+        row.append(order, repsInput, weightInput, rpeInput, restContainer, metaCell);
         return row;
     }
 
@@ -2645,6 +2670,20 @@
         }
         const minutes = safeInt(parts[0], 0);
         const seconds = safeInt(parts[1], 0);
+        return Math.max(0, minutes * 60 + seconds);
+    }
+
+    function parseRestPart(rawValue, fallback = 0) {
+        if (rawValue == null || rawValue === '') {
+            return Math.max(0, safeInt(fallback, 0));
+        }
+        return Math.max(0, safeInt(rawValue, fallback));
+    }
+
+    function composeRestFromParts(minutesValue, secondsValue) {
+        const minutes = parseRestPart(minutesValue, 0);
+        const secondsRaw = parseRestPart(secondsValue, 0);
+        const seconds = Math.min(59, secondsRaw);
         return Math.max(0, minutes * 60 + seconds);
     }
 
