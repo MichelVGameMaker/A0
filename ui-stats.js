@@ -74,7 +74,7 @@
         },
         {
             key: 'setsWeek',
-            tagLabel: 'Séries/sem.',
+            tagLabel: 'Série/sem',
             label: 'Série semaine',
             axisUnit: 'séries',
             format: formatSeries
