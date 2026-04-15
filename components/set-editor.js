@@ -808,21 +808,6 @@
             document.addEventListener('pointercancel', handleOutsideEnd, true);
         };
 
-        const hasFullSelection = (value) => {
-            if (!active?.target) {
-                return false;
-            }
-            const target = active.target;
-            const length = value?.length ?? 0;
-            if (!length) {
-                return false;
-            }
-            if (typeof target.selectionStart === 'number' && typeof target.selectionEnd === 'number') {
-                return target.selectionStart === 0 && target.selectionEnd === length;
-            }
-            return false;
-        };
-
         const selectTarget = (target = active?.target, options = {}) => {
             if (!target || target !== active?.target) {
                 return;
@@ -891,7 +876,7 @@
                     return;
                 }
                 const digitsOnly = current.replace(/\D/g, '');
-                const shouldReplace = active.replaceOnInput || hasFullSelection(current);
+                const shouldReplace = Boolean(active.replaceOnInput);
                 const base = shouldReplace ? '' : digitsOnly;
                 let next = base;
                 if (key === 'del') {
@@ -956,7 +941,7 @@
                 return;
             }
 
-            const shouldReplace = active.replaceOnInput || hasFullSelection(current);
+            const shouldReplace = Boolean(active.replaceOnInput);
             const base = shouldReplace ? '' : current;
             let next = base;
             if (key === 'del') {
