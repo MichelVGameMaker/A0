@@ -1293,6 +1293,7 @@
                 mode: inlineKeyboard.getMode?.() || 'input',
                 decimalSeparator: field === 'weight' ? ',' : undefined,
                 splitTimeField: field === 'minutes' || field === 'seconds',
+                timeField: field,
                 onKey: (key) => {
                     if (key === ':' && (field === 'minutes' || field === 'seconds')) {
                         selectField?.(field === 'minutes' ? 'seconds' : 'minutes');

@@ -656,7 +656,13 @@
                     down: '⬇️',
                     trash: '🗑️'
                 };
-                button.textContent = labelMap[key] || key;
+                const isSplitTimeToggle = key === ':' && layout === 'time' && active?.splitTimeField;
+                if (isSplitTimeToggle) {
+                    const side = active?.timeField;
+                    button.textContent = side === 'minutes' ? '▸:' : side === 'seconds' ? ':◂' : ':';
+                } else {
+                    button.textContent = labelMap[key] || key;
+                }
                 button.dataset.key = key;
                 if (key === 'up' || key === 'down') {
                     button.dataset.wide = 'true';
@@ -1016,6 +1022,7 @@
             const mode = handlers.mode || 'input';
             active = { target, ...handlers, layout, mode };
             applyLayout(layout, mode);
+            renderKeys(currentLayout, currentMode);
             renderActions(resolveActions());
             keyboard.hidden = false;
             keyboard.setAttribute('data-visible', 'true');
