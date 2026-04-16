@@ -400,6 +400,7 @@
             applyRpeTone(row, value.rpe);
             applyRpeTone(repsInput, value.rpe);
             applyRpeTone(weightInput, value.rpe);
+            applyRpeTone(restContainer, value.rpe);
         };
 
         const updatePreview = (source, { persist = true } = {}) => {

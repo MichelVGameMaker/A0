@@ -1117,9 +1117,6 @@
             applyRpeTone(row, value.rpe);
             applyRpeTone(repsInput, value.rpe);
             applyRpeTone(weightInput, value.rpe);
-            applyRpeTone(rpeInput, value.rpe);
-            applyRpeTone(restMinutesInput, value.rpe);
-            applyRpeTone(restSecondsInput, value.rpe);
             applyRpeTone(restContainer, value.rpe);
         };
 
