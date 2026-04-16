@@ -2299,6 +2299,20 @@ textarea:focus{
   align-items: stretch;
 }
 
+.routine-set-row,
+.exec-set-row{
+  border: 1px solid var(--panelBord);
+  border-radius: 10px;
+  padding: 2px 4px;
+  background: color-mix(in srgb, var(--panelBord) 20%, transparent);
+}
+
+.routine-set-row[data-rpe],
+.exec-set-row[data-rpe]{
+  background: color-mix(in srgb, var(--rpe-bg) 35%, transparent);
+  border-color: color-mix(in srgb, var(--rpe-border) 50%, var(--panelBord));
+}
+
 .exec-row .exec-reps-cell{
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;

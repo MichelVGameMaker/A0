@@ -397,6 +397,7 @@
         };
 
         const syncRowTone = () => {
+            applyRpeTone(row, value.rpe);
             applyRpeTone(repsInput, value.rpe);
             applyRpeTone(weightInput, value.rpe);
         };
