@@ -2624,21 +2624,8 @@ textarea:focus{
   outline:none;
 }
 
-.set-editor-highlight{
-  border-radius: var(--radius);
-  outline: 2px solid var(--emphase);
-  outline-offset: 0;
-}
-
-.set-editor-highlight .set-edit-input,
-.set-editor-highlight .set-edit-button,
-.set-editor-highlight .routine-set-order,
-.set-editor-highlight .exec-meta-chip{
+.set-edit-input--active{
   color: var(--emphase);
-}
-
-.set-editor-highlight .set-edit-input,
-.set-editor-highlight .set-edit-button{
   border-color: var(--emphase);
 }
 
