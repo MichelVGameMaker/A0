@@ -135,7 +135,9 @@
 
         static #selectOnFocus(event) {
             const target = event.currentTarget;
-            if (target?.select) {
+            const role = target?.dataset?.role;
+            const shouldSelectAll = role === 'minutes' || role === 'seconds';
+            if (shouldSelectAll && target?.select) {
                 target.select();
             }
         }
@@ -542,7 +544,9 @@
             if (target) {
                 window.requestAnimationFrame(() => {
                     target.focus();
-                    if (target.select) {
+                    const role = target?.dataset?.role;
+                    const shouldSelectAll = role === 'minutes' || role === 'seconds';
+                    if (shouldSelectAll && target.select) {
                         target.select();
                     }
                 });
