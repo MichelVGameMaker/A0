@@ -457,6 +457,26 @@
             ];
         };
 
+        const activeCellClass = 'set-edit-input--active';
+        const clearActiveCell = () => {
+            row.querySelectorAll(`.${activeCellClass}`).forEach((node) => node.classList.remove(activeCellClass));
+        };
+        const setActiveCell = (field) => {
+            clearActiveCell();
+            const map = {
+                reps: repsInput,
+                weight: weightInput,
+                rpe: rpeInput,
+                rest: restMinutesInput,
+                minutes: restMinutesInput,
+                seconds: restSecondsInput
+            };
+            const target = map[field];
+            if (target) {
+                target.classList.add(activeCellClass);
+            }
+        };
+
         const openEditor = (focusField) => {
             const editor = ensureInlineEditor();
             if (!editor) {
@@ -475,7 +495,10 @@
                     minutes: restMinutesInput.value,
                     seconds: restSecondsInput.value
                 }),
-                onSelectField: (field) => selectField?.(field),
+                onSelectField: (field) => {
+                    setActiveCell(field);
+                    selectField?.(field);
+                },
                 onMove: (direction) => {
                     const delta = direction === 'up' ? -1 : 1;
                     const nextIndex = moveSet(currentIndex, delta, row);
@@ -503,8 +526,11 @@
                 },
                 onDelete: () => removeSet(currentIndex),
                 onChange: updatePreview,
-                onClose: () => row.classList.remove('routine-set-row-active', 'set-editor-highlight'),
-                onOpen: () => row.classList.add('routine-set-row-active', 'set-editor-highlight')
+                onClose: () => {
+                    clearActiveCell();
+                    row.classList.remove('routine-set-row-active');
+                },
+                onOpen: () => row.classList.add('routine-set-row-active')
             });
         };
 
@@ -633,6 +659,7 @@
                 }
             });
             input.addEventListener('click', () => {
+                setActiveCell(field);
                 openEditor(field);
                 attachInlineKeyboard(input, field);
             });
@@ -671,6 +698,7 @@
             if (!target) {
                 return;
             }
+            setActiveCell(field);
             attachInlineKeyboard(target, field);
             target.focus({ preventScroll: true });
         };

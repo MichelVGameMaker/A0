@@ -1127,7 +1127,7 @@
             }
         };
 
-        const ACTIVE_CLASSES = ['routine-set-row-active', 'set-editor-highlight'];
+        const ACTIVE_CLASSES = ['routine-set-row-active'];
 
         const close = () => {
             if (!active) {
