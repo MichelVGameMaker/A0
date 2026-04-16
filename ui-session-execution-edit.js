@@ -1116,6 +1116,10 @@
         const syncRowTone = () => {
             applyRpeTone(repsInput, value.rpe);
             applyRpeTone(weightInput, value.rpe);
+            applyRpeTone(rpeInput, value.rpe);
+            applyRpeTone(restMinutesInput, value.rpe);
+            applyRpeTone(restSecondsInput, value.rpe);
+            applyRpeTone(restContainer, value.rpe);
         };
 
         const updatePreview = (source, { persist = true } = {}) => {

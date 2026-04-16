@@ -2325,6 +2325,7 @@ textarea:focus{
   grid-column: 4;
   align-self: stretch;
   height: 100%;
+  border-radius: 999px;
 }
 
 .exec-row .exec-rest-cell{
@@ -2427,7 +2428,7 @@ textarea:focus{
 
 
 .routine-set-row-active{
-  box-shadow: inset 0 -2px var(--emphase);
+  box-shadow: none;
 }
 
 .routine-set-order{
@@ -2442,19 +2443,19 @@ textarea:focus{
 .set-edit-button{
   width:100%;
   min-height: var(--control-h);
-  font-weight: var(--fw-strong);
+  font-weight: var(--fw-base);
   color: var(--black);
-  background: var(--panelBord);
-  border-color: var(--black);
+  background: color-mix(in srgb, var(--panelBord) 35%, transparent);
+  border-color: color-mix(in srgb, var(--panelBord) 55%, transparent);
 }
 .set-edit-input{
   width:100%;
   min-height: var(--control-h);
   text-align:center;
-  font-weight: var(--fw-strong);
+  font-weight: var(--fw-base);
   color: var(--black);
-  background: var(--panelBord);
-  border-color: var(--black);
+  background: color-mix(in srgb, var(--panelBord) 35%, transparent);
+  border-color: color-mix(in srgb, var(--panelBord) 55%, transparent);
 }
 .routine-set-grid .set-edit-button{
   color: var(--black);
@@ -2496,20 +2497,20 @@ textarea:focus{
 }
 
 .exec-set-planned{
-  background: color-mix(in srgb, var(--panelBord) 20%, transparent);
-  color: color-mix(in srgb, var(--black) 65%, transparent);
+  background: transparent;
+  color: inherit;
   font-weight: var(--fw-light);
 }
 
 .exec-set-planned .set-edit-button{
-  background: color-mix(in srgb, var(--panelBord) 35%, transparent);
-  border-color: color-mix(in srgb, var(--panelBord) 55%, transparent);
+  background: color-mix(in srgb, var(--panelBord) 20%, transparent);
+  border-color: color-mix(in srgb, var(--panelBord) 45%, transparent);
   color: inherit;
   font-weight: inherit;
 }
 .exec-set-planned .set-edit-input{
-  background: color-mix(in srgb, var(--panelBord) 35%, transparent);
-  border-color: color-mix(in srgb, var(--panelBord) 55%, transparent);
+  background: color-mix(in srgb, var(--panelBord) 20%, transparent);
+  border-color: color-mix(in srgb, var(--panelBord) 45%, transparent);
   color: inherit;
   font-weight: inherit;
 }
@@ -2625,8 +2626,8 @@ textarea:focus{
 }
 
 .set-edit-input--active{
-  color: var(--emphase);
   border-color: var(--emphase);
+  box-shadow: inset 0 0 0 1px var(--emphase);
 }
 
 .inline-set-editor-row{
@@ -2785,6 +2786,20 @@ body.inline-keyboard-visible .keyboard-spacer{
 .exec-rest-cell{
   font-variant-numeric: tabular-nums;
   background: transparent;
+}
+
+.exec-set-executed .set-edit-input[data-rpe],
+.exec-set-executed .set-edit-button[data-rpe],
+.exec-rest-cell[data-rpe] .set-edit-input{
+  background: color-mix(in srgb, var(--rpe-bg) 35%, transparent);
+  border-color: color-mix(in srgb, var(--rpe-border) 50%, var(--panelBord));
+}
+
+.exec-set-planned .set-edit-input[data-rpe],
+.exec-set-planned .set-edit-button[data-rpe],
+.exec-set-planned .exec-rest-cell[data-rpe] .set-edit-input{
+  background: color-mix(in srgb, var(--rpe-bg) 20%, transparent);
+  border-color: color-mix(in srgb, var(--rpe-border) 35%, var(--panelBord));
 }
 
 .span-two{
