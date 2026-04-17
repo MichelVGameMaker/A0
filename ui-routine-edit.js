@@ -1044,8 +1044,7 @@
                         rpeValue: set?.rpe,
                         onClick: stopAndOpen('rpe')
                     }),
-                    createEmptySetCell({ className: 'session-card-set-cell--goal' }),
-                    createEmptySetCell({ className: 'session-card-set-cell--medal' })
+                    createEmptySetCell({ className: 'session-card-set-cell--goal' })
                 );
                 setsWrapper.appendChild(line);
             });
