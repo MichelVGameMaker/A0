@@ -5,7 +5,6 @@
     /* STATE */
     const refs = {};
     let refsResolved = false;
-    const SHEET_ANIMATION_MS = 220;
     const state = {
         routineId: null,
         moveId: null,
@@ -68,9 +67,6 @@
         routineMoveTitle.textContent = move.exerciseName || 'Exercice';
         renderSets();
         switchScreen('screenRoutineMoveEdit');
-        requestAnimationFrame(() => {
-            refs.screenRoutineMoveEdit?.classList.add('is-active');
-        });
     };
 
     A.openRoutineMoveMeta = async function openRoutineMoveMeta(options = {}) {
@@ -383,8 +379,8 @@
         const value = {
             reps: safePositiveInt(set.reps),
             weight: sanitizeWeight(set.weight),
-            rpe: clampRpe(set.rpe),
-            rest: Math.max(0, safeInt(set.rest, 0))
+            rpe: set.rpe != null && set.rpe !== '' ? clampRpe(set.rpe) : null,
+            rest: Math.max(0, safeInt(set.rest, getRestDefaultDuration()))
         };
 
         const inputs = [];
@@ -440,11 +436,22 @@
             return [
                 toggleAction,
                 {
-                    label: 'prévu',
-                    className: 'inline-keyboard-action--span-2',
-                    span: 2,
-                    onClick: () => {
-                        applySetEditorResult(currentIndex, {
+                    label: 'planifier',
+                    className: 'inline-keyboard-action--muted',
+                    onClick: async () => {
+                        await applySetEditorResult(currentIndex, {
+                            reps: value.reps,
+                            weight: value.weight,
+                            rpe: value.rpe,
+                            rest: value.rest
+                        });
+                    }
+                },
+                {
+                    label: 'enregistrer',
+                    className: 'inline-keyboard-action--emphase',
+                    onClick: async () => {
+                        await applySetEditorResult(currentIndex, {
                             reps: value.reps,
                             weight: value.weight,
                             rpe: value.rpe,
@@ -459,6 +466,7 @@
             ];
         };
 
+        let selectField = null;
         const activeCellClass = 'set-edit-input--active';
         const clearActiveCell = () => {
             row.querySelectorAll(`.${activeCellClass}`).forEach((node) => node.classList.remove(activeCellClass));
@@ -501,9 +509,9 @@
                     setActiveCell(field);
                     selectField?.(field);
                 },
-                onMove: (direction) => {
+                onMove: async (direction) => {
                     const delta = direction === 'up' ? -1 : 1;
-                    const nextIndex = moveSet(currentIndex, delta, row);
+                    const nextIndex = await moveSet(currentIndex, delta, row);
                     if (nextIndex === null || nextIndex === undefined) {
                         return null;
                     }
@@ -511,11 +519,13 @@
                     return { order: { position: currentIndex + 1 } };
                 },
                 actions: [
-                    { id: 'plan', label: 'Planifier', variant: 'primary', full: true },
+                    { id: 'plan', label: 'Planifier', variant: 'ghost', full: true },
+                    { id: 'save', label: 'Enregistrer', variant: 'primary', full: true },
                     { id: 'delete', label: 'Supprimer', variant: 'danger', full: true }
                 ],
-                onApply: (actionId, payload) => {
-                    if (actionId !== 'plan') {
+                onApply: async (actionId, payload) => {
+                    if (actionId === 'delete') {
+                        await removeSet(currentIndex);
                         return;
                     }
                     const nextValues = {
@@ -524,7 +534,7 @@
                         rpe: payload.rpe != null ? clampRpe(payload.rpe) : null,
                         rest: Math.max(0, Math.round(payload.rest ?? 0))
                     };
-                    applySetEditorResult(currentIndex, nextValues);
+                    await applySetEditorResult(currentIndex, nextValues);
                 },
                 onDelete: () => removeSet(currentIndex),
                 onChange: updatePreview,
@@ -536,7 +546,7 @@
             });
         };
 
-        const applyDirectChange = (field, rawValue) => {
+        const applyDirectChange = async (field, rawValue) => {
             const next = { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest };
             switch (field) {
                 case 'reps':
@@ -560,7 +570,7 @@
                 default:
                     return;
             }
-            applySetEditorResult(currentIndex, next, { render: false });
+            await applySetEditorResult(currentIndex, next, { render: false });
             updatePreview(next, { persist: false });
         };
 
@@ -596,9 +606,9 @@
                 },
                 actions: buildKeyboardActions,
                 edit: {
-                    onMove: (direction) => {
+                    onMove: async (direction) => {
                         const delta = direction === 'up' ? -1 : 1;
-                        const nextIndex = moveSet(currentIndex, delta, row);
+                        const nextIndex = await moveSet(currentIndex, delta, row);
                         if (nextIndex === null || nextIndex === undefined) {
                             return;
                         }
@@ -609,8 +619,8 @@
                             total
                         });
                     },
-                    onDelete: () => {
-                        removeSet(currentIndex);
+                    onDelete: async () => {
+                        await removeSet(currentIndex);
                     }
                 },
                 getValue: () => input.value,
@@ -622,7 +632,7 @@
                     if (field === 'weight' && /[.,]$/.test(String(next))) {
                         return;
                     }
-                    applyDirectChange(field, input.value);
+                    void applyDirectChange(field, input.value);
                 },
                 onClose: () => {
                     input.blur();
@@ -651,7 +661,7 @@
                 if (field === 'rpe') {
                     applyRpeTone(input, input.value);
                 }
-                applyDirectChange(field, input.value);
+                void applyDirectChange(field, input.value);
             };
             input.addEventListener('change', commit);
             input.addEventListener('keydown', (event) => {
@@ -687,7 +697,7 @@
         restContainer.append(restMinutesInput, restSecondsInput);
         collectInputs(repsInput, weightInput, rpeInput, restMinutesInput, restSecondsInput);
         syncRowTone();
-        const selectField = (field) => {
+        selectField = (field) => {
             const map = {
                 reps: repsInput,
                 weight: weightInput,
@@ -1133,17 +1143,6 @@
         if (state.moveId) {
             A.setRoutineEditScrollTarget?.(state.moveId);
         }
-        const { screenRoutineMoveEdit } = assertRefs();
-        if (screenRoutineMoveEdit?.classList.contains('is-active')) {
-            screenRoutineMoveEdit.classList.remove('is-active');
-            screenRoutineMoveEdit.classList.add('is-closing');
-            setTimeout(() => {
-                screenRoutineMoveEdit.classList.remove('is-closing');
-                switchScreen(state.callerScreen || 'screenRoutineEdit');
-                void A.refreshRoutineEdit();
-            }, SHEET_ANIMATION_MS);
-            return;
-        }
         switchScreen(state.callerScreen || 'screenRoutineEdit');
         void A.refreshRoutineEdit();
     }
@@ -1278,18 +1277,13 @@
             screenPreferences,
             screenData
         };
-        const keepBehind = target === 'screenRoutineMoveEdit' ? state.callerScreen : null;
         Object.entries(map).forEach(([key, element]) => {
             if (!element) {
                 return;
             }
-            const shouldShow = key === target || (keepBehind && key === keepBehind);
-            element.hidden = !shouldShow;
+            element.hidden = key !== target;
         });
-        if (target === 'screenRoutineMoveEdit' && screenRoutineMoveEdit) {
-            screenRoutineMoveEdit.classList.remove('is-closing');
-        }
-        if (target !== 'screenRoutineMoveEdit' && screenRoutineMoveEdit) {
+        if (screenRoutineMoveEdit) {
             screenRoutineMoveEdit.classList.remove('is-active', 'is-closing');
         }
     }
