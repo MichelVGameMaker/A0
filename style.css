@@ -2701,22 +2701,6 @@ textarea:focus{
   gap: 10px;
 }
 
-.inline-keyboard-feedback{
-  grid-column: 1 / -1;
-  min-height: 20px;
-  font-size: 13px;
-  font-weight: var(--fw-strong);
-  color: var(--black);
-  opacity: 0;
-  transform: translateY(-3px);
-  transition: opacity 120ms ease, transform 120ms ease;
-}
-
-.inline-keyboard-feedback[data-visible="true"]{
-  opacity: 0.85;
-  transform: translateY(0);
-}
-
 .keyboard-spacer{
   height: 0;
   pointer-events: none;
@@ -2806,12 +2790,16 @@ body.inline-keyboard-visible .keyboard-spacer{
 }
 
 .inline-keyboard-key:active{
-  filter: brightness(0.97);
+  filter: brightness(0.9);
   transform: translateY(1px);
 }
 
 .inline-keyboard-key[data-rpe]:active{
-  filter: brightness(0.94);
+  filter: brightness(0.88);
+}
+
+.inline-keyboard-key--pressed{
+  filter: brightness(0.86);
 }
 
 .exec-rest-cell{
