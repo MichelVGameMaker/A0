@@ -630,14 +630,8 @@
         actionsGrid.className = 'inline-keyboard-actions';
         content.appendChild(actionsGrid);
 
-        const keyFeedback = document.createElement('div');
-        keyFeedback.className = 'inline-keyboard-feedback';
-        keyFeedback.setAttribute('aria-live', 'polite');
-        keyFeedback.setAttribute('role', 'status');
-        keyFeedback.hidden = true;
-        content.appendChild(keyFeedback);
-
-        let keyFeedbackTimer = null;
+        let pressedKeyTimer = null;
+        let pressedKeyButton = null;
 
         const layouts = {
             default: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     '.',   '0',  'del'],
@@ -690,39 +684,32 @@
                 }
                 button.addEventListener('click', (event) => {
                     event.preventDefault();
-                    showKeyFeedback(key);
+                    flashPressedKey(button);
                     handleInput(key);
                 });
                 grid.appendChild(button);
             });
         };
 
-        const formatKeyFeedback = (key) => {
-            const map = {
-                del: '⌫ Effacer',
-                up: '⬆️ Monter',
-                down: '⬇️ Descendre',
-                trash: '🗑️ Supprimer',
-                ':': ': Séparateur temps',
-                '-': 'RPE vide'
-            };
-            return map[key] || key;
-        };
-
-        const showKeyFeedback = (key) => {
-            if (!key || !active) {
+        const flashPressedKey = (button) => {
+            if (!button) {
                 return;
             }
-            if (keyFeedbackTimer) {
-                window.clearTimeout(keyFeedbackTimer);
+            const pressedClass = 'inline-keyboard-key--pressed';
+            if (pressedKeyTimer) {
+                window.clearTimeout(pressedKeyTimer);
             }
-            keyFeedback.textContent = `Touche : ${formatKeyFeedback(key)}`;
-            keyFeedback.hidden = false;
-            keyFeedback.setAttribute('data-visible', 'true');
-            keyFeedbackTimer = window.setTimeout(() => {
-                keyFeedback.removeAttribute('data-visible');
-                keyFeedback.hidden = true;
-            }, 650);
+            if (pressedKeyButton) {
+                pressedKeyButton.classList.remove(pressedClass);
+            }
+            pressedKeyButton = button;
+            button.classList.add(pressedClass);
+            pressedKeyTimer = window.setTimeout(() => {
+                button.classList.remove(pressedClass);
+                if (pressedKeyButton === button) {
+                    pressedKeyButton = null;
+                }
+            }, 120);
         };
 
         const renderActions = (actions = []) => {
@@ -782,12 +769,12 @@
             document.body?.classList.remove('inline-keyboard-visible');
             document.removeEventListener('pointerdown', handleOutside, true);
             clearPendingOutside();
-            if (keyFeedbackTimer) {
-                window.clearTimeout(keyFeedbackTimer);
-                keyFeedbackTimer = null;
+            if (pressedKeyTimer) {
+                window.clearTimeout(pressedKeyTimer);
+                pressedKeyTimer = null;
             }
-            keyFeedback.removeAttribute('data-visible');
-            keyFeedback.hidden = true;
+            pressedKeyButton?.classList.remove('inline-keyboard-key--pressed');
+            pressedKeyButton = null;
             active?.onClose?.();
             active = null;
         };
