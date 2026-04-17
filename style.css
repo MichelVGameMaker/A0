@@ -1690,6 +1690,14 @@ textarea:focus{
 .exercise-card--full-sets .exercise-card-title-row{
   padding-right: 52px;
 }
+
+.exercise-card--no-context .exercise-card-title-row{
+  padding-right: 0;
+}
+.exercise-card--no-context .list-card__end{
+  display:none;
+}
+
 .exercise-card-stats{
   font-size: 12px;
   line-height: 1.35;
@@ -1791,6 +1799,13 @@ textarea:focus{
   border:1px solid var(--panelBord);
   border-radius:10px;
   background: color-mix(in srgb, var(--panelBord) 20%, transparent);
+}
+.routine-card-sets-row{
+  grid-template-columns:
+    minmax(0, 0.4fr)
+    minmax(0, 1.0fr)
+    minmax(0, 1.0fr)
+    minmax(0, 0.7fr);
 }
 .session-card-sets-row[data-rpe]{
   background: color-mix(in srgb, var(--rpe-bg) 35%, transparent);

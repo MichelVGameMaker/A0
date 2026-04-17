@@ -945,10 +945,9 @@
 
     function renderMoveCard(move) {
         const structure = listCard.createStructure({
-            endClass: 'exercise-card-end--top',
-            cardClass: 'exercise-card--full-sets'
+            cardClass: 'exercise-card--full-sets exercise-card--no-context'
         });
-        const { card, start, body, end } = structure;
+        const { card, start, body } = structure;
         card.dataset.moveId = move.id;
         start.classList.add('list-card__start--solo');
 
@@ -969,19 +968,6 @@
         const statsLine = document.createElement('div');
         statsLine.className = 'exercise-card-stats';
         statsLine.textContent = formatExerciseStatsText(move.sets);
-        const detailsButton = document.createElement('button');
-        detailsButton.type = 'button';
-        detailsButton.className = 'exercise-card-menu-button';
-        detailsButton.textContent = 'ⓘ';
-        detailsButton.setAttribute('aria-label', "Afficher les instructions de l'exercice");
-        detailsButton.addEventListener('click', (event) => {
-            event.stopPropagation();
-            const instructions = typeof move.instructions_routine_exercice === 'string'
-                ? move.instructions_routine_exercice.trim()
-                : '';
-            showDetailsPopover(detailsButton, instructions);
-        });
-        end.appendChild(detailsButton);
         const setsWrapper = document.createElement('div');
         setsWrapper.className = 'session-card-sets';
         renderRoutineCardSets(move, setsWrapper);
@@ -1003,7 +989,7 @@
         if (sets.length) {
             sets.forEach((set, index) => {
                 const line = document.createElement('div');
-                line.className = 'session-card-sets-row';
+                line.className = 'session-card-sets-row routine-card-sets-row';
                 const pos = set?.pos ?? index + 1;
                 const openWithFocus = (field) => {
                     setRoutineScrollTarget(move.id);
@@ -1043,8 +1029,7 @@
                         field: 'rpe',
                         rpeValue: set?.rpe,
                         onClick: stopAndOpen('rpe')
-                    }),
-                    createEmptySetCell({ className: 'session-card-set-cell--goal' })
+                    })
                 );
                 setsWrapper.appendChild(line);
             });
