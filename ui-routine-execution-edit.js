@@ -46,7 +46,7 @@
             return;
         }
         state.routineId = routineId;
-        state.moveId = moveId;
+        state.moveId = moveId == null ? null : String(moveId);
         state.callerScreen = callerScreen;
         state.replaceCallerScreen = 'screenRoutineMoveEdit';
         if (Number.isInteger(focusSetIndex) && focusSetIndex >= 0) {
@@ -75,7 +75,7 @@
             return;
         }
         state.routineId = routineId;
-        state.moveId = moveId;
+        state.moveId = moveId == null ? null : String(moveId);
         state.callerScreen = callerScreen;
         state.replaceCallerScreen = callerScreen;
         state.pendingFocus = null;
@@ -1131,7 +1131,11 @@
         if (!state.routine) {
             return null;
         }
-        return state.routine.moves?.find((move) => move.id === state.moveId) || null;
+        const targetId = state.moveId == null ? null : String(state.moveId);
+        if (!targetId) {
+            return null;
+        }
+        return state.routine.moves?.find((move) => String(move.id) === targetId) || null;
     }
 
     function returnToCaller() {
