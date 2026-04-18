@@ -971,7 +971,7 @@
         titleRow.appendChild(name);
         const statsLine = document.createElement('div');
         statsLine.className = 'exercise-card-stats';
-        statsLine.textContent = formatExerciseStatsText(move.sets);
+        renderExerciseStatsLine(statsLine, move.sets);
         const setsWrapper = document.createElement('div');
         setsWrapper.className = 'session-card-sets';
         renderRoutineCardSets(move, setsWrapper);
@@ -1067,7 +1067,7 @@
             return false;
         }
         if (statsLine) {
-            statsLine.textContent = formatExerciseStatsText(move?.sets);
+            renderExerciseStatsLine(statsLine, move?.sets);
         }
         renderRoutineCardSets(move, setsWrapper);
         return true;
@@ -1498,7 +1498,7 @@
         return `@${formatSynopsisRpe(value)}`;
     }
 
-    function formatExerciseMetric(value, suffix = '') {
+    function formatExerciseMetricSingleDecimal(value, suffix = '') {
         const numeric = Number(value);
         if (!Number.isFinite(numeric)) {
             return '—';
@@ -1552,9 +1552,37 @@
         };
     }
 
-    function formatExerciseStatsText(sets) {
+    function formatExerciseStatsValues(sets) {
         const stats = computeExerciseStatsLine(sets);
-        return `1RM ${formatExerciseMetric(stats.orm, 'kg')} · 1RMrpe ${formatExerciseMetric(stats.ormRpe, 'kg')} · RPE moyen ${formatExerciseMetric(stats.rpeAvg)}`;
+        return {
+            orm: formatExerciseMetricSingleDecimal(stats.orm, 'kg'),
+            ormRpe: formatExerciseMetricSingleDecimal(stats.ormRpe, 'kg'),
+            rpeAvg: formatExerciseMetricSingleDecimal(stats.rpeAvg)
+        };
+    }
+
+    function renderExerciseStatsLine(element, sets, historyLabel = 'Historique') {
+        if (!element) {
+            return;
+        }
+        const values = formatExerciseStatsValues(sets);
+        element.innerHTML = '';
+        const spacer = document.createElement('span');
+        spacer.className = 'exercise-card-stats-cell exercise-card-stats-cell--spacer';
+        spacer.setAttribute('aria-hidden', 'true');
+        const orm = document.createElement('span');
+        orm.className = 'exercise-card-stats-cell';
+        orm.textContent = values.orm;
+        const ormRpe = document.createElement('span');
+        ormRpe.className = 'exercise-card-stats-cell';
+        ormRpe.textContent = values.ormRpe;
+        const rpe = document.createElement('span');
+        rpe.className = 'exercise-card-stats-cell';
+        rpe.textContent = `@${values.rpeAvg}`;
+        const history = document.createElement('span');
+        history.className = 'exercise-card-stats-cell exercise-card-stats-cell--history';
+        history.textContent = historyLabel || 'Historique';
+        element.append(spacer, orm, ormRpe, rpe, history);
     }
 
     function normalizeFocusField(field) {
