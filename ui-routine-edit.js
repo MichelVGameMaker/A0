@@ -956,11 +956,15 @@
         name.textContent = move.exerciseName || 'Exercice';
         name.addEventListener('click', (event) => {
             event.stopPropagation();
-            if (!move.exerciseId) {
+            if (!move?.id) {
                 return;
             }
             setRoutineScrollTarget(move.id);
-            void A.openExerciseRead({ currentId: move.exerciseId, callerScreen: 'screenRoutineEdit' });
+            void A.openRoutineMoveEdit({
+                routineId: state.routineId,
+                moveId: move.id,
+                callerScreen: 'screenRoutineEdit'
+            });
         });
         const titleRow = document.createElement('div');
         titleRow.className = 'exercise-card-title-row';
