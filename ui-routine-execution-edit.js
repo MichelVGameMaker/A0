@@ -12,7 +12,8 @@
         routine: null,
         pendingSave: null,
         pendingFocus: null,
-        replaceCallerScreen: 'screenRoutineMoveEdit'
+        replaceCallerScreen: 'screenRoutineMoveEdit',
+        activeTab: 'routine'
     };
     const instructionsState = {
         move: null,
@@ -28,6 +29,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
         wireNavigation();
+        wireTabs();
         wireActions();
         wireMetaDialog();
         wireDetailsDialog();
@@ -65,7 +67,10 @@
 
         const { routineMoveTitle } = assertRefs();
         routineMoveTitle.textContent = move.exerciseName || 'Exercice';
+        state.activeTab = 'routine';
+        resetRoutineMoveSecondaryTabs();
         renderSets();
+        await setRoutineMoveActiveTab(state.activeTab);
         switchScreen('screenRoutineMoveEdit');
     };
 
@@ -115,6 +120,14 @@
         refs.screenData = document.getElementById('screenData');
         refs.routineMoveTitle = document.getElementById('routineMoveTitle');
         refs.routineMoveSets = document.getElementById('routineMoveSets');
+        refs.routineMoveTabs = document.getElementById('routineMoveTabs');
+        refs.routineMoveTabRoutine = document.getElementById('routineMoveTabRoutine');
+        refs.routineMoveTabExec = document.getElementById('routineMoveTabExec');
+        refs.routineMoveTabHistory = document.getElementById('routineMoveTabHistory');
+        refs.routineMoveTabStats = document.getElementById('routineMoveTabStats');
+        refs.routineMoveExecPanel = document.getElementById('routineMoveExecPanel');
+        refs.routineMoveHistoryPanel = document.getElementById('routineMoveHistoryPanel');
+        refs.routineMoveStatsPanel = document.getElementById('routineMoveStatsPanel');
         refs.routineMoveBack = document.getElementById('routineMoveBack');
         refs.routineMoveDone = document.getElementById('routineMoveDone');
         refs.routineMoveAddSet = document.getElementById('routineMoveAddSet');
@@ -147,6 +160,14 @@
             'screenRoutineMoveEdit',
             'routineMoveTitle',
             'routineMoveSets',
+            'routineMoveTabs',
+            'routineMoveTabRoutine',
+            'routineMoveTabExec',
+            'routineMoveTabHistory',
+            'routineMoveTabStats',
+            'routineMoveExecPanel',
+            'routineMoveHistoryPanel',
+            'routineMoveStatsPanel',
             'routineMoveBack',
             'routineMoveAddSet',
             'routineMoveDelete',
@@ -177,6 +198,93 @@
         routineMoveDone?.addEventListener('click', () => {
             inlineKeyboard?.detach?.();
             returnToCaller();
+        });
+    }
+
+    function wireTabs() {
+        const { routineMoveTabs } = assertRefs();
+        routineMoveTabs?.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-tab]');
+            if (!button) {
+                return;
+            }
+            const nextTab = button.dataset.tab;
+            void setRoutineMoveActiveTab(nextTab);
+        });
+    }
+
+    async function setRoutineMoveActiveTab(tab) {
+        const {
+            routineMoveTabs,
+            routineMoveTabRoutine,
+            routineMoveTabExec,
+            routineMoveTabHistory,
+            routineMoveTabStats
+        } = assertRefs();
+        const nextTab = ['routine', 'exec', 'history', 'stats'].includes(tab) ? tab : 'routine';
+        state.activeTab = nextTab;
+
+        routineMoveTabs.querySelectorAll('[data-tab]').forEach((button) => {
+            const isActive = button.dataset.tab === nextTab;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        routineMoveTabRoutine.hidden = nextTab !== 'routine';
+        routineMoveTabExec.hidden = nextTab !== 'exec';
+        routineMoveTabHistory.hidden = nextTab !== 'history';
+        routineMoveTabStats.hidden = nextTab !== 'stats';
+
+        await renderRoutineMoveTab(nextTab);
+    }
+
+    async function renderRoutineMoveTab(tab, options = {}) {
+        const { force = false } = options;
+        const move = findMove();
+        if (!move?.exerciseId) {
+            return;
+        }
+        const { routineMoveExecPanel, routineMoveHistoryPanel, routineMoveStatsPanel } = assertRefs();
+        if (tab === 'exec' && (force || !routineMoveExecPanel.dataset.loaded)) {
+            routineMoveExecPanel.innerHTML = '';
+            const exercise = await db.get('exercises', move.exerciseId);
+            if (exercise && typeof A.renderExerciseReadExecPanel === 'function') {
+                A.renderExerciseReadExecPanel({
+                    exercise,
+                    container: routineMoveExecPanel,
+                    originLabel: 'Routine'
+                });
+            }
+            routineMoveExecPanel.dataset.loaded = '1';
+        }
+        if (tab === 'history' && (force || !routineMoveHistoryPanel.dataset.loaded)) {
+            routineMoveHistoryPanel.innerHTML = '';
+            const exercise = await db.get('exercises', move.exerciseId);
+            if (exercise && typeof A.renderExerciseReadHistoryPanel === 'function') {
+                await A.renderExerciseReadHistoryPanel({
+                    exercise,
+                    exerciseId: move.exerciseId,
+                    container: routineMoveHistoryPanel
+                });
+            }
+            routineMoveHistoryPanel.dataset.loaded = '1';
+        }
+        if (tab === 'stats' && (force || !routineMoveStatsPanel.dataset.loaded)) {
+            routineMoveStatsPanel.innerHTML = '';
+            if (typeof A.renderExerciseReadStatsPanel === 'function') {
+                await A.renderExerciseReadStatsPanel({
+                    exerciseId: move.exerciseId,
+                    container: routineMoveStatsPanel
+                });
+            }
+            routineMoveStatsPanel.dataset.loaded = '1';
+        }
+    }
+
+    function resetRoutineMoveSecondaryTabs() {
+        const { routineMoveExecPanel, routineMoveHistoryPanel, routineMoveStatsPanel } = assertRefs();
+        [routineMoveExecPanel, routineMoveHistoryPanel, routineMoveStatsPanel].forEach((panel) => {
+            panel.innerHTML = '';
+            delete panel.dataset.loaded;
         });
     }
 

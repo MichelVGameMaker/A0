@@ -591,24 +591,30 @@
 <!-- ==================== -->
 
 <!-- ========== 3.1.1 Routine > modification des séries  ========== -->
-<section id="screenRoutineMoveEdit" class="screen screen-sheet-overlay" hidden>
+<section id="screenRoutineMoveEdit" class="screen" hidden>
 
-    <div class="screen-sheet">
-        <header class="header">
-            <div class="header-left">
-                <button id="routineMoveBack" class="btn ghost" title="Retour">◀︎</button>
-            </div>
+    <header class="header">
+        <div class="header-left">
+            <button id="routineMoveBack" class="btn ghost" title="Retour">◀︎</button>
+        </div>
 
-            <div class="header-center">
-                <div class="title" id="routineMoveTitle">Exercice</div>
-            </div>
+        <div class="header-center">
+            <div class="title" id="routineMoveTitle">Exercice</div>
+        </div>
 
-            <div class="header-right">
-            </div>
-        </header>
+        <div class="header-right">
+        </div>
+    </header>
 
-        <main class="content">
+    <main class="content">
+        <div id="routineMoveTabs" class="stats-toggle exercise-read-tabs" role="tablist" aria-label="Détails exercice de routine">
+            <button type="button" class="stats-toggle-btn is-active" data-tab="routine" role="tab" aria-selected="true">Routine</button>
+            <button type="button" class="stats-toggle-btn" data-tab="exec" role="tab" aria-selected="false">Exécution</button>
+            <button type="button" class="stats-toggle-btn" data-tab="history" role="tab" aria-selected="false">Histo</button>
+            <button type="button" class="stats-toggle-btn" data-tab="stats" role="tab" aria-selected="false">Stats</button>
+        </div>
 
+        <section id="routineMoveTabRoutine" class="exercise-read-tab" data-tab-panel="routine">
             <div class="exec-grid exec-head routine-set-grid routine-set-head">
                 <div class="lbl">#</div>
                 <div class="lbl">Reps</div>
@@ -622,9 +628,18 @@
             <div class="add-actions">
                 <button id="routineMoveAddSet" class="btn cta full">+ Ajouter une série</button>
             </div>
-            <div class="keyboard-spacer" aria-hidden="true"></div>
-        </main>
-    </div>
+        </section>
+        <section id="routineMoveTabExec" class="exercise-read-tab" data-tab-panel="exec" hidden>
+            <div id="routineMoveExecPanel"></div>
+        </section>
+        <section id="routineMoveTabHistory" class="exercise-read-tab" data-tab-panel="history" hidden>
+            <div id="routineMoveHistoryPanel"></div>
+        </section>
+        <section id="routineMoveTabStats" class="exercise-read-tab" data-tab-panel="stats" hidden>
+            <div id="routineMoveStatsPanel"></div>
+        </section>
+        <div class="keyboard-spacer" aria-hidden="true"></div>
+    </main>
 
 </section>
 <!-- ==================== -->
