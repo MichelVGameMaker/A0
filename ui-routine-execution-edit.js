@@ -1288,7 +1288,14 @@
             element.hidden = key !== target;
         });
         if (screenRoutineMoveEdit) {
-            screenRoutineMoveEdit.classList.remove('is-active', 'is-closing');
+            if (target === 'screenRoutineMoveEdit') {
+                screenRoutineMoveEdit.classList.remove('is-closing');
+                requestAnimationFrame(() => {
+                    screenRoutineMoveEdit.classList.add('is-active');
+                });
+            } else {
+                screenRoutineMoveEdit.classList.remove('is-active', 'is-closing');
+            }
         }
     }
 
