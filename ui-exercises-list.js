@@ -88,7 +88,7 @@
             return;
         }
 
-        const recentCounts = await getRecentExerciseCounts(12);
+        const recentCounts = await getRecentExerciseCounts({ sessionLimit: 12, monthLimit: 6 });
         const recentExercises = [];
         const otherExercises = [];
 
@@ -213,16 +213,22 @@
         return map;
     }
 
-    async function getRecentExerciseCounts(limit = 12) {
+    async function getRecentExerciseCounts(options = {}) {
+        const { sessionLimit = 12, monthLimit = 6 } = options;
         const counts = new Map();
         const dates = await db.listSessionDates();
+        const now = new Date();
+        const sixMonthsAgo = new Date(now);
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - monthLimit);
+        const sixMonthsAgoKey = toDateKey(sixMonthsAgo);
         const sortedDates = dates
             .map((entry) => entry?.date)
             .filter(Boolean)
-            .sort((a, b) => String(b).localeCompare(String(a)))
-            .slice(0, limit);
+            .sort((a, b) => String(b).localeCompare(String(a)));
 
-        for (const date of sortedDates) {
+        const selectedDates = sortedDates.filter((date, index) => index < sessionLimit || String(date) >= sixMonthsAgoKey);
+
+        for (const date of selectedDates) {
             const session = await db.getSession(date);
             if (!Array.isArray(session?.exercises)) {
                 continue;
@@ -238,6 +244,13 @@
             });
         }
         return counts;
+    }
+
+    function toDateKey(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     function appendExerciseSection(container, label, exercises, options = {}) {
