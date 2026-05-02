@@ -1325,6 +1325,47 @@
             state.seconds = normalized.seconds;
         };
 
+        const getWeightDeltaStep = (weightValue) => {
+            const current = Math.max(0, parseFloatSafe(weightValue, 0));
+            return current <= 30 ? 1 : 2.5;
+        };
+
+        const formatStepperDelta = (deltaValue) => {
+            const numeric = Number(deltaValue);
+            if (!Number.isFinite(numeric) || numeric === 0) {
+                return '0';
+            }
+            const abs = Math.abs(numeric);
+            const sign = numeric > 0 ? '+' : '−';
+            return `${sign}${formatDecimal(abs)}`;
+        };
+
+        const refreshStepperLabels = (state) => {
+            if (!active?.nodes?.length) {
+                return;
+            }
+            const weightStep = getWeightDeltaStep(state?.weight);
+            active.nodes.forEach((node) => {
+                if (!(node instanceof HTMLElement)) {
+                    return;
+                }
+                const isPlus = node.classList.contains('inline-set-editor-plus');
+                const direction = isPlus ? 1 : -1;
+                const repsButton = node.querySelector('.inline-set-editor-reps');
+                const weightButton = node.querySelector('.inline-set-editor-weight');
+                const rpeButton = node.querySelector('.inline-set-editor-rpe');
+                if (repsButton) {
+                    repsButton.textContent = formatStepperDelta(direction);
+                }
+                if (weightButton) {
+                    weightButton.textContent = formatStepperDelta(direction * weightStep);
+                }
+                if (rpeButton) {
+                    rpeButton.textContent = formatStepperDelta(direction);
+                }
+            });
+        };
+
         const adjustState = (state, field, delta, config) => {
             syncStateFromInputs(state, config);
             inlineKeyboard?.selectTarget?.(undefined, { select: false });
@@ -1336,7 +1377,8 @@
                 }
                 case 'weight': {
                     const current = Math.max(0, parseFloatSafe(state.weight, 0));
-                    let next = current + delta;
+                    const step = getWeightDeltaStep(current);
+                    let next = current + (delta * step);
                     if (next < 0) {
                         next = 0;
                     }
@@ -1375,6 +1417,7 @@
                     break;
             }
             emitChange(config, state);
+            refreshStepperLabels(state);
             config?.onSelectField?.(field);
         };
 
@@ -1402,23 +1445,24 @@
             }
             const delta = type === 'plus' ? 1 : -1;
             const secondsDelta = type === 'plus' ? 10 : -10;
+            const weightStep = getWeightDeltaStep(state?.weight);
 
             const repsBtn = createStepperButton(
-                type === 'plus' ? '+' : '−',
+                formatStepperDelta(delta),
                 () => adjustState(state, 'reps', delta, config),
                 false,
                 `${type === 'plus' ? 'Augmenter' : 'Diminuer'} les répétitions`
             );
             repsBtn.classList.add('inline-set-editor-reps');
             const weightBtn = createStepperButton(
-                type === 'plus' ? '+' : '−',
+                formatStepperDelta(delta * weightStep),
                 () => adjustState(state, 'weight', delta, config),
                 false,
                 `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le poids`
             );
             weightBtn.classList.add('inline-set-editor-weight');
             const rpeBtn = createStepperButton(
-                type === 'plus' ? '+' : '−',
+                formatStepperDelta(delta),
                 () => adjustState(state, 'rpe', delta, config),
                 false,
                 `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le RPE`
@@ -1452,6 +1496,7 @@
             active.nodes = [plusRow, minusRow].filter(Boolean);
             attachNodes();
             updateMoveButtons();
+            refreshStepperLabels(state);
             emitChange(config, state);
             document.addEventListener('pointerdown', handleOutside);
         };
