@@ -1330,6 +1330,14 @@
             return current <= 30 ? 1 : 2.5;
         };
 
+        const formatDeltaValue = (value) => {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) {
+                return '0';
+            }
+            return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(2).replace(/\.?0+$/, '');
+        };
+
         const formatStepperDelta = (deltaValue) => {
             const numeric = Number(deltaValue);
             if (!Number.isFinite(numeric) || numeric === 0) {
@@ -1337,7 +1345,7 @@
             }
             const abs = Math.abs(numeric);
             const sign = numeric > 0 ? '+' : '−';
-            return `${sign}${formatDecimal(abs)}`;
+            return `${sign}${formatDeltaValue(abs)}`;
         };
 
         const refreshStepperLabels = (state) => {
