@@ -544,7 +544,7 @@
             return [
                 toggleAction,
                 {
-                    label: 'planifier',
+                    label: 'prévu',
                     className: 'inline-keyboard-action--muted',
                     onClick: async () => {
                         await applySetEditorResult(currentIndex, {
@@ -552,11 +552,11 @@
                             weight: value.weight,
                             rpe: value.rpe,
                             rest: value.rest
-                        });
+                        }, { done: false });
                     }
                 },
                 {
-                    label: 'enregistrer',
+                    label: 'fait',
                     className: 'inline-keyboard-action--emphase',
                     onClick: async () => {
                         await applySetEditorResult(currentIndex, {
@@ -564,7 +564,8 @@
                             weight: value.weight,
                             rpe: value.rpe,
                             rest: value.rest
-                        });
+                        }, { done: true });
+                        startTimer(value.rest, { setId: set.id, setIndex: currentIndex });
                     }
                 },
                 {
