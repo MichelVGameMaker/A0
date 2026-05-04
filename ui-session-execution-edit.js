@@ -1176,6 +1176,7 @@
                     className: 'inline-keyboard-action--emphase',
                     close: false,
                     onClick: async () => {
+                        inlineKeyboard?.setMode?.('timer');
                         await applySetEditorResult(
                             currentIndex,
                             { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest },
