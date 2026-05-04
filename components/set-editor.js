@@ -632,6 +632,7 @@
 
         let pressedKeyTimer = null;
         let pressedKeyButton = null;
+        let timerModePointerGuard = false;
 
         const layouts = {
             default: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     '.',   '0',  'del'],
@@ -770,6 +771,22 @@
 
         renderKeys(currentLayout, currentMode);
 
+        const releaseTimerModePointerGuard = () => {
+            if (!timerModePointerGuard) {
+                return;
+            }
+            timerModePointerGuard = false;
+            document.removeEventListener('pointerup', releaseTimerModePointerGuard, true);
+            document.removeEventListener('pointercancel', releaseTimerModePointerGuard, true);
+        };
+
+        const armTimerModePointerGuard = () => {
+            releaseTimerModePointerGuard();
+            timerModePointerGuard = true;
+            document.addEventListener('pointerup', releaseTimerModePointerGuard, true);
+            document.addEventListener('pointercancel', releaseTimerModePointerGuard, true);
+        };
+
         const clearPendingOutside = () => {
             if (!pendingOutside) {
                 return;
@@ -786,6 +803,7 @@
             document.body?.classList.remove('inline-keyboard-visible');
             document.removeEventListener('pointerdown', handleOutside, true);
             clearPendingOutside();
+            releaseTimerModePointerGuard();
             if (pressedKeyTimer) {
                 window.clearTimeout(pressedKeyTimer);
                 pressedKeyTimer = null;
@@ -824,6 +842,9 @@
             const isInsideInlineSetEditor = path.some((node) => node?.classList?.contains?.('inline-set-editor-row'));
             const allowInlineSetEditor = isInsideInlineSetEditor && isInteractiveTarget(target);
             const isInlineInput = target?.closest?.('.set-edit-input');
+            if (timerModePointerGuard) {
+                return true;
+            }
             if (isInsideKeyboard || isInsideTarget || allowInlineSetEditor || isInlineInput) {
                 return true;
             }
@@ -847,6 +868,7 @@
             }
             const { moved } = pendingOutside;
             clearPendingOutside();
+            releaseTimerModePointerGuard();
             if (!moved) {
                 handleClose();
             }
@@ -899,7 +921,14 @@
             if (!active) {
                 return;
             }
-            if (key === 'done' || key === 'close') {
+            if (key === 'close') {
+                handleClose();
+                return;
+            }
+            if (key === 'done') {
+                if (active.mode === 'timer') {
+                    return;
+                }
                 handleClose();
                 return;
             }
@@ -1065,9 +1094,13 @@
             if (active.mode === nextMode) {
                 return;
             }
+            const previousMode = active.mode;
             active.mode = nextMode;
             applyLayout(active.layout, active.mode);
             renderActions(resolveActions());
+            if (previousMode !== 'timer' && active.mode === 'timer') {
+                armTimerModePointerGuard();
+            }
             if (active.mode === 'input') {
                 selectTarget(active.target);
             }
