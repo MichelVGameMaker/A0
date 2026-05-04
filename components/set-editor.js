@@ -639,7 +639,7 @@
             integer: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     null,  '0',  'del'],
             rpe:     ['5',  '5.5', '6', '6.5', '7', '7.5', '8',    '8.5', '9',     '9.5', '10', '-'],
             time:    ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     ':',   '0',  'del'],
-            timer:   ['timerDisplay', 'timerReset', null, '-10', 'timerToggle', '+10', null, null, null, null, 'done', 'close'],
+            timer:   ['timerDisplay', 'timerReset', null, '-10', 'timerToggle', '+10', null, null, null, null, null, null],
             edit:    ['trash', 'up', null, null, null, null, null, 'down', null]
         };
 
@@ -1093,6 +1093,12 @@
         const resolveActions = () => {
             if (!active) {
                 return [];
+            }
+            if (active.mode === 'timer') {
+                return [
+                    { label: 'fait', className: 'inline-keyboard-action--emphase', close: false, onClick: () => handleInput('done') },
+                    { label: 'fermer', className: 'inline-keyboard-action--muted', close: false, onClick: () => handleInput('close') }
+                ];
             }
             if (typeof active.actions === 'function') {
                 return active.actions(active.mode);
