@@ -639,8 +639,8 @@
             integer: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     null,  '0',  'del'],
             rpe:     ['5',  '5.5', '6', '6.5', '7', '7.5', '8',    '8.5', '9',     '9.5', '10', '-'],
             time:    ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     ':',   '0',  'del'],
-            timer:   [null, null, null, null,  null, null, null,   null,  null,    null,  'done', 'close'],
-            edit:    ['up', null, null, 'down', null, 'trash', null, null, null]
+            timer:   ['timerDisplay', 'timerReset', null, '-10', 'timerToggle', '+10', null, null, null, null, 'done', 'close'],
+            edit:    ['trash', 'up', null, null, null, null, null, 'down', null]
         };
 
         const resolveLayout = (layout, mode) => {
@@ -673,12 +673,21 @@
                     down: '⬇️',
                     trash: '🗑️',
                     done: 'fait',
-                    close: 'fermer\n▼'
+                    close: 'fermer\n▼',
+                    timerDisplay: '0:00',
+                    timerReset: 'réinitialiser',
+                    timerToggle: 'play'
                 };
                 const isSplitTimeToggle = key === ':' && layout === 'time' && active?.splitTimeField;
+                const isTimerDisplay = key === 'timerDisplay' && active?.mode === 'timer';
+                const isTimerToggle = key === 'timerToggle' && active?.mode === 'timer';
                 if (isSplitTimeToggle) {
                     const side = active?.timeField;
                     button.textContent = side === 'minutes' ? '▸:' : side === 'seconds' ? ':◂' : ':';
+                } else if (isTimerDisplay) {
+                    button.textContent = active?.getTimerDisplay?.() || labelMap[key];
+                } else if (isTimerToggle) {
+                    button.textContent = active?.getTimerToggleLabel?.() || labelMap[key];
                 } else {
                     button.textContent = labelMap[key] || key;
                 }
@@ -686,6 +695,18 @@
                 if (key === 'up' || key === 'down') {
                     button.dataset.wide = 'true';
                     button.dataset.tall = 'true';
+                }
+                if (key === 'timerDisplay') {
+                    button.dataset.wide = 'true';
+                    button.dataset.tall = 'true';
+                    button.dataset.timerRole = 'display';
+                }
+                if (key === 'timerReset') {
+                    button.dataset.wide = 'true';
+                    button.dataset.timerRole = 'reset';
+                }
+                if (key === '-10' || key === '+10' || key === 'timerToggle') {
+                    button.dataset.timerRole = key === 'timerToggle' ? 'toggle' : 'adjust';
                 }
                 if (key === 'trash') {
                     button.dataset.tall = 'true';
@@ -699,6 +720,9 @@
                 }
                 if (layout === 'rpe' && key !== '-') {
                     button.dataset.rpe = key;
+                }
+                if (key === 'timerDisplay') {
+                    button.disabled = true;
                 }
                 button.addEventListener('click', (event) => {
                     event.preventDefault();
@@ -926,10 +950,9 @@
                 return;
             }
             if (key === 'done') {
-                if (active.mode === 'timer') {
-                    return;
+                if (active.mode !== 'timer') {
+                    handleClose();
                 }
-                handleClose();
                 return;
             }
             if (typeof active.onKey === 'function') {
@@ -1127,7 +1150,14 @@
             contains,
             selectTarget,
             setMode,
-            getMode: () => active?.mode || 'input'
+            getMode: () => active?.mode || 'input',
+            refresh: () => {
+                if (!active) {
+                    return;
+                }
+                renderKeys(currentLayout, currentMode);
+                renderActions(resolveActions());
+            }
         };
         components.inlineKeyboard = api;
         return api;

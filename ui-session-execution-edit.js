@@ -1321,13 +1321,61 @@
             if (!inlineKeyboard) {
                 return;
             }
+            const getTimerDisplayLabel = () => {
+                const timer = ensureSharedTimer();
+                const remaining = safeInt(timer.remainSec, 0);
+                const sign = remaining < 0 ? '-' : '';
+                const absolute = Math.abs(remaining);
+                const minutes = Math.floor(absolute / 60);
+                const seconds = absolute % 60;
+                return `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
+            };
             inlineKeyboard.attach(input, {
                 layout: resolveKeyboardLayout(field),
                 mode: inlineKeyboard.getMode?.() || 'input',
                 decimalSeparator: field === 'weight' ? ',' : undefined,
                 splitTimeField: field === 'minutes' || field === 'seconds',
                 timeField: field,
-                onKey: (key) => {
+                getTimerDisplay: getTimerDisplayLabel,
+                getTimerToggleLabel: () => (ensureSharedTimer().running ? 'pause' : 'play'),
+                onKey: (key, context = {}) => {
+                    if (context.mode === 'timer') {
+                        if (key === 'timerReset') {
+                            resetTimerToDefault();
+                            inlineKeyboard?.refresh?.();
+                            return true;
+                        }
+                        if (key === '-10') {
+                            adjustTimer(-10);
+                            inlineKeyboard?.refresh?.();
+                            return true;
+                        }
+                        if (key === '+10') {
+                            adjustTimer(10);
+                            inlineKeyboard?.refresh?.();
+                            return true;
+                        }
+                        if (key === 'timerToggle') {
+                            const timer = ensureSharedTimer();
+                            if (timer.running) {
+                                pauseTimer();
+                            } else {
+                                resumeTimer();
+                            }
+                            inlineKeyboard?.refresh?.();
+                            return true;
+                        }
+                        if (key === 'done') {
+                            startTimer(value.rest, { setId: set.id, setIndex: currentIndex });
+                            pauseTimer();
+                            inlineKeyboard?.detach?.();
+                            return true;
+                        }
+                        if (key === 'close') {
+                            inlineKeyboard?.detach?.();
+                            return true;
+                        }
+                    }
                     if (key === ':' && (field === 'minutes' || field === 'seconds')) {
                         selectField?.(field === 'minutes' ? 'seconds' : 'minutes');
                         return true;
@@ -3074,6 +3122,9 @@
         timerDisplay.classList.toggle('tmr-display--warning', isWarning);
         timerDisplay.classList.toggle('tmr-display--negative', isNegative);
         timerDisplay.textContent = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
+        if (inlineKeyboard?.isOpen?.() && inlineKeyboard?.getMode?.() === 'timer') {
+            inlineKeyboard.refresh?.();
+        }
         syncTimerBarSpacer(execTimerBar, false);
     }
 
