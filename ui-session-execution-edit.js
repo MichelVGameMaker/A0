@@ -1147,6 +1147,9 @@
         };
 
         const buildKeyboardActions = (mode = 'input') => {
+            if (mode === 'timer') {
+                return [];
+            }
             const isEdit = mode === 'edit';
             const toggleAction = {
                 icon: isEdit ? '🔢' : '…',
@@ -1171,6 +1174,7 @@
                 {
                     label: 'fait',
                     className: 'inline-keyboard-action--emphase',
+                    close: false,
                     onClick: async () => {
                         await applySetEditorResult(
                             currentIndex,
@@ -1178,6 +1182,7 @@
                             { done: true }
                         );
                         startTimer(value.rest, { setId: set.id, setIndex: currentIndex });
+                        inlineKeyboard?.setMode?.('timer');
                     }
                 },
                 {

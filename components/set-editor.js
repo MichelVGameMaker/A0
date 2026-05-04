@@ -638,10 +638,19 @@
             integer: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     null,  '0',  'del'],
             rpe:     ['5',  '5.5', '6', '6.5', '7', '7.5', '8',    '8.5', '9',     '9.5', '10', '-'],
             time:    ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     ':',   '0',  'del'],
+            timer:   [null, null, null, null,  null, null, null,   null,  null,    null,  'done', 'close'],
             edit:    ['up', null, null, 'down', null, 'trash', null, null, null]
         };
 
-        const resolveLayout = (layout, mode) => (mode === 'edit' ? 'edit' : layout || 'default');
+        const resolveLayout = (layout, mode) => {
+            if (mode === 'edit') {
+                return 'edit';
+            }
+            if (mode === 'timer') {
+                return 'timer';
+            }
+            return layout || 'default';
+        };
 
         const renderKeys = (layout, mode) => {
             grid.innerHTML = '';
@@ -661,7 +670,9 @@
                     del: '⌫',
                     up: '⬆️',
                     down: '⬇️',
-                    trash: '🗑️'
+                    trash: '🗑️',
+                    done: 'fait',
+                    close: 'fermer\n▼'
                 };
                 const isSplitTimeToggle = key === ':' && layout === 'time' && active?.splitTimeField;
                 if (isSplitTimeToggle) {
@@ -678,6 +689,12 @@
                 if (key === 'trash') {
                     button.dataset.tall = 'true';
                     button.classList.add('inline-keyboard-key--danger');
+                }
+                if (key === 'done') {
+                    button.classList.add('inline-keyboard-action--emphase');
+                }
+                if (key === 'close') {
+                    button.classList.add('inline-keyboard-action--close');
                 }
                 if (layout === 'rpe' && key !== '-') {
                     button.dataset.rpe = key;
@@ -880,6 +897,10 @@
 
         const handleInput = (key) => {
             if (!active) {
+                return;
+            }
+            if (key === 'done' || key === 'close') {
+                handleClose();
                 return;
             }
             if (typeof active.onKey === 'function') {
