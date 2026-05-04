@@ -1317,6 +1317,18 @@
             return 'default';
         };
 
+        const focusNextSetRepsInput = () => {
+            const nextRow = row.nextElementSibling?.classList?.contains('exec-set-row')
+                ? row.nextElementSibling
+                : null;
+            const nextRepsInput = nextRow?.querySelector?.('.exec-reps-cell');
+            if (!nextRepsInput) {
+                return;
+            }
+            nextRepsInput.click();
+            inlineKeyboard?.setMode?.('input');
+        };
+
         const attachInlineKeyboard = (input, field) => {
             if (!inlineKeyboard) {
                 return;
@@ -1366,9 +1378,9 @@
                             return true;
                         }
                         if (key === 'done') {
-                            startTimer(value.rest, { setId: set.id, setIndex: currentIndex });
-                            pauseTimer();
+                            resetTimerToDefault();
                             inlineKeyboard?.detach?.();
+                            focusNextSetRepsInput();
                             return true;
                         }
                         if (key === 'close') {
