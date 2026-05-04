@@ -633,6 +633,7 @@
         let pressedKeyTimer = null;
         let pressedKeyButton = null;
         let timerModePointerGuard = false;
+        let timerRefreshInterval = null;
 
         const layouts = {
             default: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     '.',   '0',  'del'],
@@ -754,6 +755,28 @@
             }, 120);
         };
 
+
+        const stopTimerRefreshLoop = () => {
+            if (!timerRefreshInterval) {
+                return;
+            }
+            window.clearInterval(timerRefreshInterval);
+            timerRefreshInterval = null;
+        };
+
+        const startTimerRefreshLoop = () => {
+            if (!active || active.mode !== 'timer' || timerRefreshInterval) {
+                return;
+            }
+            timerRefreshInterval = window.setInterval(() => {
+                if (!active || active.mode !== 'timer') {
+                    stopTimerRefreshLoop();
+                    return;
+                }
+                renderKeys(currentLayout, currentMode);
+            }, 1000);
+        };
+
         const renderActions = (actions = []) => {
             actionsGrid.innerHTML = '';
             const list = Array.isArray(actions) ? actions : [];
@@ -827,6 +850,7 @@
             document.body?.classList.remove('inline-keyboard-visible');
             document.removeEventListener('pointerdown', handleOutside, true);
             clearPendingOutside();
+            stopTimerRefreshLoop();
             releaseTimerModePointerGuard();
             if (pressedKeyTimer) {
                 window.clearTimeout(pressedKeyTimer);
@@ -1130,6 +1154,11 @@
             if (previousMode !== 'timer' && active.mode === 'timer') {
                 armTimerModePointerGuard();
             }
+            if (active.mode === 'timer') {
+                startTimerRefreshLoop();
+            } else {
+                stopTimerRefreshLoop();
+            }
             if (active.mode === 'input') {
                 selectTarget(active.target);
             }
@@ -1142,6 +1171,11 @@
             applyLayout(layout, mode);
             renderKeys(currentLayout, currentMode);
             renderActions(resolveActions());
+            if (mode === 'timer') {
+                startTimerRefreshLoop();
+            } else {
+                stopTimerRefreshLoop();
+            }
             keyboard.hidden = false;
             keyboard.setAttribute('data-visible', 'true');
             document.body?.classList.add('inline-keyboard-visible');
