@@ -1180,7 +1180,7 @@
                         await applySetEditorResult(
                             currentIndex,
                             { reps: value.reps, weight: value.weight, rpe: value.rpe, rest: value.rest },
-                            { done: true }
+                            { done: true, render: false }
                         );
                         startTimer(value.rest, { setId: set.id, setIndex: currentIndex });
                         inlineKeyboard?.setMode?.('timer');
