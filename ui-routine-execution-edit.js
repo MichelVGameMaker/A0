@@ -689,7 +689,7 @@
             }
             inlineKeyboard.attach(input, {
                 layout: resolveKeyboardLayout(field),
-                mode: inlineKeyboard.getMode?.() || 'input',
+                mode: 'input',
                 decimalSeparator: field === 'weight' ? ',' : undefined,
                 splitTimeField: field === 'minutes' || field === 'seconds',
                 timeField: field,
