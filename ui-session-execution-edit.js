@@ -1167,9 +1167,8 @@
             }
             const isEdit = mode === 'edit';
             const toggleAction = {
-                icon: isEdit ? '🔢' : '…',
+                label: isEdit ? 'mode saisie' : 'mode edit',
                 ariaLabel: isEdit ? 'Basculer en mode saisie' : 'Basculer en mode édition',
-                className: 'inline-keyboard-action--icon',
                 close: false,
                 onClick: () => inlineKeyboard?.setMode?.(isEdit ? 'input' : 'edit')
             };
@@ -1177,7 +1176,7 @@
                 toggleAction,
                 {
                     label: 'prévu',
-                    className: 'inline-keyboard-action--muted',
+                    className: 'inline-keyboard-action--emphase-light',
                     onClick: async () => {
                         await applySetEditorResult(
                             currentIndex,

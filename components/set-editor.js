@@ -640,8 +640,8 @@
             integer: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     null,  '0',  'del'],
             rpe:     ['5',  '5.5', '6', '6.5', '7', '7.5', '8',    '8.5', '9',     '9.5', '10', '-'],
             time:    ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     ':',   '0',  'del'],
-            timer:   ['timerDisplay', 'timerReset', null, '-10', 'timerToggle', '+10'],
-            edit:    ['trash', 'up', null, 'down', null, null]
+            timer:   ['timerReset', 'timerDisplay', 'timerDisplay', null, '-10', '+10'],
+            edit:    ['trash', 'up', 'up', 'trash', 'down', 'down']
         };
 
         const resolveLayout = (layout, mode) => {
@@ -676,8 +676,7 @@
                     done: 'fait',
                     close: 'fermer\n▼',
                     timerDisplay: '0:00',
-                    timerReset: 'réinitialiser',
-                    timerToggle: 'play'
+                    timerReset: 'Réinit'
                 };
                 const isSplitTimeToggle = key === ':' && layout === 'time' && active?.splitTimeField;
                 const isTimerDisplay = key === 'timerDisplay' && active?.mode === 'timer';
@@ -721,9 +720,6 @@
                 }
                 if (layout === 'rpe' && key !== '-') {
                     button.dataset.rpe = key;
-                }
-                if (key === 'timerDisplay') {
-                    button.disabled = true;
                 }
                 button.addEventListener('click', (event) => {
                     event.preventDefault();
@@ -1116,9 +1112,6 @@
 
         const resolveActions = () => {
             if (!active) {
-                return [];
-            }
-            if (active.mode === 'timer') {
                 return [];
             }
             if (typeof active.actions === 'function') {
