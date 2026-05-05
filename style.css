@@ -2762,6 +2762,12 @@ body.inline-keyboard-visible .keyboard-spacer{
   color: var(--black);
 }
 
+.inline-keyboard-action--emphase-light{
+  background: color-mix(in srgb, var(--emphase) 45%, white);
+  border-color: color-mix(in srgb, var(--emphase) 55%, white);
+  color: #fff;
+}
+
 
 .inline-keyboard-action--close{
   white-space: pre-line;
