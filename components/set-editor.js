@@ -1493,7 +1493,7 @@
                     weightButton.textContent = formatStepperDelta(direction * weightStep);
                 }
                 if (rpeButton) {
-                    rpeButton.textContent = formatStepperDelta(direction);
+                    rpeButton.textContent = formatStepperDelta(direction * 0.5);
                 }
             });
         };
@@ -1594,7 +1594,7 @@
             );
             weightBtn.classList.add('inline-set-editor-weight');
             const rpeBtn = createStepperButton(
-                formatStepperDelta(delta),
+                formatStepperDelta(delta * 0.5),
                 () => adjustState(state, 'rpe', delta, config),
                 false,
                 `${type === 'plus' ? 'Augmenter' : 'Diminuer'} le RPE`
