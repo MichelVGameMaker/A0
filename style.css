@@ -2714,7 +2714,8 @@ textarea:focus{
 .inline-keyboard-actions{
   grid-column: span 1;
   display: grid;
-  grid-template-rows: repeat(4, 45px);
+  grid-auto-rows: 45px;
+  align-content: start;
   gap: 10px;
 }
 

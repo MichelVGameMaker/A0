@@ -640,7 +640,7 @@
             integer: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     null,  '0',  'del'],
             rpe:     ['5',  '5.5', '6', '6.5', '7', '7.5', '8',    '8.5', '9',     '9.5', '10', '-'],
             time:    ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     ':',   '0',  'del'],
-            timer:   ['timerDisplay', 'timerReset', 'done', '-10', 'timerToggle', '+10', null, null, 'close'],
+            timer:   ['timerDisplay', 'timerReset', null, '-10', 'timerToggle', '+10'],
             edit:    ['trash', 'up', null, 'down', null, null]
         };
 
