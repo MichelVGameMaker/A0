@@ -640,8 +640,8 @@
             integer: ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     null,  '0',  'del'],
             rpe:     ['5',  '5.5', '6', '6.5', '7', '7.5', '8',    '8.5', '9',     '9.5', '10', '-'],
             time:    ['1',  '2',  '3',  '4',   '5', '6',   '7',    '8',   '9',     ':',   '0',  'del'],
-            timer:   ['timerDisplay', 'timerReset', null, '-10', 'timerToggle', '+10'],
-            edit:    ['trash', 'up', null, 'down', null, null, null, null, null]
+            timer:   ['timerDisplay', 'timerReset', 'done', '-10', 'timerToggle', '+10', null, null, 'close'],
+            edit:    ['trash', 'up', null, 'down', null, null]
         };
 
         const resolveLayout = (layout, mode) => {
@@ -973,17 +973,17 @@
                 handleClose();
                 return;
             }
-            if (key === 'done') {
-                if (active.mode !== 'timer') {
-                    handleClose();
-                }
-                return;
-            }
             if (typeof active.onKey === 'function') {
                 const handled = active.onKey(key, { mode: active.mode, layout: active.layout });
                 if (handled) {
                     return;
                 }
+            }
+            if (key === 'done') {
+                if (active.mode !== 'timer') {
+                    handleClose();
+                }
+                return;
             }
             if (active.mode === 'edit') {
                 const edit = active.edit || {};
@@ -1119,10 +1119,7 @@
                 return [];
             }
             if (active.mode === 'timer') {
-                return [
-                    { label: 'fait', className: 'inline-keyboard-action--emphase', close: false, onClick: () => handleInput('done') },
-                    { label: 'fermer', className: 'inline-keyboard-action--muted', close: false, onClick: () => handleInput('close') }
-                ];
+                return [];
             }
             if (typeof active.actions === 'function') {
                 return active.actions(active.mode);
