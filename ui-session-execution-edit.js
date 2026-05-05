@@ -1148,7 +1148,22 @@
 
         const buildKeyboardActions = (mode = 'input') => {
             if (mode === 'timer') {
-                return [];
+                return [
+                    {
+                        label: 'fait',
+                        className: 'inline-keyboard-action--emphase',
+                        close: false,
+                        onClick: () => {
+                            resetTimerToDefault();
+                            inlineKeyboard?.detach?.();
+                            focusNextSetRepsInput();
+                        }
+                    },
+                    {
+                        label: 'fermer\n▼',
+                        className: 'inline-keyboard-action--close'
+                    }
+                ];
             }
             const isEdit = mode === 'edit';
             const toggleAction = {
