@@ -28,6 +28,9 @@
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
+        if (!refs.screenRoutineMoveEdit) {
+            return;
+        }
         wireNavigation();
         wireTabs();
         wireActions();
