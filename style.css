@@ -2813,6 +2813,55 @@ body.inline-keyboard-visible .keyboard-spacer{
   height: auto;
 }
 
+.inline-keyboard-grid[data-layout="edit"]{
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 45px;
+}
+
+.inline-keyboard-grid[data-layout="edit"] .inline-keyboard-key[data-key="trash"]{
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.inline-keyboard-grid[data-layout="edit"] .inline-keyboard-key[data-key="up"]{
+  grid-column: 2 / span 2;
+  grid-row: 1 / span 2;
+}
+
+.inline-keyboard-grid[data-layout="edit"] .inline-keyboard-key[data-key="down"]{
+  grid-column: 2 / span 2;
+  grid-row: 3 / span 2;
+}
+
+.inline-keyboard-grid[data-layout="timer"]{
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 45px;
+}
+
+.inline-keyboard-grid[data-layout="timer"] .inline-keyboard-key[data-key="timerReset"]{
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.inline-keyboard-grid[data-layout="timer"] .inline-keyboard-key[data-key="timerDisplay"]{
+  grid-column: 2 / span 2;
+  grid-row: 1 / span 2;
+}
+
+.inline-keyboard-grid[data-layout="timer"] .inline-keyboard-key[data-key="-10"]{
+  grid-column: 2;
+  grid-row: 3 / span 2;
+}
+
+.inline-keyboard-grid[data-layout="timer"] .inline-keyboard-key[data-key="+10"]{
+  grid-column: 3;
+  grid-row: 3 / span 2;
+}
+
+.inline-keyboard-grid[data-layout="timer"] + .inline-keyboard-actions{
+  align-content: end;
+}
+
 .inline-keyboard-key:active{
   filter: brightness(0.9);
   transform: translateY(1px);

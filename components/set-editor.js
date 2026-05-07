@@ -656,6 +656,8 @@
 
         const renderKeys = (layout, mode) => {
             grid.innerHTML = '';
+            grid.dataset.layout = layout;
+            grid.dataset.mode = mode || '';
             const keys = layouts[layout] || layouts.default;
             keys.forEach((key) => {
                 const button = document.createElement('button');
