@@ -1384,7 +1384,7 @@
                             inlineKeyboard?.refresh?.();
                             return true;
                         }
-                        if (key === 'timerToggle') {
+                        if (key === 'timerDisplay' || key === 'timerToggle') {
                             const timer = ensureSharedTimer();
                             if (timer.running) {
                                 pauseTimer();
@@ -3028,6 +3028,37 @@
         updateTimerUI();
     }
 
+    async function applyAttachmentRestValue(nextRest) {
+        const timer = ensureSharedTimer();
+        const attachment = timer.attachment;
+        if (!attachment?.dateKey || !attachment?.exerciseId || !attachment?.setId) {
+            return;
+        }
+        const session =
+            attachment.dateKey === state.dateKey && state.session ? state.session : await db.getSession(attachment.dateKey);
+        if (!session) {
+            return;
+        }
+        const exercise = Array.isArray(session.exercises)
+            ? session.exercises.find((item) => item.id === attachment.exerciseId) ||
+              session.exercises.find((item) => item.exercise_id === attachment.exerciseId)
+            : null;
+        if (!exercise || !Array.isArray(exercise.sets)) {
+            return;
+        }
+        const set = findSetById(exercise.sets, attachment.setId);
+        if (!set) {
+            return;
+        }
+        set.rest = Math.max(0, safeInt(nextRest, getDefaultRest()));
+        updateLastRestDuration(set.rest);
+        if (session === state.session) {
+            await persistSession();
+        } else {
+            await db.saveSession(session);
+        }
+    }
+
     function resetTimerToDefault() {
         const timer = ensureSharedTimer();
         stopTimer();
@@ -3036,6 +3067,7 @@
             startSec: defaultRest,
             remainSec: defaultRest
         });
+        void applyAttachmentRestValue(defaultRest);
         updateTimerUI();
     }
     A.resetTimerToDefault = resetTimerToDefault;
