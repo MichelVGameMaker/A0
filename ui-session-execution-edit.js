@@ -102,6 +102,9 @@
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
+        if (!refs.screenExecEdit) {
+            return;
+        }
         wireNavigation();
         wireActions();
         wireDetails();

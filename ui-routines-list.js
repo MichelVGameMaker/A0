@@ -33,6 +33,9 @@
     /* WIRE */
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
+        if (!refs.screenRoutineList) {
+            return;
+        }
         wireCreateButton();
         wireBackButton();
         wireFilters();
