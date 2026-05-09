@@ -148,7 +148,8 @@
             screenFitHeroMapping
         } = refs;
 
-        tabSessions?.addEventListener('click', async () => {
+        tabSessions?.addEventListener('pointerdown', async (event) => {
+            event.preventDefault();
             const isActive = tabSessions.classList.contains('active');
             const isOnSessions = screenSessions && !screenSessions.hidden;
             if (isActive && isOnSessions) {
@@ -163,13 +164,15 @@
             await A.renderSession();
         });
 
-        tabStats?.addEventListener('click', async () => {
+        tabStats?.addEventListener('pointerdown', async (event) => {
+            event.preventDefault();
             A.setTimerVisibility?.({ hidden: true });
             setActiveTab('tabStats');
             await A.openStatsSection?.();
         });
 
-        tabPlanning?.addEventListener('click', async () => {
+        tabPlanning?.addEventListener('pointerdown', async (event) => {
+            event.preventDefault();
             A.setTimerVisibility?.({ hidden: true });
             setActiveTab('tabPlanning');
             await A.openPlanning?.();
