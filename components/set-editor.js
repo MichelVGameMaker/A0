@@ -268,7 +268,11 @@
                 return;
             }
             const current = SetEditor.#parseFloat(input.value, 0);
-            let next = current + delta;
+            const step = Math.abs(Number(delta)) || 0;
+            if (!step) {
+                return;
+            }
+            let next = SetEditor.#snapByDirection(current, step, Number(delta) >= 0 ? 1 : -1);
             if (next < 0) {
                 next = 0;
             }
@@ -312,25 +316,33 @@
             if (!refs) {
                 return;
             }
-            let minutes = SetEditor.#parseInt(refs.minutesInput?.value, 0);
-            let seconds = SetEditor.#parseInt(refs.secondsInput?.value, 0);
-            seconds += delta;
-            if (seconds >= 60) {
-                minutes += Math.floor(seconds / 60);
-                seconds %= 60;
-            } else if (seconds < 0) {
-                const borrow = Math.ceil(Math.abs(seconds) / 60);
-                if (minutes >= borrow) {
-                    minutes -= borrow;
-                    seconds = (seconds % 60 + 60) % 60;
-                } else {
-                    minutes = 0;
-                    seconds = 0;
-                }
+            const step = Math.abs(Number(delta)) || 0;
+            if (!step) {
+                return;
             }
-            refs.minutesInput.value = String(Math.max(0, minutes));
-            refs.secondsInput.value = String(Math.max(0, seconds));
+            const direction = Number(delta) >= 0 ? 1 : -1;
+            const minutes = SetEditor.#parseInt(refs.minutesInput?.value, 0);
+            const seconds = SetEditor.#parseInt(refs.secondsInput?.value, 0);
+            const currentTotal = Math.max(0, minutes * 60 + seconds);
+            const nextTotal = Math.max(0, SetEditor.#snapByDirection(currentTotal, step, direction));
+            refs.minutesInput.value = String(Math.floor(nextTotal / 60));
+            refs.secondsInput.value = String(nextTotal % 60);
             SetEditor.#notifyChange();
+        }
+
+        static #snapByDirection(current, step, direction) {
+            const safeCurrent = Number.isFinite(Number(current)) ? Number(current) : 0;
+            const safeStep = Math.abs(Number(step));
+            if (!safeStep) {
+                return safeCurrent;
+            }
+            const quotient = safeCurrent / safeStep;
+            const rounded = Math.round(quotient);
+            const isAligned = Math.abs(quotient - rounded) < 1e-9;
+            if (direction >= 0) {
+                return (isAligned ? rounded + 1 : Math.ceil(quotient)) * safeStep;
+            }
+            return (isAligned ? rounded - 1 : Math.floor(quotient)) * safeStep;
         }
 
         static #sanitizeTimeInputs() {
