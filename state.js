@@ -98,6 +98,15 @@
         return existing.calculateOrm(load, count + repsInReserve);
     };
 
+
+    /**
+     * Seuil minimum de RPE utilisé pour les métriques qui filtrent les séries.
+     * @returns {number} Seuil de RPE inclusif.
+     */
+    existing.getMinTrackedRpe = function getMinTrackedRpe() {
+        return 7;
+    };
+
     /**
      * Retourne la date du jour sans composante horaire.
      * @returns {Date} Date du jour.

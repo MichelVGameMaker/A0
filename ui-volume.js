@@ -393,7 +393,7 @@
                     return;
                 }
                 const sets = Array.isArray(sessionExercise.sets) ? sessionExercise.sets : [];
-                const doneSets = sets.reduce((total, set) => total + (set?.done === true ? 1 : 0), 0);
+                const doneSets = countTrackedSets(sets);
                 if (doneSets === 0) {
                     return;
                 }
@@ -865,6 +865,22 @@
         return null;
     }
 
+
+
+    function countTrackedSets(sets) {
+        const minRpe = A.getMinTrackedRpe?.() ?? 7;
+        return (Array.isArray(sets) ? sets : []).reduce((total, set) => {
+            if (set?.done !== true) {
+                return total;
+            }
+            const rpe = Number(set?.rpe);
+            if (!Number.isFinite(rpe) || rpe < minRpe) {
+                return total;
+            }
+            return total + 1;
+        }, 0);
+    }
+
     function computeMuscleStats(sessions, exercises, muscleKey, start, end) {
         const exerciseById = new Map(exercises.map((exercise) => [exercise.id, exercise]));
         const stats = { sessions: 0, sets: 0 };
@@ -889,7 +905,7 @@
                     return;
                 }
                 const sets = Array.isArray(sessionExercise.sets) ? sessionExercise.sets : [];
-                const doneSets = sets.reduce((total, set) => total + (set?.done === true ? 1 : 0), 0);
+                const doneSets = countTrackedSets(sets);
                 if (doneSets === 0) {
                     return;
                 }
@@ -969,7 +985,7 @@
                     return;
                 }
                 const sets = Array.isArray(sessionExercise.sets) ? sessionExercise.sets : [];
-                const doneSets = sets.reduce((total, set) => total + (set?.done === true ? 1 : 0), 0);
+                const doneSets = countTrackedSets(sets);
                 if (doneSets === 0) {
                     return;
                 }
