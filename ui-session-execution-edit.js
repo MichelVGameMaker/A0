@@ -1149,17 +1149,30 @@
             }
         };
 
+        const hasNextSet = () => {
+            const sets = Array.isArray(getExercise()?.sets) ? getExercise().sets : [];
+            return currentIndex + 1 < sets.length;
+        };
+
+        const goToNextSetOrCreate = async () => {
+            resetTimerToDefault();
+            if (hasNextSet()) {
+                inlineKeyboard?.detach?.();
+                focusNextSetRepsInput();
+                return;
+            }
+            await addSet();
+        };
+
         const buildKeyboardActions = (mode = 'input') => {
             if (mode === 'timer') {
                 return [
                     {
-                        label: 'fait',
+                        label: hasNextSet() ? 'Suivant' : 'Ajouter',
                         className: 'inline-keyboard-action--emphase',
                         close: false,
                         onClick: () => {
-                            resetTimerToDefault();
-                            inlineKeyboard?.detach?.();
-                            focusNextSetRepsInput();
+                            void goToNextSetOrCreate();
                         }
                     },
                     {
@@ -1395,9 +1408,7 @@
                             return true;
                         }
                         if (key === 'done') {
-                            resetTimerToDefault();
-                            inlineKeyboard?.detach?.();
-                            focusNextSetRepsInput();
+                            void goToNextSetOrCreate();
                             return true;
                         }
                         if (key === 'close') {
