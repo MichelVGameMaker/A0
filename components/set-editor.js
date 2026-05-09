@@ -630,8 +630,6 @@
         actionsGrid.className = 'inline-keyboard-actions';
         content.appendChild(actionsGrid);
 
-        let pressedKeyTimer = null;
-        let pressedKeyButton = null;
         let timerModePointerGuard = false;
         let timerRefreshInterval = null;
 
@@ -652,6 +650,66 @@
                 return 'timer';
             }
             return layout || 'default';
+        };
+
+
+        const bindPressRelease = (button, onRelease, { pressedClass = 'inline-keyboard-key--pressed' } = {}) => {
+            if (!button || typeof onRelease !== 'function') {
+                return;
+            }
+            let pressed = false;
+            let pointerId = null;
+            let releaseHandledByPointer = false;
+            const clearPressed = () => {
+                if (!pressed) {
+                    return;
+                }
+                pressed = false;
+                button.classList.remove(pressedClass);
+                if (button.hasPointerCapture?.(pointerId)) {
+                    button.releasePointerCapture(pointerId);
+                }
+                pointerId = null;
+            };
+            const triggerRelease = async () => {
+                clearPressed();
+                releaseHandledByPointer = true;
+                await onRelease();
+            };
+            button.addEventListener('pointerdown', (event) => {
+                if (event.button !== 0) {
+                    return;
+                }
+                event.preventDefault();
+                pressed = true;
+                pointerId = event.pointerId;
+                button.classList.add(pressedClass);
+                button.setPointerCapture?.(pointerId);
+            });
+            button.addEventListener('pointerup', (event) => {
+                if (!pressed || event.pointerId !== pointerId) {
+                    return;
+                }
+                event.preventDefault();
+                void triggerRelease();
+            });
+            button.addEventListener('pointercancel', clearPressed);
+            button.addEventListener('pointerleave', (event) => {
+                if (event.pointerType !== 'touch') {
+                    clearPressed();
+                }
+            });
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (releaseHandledByPointer) {
+                    releaseHandledByPointer = false;
+                    return;
+                }
+                if (!pressed) {
+                    void onRelease();
+                }
+            });
         };
 
         const renderKeys = (layout, mode) => {
@@ -723,34 +781,9 @@
                 if (layout === 'rpe' && key !== '-') {
                     button.dataset.rpe = key;
                 }
-                button.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    flashPressedKey(button);
-                    handleInput(key);
-                });
+                bindPressRelease(button, () => handleInput(key));
                 grid.appendChild(button);
             });
-        };
-
-        const flashPressedKey = (button) => {
-            if (!button) {
-                return;
-            }
-            const pressedClass = 'inline-keyboard-key--pressed';
-            if (pressedKeyTimer) {
-                window.clearTimeout(pressedKeyTimer);
-            }
-            if (pressedKeyButton) {
-                pressedKeyButton.classList.remove(pressedClass);
-            }
-            pressedKeyButton = button;
-            button.classList.add(pressedClass);
-            pressedKeyTimer = window.setTimeout(() => {
-                button.classList.remove(pressedClass);
-                if (pressedKeyButton === button) {
-                    pressedKeyButton = null;
-                }
-            }, 120);
         };
 
 
@@ -801,15 +834,14 @@
                 if (Number.isFinite(action?.span)) {
                     button.style.gridRow = `span ${action.span}`;
                 }
-                button.addEventListener('click', async (event) => {
-                    event.preventDefault();
+                bindPressRelease(button, async () => {
                     if (typeof action?.onClick === 'function') {
                         await action.onClick();
                     }
                     if (action?.close !== false) {
                         handleClose();
                     }
-                });
+                }, { pressedClass: 'inline-keyboard-key--pressed' });
                 actionsGrid.appendChild(button);
             });
         };
@@ -850,12 +882,6 @@
             clearPendingOutside();
             stopTimerRefreshLoop();
             releaseTimerModePointerGuard();
-            if (pressedKeyTimer) {
-                window.clearTimeout(pressedKeyTimer);
-                pressedKeyTimer = null;
-            }
-            pressedKeyButton?.classList.remove('inline-keyboard-key--pressed');
-            pressedKeyButton = null;
             active?.onClose?.();
             active = null;
         };
