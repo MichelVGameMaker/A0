@@ -120,7 +120,7 @@
             const rpe = Number(set?.rpe);
             const reps = Number(set?.reps);
             const weight = Number(set?.weight);
-            return Number.isFinite(rpe) && rpe >= 7 && Number.isFinite(reps) && reps > 0 && Number.isFinite(weight) && weight > 0;
+            return Number.isFinite(rpe) && rpe >= (A.getMinTrackedRpe?.() ?? 7) && Number.isFinite(reps) && reps > 0 && Number.isFinite(weight) && weight > 0;
         });
         if (!eligibleSets.length) {
             return {
@@ -1470,7 +1470,7 @@
 
     function isSetEligibleForOrmMean(set) {
         const rpe = Number(set?.rpe);
-        return Number.isFinite(rpe) && rpe >= 7;
+        return Number.isFinite(rpe) && rpe >= (A.getMinTrackedRpe?.() ?? 7);
     }
 
     function resolveSetOrmValue(set) {
