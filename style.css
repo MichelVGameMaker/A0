@@ -2526,20 +2526,20 @@ textarea:focus{
 }
 
 .exec-set-planned{
-  background: transparent;
+  background: var(--panelBack);
   color: inherit;
   font-weight: var(--fw-light);
 }
 
 .exec-set-planned .set-edit-button{
-  background: color-mix(in srgb, var(--panelBord) 20%, transparent);
-  border-color: color-mix(in srgb, var(--panelBord) 45%, transparent);
+  background: var(--panelBack);
+  border-color: var(--panelBord);
   color: inherit;
   font-weight: inherit;
 }
 .exec-set-planned .set-edit-input{
-  background: color-mix(in srgb, var(--panelBord) 20%, transparent);
-  border-color: color-mix(in srgb, var(--panelBord) 45%, transparent);
+  background: var(--panelBack);
+  border-color: var(--panelBord);
   color: inherit;
   font-weight: inherit;
 }

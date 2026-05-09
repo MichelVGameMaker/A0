@@ -478,7 +478,7 @@
 
     function renderSetRow(set, index, totalSets) {
         const row = document.createElement('div');
-        row.className = 'exec-grid exec-row routine-set-row routine-set-grid';
+        row.className = 'exec-grid exec-row routine-set-row routine-set-grid exec-set-planned';
         row.dataset.idx = String(index);
 
         const order = document.createElement('div');
