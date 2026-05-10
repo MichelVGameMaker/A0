@@ -675,6 +675,12 @@
             const { card, start, body, end } = structure;
             const exerciseInstanceId = exercise.id || exercise.exercise_id;
             card.dataset.exerciseId = exerciseInstanceId;
+            const superset = Array.isArray(session.supersets)
+                ? session.supersets.find((item) => Array.isArray(item.exerciseIds) && item.exerciseIds.includes(exerciseInstanceId))
+                : null;
+            if (superset?.color) {
+                card.style.border = `2px solid ${superset.color}`;
+            }
             start.classList.add('list-card__start--solo');
 
             const exerciseName = exercise.exercise_name || 'Exercice';
