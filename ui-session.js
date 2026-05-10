@@ -659,6 +659,7 @@
         const session = await db.getSession(key);
         updateSessionEditButtons(session);
         updateSessionCommentsPreview(session);
+        updateSessionDurationPreview(session);
         sessionList.innerHTML = '';
         if (!(session?.exercises?.length)) {
             sessionList.innerHTML = '<div class="empty">Aucun exercice pour cette date.</div>';
@@ -1784,6 +1785,7 @@
         refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
         refs.btnSessionComments = document.getElementById('btnSessionComments');
         refs.sessionCommentsPreview = document.getElementById('sessionCommentsPreview');
+        refs.sessionDurationPreview = document.getElementById('sessionDurationPreview');
         refs.sessionCreateRoutine = document.getElementById('sessionCreateRoutine');
         refs.sessionDelete = document.getElementById('sessionDelete');
         refs.sessionShare = document.getElementById('sessionShare');
@@ -2251,6 +2253,41 @@
             : '';
         sessionCommentsPreview.textContent = comment;
         sessionCommentsPreview.dataset.empty = comment ? 'false' : 'true';
+    }
+
+    function updateSessionDurationPreview(session) {
+        const { sessionDurationPreview } = ensureRefs();
+        if (!sessionDurationPreview) {
+            return;
+        }
+        const totalSeconds = computeSessionEstimatedDurationSeconds(session);
+        sessionDurationPreview.value = formatSessionDuration(totalSeconds);
+    }
+
+    function computeSessionEstimatedDurationSeconds(session) {
+        const repDurationSeconds = Math.max(1, safeInt(A.preferences?.getRepDurationSeconds?.(), 4));
+        const exercises = Array.isArray(session?.exercises) ? session.exercises : [];
+        let totalSeconds = 0;
+        for (const exercise of exercises) {
+            const sets = Array.isArray(exercise?.sets) ? exercise.sets : [];
+            for (const set of sets) {
+                const reps = Math.max(0, safeInt(set?.reps, 0));
+                const rest = Math.max(0, safeInt(set?.rest, 0));
+                totalSeconds += rest + (reps * repDurationSeconds);
+            }
+        }
+        return totalSeconds;
+    }
+
+    function formatSessionDuration(totalSeconds) {
+        const safeSeconds = Math.max(0, safeInt(totalSeconds, 0));
+        const totalMinutes = Math.round(safeSeconds / 60);
+        if (totalMinutes < 60) {
+            return `${totalMinutes}mn`;
+        }
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        return `${hours}h${String(minutes).padStart(2, '0')}mn`;
     }
 
     async function resolveSessionInstructionsText() {
