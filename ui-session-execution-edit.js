@@ -1248,6 +1248,7 @@
             if (!editor) {
                 return;
             }
+            value.rest = composeRestFromParts(restMinutesInput.value, restSecondsInput.value);
             const { minutes, seconds } = splitRest(value.rest);
             editor.open(row, {
                 values: { reps: value.reps, weight: value.weight, rpe: value.rpe, minutes, seconds },
