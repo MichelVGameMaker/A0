@@ -153,8 +153,13 @@
             const isActive = tabSessions.classList.contains('active');
             const isOnSessions = screenSessions && !screenSessions.hidden;
             if (isActive && isOnSessions) {
-                const isHidden = A.isTimerHidden?.();
-                A.setTimerVisibility?.({ hidden: isHidden === false });
+                const opened = A.openTimerKeyboard?.();
+                if (!opened) {
+                    const isHidden = A.isTimerHidden?.();
+                    A.setTimerVisibility?.({ hidden: isHidden === false });
+                } else {
+                    A.setTimerVisibility?.({ hidden: true });
+                }
                 return;
             }
             A.setTimerVisibility?.({ hidden: true });

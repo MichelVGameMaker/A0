@@ -3033,6 +3033,21 @@
         return Boolean(timerVisibility?.hidden);
     }
     A.isTimerHidden = () => isTimerHidden();
+    A.openTimerKeyboard = () => {
+        if (!inlineKeyboard) {
+            return false;
+        }
+        const activeInput = document.activeElement instanceof HTMLInputElement ? document.activeElement : null;
+        const fallbackInput = refs.execSets?.querySelector?.('.exec-rest-second-cell, .exec-rest-minute-cell, .exec-reps-cell');
+        const input = activeInput || fallbackInput;
+        if (!(input instanceof HTMLInputElement)) {
+            return false;
+        }
+        input.click();
+        inlineKeyboard.setMode?.('timer');
+        inlineKeyboard.refresh?.();
+        return true;
+    };
 
     function resetTimerState() {
         const timer = ensureSharedTimer();
