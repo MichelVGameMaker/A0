@@ -3012,7 +3012,7 @@
         set.rest = Math.max(0, safeInt(set.rest, 0) + delta);
         updateLastRestDuration(set.rest);
         if (session === state.session) {
-            await persistSession();
+            await persistSession(false);
         } else {
             await db.saveSession(session);
         }
@@ -3064,7 +3064,7 @@
         set.rest = Math.max(0, safeInt(nextRest, getDefaultRest()));
         updateLastRestDuration(set.rest);
         if (session === state.session) {
-            await persistSession();
+            await persistSession(false);
         } else {
             await db.saveSession(session);
         }
