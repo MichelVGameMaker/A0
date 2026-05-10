@@ -270,8 +270,11 @@
         refs.timerPlus = document.getElementById('tmrPlus');
         refs.timerReset = document.getElementById('tmrReset');
         refs.dlgExecMoveEditor = document.getElementById('dlgExecMoveEditor');
+        refs.dlgExecSupersetEditor = document.getElementById('dlgExecSupersetEditor');
+        refs.execSupersetList = document.getElementById('execSupersetList');
         refs.execMoveUp = document.getElementById('execMoveUp');
         refs.execMoveDown = document.getElementById('execMoveDown');
+        refs.execMoveSuperset = document.getElementById('execMoveSuperset');
         refs.execMoveAnnotate = document.getElementById('execMoveAnnotate');
         refs.execMoveDuplicate = document.getElementById('execMoveDuplicate');
         refs.execReplaceExercise = document.getElementById('execReplaceExercise');
@@ -321,8 +324,11 @@
             'timerPlus',
             'timerReset',
             'dlgExecMoveEditor',
+            'dlgExecSupersetEditor',
+            'execSupersetList',
             'execMoveUp',
             'execMoveDown',
+            'execMoveSuperset',
             'execMoveAnnotate',
             'execMoveDuplicate',
             'execReplaceExercise',
@@ -369,7 +375,8 @@
             execMoveDown,
             execMoveAnnotate,
             execMoveDuplicate,
-            execMovePrefill
+            execMovePrefill,
+            execMoveSuperset
         } = assertRefs();
         execAddSet.addEventListener('click', () => {
             void addSet();
@@ -403,6 +410,9 @@
         });
         execMovePrefill.addEventListener('click', () => {
             void prefillExercisePendingSets();
+        });
+        execMoveSuperset.addEventListener('click', () => {
+            void openSupersetEditorFromCurrentExercise();
         });
         execMetaToggle.addEventListener('click', () => {
             if (state.metaMode !== 'history') {
@@ -1156,6 +1166,9 @@
 
         const goToNextSetOrCreate = async () => {
             resetTimerToDefault();
+            if (await goToNextSupersetSet(currentIndex)) {
+                return;
+            }
             if (hasNextSet()) {
                 inlineKeyboard?.detach?.();
                 focusNextSetRepsInput();
@@ -2521,6 +2534,93 @@
             .replace(/['’\s]+/g, '-')
             .replace(/-+/g, '-')
             .replace(/^-|-$/g, '') || 'exercice';
+    }
+
+    async function goToNextSupersetSet(currentSetIndex) {
+        const exercise = getExercise();
+        if (!exercise?.id) return false;
+        const superset = getSupersetForExercise(exercise.id);
+        if (!superset || !Array.isArray(superset.exerciseIds) || superset.exerciseIds.length < 2) return false;
+        const ordered = state.session.exercises.filter((item) => superset.exerciseIds.includes(item.id));
+        if (!ordered.length) return false;
+        const currentExerciseOrder = ordered.findIndex((item) => item.id === exercise.id);
+        const cycle = [...ordered.slice(currentExerciseOrder + 1), ...ordered.slice(0, currentExerciseOrder + 1)];
+        for (const ex of cycle) {
+            const sets = Array.isArray(ex.sets) ? ex.sets : [];
+            const nextIndex = ex.id === exercise.id
+                ? sets.findIndex((set, idx) => idx > currentSetIndex && set?.done !== true)
+                : sets.findIndex((set) => set?.done !== true);
+            if (nextIndex >= 0) {
+                inlineKeyboard?.detach?.();
+                await A.openExecEdit({ currentId: ex.id, callerScreen: 'screenSessions', focusSetIndex: nextIndex, focusField: 'reps' });
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function getSupersetPalette() {
+        return ['#0f62fe', '#ff7d00', '#8a3ffc', '#198038', '#d12771', '#005d5d', '#a56eff'];
+    }
+
+    function ensureSessionSupersets() {
+        if (!state.session) return [];
+        if (!Array.isArray(state.session.supersets)) state.session.supersets = [];
+        return state.session.supersets;
+    }
+
+    function getSupersetForExercise(exerciseId) {
+        return ensureSessionSupersets().find((s) => Array.isArray(s.exerciseIds) && s.exerciseIds.includes(exerciseId)) || null;
+    }
+
+    async function openSupersetEditorFromCurrentExercise() {
+        const exercise = getExercise();
+        if (!exercise?.id) return;
+        let superset = getSupersetForExercise(exercise.id);
+        if (!superset) {
+            const supersets = ensureSessionSupersets();
+            const used = new Set(supersets.map((s) => s.color));
+            const color = getSupersetPalette().find((c) => !used.has(c)) || getSupersetPalette()[0];
+            superset = { id: `ss_${Date.now()}`, color, exerciseIds: [exercise.id] };
+            supersets.push(superset);
+        }
+        renderSupersetEditor(superset.id);
+    }
+
+    function renderSupersetEditor(supersetId) {
+        const { dlgExecSupersetEditor, execSupersetList } = assertRefs();
+        const target = ensureSessionSupersets().find((s) => s.id === supersetId);
+        if (!target || !Array.isArray(state.session?.exercises)) return;
+        execSupersetList.innerHTML = '';
+        state.session.exercises.forEach((exercise) => {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'modal-context-action';
+            row.textContent = (exercise.exercise_name || 'Exercice').trim();
+            const existing = getSupersetForExercise(exercise.id);
+            if (existing?.color) row.style.borderLeft = `6px solid ${existing.color}`;
+            if (target.exerciseIds.includes(exercise.id)) row.classList.add('selected');
+            row.addEventListener('click', () => {
+                if (target.exerciseIds.includes(exercise.id)) {
+                    target.exerciseIds = target.exerciseIds.filter((id) => id !== exercise.id);
+                } else {
+                    const owner = getSupersetForExercise(exercise.id);
+                    if (owner) owner.exerciseIds = owner.exerciseIds.filter((id) => id !== exercise.id);
+                    target.exerciseIds.push(exercise.id);
+                }
+                renderSupersetEditor(supersetId);
+            });
+            execSupersetList.appendChild(row);
+        });
+        dlgExecSupersetEditor.showModal();
+        dlgExecSupersetEditor.onclick = (event) => {
+            if (event.target === dlgExecSupersetEditor) {
+                state.session.supersets = ensureSessionSupersets().filter((s) => Array.isArray(s.exerciseIds) && s.exerciseIds.length > 0);
+                dlgExecSupersetEditor.close();
+                void persistSession(false);
+                void refreshSessionViews();
+            }
+        };
     }
 
     async function refreshSessionViews() {
