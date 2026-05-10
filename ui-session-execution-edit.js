@@ -3011,6 +3011,7 @@
         }
         set.rest = Math.max(0, safeInt(set.rest, 0) + delta);
         updateLastRestDuration(set.rest);
+        syncAttachedSetRestInputs(set.rest, attachment);
         if (session === state.session) {
             await persistSession(false);
         } else {
@@ -3063,10 +3064,42 @@
         }
         set.rest = Math.max(0, safeInt(nextRest, getDefaultRest()));
         updateLastRestDuration(set.rest);
+        syncAttachedSetRestInputs(set.rest, attachment);
         if (session === state.session) {
             await persistSession(false);
         } else {
             await db.saveSession(session);
+        }
+    }
+
+    function syncAttachedSetRestInputs(restValue, attachment = ensureSharedTimer().attachment) {
+        if (!attachment || attachment.dateKey !== state.dateKey || attachment.exerciseId !== state.exerciseId) {
+            return;
+        }
+        const exercise = getExercise();
+        if (!exercise || !Array.isArray(exercise.sets)) {
+            return;
+        }
+        let setIndex = Number.isInteger(attachment.setIndex) ? attachment.setIndex : null;
+        if (!Number.isInteger(setIndex) || setIndex < 0 || setIndex >= exercise.sets.length) {
+            setIndex = exercise.sets.findIndex((set) => set?.id === attachment.setId);
+        }
+        if (!Number.isInteger(setIndex) || setIndex < 0) {
+            return;
+        }
+        const row = refs.execSets?.querySelector?.(`.exec-set-row[data-index="${setIndex}"]`);
+        if (!row) {
+            return;
+        }
+        const next = Math.max(0, safeInt(restValue, 0));
+        const { minutes, seconds } = splitRest(next);
+        const minuteInput = row.querySelector('.exec-rest-minute-cell');
+        const secondInput = row.querySelector('.exec-rest-second-cell');
+        if (minuteInput) {
+            minuteInput.value = String(minutes);
+        }
+        if (secondInput) {
+            secondInput.value = String(seconds).padStart(2, '0');
         }
     }
 
