@@ -2224,6 +2224,12 @@ textarea:focus{
     font: inherit;
     cursor: pointer;
 }
+.session-duration-preview{
+    flex: 0 0 72px;
+    width: 72px;
+    text-align: center;
+    padding: 0 6px;
+}
 .session-comments-text{
     display:block;
     min-height: 1.2em;

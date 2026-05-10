@@ -68,6 +68,7 @@
         </div>
 
         <div class="session-comments-header">
+            <input id="sessionDurationPreview" class="input session-duration-preview" type="text" readonly aria-label="Durée estimée de la séance" value="0mn" />
             <button id="btnSessionComments" class="session-comments-content" type="button" aria-label="Ajouter un commentaire de séance">
                 <span id="sessionCommentsPreview" class="session-comments-text details" data-empty="true" data-placeholder="commentaires"></span>
             </button>
@@ -1000,6 +1001,16 @@
                     </div>
                 </div>
             </article >
+            <article id="btnPreferencesRepDuration" class="exercise-card list-card clickable" role="button" aria-label="Durée d'une répétition pour le calcul de la séance">
+                <div class="exercise-card-row list-card__row">
+                    <div class="exercise-card-left list-card__start">
+                        <div class="exercise-card-text list-card__body">
+                            <div class="element">Durée d'une répétition</div>
+                            <div id="prefRepDurationSummary" class="details"></div>
+                        </div>
+                    </div>
+                </div>
+            </article>
 
            <article id="btnPreferencesNewSet" class="exercise-card list-card clickable" role="button" aria-label="Valeurs pour une nouvelle série">
                 <div class="exercise-card-row list-card__row">
@@ -1161,6 +1172,23 @@
         </div>
         <div class="modal-footer">
             <button id="prefRestSave" class="btn cta full" type="button">ok</button>
+        </div>
+    </form>
+</dialog>
+<dialog id="dlgPreferencesRepDuration" class="modal modal-fixed modal-centered">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Durée d'une répétition</div>
+            <button id="prefRepDurationCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <label class="lbl" for="prefRepDurationSeconds">Temps d'une répétition (secondes)</label>
+                <input id="prefRepDurationSeconds" class="input" type="number" min="1" step="1" inputmode="numeric" aria-label="Secondes par répétition" />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="prefRepDurationSave" class="btn cta full" type="button">ok</button>
         </div>
     </form>
 </dialog>

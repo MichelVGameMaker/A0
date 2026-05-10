@@ -7,7 +7,8 @@
         restDefaultEnabled: true,
         restDefaultDuration: 80,
         lastRestDuration: 80,
-        newSetValueSource: 'last_set'
+        newSetValueSource: 'last_set',
+        repDurationSeconds: 4
     };
     let cache = null;
 
@@ -37,6 +38,7 @@
         cache.restDefaultDuration = sanitizeDuration(cache.restDefaultDuration);
         cache.lastRestDuration = sanitizeDuration(cache.lastRestDuration, cache.restDefaultDuration);
         cache.newSetValueSource = normalizeNewSetValueSource(cache.newSetValueSource);
+        cache.repDurationSeconds = sanitizeRepDuration(cache.repDurationSeconds);
         return cache;
     }
 
@@ -54,6 +56,14 @@
     function sanitizeDuration(value, fallback = DEFAULTS.restDefaultDuration) {
         const number = Number(value);
         if (!Number.isFinite(number) || number < 0) {
+            return fallback;
+        }
+        return Math.round(number);
+    }
+
+    function sanitizeRepDuration(value, fallback = DEFAULTS.repDurationSeconds) {
+        const number = Number(value);
+        if (!Number.isFinite(number) || number <= 0) {
             return fallback;
         }
         return Math.round(number);
@@ -121,6 +131,19 @@
         data.newSetValueSource = normalizeNewSetValueSource(value);
         persist();
         return data.newSetValueSource;
+    };
+
+    preferences.getRepDurationSeconds = function getRepDurationSeconds() {
+        const data = ensureLoaded();
+        return sanitizeRepDuration(data.repDurationSeconds);
+    };
+
+    preferences.setRepDurationSeconds = function setRepDurationSeconds(seconds) {
+        const data = ensureLoaded();
+        const sanitized = sanitizeRepDuration(seconds);
+        data.repDurationSeconds = sanitized;
+        persist();
+        return sanitized;
     };
 
     preferences.getDefaultTimerDuration = function getDefaultTimerDuration() {

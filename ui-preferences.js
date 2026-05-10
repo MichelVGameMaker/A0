@@ -9,6 +9,7 @@
         ensureRefs();
         wireEvents();
         renderRestSummary();
+        renderRepDurationSummary();
         renderNewSetSummary();
     });
 
@@ -25,6 +26,12 @@
         refs.prefRestSave = document.getElementById('prefRestSave');
         refs.prefRestCancel = document.getElementById('prefRestCancel');
         refs.btnPreferencesNewSet = document.getElementById('btnPreferencesNewSet');
+        refs.btnPreferencesRepDuration = document.getElementById('btnPreferencesRepDuration');
+        refs.prefRepDurationSummary = document.getElementById('prefRepDurationSummary');
+        refs.dlgPreferencesRepDuration = document.getElementById('dlgPreferencesRepDuration');
+        refs.prefRepDurationSeconds = document.getElementById('prefRepDurationSeconds');
+        refs.prefRepDurationSave = document.getElementById('prefRepDurationSave');
+        refs.prefRepDurationCancel = document.getElementById('prefRepDurationCancel');
         refs.prefNewSetSummary = document.getElementById('prefNewSetSummary');
         refs.dlgPreferencesNewSet = document.getElementById('dlgPreferencesNewSet');
         refs.prefNewSetLastSet = document.getElementById('prefNewSetLastSet');
@@ -41,6 +48,10 @@
             dlgPreferencesRest,
             prefRestSave,
             prefRestCancel,
+            btnPreferencesRepDuration,
+            dlgPreferencesRepDuration,
+            prefRepDurationSave,
+            prefRepDurationCancel,
             btnPreferencesNewSet,
             dlgPreferencesNewSet,
             prefNewSetSave,
@@ -64,6 +75,19 @@
 
         dlgPreferencesRest?.addEventListener('close', () => {
             renderRestSummary();
+        });
+        btnPreferencesRepDuration?.addEventListener('click', () => openRepDurationDialog());
+        prefRepDurationSave?.addEventListener('click', (event) => {
+            event.preventDefault();
+            saveRepDurationPreferences();
+            dlgPreferencesRepDuration?.close();
+        });
+        prefRepDurationCancel?.addEventListener('click', (event) => {
+            event.preventDefault();
+            dlgPreferencesRepDuration?.close();
+        });
+        dlgPreferencesRepDuration?.addEventListener('close', () => {
+            renderRepDurationSummary();
         });
 
         btnPreferencesNewSet?.addEventListener('click', () => {
@@ -141,6 +165,35 @@
         if (typeof dlgPreferencesNewSet.showModal === 'function') {
             dlgPreferencesNewSet.showModal();
         }
+    }
+
+    function openRepDurationDialog() {
+        const { dlgPreferencesRepDuration, prefRepDurationSeconds } = ensureRefs();
+        if (!dlgPreferencesRepDuration || !prefRepDurationSeconds) {
+            return;
+        }
+        prefRepDurationSeconds.value = String(A.preferences?.getRepDurationSeconds?.() ?? 4);
+        if (typeof dlgPreferencesRepDuration.showModal === 'function') {
+            dlgPreferencesRepDuration.showModal();
+        }
+    }
+
+    function saveRepDurationPreferences() {
+        const { prefRepDurationSeconds } = ensureRefs();
+        if (!prefRepDurationSeconds) {
+            return;
+        }
+        const value = Math.max(1, safeInt(prefRepDurationSeconds.value, 4));
+        A.preferences?.setRepDurationSeconds?.(value);
+    }
+
+    function renderRepDurationSummary() {
+        const { prefRepDurationSummary } = ensureRefs();
+        if (!prefRepDurationSummary) {
+            return;
+        }
+        const seconds = A.preferences?.getRepDurationSeconds?.() ?? 4;
+        prefRepDurationSummary.textContent = `${seconds}s par répétition`;
     }
 
     function saveNewSetPreferences() {
