@@ -1645,6 +1645,13 @@ textarea:focus{
   text-overflow:ellipsis;
   white-space:nowrap;
 }
+
+#screenAdmin .list-card__body .details{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:unset;
+}
+
 .exercise-card-text{
   display:-webkit-box;
   -webkit-box-orient:vertical;
