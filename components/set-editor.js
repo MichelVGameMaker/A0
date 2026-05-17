@@ -1483,6 +1483,20 @@
             const current = Math.max(0, parseFloatSafe(weightValue, 0));
             return current <= 30 ? 1 : 2.5;
         };
+        const snapByDirection = (current, step, direction) => {
+            const safeCurrent = Number.isFinite(Number(current)) ? Number(current) : 0;
+            const safeStep = Math.abs(Number(step));
+            if (!safeStep) {
+                return safeCurrent;
+            }
+            const quotient = safeCurrent / safeStep;
+            const rounded = Math.round(quotient);
+            const isAligned = Math.abs(quotient - rounded) < 1e-9;
+            if (direction >= 0) {
+                return (isAligned ? rounded + 1 : Math.ceil(quotient)) * safeStep;
+            }
+            return (isAligned ? rounded - 1 : Math.floor(quotient)) * safeStep;
+        };
 
         const formatDeltaValue = (value) => {
             const numeric = Number(value);
@@ -1540,7 +1554,8 @@
                 case 'weight': {
                     const current = Math.max(0, parseFloatSafe(state.weight, 0));
                     const step = getWeightDeltaStep(current);
-                    let next = current + (delta * step);
+                    const direction = delta >= 0 ? 1 : -1;
+                    let next = snapByDirection(current, step, direction);
                     if (next < 0) {
                         next = 0;
                     }
