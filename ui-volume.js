@@ -357,13 +357,9 @@
                 return;
             }
             const primaryKey = normalizeKey(exercise.muscle);
-            const secondaryKeys = [
-                exercise.muscleGroup1,
-                exercise.muscleGroup2,
-                exercise.muscleGroup3
-            ]
-                .filter(Boolean)
-                .map(normalizeKey);
+            const secondaryKeys = Array.isArray(exercise.secondaryMuscles)
+                ? exercise.secondaryMuscles.filter(Boolean).map(normalizeKey)
+                : [];
 
             if (primaryKey && primaryKey === normalizedMuscle) {
                 primaryExercises.push(exercise);
@@ -934,19 +930,11 @@
             }
             keySet.add(normalizeKey(value));
         };
-        [
-            exercise.muscle,
-            exercise.muscleGroup1,
-            exercise.muscleGroup2,
-            exercise.muscleGroup3
-        ].forEach(addKey);
-
-        if (typeof CFG.decodeMuscle === 'function') {
-            const decoded = CFG.decodeMuscle(exercise.muscle);
-            if (decoded) {
-                [decoded.g1, decoded.g2, decoded.g3].forEach(addKey);
-            }
-        }
+        addKey(exercise.muscle);
+        const secondaryMuscles = Array.isArray(exercise.secondaryMuscles)
+            ? exercise.secondaryMuscles
+            : [];
+        secondaryMuscles.forEach(addKey);
         return Array.from(keySet);
     }
 
