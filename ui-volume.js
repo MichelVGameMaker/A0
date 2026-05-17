@@ -899,9 +899,8 @@
                 if (!exercise) {
                     return;
                 }
-                const muscles = getExerciseMuscleKeys(exercise);
                 const primaryMuscle = normalizeKey(exercise.muscle);
-                if (!muscles.length && !primaryMuscle) {
+                if (!primaryMuscle) {
                     return;
                 }
                 const sets = Array.isArray(sessionExercise.sets) ? sessionExercise.sets : [];
@@ -910,10 +909,10 @@
                     return;
                 }
 
-                if (muscles.includes(muscleKey)) {
+                if (primaryMuscle === muscleKey) {
                     stats.sets += doneSets;
                 }
-                if (!sessionCounted && muscles.includes(muscleKey)) {
+                if (!sessionCounted && primaryMuscle === muscleKey) {
                     stats.sessions += 1;
                     sessionCounted = true;
                 }
@@ -979,9 +978,8 @@
                 if (!exercise) {
                     return;
                 }
-                const muscles = getExerciseMuscleKeys(exercise);
                 const primaryMuscle = normalizeKey(exercise.muscle);
-                if (!muscles.length && !primaryMuscle) {
+                if (!primaryMuscle) {
                     return;
                 }
                 const sets = Array.isArray(sessionExercise.sets) ? sessionExercise.sets : [];
@@ -989,18 +987,10 @@
                 if (doneSets === 0) {
                     return;
                 }
-                muscles.forEach((muscleKey) => {
-                    if (!statsByKey.has(muscleKey)) {
-                        return;
-                    }
-                    sessionMuscles.add(muscleKey);
-                });
-                muscles.forEach((muscleKey) => {
-                    if (!statsByKey.has(muscleKey)) {
-                        return;
-                    }
-                    statsByKey.get(muscleKey).sets += doneSets;
-                });
+                if (statsByKey.has(primaryMuscle)) {
+                    sessionMuscles.add(primaryMuscle);
+                    statsByKey.get(primaryMuscle).sets += doneSets;
+                }
             });
 
             sessionMuscles.forEach((muscleKey) => {
