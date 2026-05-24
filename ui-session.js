@@ -325,18 +325,7 @@
                 text.appendChild(commentsNode);
             }
         }
-        const actions = document.createElement('div');
-        actions.className = 'exec-details-popover__actions';
-        const closeButton = document.createElement('button');
-        closeButton.type = 'button';
-        closeButton.className = 'btn ghost';
-        closeButton.textContent = 'Fermer';
-        closeButton.addEventListener('click', (event) => {
-            event.stopPropagation();
-            clearDetailsPopover();
-        });
-        actions.appendChild(closeButton);
-        popover.append(text, actions);
+        popover.append(text);
         document.body.appendChild(popover);
         const rect = target.getBoundingClientRect();
         const popRect = popover.getBoundingClientRect();
