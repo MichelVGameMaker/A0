@@ -455,6 +455,19 @@
         execDetailsCancel?.addEventListener('click', () => {
             void closeExecDetailsDialog({ revert: true });
         });
+        dlgExecDetails.addEventListener('click', (event) => {
+            if (event.target === dlgExecDetails) {
+                void closeExecDetailsDialog({ revert: false });
+            }
+        });
+        dlgExecDetails.addEventListener('cancel', (event) => {
+            event.preventDefault();
+            void closeExecDetailsDialog({ revert: false });
+        });
+        dlgExecDetails.querySelector('form')?.addEventListener('submit', (event) => {
+            event.preventDefault();
+            void closeExecDetailsDialog({ revert: false });
+        });
         dlgExecDetails.addEventListener('close', () => {
             void flushExecDetailsSave();
         });
