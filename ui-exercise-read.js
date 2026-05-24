@@ -557,6 +557,7 @@
                 }
                 return {
                     session,
+                    exerciseInstanceId: match.id || match.exercise_id || null,
                     sets: match.sets.filter(
                         (set) =>
                             set?.done === true &&
@@ -582,7 +583,7 @@
         }
 
         const weightUnit = exercise?.weight_unit === 'imperial' ? 'lb' : 'kg';
-        items.forEach(({ session, sets }) => {
+        items.forEach(({ session, exerciseInstanceId, sets }) => {
             const wrapper = document.createElement('div');
             wrapper.className = 'exercise-history-session';
 
@@ -606,8 +607,57 @@
                 });
             }
 
+            wrapper.tabIndex = 0;
+            wrapper.role = 'button';
+            wrapper.setAttribute('aria-label', `Ouvrir la séance du ${formatSessionDate(session)}`);
+            wrapper.addEventListener('click', () => {
+                void openSessionFromHistory(session, exerciseInstanceId);
+            });
+            wrapper.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') {
+                    return;
+                }
+                event.preventDefault();
+                void openSessionFromHistory(session, exerciseInstanceId);
+            });
+
             container.appendChild(wrapper);
         });
+    }
+
+    async function openSessionFromHistory(session, exerciseInstanceId) {
+        const dateKey = session?.date || session?.id;
+        const targetDate = parseDateKey(dateKey);
+        if (!targetDate || Number.isNaN(targetDate.getTime())) {
+            return;
+        }
+        A.activeDate = targetDate;
+        A.currentAnchor = A.startOfWeek(A.activeDate);
+        if (typeof A.populateRoutineSelect === 'function') {
+            await A.populateRoutineSelect();
+        }
+        if (typeof A.renderWeek === 'function') {
+            await A.renderWeek();
+        }
+        if (exerciseInstanceId) {
+            A.setSessionScrollTarget?.(exerciseInstanceId, { topGapPx: 0 });
+        }
+        if (typeof A.renderSession === 'function') {
+            await A.renderSession();
+        }
+        switchScreen('screenSessions');
+        A.restoreSessionScroll?.();
+    }
+
+    function parseDateKey(dateKey) {
+        if (!dateKey || typeof dateKey !== 'string') {
+            return null;
+        }
+        const [year, month, day] = dateKey.split('-').map((part) => Number.parseInt(part, 10));
+        if (!year || !month || !day) {
+            return null;
+        }
+        return new Date(year, month - 1, day, 12);
     }
 
     function cleanInstructionStep(step) {

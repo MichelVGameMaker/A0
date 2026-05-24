@@ -24,7 +24,8 @@
     const sessionScrollState = {
         top: 0,
         pendingRestore: false,
-        targetExerciseId: null
+        targetExerciseId: null,
+        targetTopGapPx: null
     };
     let activeContextCard = null;
     const ROUTINE_ADD_MODIFIER_OPTIONS = [
@@ -537,11 +538,13 @@
         card.addEventListener('click', onClickCapture, true);
     }
 
-    function setSessionScrollTarget(exerciseId) {
+    function setSessionScrollTarget(exerciseId, options = {}) {
         if (!exerciseId) {
             return;
         }
         sessionScrollState.targetExerciseId = exerciseId;
+        const requestedGap = Number(options?.topGapPx);
+        sessionScrollState.targetTopGapPx = Number.isFinite(requestedGap) ? Math.max(0, requestedGap) : null;
         storeSessionScroll();
     }
 
@@ -1867,10 +1870,12 @@
             if (target) {
                 const containerRect = container.getBoundingClientRect();
                 const targetRect = target.getBoundingClientRect();
-                container.scrollTop = container.scrollTop + (targetRect.top - containerRect.top) - SESSION_SCROLL_TOP_GAP_PX;
+                const scrollGap = sessionScrollState.targetTopGapPx ?? SESSION_SCROLL_TOP_GAP_PX;
+                container.scrollTop = container.scrollTop + (targetRect.top - containerRect.top) - scrollGap;
                 restored = true;
             }
             sessionScrollState.targetExerciseId = null;
+            sessionScrollState.targetTopGapPx = null;
         }
         if (!restored) {
             container.scrollTop = sessionScrollState.top;
@@ -1880,7 +1885,7 @@
 
     A.storeSessionScroll = () => storeSessionScroll();
     A.restoreSessionScroll = () => restoreSessionScroll();
-    A.setSessionScrollTarget = (exerciseId) => setSessionScrollTarget(exerciseId);
+    A.setSessionScrollTarget = (exerciseId, options = {}) => setSessionScrollTarget(exerciseId, options);
     A.ensureSessionCardInView = (exerciseId) => {
         if (!exerciseId) {
             return false;
