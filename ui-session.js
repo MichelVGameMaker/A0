@@ -1795,6 +1795,8 @@
         refs.btnSessionComments = document.getElementById('btnSessionComments');
         refs.sessionCommentsPreview = document.getElementById('sessionCommentsPreview');
         refs.sessionDurationPreview = document.getElementById('sessionDurationPreview');
+        refs.sessionCommentDurationPreview = document.getElementById('sessionCommentDurationPreview');
+        refs.sessionCommentInstructionsPreview = document.getElementById('sessionCommentInstructionsPreview');
         refs.sessionCreateRoutine = document.getElementById('sessionCreateRoutine');
         refs.sessionDelete = document.getElementById('sessionDelete');
         refs.sessionShare = document.getElementById('sessionShare');
@@ -2254,12 +2256,21 @@
     }
 
     function updateSessionDurationPreview(session) {
-        const { sessionDurationPreview } = ensureRefs();
-        if (!sessionDurationPreview) {
+        const {
+            sessionDurationPreview,
+            sessionCommentDurationPreview
+        } = ensureRefs();
+        if (!sessionDurationPreview && !sessionCommentDurationPreview) {
             return;
         }
         const totalSeconds = computeSessionEstimatedDurationSeconds(session);
-        sessionDurationPreview.value = formatSessionDuration(totalSeconds);
+        const formattedDuration = formatSessionDuration(totalSeconds);
+        if (sessionDurationPreview) {
+            sessionDurationPreview.value = formattedDuration;
+        }
+        if (sessionCommentDurationPreview) {
+            sessionCommentDurationPreview.value = formattedDuration;
+        }
     }
 
     function computeSessionEstimatedDurationSeconds(session) {
@@ -2281,11 +2292,11 @@
         const safeSeconds = Math.max(0, safeInt(totalSeconds, 0));
         const totalMinutes = Math.round(safeSeconds / 60);
         if (totalMinutes < 60) {
-            return `${totalMinutes}mn`;
+            return `${totalMinutes}m`;
         }
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
-        return `${hours}h${String(minutes).padStart(2, '0')}mn`;
+        return `${hours}h${String(minutes).padStart(2, '0')}`;
     }
 
     async function resolveSessionInstructionsText() {
@@ -2316,13 +2327,22 @@
     }
 
     function updateSessionInstructionsPreview(text) {
-        const { sessionCommentInstructions } = ensureRefs();
-        if (!sessionCommentInstructions) {
+        const {
+            sessionCommentInstructions,
+            sessionCommentInstructionsPreview
+        } = ensureRefs();
+        if (!sessionCommentInstructions && !sessionCommentInstructionsPreview) {
             return;
         }
         const instructions = typeof text === 'string' ? text.trim() : '';
-        sessionCommentInstructions.textContent = instructions;
-        sessionCommentInstructions.dataset.empty = instructions ? 'false' : 'true';
+        if (sessionCommentInstructions) {
+            sessionCommentInstructions.textContent = instructions;
+            sessionCommentInstructions.dataset.empty = instructions ? 'false' : 'true';
+        }
+        if (sessionCommentInstructionsPreview) {
+            sessionCommentInstructionsPreview.textContent = instructions;
+            sessionCommentInstructionsPreview.dataset.empty = instructions ? 'false' : 'true';
+        }
     }
 
     function focusTextareaAtEnd(textarea) {
