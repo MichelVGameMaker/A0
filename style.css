@@ -2241,6 +2241,7 @@ textarea:focus{
     display:block;
     min-height: 1.2em;
     font-size: var(--fs-small);
+    white-space: pre-wrap;
 }
 .session-comments-text[data-empty="true"]::before{
     content: attr(data-placeholder);
