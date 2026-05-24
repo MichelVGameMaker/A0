@@ -2066,14 +2066,6 @@
             void flushSessionCommentSave();
         });
 
-        sessionCommentInput?.addEventListener('input', () => {
-            if (!sessionCommentState.session) {
-                return;
-            }
-            sessionCommentState.session.comments_session_global = sessionCommentInput.value;
-            updateSessionCommentsPreview(sessionCommentState.session);
-            scheduleSessionCommentSave();
-        });
     }
 
     async function updateSessionNavigation() {
@@ -2221,26 +2213,21 @@
         if (!dlgSessionComment || !sessionCommentInput) {
             return;
         }
-        if (revert && sessionCommentState.session) {
-            sessionCommentState.session.comments_session_global = sessionCommentState.initialComments || '';
-            sessionCommentInput.value = sessionCommentState.initialComments || '';
-            updateSessionCommentsPreview(sessionCommentState.session);
+        if (!sessionCommentState.session) {
+            return;
         }
-        await flushSessionCommentSave();
+        if (revert) {
+            sessionCommentInput.value = sessionCommentState.initialComments || '';
+        } else {
+            sessionCommentState.session.comments_session_global = sessionCommentInput.value;
+            updateSessionCommentsPreview(sessionCommentState.session);
+            await flushSessionCommentSave();
+        }
         if (A.closeDialog) {
             A.closeDialog(dlgSessionComment);
         } else {
             dlgSessionComment.close();
         }
-    }
-
-    function scheduleSessionCommentSave() {
-        if (sessionCommentState.saveTimer) {
-            clearTimeout(sessionCommentState.saveTimer);
-        }
-        sessionCommentState.saveTimer = setTimeout(() => {
-            void flushSessionCommentSave();
-        }, 300);
     }
 
     async function flushSessionCommentSave() {
