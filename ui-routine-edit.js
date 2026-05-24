@@ -782,20 +782,15 @@
             routineDetailsInput.value = routineDetailsSnapshot;
             dlgRoutineDetails.showModal();
         });
-        routineDetailsInput.addEventListener('input', () => {
+        routineDetailsClose?.addEventListener('click', () => {
             if (!state.routine) {
+                closeRoutineDetailsDialog();
+                routineDetailsSnapshot = null;
                 return;
             }
             state.routine.instructions_routine_global = routineDetailsInput.value;
             updateRoutineDetailsPreview(state.routine);
-            scheduleSave();
-        });
-        routineDetailsClose?.addEventListener('click', () => {
-            if (state.pendingSave) {
-                clearTimeout(state.pendingSave);
-                state.pendingSave = null;
-                void persistRoutine();
-            }
+            void persistRoutine();
             closeRoutineDetailsDialog();
             routineDetailsSnapshot = null;
         });
@@ -804,14 +799,7 @@
                 closeRoutineDetailsDialog();
                 return;
             }
-            if (state.pendingSave) {
-                clearTimeout(state.pendingSave);
-                state.pendingSave = null;
-            }
-            state.routine.instructions_routine_global = routineDetailsSnapshot;
             routineDetailsInput.value = routineDetailsSnapshot;
-            updateRoutineDetailsPreview(state.routine);
-            void persistRoutine();
             closeRoutineDetailsDialog();
             routineDetailsSnapshot = null;
         });
