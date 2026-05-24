@@ -648,11 +648,15 @@
             execDetailsInput.value = nextDetails;
             updateExecDetailsPreview(commentsState.exercise);
         }
-        await flushExecDetailsSave();
         if (A.closeDialog) {
             A.closeDialog(dlgExecDetails);
         } else {
             dlgExecDetails.close();
+        }
+        try {
+            await flushExecDetailsSave();
+        } catch (error) {
+            console.error('Impossible de sauvegarder les commentaires exercice.', error);
         }
         if (!revert && isSessionScreenActive()) {
             await refreshSessionViews();
