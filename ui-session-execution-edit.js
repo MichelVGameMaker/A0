@@ -995,6 +995,14 @@
         }
         const actions = document.createElement('div');
         actions.className = 'exec-details-popover__actions';
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn ghost';
+        closeButton.textContent = 'Fermer';
+        closeButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            clearDetailsPopover();
+        });
         const editButton = document.createElement('button');
         editButton.type = 'button';
         editButton.className = 'btn ghost';
@@ -1004,7 +1012,7 @@
             clearDetailsPopover();
             void openExecDetailsDialog();
         });
-        actions.appendChild(editButton);
+        actions.append(closeButton, editButton);
         popover.append(text, actions);
         document.body.appendChild(popover);
         const rect = target.getBoundingClientRect();
