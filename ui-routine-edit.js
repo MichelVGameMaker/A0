@@ -102,6 +102,7 @@
         refs.routineName = document.getElementById('routineName');
         refs.routineIcon = document.getElementById('routineIcon');
         refs.btnRoutineDetails = document.getElementById('btnRoutineDetails');
+        refs.routineDurationPreview = document.getElementById('routineDurationPreview');
         refs.routineDetailsPreview = document.getElementById('routineDetailsPreview');
         refs.dlgRoutineDetails = document.getElementById('dlgRoutineDetails');
         refs.routineDetailsInput = document.getElementById('routineDetailsInput');
@@ -876,6 +877,7 @@
             routineEditTitle.textContent = state.routine.name || 'Routine';
         }
         updateRoutineDetailsPreview(state.routine);
+        updateRoutineDurationPreview(state.routine);
         refreshValueStates();
         renderRoutineList();
     }
@@ -888,6 +890,41 @@
         const instructions = routine?.instructions_routine_global || '';
         routineDetailsPreview.textContent = instructions;
         routineDetailsPreview.dataset.empty = instructions.trim() ? 'false' : 'true';
+    }
+
+    function updateRoutineDurationPreview(routine) {
+        const { routineDurationPreview } = ensureRefs();
+        if (!routineDurationPreview) {
+            return;
+        }
+        const totalSeconds = computeRoutineEstimatedDurationSeconds(routine);
+        routineDurationPreview.value = formatSessionDuration(totalSeconds);
+    }
+
+    function computeRoutineEstimatedDurationSeconds(routine) {
+        const repDurationSeconds = Math.max(1, safeInt(A.preferences?.getRepDurationSeconds?.(), 4));
+        const moves = Array.isArray(routine?.moves) ? routine.moves : [];
+        let totalSeconds = 0;
+        for (const move of moves) {
+            const sets = Array.isArray(move?.sets) ? move.sets : [];
+            for (const set of sets) {
+                const reps = Math.max(0, safeInt(set?.reps, 0));
+                const rest = Math.max(0, safeInt(set?.rest, 0));
+                totalSeconds += rest + (reps * repDurationSeconds);
+            }
+        }
+        return totalSeconds;
+    }
+
+    function formatSessionDuration(totalSeconds) {
+        const safeSeconds = Math.max(0, safeInt(totalSeconds, 0));
+        const totalMinutes = Math.round(safeSeconds / 60);
+        if (totalMinutes < 60) {
+            return `${totalMinutes}m`;
+        }
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        return `${hours}h${String(minutes).padStart(2, '0')}`;
     }
 
     function renderIconPreview() {
