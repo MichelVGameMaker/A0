@@ -28,6 +28,8 @@
     const planEditState = {
         plan: null
     };
+    let planMetaSnapshot = null;
+    let planCommentSnapshot = null;
 
     document.addEventListener('DOMContentLoaded', () => {
         ensureRefs();
@@ -413,9 +415,10 @@
 
     function renderPlanEdit(plan) {
         const {
+            planEditTitle,
+            planCommentPreview,
             planEditName,
             planEditComment,
-            btnPlanApply,
             planEditCycleDetails,
             planEditMesoDetails,
             planEditProgressionDetails
@@ -423,12 +426,16 @@
         if (!planEditName || !planEditComment) {
             return;
         }
+        if (planEditTitle) {
+            const icon = plan?.icon || '📋';
+            planEditTitle.textContent = `${icon} ${plan?.name || 'Plan'}`;
+        }
         planEditName.value = plan?.name || '';
         planEditComment.value = plan?.comment || '';
-        if (btnPlanApply) {
-            const isActive = Boolean(plan?.active);
-            btnPlanApply.disabled = isActive;
-            btnPlanApply.textContent = isActive ? '✅ Plan actuel' : '✅ Appliquer ce plan';
+        if (planCommentPreview) {
+            const comment = String(plan?.comment || '').trim();
+            planCommentPreview.textContent = comment || 'Ajouter un commentaire de plan';
+            planCommentPreview.dataset.empty = comment ? 'false' : 'true';
         }
         if (planEditCycleDetails) {
             planEditCycleDetails.textContent = buildPlanCycleDetails(plan);
@@ -820,11 +827,15 @@
         refs.tabPlanning = document.getElementById('tabPlanning');
         refs.planningPlansList = document.getElementById('planningPlansList');
         refs.planningRoutinesList = document.getElementById('planningRoutinesList');
+        refs.planEditTitle = document.getElementById('planEditTitle');
+        refs.planEditEdit = document.getElementById('planEditEdit');
+        refs.planEditMenu = document.getElementById('planEditMenu');
         refs.btnPlanEditBack = document.getElementById('btnPlanEditBack');
         refs.planEditName = document.getElementById('planEditName');
+        refs.planEditIcon = document.getElementById('planEditIcon');
         refs.planEditComment = document.getElementById('planEditComment');
-        refs.btnPlanApply = document.getElementById('btnPlanApply');
-        refs.btnPlanDuplicate = document.getElementById('btnPlanDuplicate');
+        refs.btnPlanComment = document.getElementById('btnPlanComment');
+        refs.planCommentPreview = document.getElementById('planCommentPreview');
         refs.btnPlanEditCycle = document.getElementById('btnPlanEditCycle');
         refs.btnPlanEditMeso = document.getElementById('btnPlanEditMeso');
         refs.btnPlanEditProgression = document.getElementById('btnPlanEditProgression');
@@ -839,6 +850,17 @@
         refs.planningStartDay = document.getElementById('planningStartDay');
         refs.planningDurationCancel = document.getElementById('planningDurationCancel');
         refs.planningDurationSave = document.getElementById('planningDurationSave');
+        refs.dlgPlanEditor = document.getElementById('dlgPlanEditor');
+        refs.planEditorClose = document.getElementById('planEditorClose');
+        refs.planEditorCancel = document.getElementById('planEditorCancel');
+        refs.dlgPlanActions = document.getElementById('dlgPlanActions');
+        refs.planUseAction = document.getElementById('planUseAction');
+        refs.planShareAction = document.getElementById('planShareAction');
+        refs.planDuplicateAction = document.getElementById('planDuplicateAction');
+        refs.planDeleteAction = document.getElementById('planDeleteAction');
+        refs.dlgPlanComment = document.getElementById('dlgPlanComment');
+        refs.planCommentClose = document.getElementById('planCommentClose');
+        refs.planCommentCancel = document.getElementById('planCommentCancel');
         refsResolved = true;
         return refs;
     }
@@ -846,10 +868,23 @@
     function wireButtons() {
         const {
             btnPlanEditBack,
+            planEditEdit,
+            planEditMenu,
             planEditName,
+            planEditIcon,
             planEditComment,
-            btnPlanApply,
-            btnPlanDuplicate,
+            btnPlanComment,
+            dlgPlanEditor,
+            planEditorClose,
+            planEditorCancel,
+            dlgPlanActions,
+            planUseAction,
+            planShareAction,
+            planDuplicateAction,
+            planDeleteAction,
+            dlgPlanComment,
+            planCommentClose,
+            planCommentCancel,
             btnPlanEditCycle,
             btnPlanEditMeso,
             btnPlanEditProgression,
@@ -864,22 +899,90 @@
             void A.openPlanning({ section: planningState.returnSection || 'plans' });
         });
 
-        planEditName?.addEventListener('input', (event) => {
-            const value = event.target?.value || '';
-            void persistPlanField('name', value.trim());
+        planEditEdit?.addEventListener('click', () => {
+            if (!planEditState.plan) return;
+            planMetaSnapshot = {
+                name: planEditState.plan.name || '',
+                icon: planEditState.plan.icon || '📋'
+            };
+            planEditName.value = planMetaSnapshot.name;
+            if (planEditIcon) {
+                planEditIcon.value = planMetaSnapshot.icon;
+            }
+            dlgPlanEditor?.showModal();
         });
 
-        planEditComment?.addEventListener('input', (event) => {
-            const value = event.target?.value || '';
-            void persistPlanField('comment', value.trim());
+        planEditorClose?.addEventListener('click', () => {
+            if (!planEditState.plan) return;
+            planEditState.plan.name = (planEditName?.value || '').trim() || 'Plan';
+            planEditState.plan.icon = (planEditIcon?.value || '📋').trim();
+            void db.put('plans', planEditState.plan);
+            renderPlanEdit(planEditState.plan);
+            dlgPlanEditor?.close();
+            planMetaSnapshot = null;
         });
 
-        btnPlanApply?.addEventListener('click', () => {
-            void handleApplyPlan();
+        planEditorCancel?.addEventListener('click', () => {
+            if (planMetaSnapshot && planEditName) {
+                planEditName.value = planMetaSnapshot.name;
+                if (planEditIcon) planEditIcon.value = planMetaSnapshot.icon;
+            }
+            dlgPlanEditor?.close();
+            planMetaSnapshot = null;
         });
 
-        btnPlanDuplicate?.addEventListener('click', () => {
-            void handleDuplicatePlan();
+        btnPlanComment?.addEventListener('click', () => {
+            if (!planEditState.plan) return;
+            planCommentSnapshot = planEditState.plan.comment || '';
+            if (planEditComment) {
+                planEditComment.value = planCommentSnapshot;
+            }
+            dlgPlanComment?.showModal();
+        });
+
+        planCommentClose?.addEventListener('click', () => {
+            if (!planEditState.plan) return;
+            planEditState.plan.comment = (planEditComment?.value || '').trim();
+            void db.put('plans', planEditState.plan);
+            renderPlanEdit(planEditState.plan);
+            dlgPlanComment?.close();
+            planCommentSnapshot = null;
+        });
+
+        planCommentCancel?.addEventListener('click', () => {
+            if (planEditComment && typeof planCommentSnapshot === 'string') {
+                planEditComment.value = planCommentSnapshot;
+            }
+            dlgPlanComment?.close();
+            planCommentSnapshot = null;
+        });
+
+        const closePlanActions = () => dlgPlanActions?.close();
+        planEditMenu?.addEventListener('click', () => dlgPlanActions?.showModal());
+        dlgPlanActions?.addEventListener('click', (event) => {
+            if (event.target === dlgPlanActions) closePlanActions();
+        });
+        planUseAction?.addEventListener('click', () => { closePlanActions(); void handleApplyPlan(); });
+        planDuplicateAction?.addEventListener('click', () => { closePlanActions(); void handleDuplicatePlan(); });
+        planDeleteAction?.addEventListener('click', async () => {
+            closePlanActions();
+            const plan = planEditState.plan;
+            if (!plan?.id) return;
+            await db.del('plans', plan.id);
+            await A.openPlanning({ section: planningState.returnSection || 'plans' });
+        });
+        planShareAction?.addEventListener('click', async () => {
+            closePlanActions();
+            const plan = planEditState.plan;
+            if (!plan) return;
+            const text = `Plan ${plan.name || 'sans nom'}\n` + buildPlanCycleDetails(plan);
+            if (navigator.share) {
+                await navigator.share({ title: 'Plan de séances', text });
+            } else if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                window.prompt('Copiez ce texte pour le partager :', text);
+            }
         });
 
         btnPlanEditCycle?.addEventListener('click', () => {

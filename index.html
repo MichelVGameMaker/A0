@@ -836,24 +836,20 @@
             <button id="btnPlanEditBack" class="btn" title="Retour">◀︎</button>
         </div>
         <div class="header-center">
-            <div class="title">Modification du plan</div>
+            <div id="planEditTitle" class="title">Plan</div>
         </div>
-        <div class="header-right"></div>
+        <div class="header-right">
+            <button id="planEditEdit" class="btn" type="button" title="Éditer le plan" aria-label="Éditer le plan">✎</button>
+            <button id="planEditMenu" class="btn" type="button" aria-label="Actions du plan">…</button>
+        </div>
     </header>
 
     <main class="content">
         <div class="bloque">
             <div class="row">
-                <input id="planEditName" class="input full" type="text" placeholder="Nom du plan" />
-            </div>
-            <div class="row">
-                <textarea id="planEditComment" class="input full" rows="4" placeholder="Commentaire du plan"></textarea>
-            </div>
-            <div class="row">
-                <button id="btnPlanApply" class="btn full" type="button">✅ Appliquer ce plan</button>
-            </div>
-            <div class="row">
-                <button id="btnPlanDuplicate" class="btn full" type="button">📄 Dupliquer ce plan</button>
+                <button id="btnPlanComment" class="session-comments-content" type="button" aria-label="Ajouter un commentaire de plan">
+                    <span id="planCommentPreview" class="session-comments-text" data-empty="true">Ajouter un commentaire de plan</span>
+                </button>
             </div>
             <div class="planning-plan-actions">
                 <button id="btnPlanEditCycle" class="exercise-card list-card planning-action-card clickable" type="button">
@@ -897,6 +893,69 @@
     </main>
 
 </section>
+<!-- ==================== -->
+
+<!-- ========== Plan : modale méta ========== -->
+<dialog id="dlgPlanEditor" class="modal modal-fixed modal-centered modal-top">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Éditer</div>
+            <button id="planEditorCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="planEditName">Nom</label>
+                    <input id="planEditName" class="input" placeholder="Nom du plan" />
+                </div>
+            </div>
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="planEditIcon">Icône</label>
+                    <select id="planEditIcon" class="input" aria-label="Icône du plan">
+                        <option>📋</option><option>🏋️</option><option>💪</option><option>🔥</option><option>⚡</option><option>🧠</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="planEditorClose" class="btn cta full" type="button">ok</button>
+        </div>
+    </form>
+</dialog>
+<!-- ==================== -->
+
+<!-- ========== Plan : actions ========== -->
+<dialog id="dlgPlanActions" class="modal modal-context">
+    <form method="dialog" class="modal-context-form">
+        <button id="planUseAction" class="modal-context-action" type="button">utiliser</button>
+        <button id="planShareAction" class="modal-context-action" type="button">partager</button>
+        <button id="planDuplicateAction" class="modal-context-action" type="button">dupliquer</button>
+        <button id="planDeleteAction" class="modal-context-action is-danger" type="button">supprimer</button>
+    </form>
+</dialog>
+<!-- ==================== -->
+
+<!-- ========== Plan : commentaire ========== -->
+<dialog id="dlgPlanComment" class="modal modal-fixed modal-centered modal-top">
+    <form method="dialog" class="modal-form">
+        <div class="modal-header">
+            <div class="title modal-title">Commentaire de plan</div>
+            <button id="planCommentCancel" class="btn ghost modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bloque">
+                <div class="vstack">
+                    <label class="lbl" for="planEditComment">Commentaire de plan</label>
+                    <textarea id="planEditComment" class="input session-comment-textarea" rows="8" placeholder="Ajouter un commentaire de plan"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="planCommentClose" class="btn cta full" type="button">ok</button>
+        </div>
+    </form>
+</dialog>
 <!-- ==================== -->
 
 <!-- ========== Planning : Cycle ========== -->
