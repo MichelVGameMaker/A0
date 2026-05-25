@@ -2591,6 +2591,14 @@
     }
 
     async function openSupersetEditorFromCurrentExercise() {
+        const { dlgExecMoveEditor } = assertRefs();
+        if (dlgExecMoveEditor?.open) {
+            if (A.closeDialog) {
+                A.closeDialog(dlgExecMoveEditor);
+            } else {
+                dlgExecMoveEditor.close();
+            }
+        }
         const exercise = getExercise();
         if (!exercise?.id) return;
         let superset = getSupersetForExercise(exercise.id);
