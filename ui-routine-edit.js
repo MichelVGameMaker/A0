@@ -634,7 +634,7 @@
     }
 
     function createEmptyRoutine(id) {
-        return { id, name: 'Routine', icon: ICONS[0], instructions_routine_global: '', moves: [] };
+        return { id, name: 'Routine', icon: ICONS[0], instructions_routine_global: '', supersets: [], moves: [] };
     }
 
     function pickTextValue(...values) {
@@ -655,6 +655,7 @@
             name: routine.name || 'Routine',
             icon: routine.icon || ICONS[0],
             instructions_routine_global: pickTextValue(routine.instructions_routine_global, routine.details),
+            supersets: Array.isArray(routine.supersets) ? [...routine.supersets] : [],
             moves: Array.isArray(routine.moves) ? [...routine.moves] : []
         };
         normalized.moves = normalized.moves.map((move, index) => ({
@@ -975,6 +976,10 @@
         const { card, start, body } = structure;
         card.dataset.moveId = move.id;
         start.classList.add('list-card__start--solo');
+        const superset = getSupersetForMove(move.id);
+        if (superset?.color) {
+            card.style.border = `2px solid ${superset.color}`;
+        }
 
         const name = document.createElement('div');
         name.className = 'element exercise-card-name';
@@ -1355,6 +1360,15 @@
             name: routine.name,
             icon: routine.icon,
             instructions_routine_global: routine.instructions_routine_global || '',
+            supersets: Array.isArray(routine.supersets)
+                ? routine.supersets
+                    .map((superset, index) => ({
+                        id: superset.id || `ss_${index + 1}`,
+                        color: superset.color || '#0f62fe',
+                        moveIds: Array.isArray(superset.moveIds) ? superset.moveIds.map((moveId) => String(moveId)) : []
+                    }))
+                    .filter((superset) => superset.moveIds.length > 0)
+                : [],
             moves: routine.moves.map((move, index) => ({
                 id: move.id,
                 pos: safeInt(move.pos, index + 1),
@@ -1384,6 +1398,13 @@
             const other = b[index];
             return entry.moveId === other.moveId && entry.pos === other.pos;
         });
+    }
+
+    function getSupersetForMove(moveId) {
+        if (!state.routine || !Array.isArray(state.routine.supersets)) {
+            return null;
+        }
+        return state.routine.supersets.find((superset) => Array.isArray(superset.moveIds) && superset.moveIds.includes(moveId)) || null;
     }
 
     function getRpeDatasetValue(value) {

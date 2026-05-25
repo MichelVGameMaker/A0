@@ -141,6 +141,9 @@
         refs.routineMoveDown = document.getElementById('routineMoveDown');
         refs.routineMoveAnnotate = document.getElementById('routineMoveAnnotate');
         refs.routineMoveDuplicate = document.getElementById('routineMoveDuplicate');
+        refs.routineMoveSuperset = document.getElementById('routineMoveSuperset');
+        refs.dlgRoutineSupersetEditor = document.getElementById('dlgRoutineSupersetEditor');
+        refs.routineSupersetList = document.getElementById('routineSupersetList');
         refs.dlgRoutineMoveDetails = document.getElementById('dlgRoutineMoveDetails');
         refs.routineMoveDetailsInput = document.getElementById('routineMoveDetailsInput');
         refs.routineMoveDetailsClose = document.getElementById('routineMoveDetailsClose');
@@ -180,6 +183,9 @@
             'routineMoveDown',
             'routineMoveAnnotate',
             'routineMoveDuplicate',
+            'routineMoveSuperset',
+            'dlgRoutineSupersetEditor',
+            'routineSupersetList',
             'dlgRoutineMoveDetails',
             'routineMoveDetailsInput',
             'routineMoveDetailsClose',
@@ -299,7 +305,8 @@
             routineMoveUp,
             routineMoveDown,
             routineMoveAnnotate,
-            routineMoveDuplicate
+            routineMoveDuplicate,
+            routineMoveSuperset
         } = assertRefs();
         routineMoveAddSet.addEventListener('click', () => {
             addSet();
@@ -327,6 +334,9 @@
         });
         routineMoveDuplicate.addEventListener('click', () => {
             void duplicateMove();
+        });
+        routineMoveSuperset.addEventListener('click', () => {
+            void openSupersetEditorFromCurrentMove();
         });
     }
 
@@ -966,10 +976,17 @@
             return;
         }
         moves.splice(index, 1);
+        const removedMoveId = state.moveId;
         moves.forEach((move, idx) => {
             move.pos = idx + 1;
         });
         state.routine.moves = moves;
+        state.routine.supersets = ensureRoutineSupersets()
+            .map((superset) => ({
+                ...superset,
+                moveIds: (superset.moveIds || []).filter((moveId) => moveId !== removedMoveId)
+            }))
+            .filter((superset) => Array.isArray(superset.moveIds) && superset.moveIds.length > 0);
         await persistRoutine({ refresh: false });
         if (A.closeDialog) {
             A.closeDialog(refs.dlgRoutineMoveEditor);
@@ -1172,6 +1189,15 @@
             name: routine.name || 'Routine',
             icon: routine.icon || '🏋️',
             instructions_routine_global: pickTextValue(routine.instructions_routine_global, routine.details),
+            supersets: Array.isArray(routine.supersets)
+                ? routine.supersets.map((superset, index) => ({
+                    id: superset.id || `ss_${index + 1}`,
+                    color: typeof superset.color === 'string' ? superset.color : getSupersetPalette()[0],
+                    moveIds: Array.isArray(superset.moveIds)
+                        ? superset.moveIds.map((moveId) => String(moveId))
+                        : []
+                })).filter((superset) => superset.moveIds.length > 0)
+                : [],
             moves: Array.isArray(routine.moves)
                 ? routine.moves.map((move, index) => ({
                     id: move.id || uid('move'),
@@ -1203,6 +1229,15 @@
             name: routine.name,
             icon: routine.icon,
             instructions_routine_global: routine.instructions_routine_global || '',
+            supersets: Array.isArray(routine.supersets)
+                ? routine.supersets
+                    .map((superset, index) => ({
+                        id: superset.id || `ss_${index + 1}`,
+                        color: superset.color || getSupersetPalette()[0],
+                        moveIds: Array.isArray(superset.moveIds) ? superset.moveIds.map((moveId) => String(moveId)) : []
+                    }))
+                    .filter((superset) => superset.moveIds.length > 0)
+                : [],
             moves: Array.isArray(routine.moves)
                 ? routine.moves.map((move, index) => ({
                     id: move.id || uid('move'),
@@ -1248,6 +1283,71 @@
         }
         switchScreen(state.callerScreen || 'screenRoutineEdit');
         void A.refreshRoutineEdit();
+    }
+
+    function getSupersetPalette() {
+        return ['#0f62fe', '#ff7d00', '#8a3ffc', '#198038', '#d12771', '#005d5d', '#a56eff'];
+    }
+
+    function ensureRoutineSupersets() {
+        if (!state.routine) return [];
+        if (!Array.isArray(state.routine.supersets)) state.routine.supersets = [];
+        return state.routine.supersets;
+    }
+
+    function getSupersetForMove(moveId) {
+        return ensureRoutineSupersets().find((s) => Array.isArray(s.moveIds) && s.moveIds.includes(moveId)) || null;
+    }
+
+    async function openSupersetEditorFromCurrentMove() {
+        const { dlgRoutineMoveEditor } = assertRefs();
+        if (A.closeDialog) A.closeDialog(dlgRoutineMoveEditor); else dlgRoutineMoveEditor?.close();
+        const move = findMove();
+        if (!move?.id) return;
+        let superset = getSupersetForMove(move.id);
+        if (!superset) {
+            const supersets = ensureRoutineSupersets();
+            const used = new Set(supersets.map((s) => s.color));
+            const color = getSupersetPalette().find((c) => !used.has(c)) || getSupersetPalette()[0];
+            superset = { id: `ss_${Date.now()}`, color, moveIds: [move.id] };
+            supersets.push(superset);
+        }
+        renderRoutineSupersetEditor(superset.id);
+    }
+
+    function renderRoutineSupersetEditor(supersetId) {
+        const { dlgRoutineSupersetEditor, routineSupersetList } = assertRefs();
+        const target = ensureRoutineSupersets().find((s) => s.id === supersetId);
+        if (!target || !Array.isArray(state.routine?.moves)) return;
+        routineSupersetList.innerHTML = '';
+        state.routine.moves.forEach((move) => {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'modal-context-action';
+            row.textContent = (move.exerciseName || 'Exercice').trim();
+            const existing = getSupersetForMove(move.id);
+            if (existing?.color) row.style.borderLeft = `6px solid ${existing.color}`;
+            if (target.moveIds.includes(move.id)) row.classList.add('selected');
+            row.addEventListener('click', () => {
+                if (target.moveIds.includes(move.id)) {
+                    target.moveIds = target.moveIds.filter((id) => id !== move.id);
+                } else {
+                    const owner = getSupersetForMove(move.id);
+                    if (owner) owner.moveIds = owner.moveIds.filter((id) => id !== move.id);
+                    target.moveIds.push(move.id);
+                }
+                renderRoutineSupersetEditor(supersetId);
+            });
+            routineSupersetList.appendChild(row);
+        });
+        dlgRoutineSupersetEditor.showModal();
+        dlgRoutineSupersetEditor.onclick = (event) => {
+            if (event.target === dlgRoutineSupersetEditor) {
+                state.routine.supersets = ensureRoutineSupersets().filter((s) => Array.isArray(s.moveIds) && s.moveIds.length > 0);
+                dlgRoutineSupersetEditor.close();
+                void persistRoutine();
+            }
+        };
     }
 
     function syncRoutineListOrder() {
