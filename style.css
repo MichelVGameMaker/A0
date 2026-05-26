@@ -2290,8 +2290,34 @@ textarea:focus{
 .session-list{
     display:flex;
     flex-direction:column;
+    gap: var(--gap);
     margin:16px 0; 
 }
+
+#planningPlansList{
+    display:flex;
+    flex-direction:column;
+    gap: var(--gap);
+}
+
+/* Harmonisation des espacements verticaux entre fiches/cartes */
+#screenSettings .bloque,
+#screenExercises .bloque,
+#screenPreferences .bloque,
+#screenData .bloque,
+#screenApplication .bloque,
+#screenPlanEdit .planning-plan-actions,
+#routineList,
+#sessionList{
+    gap: var(--gap);
+}
+
+/* Boutons Réglages/Application alignés sur la hauteur des cartes Préférences */
+#screenSettings .row > .btn,
+#screenApplication .row > .btn{
+    min-height: 68px;
+}
+
 
 
 /* Grille des séries (3 par ligne) */
