@@ -839,17 +839,19 @@
             <div id="planEditTitle" class="title">Plan</div>
         </div>
         <div class="header-right">
-            <button id="planEditEdit" class="btn" type="button" title="Éditer le plan" aria-label="Éditer le plan">✎</button>
-            <button id="planEditMenu" class="btn" type="button" aria-label="Actions du plan">…</button>
+            <button id="planEditEdit" class="btn primary" type="button" title="Éditer le plan" aria-label="Éditer le plan">✎</button>
         </div>
     </header>
 
     <main class="content">
         <div class="bloque">
             <div class="row">
-                <button id="btnPlanComment" class="session-comments-content" type="button" aria-label="Ajouter un commentaire de plan">
-                    <span id="planCommentPreview" class="session-comments-text" data-empty="true">Ajouter un commentaire de plan</span>
-                </button>
+                <div class="session-comments-header plan-comments-header">
+                    <button id="btnPlanComment" class="session-comments-content" type="button" aria-label="Ajouter un commentaire de plan">
+                        <span id="planCommentPreview" class="session-comments-text details" data-empty="true" data-placeholder="Ajouter un commentaire de plan"></span>
+                    </button>
+                    <button id="planEditMenu" class="btn ghost session-comments-more" type="button" aria-label="Actions du plan">...</button>
+                </div>
             </div>
             <div class="planning-plan-actions">
                 <button id="btnPlanEditCycle" class="exercise-card list-card planning-action-card clickable" type="button">
