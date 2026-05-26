@@ -991,7 +991,7 @@ textarea:focus{
 
 .planning-plan-actions{
     display:grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap:var(--gap);
 }
 
@@ -2258,6 +2258,19 @@ textarea:focus{
 .session-comments-more:focus-visible{
     outline: 2px solid var(--focusedBord);
     outline-offset: 2px;
+}
+.plan-comments-header{
+    min-height: 96px;
+}
+.plan-comments-header .session-comments-content{
+    min-height: 72px;
+}
+.plan-comments-header .session-comments-text{
+    min-height: 2.6em;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
 }
 .session-comment-textarea{
     min-height: 180px;
