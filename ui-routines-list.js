@@ -178,7 +178,7 @@
             const id = createRoutineId();
             highlightCallerTab(state.callerScreen);
             storeRoutineListScroll();
-            A.openRoutineEdit({ routineId: id, callerScreen: state.callerScreen });
+            A.openRoutineEdit({ routineId: id, callerScreen: state.callerScreen, resetScroll: true });
         });
     }
 
@@ -450,7 +450,7 @@
             card.addEventListener('click', () => {
                 highlightCallerTab(state.callerScreen);
                 storeRoutineListScroll();
-                A.openRoutineEdit({ routineId: routine?.id, callerScreen: state.callerScreen });
+                A.openRoutineEdit({ routineId: routine?.id, callerScreen: state.callerScreen, resetScroll: true });
             });
         }
 

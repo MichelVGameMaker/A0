@@ -51,13 +51,19 @@
 
     /* ACTIONS */
     A.openRoutineEdit = async function openRoutineEdit(options = {}) {
-        const { routineId = 'routine-test', callerScreen = 'screenSettings' } = options;
+        const { routineId = 'routine-test', callerScreen = 'screenSettings', resetScroll = false } = options;
         state.routineId = routineId;
         state.callerScreen = callerScreen;
         state.active = true;
+        if (resetScroll) {
+            resetRoutineScroll();
+        }
         await loadRoutine(true);
         renderRoutine();
         switchScreen('screenRoutineEdit');
+        if (resetScroll) {
+            resetRoutineScroll();
+        }
     };
 
     A.refreshRoutineEdit = async function refreshRoutineEdit() {
@@ -170,6 +176,16 @@
         }
         routineScrollState.top = container.scrollTop || 0;
         routineScrollState.pendingRestore = true;
+    }
+
+    function resetRoutineScroll() {
+        routineScrollState.top = 0;
+        routineScrollState.pendingRestore = false;
+        routineScrollState.targetMoveId = null;
+        const container = getRoutineScrollContainer();
+        if (container) {
+            container.scrollTop = 0;
+        }
     }
 
     const ROUTINE_SCROLL_TOP_GAP_PX = 10;
