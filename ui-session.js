@@ -1123,6 +1123,7 @@
             if (!routine) {
                 continue;
             }
+            appendRoutineNameToSessionComments(session, routine.name || 'Routine');
             for (const move of routine.moves) {
                 if (existingIds.has(move.exerciseId)) {
                     continue;
@@ -1521,6 +1522,13 @@
     }
 
     /* UTILS */
+    function appendRoutineNameToSessionComments(session, routineName) {
+        const comments = typeof session?.comments_session_global === 'string'
+            ? session.comments_session_global.trimEnd()
+            : '';
+        session.comments_session_global = comments ? `${comments}\n${routineName}` : routineName;
+    }
+
     function createSession(date) {
         return {
             id: A.sessionId(date),
