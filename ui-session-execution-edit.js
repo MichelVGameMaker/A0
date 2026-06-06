@@ -511,30 +511,45 @@
 
     function scheduleActiveTabScroll(tab) {
         requestAnimationFrame(() => {
-            const { screenExecEdit, execEditTabs, execReadHistoryContent } = assertRefs();
-            const content = screenExecEdit?.querySelector('.content');
-            if (!content || screenExecEdit.hidden || state.activeTab !== tab) {
-                return;
-            }
-            if (tab === 'stats') {
-                content.scrollTo({ top: 0, behavior: 'auto' });
-                return;
-            }
-            if (tab !== 'history') {
-                return;
-            }
-            const selectedSession = execReadHistoryContent?.querySelector('.exercise-history-session.is-selected');
-            if (!selectedSession) {
-                return;
-            }
-            const contentRect = content.getBoundingClientRect();
-            const selectedRect = selectedSession.getBoundingClientRect();
-            const tabsHeight = execEditTabs?.getBoundingClientRect().height || 0;
-            content.scrollTo({
-                top: content.scrollTop + selectedRect.top - contentRect.top - tabsHeight - 12,
-                behavior: 'auto'
-            });
+            // Attend que l'écran et l'onglet nouvellement affichés aient leurs dimensions finales.
+            requestAnimationFrame(() => scrollActiveTab(tab));
         });
+    }
+
+    function scrollActiveTab(tab) {
+        const {
+            screenExecEdit,
+            execEditTabs,
+            execEditTabHistory,
+            execReadHistoryContent
+        } = assertRefs();
+        const content = screenExecEdit?.querySelector('.content');
+        if (!content || screenExecEdit.hidden || state.activeTab !== tab) {
+            return;
+        }
+        if (tab === 'stats') {
+            content.scrollTo({ top: 0, behavior: 'auto' });
+            return;
+        }
+        if (tab !== 'history') {
+            return;
+        }
+        execEditTabHistory.style.paddingBottom = '';
+        const selectedSession = execReadHistoryContent?.querySelector('.exercise-history-session.is-selected');
+        if (!selectedSession) {
+            return;
+        }
+
+        const contentRect = content.getBoundingClientRect();
+        const selectedRect = selectedSession.getBoundingClientRect();
+        const tabsHeight = execEditTabs?.getBoundingClientRect().height || 0;
+        const targetTop = content.scrollTop + selectedRect.top - contentRect.top - tabsHeight - 12;
+        const maxScrollTop = content.scrollHeight - content.clientHeight;
+        const missingScrollSpace = Math.max(0, targetTop - maxScrollTop);
+        if (missingScrollSpace > 0) {
+            execEditTabHistory.style.paddingBottom = `${missingScrollSpace}px`;
+        }
+        content.scrollTo({ top: targetTop, behavior: 'auto' });
     }
 
     function setSessionTabVisibility(visible) {
