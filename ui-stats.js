@@ -154,14 +154,14 @@
     };
 
     A.renderExerciseStatsEmbedded = async function renderExerciseStatsEmbedded(exerciseId, options = {}) {
-        const { container = null } = options;
+        const { container = null, selectedDateKey = null } = options;
         ensureRefs();
         await loadData(true);
         const exercise = state.exercises.find((item) => item.id === exerciseId) || (await db.get('exercises', exerciseId));
         state.activeExercise = exercise || null;
         renderExerciseDetail();
         if (container) {
-            renderEmbeddedStatsContent(container, exerciseId);
+            renderEmbeddedStatsContent(container, exerciseId, selectedDateKey);
         }
     };
 
@@ -430,12 +430,17 @@
         renderTimeline();
     }
 
-    function renderEmbeddedStatsContent(container, exerciseId) {
+    function renderEmbeddedStatsContent(container, exerciseId, selectedDateKey = null) {
         if (!container) {
             return;
         }
         if (exerciseId) {
             container.dataset.statsExerciseId = exerciseId;
+        }
+        if (selectedDateKey) {
+            container.dataset.statsSelectedDateKey = selectedDateKey;
+        } else {
+            delete container.dataset.statsSelectedDateKey;
         }
         const { statsMetricTags, statsChart, statsChartEmpty, statsRangeTags, statsTimeline, statsExerciseSubtitle, statsTimelineTitle } =
             assertStatsRefs();
@@ -473,7 +478,8 @@
         renderChart({
             statsChart: embeddedChart || statsChart,
             statsChartEmpty: embeddedChartEmpty || statsChartEmpty,
-            statsExerciseSubtitle: embeddedSubtitle || statsExerciseSubtitle
+            statsExerciseSubtitle: embeddedSubtitle || statsExerciseSubtitle,
+            selectedDateKey
         });
 
         if (!container.dataset.statsEmbeddedWired) {
@@ -484,7 +490,10 @@
                     if (nextMetric && METRIC_MAP[nextMetric]) {
                         state.activeMetric = nextMetric;
                         const targetExerciseId = container.dataset.statsExerciseId || exerciseId;
-                        void A.renderExerciseStatsEmbedded(targetExerciseId, { container });
+                        void A.renderExerciseStatsEmbedded(targetExerciseId, {
+                            container,
+                            selectedDateKey: container.dataset.statsSelectedDateKey || null
+                        });
                     }
                     return;
                 }
@@ -500,7 +509,10 @@
                 if (nextRange && RANGE_MAP[nextRange]) {
                     state.activeRange = nextRange;
                     const targetExerciseId = container.dataset.statsExerciseId || exerciseId;
-                    void A.renderExerciseStatsEmbedded(targetExerciseId, { container });
+                    void A.renderExerciseStatsEmbedded(targetExerciseId, {
+                        container,
+                        selectedDateKey: container.dataset.statsSelectedDateKey || null
+                    });
                 }
             });
             container.dataset.statsEmbeddedWired = 'true';
@@ -930,7 +942,12 @@
         const metricDefinition = METRIC_MAP[state.activeMetric] || METRIC_DEFINITIONS[0];
         const rangeDefinition = RANGE_MAP[state.activeRange] || RANGE_OPTIONS[0];
         const cutoff = computeRangeCutoff(rangeDefinition);
-        const filtered = cutoff ? usage.filter((entry) => entry.dateObj >= cutoff) : [...usage];
+        const filtered = includeSelectedUsage(
+            cutoff ? usage.filter((entry) => entry.dateObj >= cutoff) : [...usage],
+            usage,
+            context.selectedDateKey,
+            state.activeMetric
+        );
         const aggregated =
             state.activeMetric === 'setsWeek' ? aggregateUsageByWeek(filtered) : aggregateUsageByDay(filtered);
         if (!aggregated.length) {
@@ -1168,7 +1185,11 @@
             svg.appendChild(circle);
         });
 
-        updateFocusAtPoint(points[points.length - 1]);
+        const selectedPoint = findSelectedChartPoint(points, context.selectedDateKey, state.activeMetric);
+        if (selectedPoint) {
+            isSelectionLocked = true;
+        }
+        updateFocusAtPoint(selectedPoint || points[points.length - 1]);
 
         statsChart.setAttribute(
             'aria-label',
@@ -1177,6 +1198,31 @@
             })`
         );
         statsChart.appendChild(svg);
+    }
+
+    function includeSelectedUsage(filtered, usage, selectedDateKey, metricKey) {
+        const selectedDate = parseDate(selectedDateKey);
+        if (!selectedDate) {
+            return filtered;
+        }
+        const targetKey = metricKey === 'setsWeek' ? getWeekKey(selectedDate) : A.ymd?.(selectedDate);
+        const selectedEntries = usage.filter((entry) => {
+            const entryKey = metricKey === 'setsWeek' ? getWeekKey(entry?.dateObj) : entry?.date;
+            return entryKey === targetKey;
+        });
+        return Array.from(new Set([...filtered, ...selectedEntries]));
+    }
+
+    function findSelectedChartPoint(points, selectedDateKey, metricKey) {
+        const selectedDate = parseDate(selectedDateKey);
+        if (!selectedDate || !Array.isArray(points)) {
+            return null;
+        }
+        const targetKey = metricKey === 'setsWeek' ? getWeekKey(selectedDate) : A.ymd?.(selectedDate);
+        return points.find((point) => {
+            const pointKey = metricKey === 'setsWeek' ? getWeekKey(point.date) : A.ymd?.(point.date);
+            return pointKey === targetKey;
+        }) || null;
     }
 
     function buildGoalMarkers(metricKey, exercise, usage) {

@@ -506,6 +506,35 @@
         execEditTabExec.hidden = tab !== 'exec';
         execEditTabHistory.hidden = tab !== 'history';
         execEditTabStats.hidden = tab !== 'stats';
+        scheduleActiveTabScroll(tab);
+    }
+
+    function scheduleActiveTabScroll(tab) {
+        requestAnimationFrame(() => {
+            const { screenExecEdit, execEditTabs, execReadHistoryContent } = assertRefs();
+            const content = screenExecEdit?.querySelector('.content');
+            if (!content || screenExecEdit.hidden || state.activeTab !== tab) {
+                return;
+            }
+            if (tab === 'stats') {
+                content.scrollTo({ top: 0, behavior: 'auto' });
+                return;
+            }
+            if (tab !== 'history') {
+                return;
+            }
+            const selectedSession = execReadHistoryContent?.querySelector('.exercise-history-session.is-selected');
+            if (!selectedSession) {
+                return;
+            }
+            const contentRect = content.getBoundingClientRect();
+            const selectedRect = selectedSession.getBoundingClientRect();
+            const tabsHeight = execEditTabs?.getBoundingClientRect().height || 0;
+            content.scrollTo({
+                top: content.scrollTop + selectedRect.top - contentRect.top - tabsHeight - 12,
+                behavior: 'auto'
+            });
+        });
     }
 
     function setSessionTabVisibility(visible) {
@@ -541,13 +570,14 @@
             await A.renderExerciseReadHistoryPanel({
                 exercise: mergedExercise,
                 exerciseId: linkedExerciseId,
-                container: execReadHistoryContent
+                container: execReadHistoryContent,
+                selectedDateKey: state.dateKey
             });
         }
-        await renderStatsDuplicate(mergedExercise, execEditTabStats, linkedExerciseId);
+        await renderStatsDuplicate(mergedExercise, execEditTabStats, linkedExerciseId, state.dateKey);
     }
 
-    async function renderStatsDuplicate(exercise, container, exerciseId) {
+    async function renderStatsDuplicate(exercise, container, exerciseId, selectedDateKey = null) {
         if (!container) {
             return;
         }
@@ -562,7 +592,8 @@
         }
         await A.renderExerciseReadStatsPanel({
             exerciseId,
-            container
+            container,
+            selectedDateKey
         });
     }
 
