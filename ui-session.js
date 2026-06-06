@@ -1856,12 +1856,19 @@
 
     const SESSION_SCROLL_TOP_GAP_PX = 10;
 
+    function getSessionVisibleTop(container) {
+        const containerRect = container.getBoundingClientRect();
+        const paddingTop = Number.parseFloat(window.getComputedStyle(container).paddingTop) || 0;
+        return containerRect.top + paddingTop;
+    }
+
     function restoreSessionScroll() {
         if (!sessionScrollState.pendingRestore) {
             return;
         }
+        const { screenSessions } = ensureRefs();
         const container = getSessionScrollContainer();
-        if (!container) {
+        if (!container || screenSessions?.hidden) {
             return;
         }
         let restored = false;
@@ -1870,10 +1877,9 @@
                 `[data-exercise-id="${CSS.escape(sessionScrollState.targetExerciseId)}"]`
             );
             if (target) {
-                const containerRect = container.getBoundingClientRect();
                 const targetRect = target.getBoundingClientRect();
                 const scrollGap = sessionScrollState.targetTopGapPx ?? SESSION_SCROLL_TOP_GAP_PX;
-                container.scrollTop = container.scrollTop + (targetRect.top - containerRect.top) - scrollGap;
+                container.scrollTop += targetRect.top - getSessionVisibleTop(container) - scrollGap;
                 restored = true;
             }
             sessionScrollState.targetExerciseId = null;
@@ -1902,7 +1908,7 @@
         }
         const containerRect = container.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
-        const targetTopLimit = containerRect.top + SESSION_SCROLL_TOP_GAP_PX;
+        const targetTopLimit = getSessionVisibleTop(container) + SESSION_SCROLL_TOP_GAP_PX;
         if (targetRect.top < targetTopLimit) {
             container.scrollTop += targetRect.top - targetTopLimit;
         } else if (targetRect.bottom > containerRect.bottom) {
