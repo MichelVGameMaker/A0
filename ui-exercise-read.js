@@ -733,13 +733,15 @@
         const line = document.createElement('div');
         line.className = 'details exercise-history-set-line exercise-history-stats-line';
         const stats = computeHistorySessionStats(sets);
+        const totalReps = Number.isFinite(stats?.totalReps) ? `${formatNumber(stats.totalReps)}x` : '—';
+        const totalVolume = Number.isFinite(stats?.totalVolume) ? `${formatNumber(stats.totalVolume)}${weightUnit}` : `—${weightUnit}`;
         const rpeAvg = Number.isFinite(stats?.rpeAvg) ? formatRpeValue(stats.rpeAvg) : '—';
         const orm = Number.isFinite(stats?.orm) ? `${formatOrmValue(stats.orm)}${weightUnit}` : `—${weightUnit}`;
         const ormRpe = Number.isFinite(stats?.ormRpe) ? `${formatOrmValue(stats.ormRpe)}${weightUnit}` : `—${weightUnit}`;
 
         line.append(
-            createHistoryPart('exercise-history-set-line__reps', ''),
-            createHistoryPart('exercise-history-set-line__weight', ''),
+            createHistoryPart('exercise-history-set-line__reps', totalReps),
+            createHistoryPart('exercise-history-set-line__weight', totalVolume),
             createHistoryPart('exercise-history-set-line__rpe', rpeAvg),
             createHistoryPart('exercise-history-set-line__sep', ''),
             createHistoryPart('exercise-history-set-line__orm', orm),
@@ -750,14 +752,29 @@
     }
 
     function computeHistorySessionStats(sets) {
-        const eligibleSets = (Array.isArray(sets) ? sets : []).filter((set) => {
+        const minTrackedRpe = A.getMinTrackedRpe?.() ?? 7;
+        const trackedSets = (Array.isArray(sets) ? sets : []).filter((set) => {
             const rpe = Number(set?.rpe);
+            return Number.isFinite(rpe) && rpe >= minTrackedRpe;
+        });
+        const totalReps = trackedSets.reduce((total, set) => {
+            const reps = Number(set?.reps);
+            return Number.isFinite(reps) && reps > 0 ? total + reps : total;
+        }, 0);
+        const totalVolume = trackedSets.reduce((total, set) => {
             const reps = Number(set?.reps);
             const weight = Number(set?.weight);
-            return Number.isFinite(rpe) && rpe >= 7 && Number.isFinite(reps) && reps > 0 && Number.isFinite(weight) && weight > 0;
+            return Number.isFinite(reps) && reps > 0 && Number.isFinite(weight) && weight > 0
+                ? total + reps * weight
+                : total;
+        }, 0);
+        const eligibleSets = trackedSets.filter((set) => {
+            const reps = Number(set?.reps);
+            const weight = Number(set?.weight);
+            return Number.isFinite(reps) && reps > 0 && Number.isFinite(weight) && weight > 0;
         });
         if (!eligibleSets.length) {
-            return { rpeAvg: null, orm: null, ormRpe: null };
+            return { totalReps, totalVolume, rpeAvg: null, orm: null, ormRpe: null };
         }
 
         let rpeSum = 0;
@@ -782,6 +799,8 @@
             }
         });
         return {
+            totalReps,
+            totalVolume,
             rpeAvg: rpeSum / eligibleSets.length,
             orm: ormCount ? ormSum / ormCount : null,
             ormRpe: ormRpeCount ? ormRpeSum / ormRpeCount : null

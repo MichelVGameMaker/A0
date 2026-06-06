@@ -2321,7 +2321,7 @@
 
     function isSetEligibleForOrmMeanForSessionEdit(set) {
         const rpe = Number(set?.rpe);
-        return Number.isFinite(rpe) && rpe >= 7;
+        return Number.isFinite(rpe) && rpe >= (A.getMinTrackedRpe?.() ?? 7);
     }
 
     function resolveSetOrmValueForSessionEdit(set) {
