@@ -1491,6 +1491,9 @@ textarea:focus{
     border-radius: var(--radius);
     background: var(--panelBack);
 }
+.exercise-history-session.is-selected{
+    border-color: var(--emphase);
+}
 .exercise-history-set-line{
     display:grid;
     grid-template-columns: 3ch 6ch 4.5ch auto auto auto auto;

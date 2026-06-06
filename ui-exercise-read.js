@@ -88,13 +88,13 @@
     };
 
     A.renderExerciseReadHistoryPanel = async function renderExerciseReadHistoryPanel(options = {}) {
-        const { exercise, exerciseId, container } = options;
-        await renderExerciseHistoryPanel({ exercise, exerciseId, container });
+        const { exercise, exerciseId, container, selectedDateKey = null } = options;
+        await renderExerciseHistoryPanel({ exercise, exerciseId, container, selectedDateKey });
     };
 
     A.renderExerciseReadStatsPanel = async function renderExerciseReadStatsPanel(options = {}) {
-        const { exerciseId, container } = options;
-        await renderExerciseStatsPanel({ exerciseId, container });
+        const { exerciseId, container, selectedDateKey = null } = options;
+        await renderExerciseStatsPanel({ exerciseId, container, selectedDateKey });
     };
 
     /* UTILS */
@@ -522,7 +522,7 @@
     }
 
 
-    async function renderExerciseStatsPanel({ exerciseId, container = null }) {
+    async function renderExerciseStatsPanel({ exerciseId, container = null, selectedDateKey = null }) {
         if (!exerciseId) {
             return;
         }
@@ -536,13 +536,13 @@
         }
         const { exReadTabStats } = assertRefs();
         if (target === exReadTabStats) {
-            await A.renderExerciseStatsEmbedded(exerciseId);
+            await A.renderExerciseStatsEmbedded(exerciseId, { selectedDateKey });
             return;
         }
-        await A.renderExerciseStatsEmbedded(exerciseId, { container: target });
+        await A.renderExerciseStatsEmbedded(exerciseId, { container: target, selectedDateKey });
     }
 
-    async function renderExerciseHistoryPanel({ exercise, exerciseId, container }) {
+    async function renderExerciseHistoryPanel({ exercise, exerciseId, container, selectedDateKey = null }) {
         if (!exerciseId || !container) {
             return;
         }
@@ -586,6 +586,12 @@
         items.forEach(({ session, exerciseInstanceId, sets }) => {
             const wrapper = document.createElement('div');
             wrapper.className = 'exercise-history-session';
+            const sessionDateKey = session?.date || session?.id || '';
+            if (selectedDateKey && sessionDateKey === selectedDateKey) {
+                wrapper.classList.add('is-selected');
+                wrapper.setAttribute('aria-current', 'true');
+            }
+            wrapper.dataset.sessionDate = sessionDateKey;
 
             const dateLabel = document.createElement('div');
             dateLabel.className = 'lbl';
