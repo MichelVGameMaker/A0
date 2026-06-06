@@ -1821,10 +1821,14 @@
         let rpeSum = 0;
         let rpeCount = 0;
         let hasData = false;
+        const minTrackedRpe = A.getMinTrackedRpe?.() ?? 7;
         sets.forEach((set) => {
             const reps = parseNumber(set?.reps);
             const weight = parseNumber(set?.weight);
             const rpe = parseNumber(set?.rpe);
+            if (!Number.isFinite(rpe) || rpe < minTrackedRpe) {
+                return;
+            }
             if (Number.isFinite(reps) || Number.isFinite(weight) || Number.isFinite(rpe)) {
                 setCount += 1;
             }
@@ -1836,11 +1840,9 @@
                 maxWeight = weight;
                 hasData = true;
             }
-            if (Number.isFinite(rpe) && rpe >= (A.getMinTrackedRpe?.() ?? 7) && rpe <= 10) {
-                rpeSum += rpe;
-                rpeCount += 1;
-                hasData = true;
-            }
+            rpeSum += rpe;
+            rpeCount += 1;
+            hasData = true;
             if (Number.isFinite(weight) && weight > 0 && Number.isFinite(reps) && reps === 10) {
                 maxTenRmReal = Number.isFinite(maxTenRmReal) ? Math.max(maxTenRmReal, weight) : weight;
                 hasData = true;
