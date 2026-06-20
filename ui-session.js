@@ -1109,14 +1109,17 @@
             return;
         }
 
-        const mode = options.mode === 'rpe' ? 'rpe' : 'template';
+        const mode = ['rpe', 'previous'].includes(options.mode) ? options.mode : 'template';
         const modifiers = normalizeRoutineAddModifiers(options?.modifiers);
         const dateKey = A.ymd(A.activeDate);
         const session = (await db.getSession(dateKey)) || createSession(A.activeDate);
         const existingIds = new Set((session.exercises || []).map((exercise) => exercise.exercise_id));
         let firstAddedId = null;
-        const sessionDates = mode === 'rpe' ? await db.listSessionDates() : [];
+        const sessionDates = ['rpe', 'previous'].includes(mode)
+            ? (await db.listSessionDatesWithActivity?.()) || await db.listSessionDates()
+            : [];
         const ormMeanCache = new Map();
+        const previousSetsCache = new Map();
 
         for (const routineId of uniqueIds) {
             const routine = await db.get('routines', routineId);
@@ -1131,6 +1134,9 @@
                 existingIds.add(move.exerciseId);
                 const ormMean = mode === 'rpe'
                     ? await resolveExerciseOrmMean(move.exerciseId, dateKey, sessionDates, ormMeanCache)
+                    : null;
+                const previousSets = mode === 'previous'
+                    ? await resolveExercisePreviousSets(move.exerciseId, dateKey, sessionDates, previousSetsCache)
                     : null;
                 const created = createSessionExercise({
                     date: session.date,
@@ -1148,14 +1154,7 @@
                     routineName: routine.name || 'Routine',
                     sort: session.exercises.length + 1,
                     sets: applyRoutineAddModifiers(
-                        move.sets.map((set) => ({
-                            pos: set.pos,
-                            reps: set.reps ?? null,
-                            weight: mode === 'rpe' ? resolveRoutineSetWeight(ormMean, set) : null,
-                            rpe: set.rpe ?? null,
-                            rest: set.rest ?? null,
-                            done: false
-                        })),
+                        buildRoutineSessionSets(move.sets, mode, ormMean, previousSets),
                         modifiers
                     )
                 });
@@ -1180,15 +1179,17 @@
             dlgRoutineAddMode,
             routineAddModeTemplate,
             routineAddModeRpe,
+            routineAddModePrevious,
             routineAddModeCancel,
             routineAddModeConfirm,
             routineAddModeModifiers
         } = ensureRefs();
-        if (!dlgRoutineAddMode || !routineAddModeTemplate || !routineAddModeRpe) {
+        if (!dlgRoutineAddMode || !routineAddModeTemplate || !routineAddModeRpe || !routineAddModePrevious) {
             return null;
         }
         routineAddModeTemplate.checked = true;
         routineAddModeRpe.checked = false;
+        routineAddModePrevious.checked = false;
 
         const modifierState = {
             reps: 0,
@@ -1199,9 +1200,9 @@
         renderRoutineAddModeModifierControls(routineAddModeModifiers, modifierState);
 
         const setMode = (mode) => {
-            const isRpe = mode === 'rpe';
-            routineAddModeTemplate.checked = !isRpe;
-            routineAddModeRpe.checked = isRpe;
+            routineAddModeTemplate.checked = mode === 'template';
+            routineAddModeRpe.checked = mode === 'rpe';
+            routineAddModePrevious.checked = mode === 'previous';
         };
 
         return await new Promise((resolve) => {
@@ -1217,20 +1218,27 @@
             const onTemplateChange = () => {
                 if (routineAddModeTemplate.checked) {
                     setMode('template');
-                } else if (!routineAddModeRpe.checked) {
+                } else if (!routineAddModeRpe.checked && !routineAddModePrevious.checked) {
                     routineAddModeTemplate.checked = true;
                 }
             };
             const onRpeChange = () => {
                 if (routineAddModeRpe.checked) {
                     setMode('rpe');
-                } else if (!routineAddModeTemplate.checked) {
+                } else if (!routineAddModeTemplate.checked && !routineAddModePrevious.checked) {
                     routineAddModeRpe.checked = true;
+                }
+            };
+            const onPreviousChange = () => {
+                if (routineAddModePrevious.checked) {
+                    setMode('previous');
+                } else if (!routineAddModeTemplate.checked && !routineAddModeRpe.checked) {
+                    routineAddModePrevious.checked = true;
                 }
             };
             const onCancel = () => closeWith(null);
             const onConfirm = () => closeWith({
-                mode: routineAddModeRpe.checked ? 'rpe' : 'template',
+                mode: routineAddModePrevious.checked ? 'previous' : routineAddModeRpe.checked ? 'rpe' : 'template',
                 modifiers: normalizeRoutineAddModifiers(modifierState)
             });
             const onBackdropClick = (event) => {
@@ -1245,6 +1253,7 @@
             const cleanup = () => {
                 routineAddModeTemplate.removeEventListener('change', onTemplateChange);
                 routineAddModeRpe.removeEventListener('change', onRpeChange);
+                routineAddModePrevious.removeEventListener('change', onPreviousChange);
                 routineAddModeCancel?.removeEventListener('click', onCancel);
                 routineAddModeConfirm?.removeEventListener('click', onConfirm);
                 dlgRoutineAddMode.removeEventListener('click', onBackdropClick);
@@ -1253,6 +1262,7 @@
 
             routineAddModeTemplate.addEventListener('change', onTemplateChange);
             routineAddModeRpe.addEventListener('change', onRpeChange);
+            routineAddModePrevious.addEventListener('change', onPreviousChange);
             routineAddModeCancel?.addEventListener('click', onCancel);
             routineAddModeConfirm?.addEventListener('click', onConfirm);
             dlgRoutineAddMode.addEventListener('click', onBackdropClick);
@@ -1424,6 +1434,59 @@
 
             return nextSet;
         });
+    }
+
+    function buildRoutineSessionSets(templateSets, mode, ormMean, previousSets) {
+        const sourceSets = mode === 'previous' && Array.isArray(previousSets) && previousSets.length
+            ? previousSets
+            : templateSets;
+        return (Array.isArray(sourceSets) ? sourceSets : []).map((set, index) => {
+            const templateSet = Array.isArray(templateSets) ? templateSets[index] || {} : {};
+            return {
+                pos: set.pos ?? index + 1,
+                reps: set.reps ?? templateSet.reps ?? null,
+                weight: mode === 'rpe'
+                    ? resolveRoutineSetWeight(ormMean, templateSet)
+                    : mode === 'previous'
+                        ? set.weight ?? null
+                        : null,
+                rpe: mode === 'previous' ? templateSet.rpe ?? set.rpe ?? null : set.rpe ?? null,
+                rest: mode === 'previous' ? templateSet.rest ?? set.rest ?? null : set.rest ?? null,
+                done: false
+            };
+        });
+    }
+
+    async function resolveExercisePreviousSets(exerciseId, dateKey, sessionDates, cache) {
+        if (!exerciseId || !dateKey) {
+            return null;
+        }
+        if (cache?.has(exerciseId)) {
+            return cache.get(exerciseId);
+        }
+        const dates = (Array.isArray(sessionDates) ? sessionDates : [])
+            .map((entry) => entry.date)
+            .filter((date) => date && date < dateKey)
+            .sort((a, b) => b.localeCompare(a));
+        for (const date of dates) {
+            const session = await db.getSession(date);
+            const exercise = Array.isArray(session?.exercises)
+                ? session.exercises.find((item) => item.exercise_id === exerciseId)
+                : null;
+            if (Array.isArray(exercise?.sets) && exercise.sets.length) {
+                const sets = exercise.sets.map((set, index) => ({
+                    pos: index + 1,
+                    reps: set.reps ?? null,
+                    weight: set.weight ?? null,
+                    rpe: set.rpe ?? null,
+                    rest: set.rest ?? null
+                }));
+                cache?.set(exerciseId, sets);
+                return sets;
+            }
+        }
+        cache?.set(exerciseId, null);
+        return null;
     }
 
     async function resolveExerciseOrmMean(exerciseId, dateKey, sessionDates, cache) {
@@ -1816,6 +1879,7 @@
         refs.dlgRoutineAddMode = document.getElementById('dlgRoutineAddMode');
         refs.routineAddModeTemplate = document.getElementById('routineAddModeTemplate');
         refs.routineAddModeRpe = document.getElementById('routineAddModeRpe');
+        refs.routineAddModePrevious = document.getElementById('routineAddModePrevious');
         refs.routineAddModeCancel = document.getElementById('routineAddModeCancel');
         refs.routineAddModeConfirm = document.getElementById('routineAddModeConfirm');
         refs.routineAddModeModifiers = document.getElementById('routineAddModeModifiers');
