@@ -3107,6 +3107,19 @@ input[type="number"]{ -moz-appearance:textfield; }
     text-align: center;
 }
 
+.stats-subtitle[data-stats-summary-link] {
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+}
+
+.stats-subtitle[data-stats-summary-link]:focus-visible {
+    outline: 2px solid var(--emphase);
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
 .stats-chart-card {
     margin-bottom: 16px;
     padding: 0;

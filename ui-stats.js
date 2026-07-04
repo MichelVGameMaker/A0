@@ -193,8 +193,6 @@
         refs.statsChartEmpty = document.getElementById('statsChartEmpty');
         refs.statsMetricTags = document.getElementById('statsMetricTags');
         refs.statsRangeTags = document.getElementById('statsRangeTags');
-        refs.statsTimeline = document.getElementById('statsTimeline');
-        refs.statsTimelineTitle = document.getElementById('statsTimelineTitle');
         refs.statsBack = document.getElementById('statsBack');
         refs.statsGoal = document.getElementById('statsGoal');
         refs.tabStats = document.getElementById('tabStats');
@@ -229,8 +227,6 @@
             'statsChartEmpty',
             'statsMetricTags',
             'statsRangeTags',
-            'statsTimeline',
-            'statsTimelineTitle',
             'statsGoal'
         ];
         const missing = required.filter((key) => !refs[key]);
@@ -275,7 +271,20 @@
                 renderExerciseDetail();
             });
         }
+        document.addEventListener('keydown', (event) => {
+            const summary = event.target.closest?.('[data-stats-summary-link]');
+            if (!summary || (event.key !== 'Enter' && event.key !== ' ')) {
+                return;
+            }
+            event.preventDefault();
+            void openHistoryForSummary(summary.dataset.selectedDateKey || null);
+        });
         document.addEventListener('click', (event) => {
+            const summary = event.target.closest('[data-stats-summary-link]');
+            if (summary) {
+                void openHistoryForSummary(summary.dataset.selectedDateKey || null);
+                return;
+            }
             const button = event.target.closest('[data-stats-section]');
             if (!button) {
                 return;
@@ -419,15 +428,13 @@
     }
 
     function renderExerciseDetail() {
-        const { statsExerciseTitle, statsExerciseSubtitle, statsTimelineTitle } = assertStatsRefs();
+        const { statsExerciseTitle, statsExerciseSubtitle } = assertStatsRefs();
         const exercise = state.activeExercise;
         statsExerciseTitle.textContent = exercise?.name || 'Exercice';
         renderMetricTags();
         renderRangeTags();
         updateExerciseSummary(statsExerciseSubtitle);
-        updateExerciseHistoryTitle(statsTimelineTitle);
         renderChart();
-        renderTimeline();
     }
 
     function renderEmbeddedStatsContent(container, exerciseId, selectedDateKey = null) {
@@ -442,7 +449,7 @@
         } else {
             delete container.dataset.statsSelectedDateKey;
         }
-        const { statsMetricTags, statsChart, statsChartEmpty, statsRangeTags, statsTimeline, statsExerciseSubtitle, statsTimelineTitle } =
+        const { statsMetricTags, statsChart, statsChartEmpty, statsRangeTags, statsExerciseSubtitle } =
             assertStatsRefs();
         container.innerHTML = '';
 
@@ -458,13 +465,6 @@
         goalButton.title = 'Objectif';
         goalButton.textContent = 'Objectif';
         container.appendChild(goalButton);
-        appendClonedParent(container, statsTimeline.closest('section'));
-
-        const embeddedTimelineTitle = container.querySelector('.stats-section-title');
-        if (embeddedTimelineTitle) {
-            embeddedTimelineTitle.textContent = statsTimelineTitle.textContent || 'Historique';
-        }
-
         const embeddedChartEmpty = container.querySelector('.stats-chart-empty');
         if (embeddedChartEmpty) {
             embeddedChartEmpty.textContent = statsChartEmpty.textContent || 'Aucune donnée enregistrée.';
@@ -474,6 +474,7 @@
         const embeddedSubtitle = container.querySelector('.stats-subtitle');
         if (embeddedSubtitle) {
             embeddedSubtitle.textContent = statsExerciseSubtitle.textContent || '';
+            prepareSummaryLink(embeddedSubtitle, selectedDateKey);
         }
         renderChart({
             statsChart: embeddedChart || statsChart,
@@ -499,6 +500,12 @@
                 }
                 const rangeButton = event.target.closest('[data-range]');
                 if (!rangeButton) {
+                    const summaryButton = event.target.closest('[data-stats-summary-link]');
+                    if (summaryButton) {
+                        event.stopPropagation();
+                        void openHistoryForSummary(summaryButton.dataset.selectedDateKey || container.dataset.statsSelectedDateKey || null);
+                        return;
+                    }
                     const goalButtonTarget = event.target.closest('[data-stats-goal]');
                     if (goalButtonTarget) {
                         openGoalDialog();
@@ -516,6 +523,41 @@
                 }
             });
             container.dataset.statsEmbeddedWired = 'true';
+        }
+    }
+
+
+    function prepareSummaryLink(element, selectedDateKey) {
+        if (!element) {
+            return;
+        }
+        element.dataset.statsSummaryLink = 'true';
+        if (selectedDateKey) {
+            element.dataset.selectedDateKey = selectedDateKey;
+        } else {
+            delete element.dataset.selectedDateKey;
+        }
+        element.setAttribute('role', 'button');
+        element.tabIndex = 0;
+        element.title = 'Ouvrir l’historique à cette date';
+    }
+
+    async function openHistoryForSummary(selectedDateKey) {
+        const exerciseId = state.activeExercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+        if (typeof A.openExecHistoryForDate === 'function' && refs.screenExecEdit && !refs.screenExecEdit.hidden) {
+            await A.openExecHistoryForDate(selectedDateKey);
+            return;
+        }
+        if (typeof A.openExerciseRead === 'function') {
+            await A.openExerciseRead({
+                currentId: exerciseId,
+                callerScreen: 'screenExecEdit',
+                tab: 'history',
+                selectedDateKey
+            });
         }
     }
 
@@ -1096,6 +1138,7 @@
             }
             const goalValue = getGoalValueAtDate(state.activeMetric, point.date, exercise, usage);
             statsExerciseSubtitle.textContent = buildSummaryText(metricDefinition, point.value, point.date, goalValue);
+            prepareSummaryLink(statsExerciseSubtitle, A.ymd?.(point.date) || null);
         };
 
         const updateFocusAtPoint = (point) => {
@@ -1169,6 +1212,7 @@
             focusGroup.setAttribute('data-visible', 'false');
             points.forEach((item) => item.element?.classList.remove('is-active'));
             updateExerciseSummary(statsExerciseSubtitle);
+            prepareSummaryLink(statsExerciseSubtitle, null);
         };
 
         svg.addEventListener('pointerdown', handlePointerDown);
