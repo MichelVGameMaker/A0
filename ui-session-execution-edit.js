@@ -122,7 +122,8 @@
             focusField = null,
             openMeta = false,
             showSessionTab = true,
-            initialTab = 'session'
+            initialTab = 'session',
+            selectedDateKey = null
         } = options;
         if (!currentId && !exerciseRefId) {
             return;
@@ -157,6 +158,7 @@
             state.exerciseId = null;
             state.exerciseRefId = exercise.id;
         }
+        state.historySelectedDateKey = selectedDateKey || state.dateKey;
         state.callerScreen = callerScreen;
         state.session = session;
         state.showSessionTab = Boolean(showSessionTab && hasSessionContext);
@@ -192,6 +194,25 @@
                 }
             }, 0);
         }
+    };
+
+
+    A.openExecHistoryForDate = async function openExecHistoryForDate(selectedDateKey = null) {
+        const { execReadHistoryContent } = assertRefs();
+        const linkedExerciseId = state.exerciseRefId;
+        if (!linkedExerciseId || typeof A.renderExerciseReadHistoryPanel !== 'function') {
+            setExecActiveTab('history');
+            return;
+        }
+        state.historySelectedDateKey = selectedDateKey || state.dateKey || null;
+        const baseExercise = await db.get('exercises', linkedExerciseId);
+        await A.renderExerciseReadHistoryPanel({
+            exercise: baseExercise,
+            exerciseId: linkedExerciseId,
+            container: execReadHistoryContent,
+            selectedDateKey: state.historySelectedDateKey
+        });
+        setExecActiveTab('history');
     };
 
     A.openExecMoveMeta = async function openExecMoveMeta(options = {}) {
@@ -586,10 +607,10 @@
                 exercise: mergedExercise,
                 exerciseId: linkedExerciseId,
                 container: execReadHistoryContent,
-                selectedDateKey: state.dateKey
+                selectedDateKey: state.historySelectedDateKey || state.dateKey
             });
         }
-        await renderStatsDuplicate(mergedExercise, execEditTabStats, linkedExerciseId, state.dateKey);
+        await renderStatsDuplicate(mergedExercise, execEditTabStats, linkedExerciseId, state.historySelectedDateKey || state.dateKey);
     }
 
     async function renderStatsDuplicate(exercise, container, exerciseId, selectedDateKey = null) {

@@ -26,7 +26,7 @@
      * @returns {Promise<void>} Promesse résolue après rendu.
      */
     A.openExerciseRead = async function openExerciseRead(options) {
-        const { currentId, callerScreen = 'screenExercises', tab = 'exec' } = options || {};
+        const { currentId, callerScreen = 'screenExercises', tab = 'exec', selectedDateKey = null } = options || {};
         if (!currentId) {
             return;
         }
@@ -35,7 +35,8 @@
                 exerciseRefId: currentId,
                 callerScreen,
                 showSessionTab: false,
-                initialTab: tab
+                initialTab: tab,
+                selectedDateKey
             });
             return;
         }
@@ -57,7 +58,8 @@
         await renderExerciseHistoryPanel({
             exercise,
             exerciseId: state.currentId,
-            container: refs.exReadHistoryList
+            container: refs.exReadHistoryList,
+            selectedDateKey
         });
         setActiveTab(tab);
 
@@ -568,8 +570,14 @@
             .filter((item) => item && item.sets.length > 0);
 
         items.sort((a, b) => {
-            const timeA = new Date(a.session?.date || a.session?.id || 0).getTime();
-            const timeB = new Date(b.session?.date || b.session?.id || 0).getTime();
+            const keyA = a.session?.date || a.session?.id || '';
+            const keyB = b.session?.date || b.session?.id || '';
+            if (selectedDateKey) {
+                if (keyA === selectedDateKey && keyB !== selectedDateKey) return -1;
+                if (keyB === selectedDateKey && keyA !== selectedDateKey) return 1;
+            }
+            const timeA = new Date(keyA || 0).getTime();
+            const timeB = new Date(keyB || 0).getTime();
             return timeB - timeA;
         });
 
