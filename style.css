@@ -2,6 +2,7 @@
    0) Variables & fondations
    ========================================================= */
 :root{
+  --app-height: 100dvh; /* Safari browser: dynamic viewport; PWA: full viewport */
   /* --- Couleurs --- */
   --emphase:       #02ccba;
   --emphase_white: #faedf6;
@@ -86,7 +87,7 @@
   --small-h:   33px;
 	
   --header-total-h: calc(var(--header-h) + 2px + env(safe-area-inset-top, 0)); /* 2px = border-bottom du header/subheader */
-  --inline-keyboard-h: calc(232px + env(safe-area-inset-bottom, 0));
+  --inline-keyboard-h: calc(240px + env(safe-area-inset-bottom, 0px));
   --timer-bar-h: 0px;
   --z-splash:        999;
   --z-keyboard:      900;
@@ -96,6 +97,10 @@
   --z-header:        10;
 }
 
+
+@media (display-mode: standalone) {
+  :root { --app-height: 100vh; }
+}
 
 /* Safe areas iOS */
 .safe-top    { padding-top:    env(safe-area-inset-top, 0); }
@@ -113,13 +118,15 @@
   -webkit-tap-highlight-color: transparent;
 }
 html {
-   height:100%;
+   height:auto;
+   min-height:100%;
    font-size: var(--fs-base);
    -webkit-text-size-adjust: 100%;
    overscroll-behavior: none;
 }
 body{
-    height:100%;
+    height:var(--app-height);
+    position:relative;
     margin:0;
     background:  var(--bodyBack);
     color:       var(--black);
@@ -156,7 +163,8 @@ body{
 .screen {
     display: flex;
     flex-direction: column;
-    height: 100svh;
+    position: relative;
+    height: var(--app-height);
 }
 .screen[hidden] { display: none !important; }
 .screen-sheet-overlay{
@@ -215,7 +223,8 @@ body{
     padding:  2px;
     padding-top: var(--header-total-h);
     padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0));
-    min-height: calc(100svh - var(--tabbar-h) - var(--header-total-h) - env(safe-area-inset-bottom, 0));  overflow-y: auto;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 
@@ -224,14 +233,14 @@ body{
    ========================================================= */
 .tabbar{
 	 z-index: var(--z-tab-bar);
-    position: fixed; bottom:0; left:0; right:0; 
-    height: var(--tabbar-h);
+    position: absolute; bottom:0; left:0; right:0; 
+    height: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px));
     display:grid;
     grid-template-columns: var(--tab-size-active) var(--tab-size-active) var(--tab-size-active);
     align-items:center;
     justify-content: center;
     column-gap: var(--tab-gap);
-    padding-bottom: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     background: transparent;
     border-top: none;
 }
@@ -312,7 +321,7 @@ body{
    ========================================================= */
 header{
     z-index: var(--z-header);
-    position: fixed; top: 0; left:0; right:0;
+    position: absolute; top: 0; left:0; right:0;
     height: calc(var(--header-h) + env(safe-area-inset-top, 0));
     display:grid;
     --header-side-w: 24px;
@@ -2741,7 +2750,7 @@ textarea:focus{
 }
 
 .inline-keyboard{
-  position: fixed;
+  position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
@@ -2782,6 +2791,11 @@ textarea:focus{
 
 body.inline-keyboard-visible .keyboard-spacer{
   height: var(--inline-keyboard-h);
+}
+
+/* Main session screen has no spacer: reserve scroll clearance for the keypad. */
+body.inline-keyboard-visible #screenSessions > .content{
+  padding-bottom: calc(var(--inline-keyboard-h) + 12px);
 }
 
 .inline-keyboard-action{
