@@ -642,6 +642,23 @@
         actionsGrid.className = 'inline-keyboard-actions';
         content.appendChild(actionsGrid);
 
+        // Match scrolling clearance to the actual rendered keypad size.
+        let keyboardSpaceFrame = null;
+        const syncKeyboardSpace = () => {
+            if (!active || keyboard.hidden) return;
+            if (keyboardSpaceFrame !== null) cancelAnimationFrame(keyboardSpaceFrame);
+            keyboardSpaceFrame = requestAnimationFrame(() => {
+                keyboardSpaceFrame = null;
+                if (!active || keyboard.hidden) return;
+                const height = Math.ceil(keyboard.getBoundingClientRect().height);
+                if (height > 0) {
+                    document.documentElement.style.setProperty('--inline-keyboard-h', `${height}px`);
+                }
+            });
+        };
+        window.addEventListener('resize', syncKeyboardSpace);
+        window.visualViewport?.addEventListener('resize', syncKeyboardSpace);
+
         let timerModePointerGuard = false;
         let timerRefreshInterval = null;
 
@@ -887,6 +904,11 @@
         };
 
         const handleClose = () => {
+            if (keyboardSpaceFrame !== null) {
+                cancelAnimationFrame(keyboardSpaceFrame);
+                keyboardSpaceFrame = null;
+            }
+            document.documentElement.style.removeProperty('--inline-keyboard-h');
             keyboard.hidden = true;
             keyboard.removeAttribute('data-visible');
             document.body?.classList.remove('inline-keyboard-visible');
@@ -1181,6 +1203,7 @@
             active.mode = nextMode;
             applyLayout(active.layout, active.mode);
             renderActions(resolveActions());
+            syncKeyboardSpace();
             if (previousMode !== 'timer' && active.mode === 'timer') {
                 armTimerModePointerGuard();
             }
@@ -1211,6 +1234,7 @@
             document.body?.classList.add('inline-keyboard-visible');
             document.addEventListener('pointerdown', handleOutside, true);
             selectTarget(target);
+            syncKeyboardSpace();
         };
 
         const api = {
@@ -1227,6 +1251,7 @@
                 }
                 renderKeys(currentLayout, currentMode);
                 renderActions(resolveActions());
+                syncKeyboardSpace();
             }
         };
         components.inlineKeyboard = api;
